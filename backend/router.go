@@ -100,6 +100,15 @@ func InitializeRoutes(router *gin.Engine) {
 			})
 		})
 
+		// Setting
+		authorized.GET("/settings", func(c *gin.Context) {
+			c.HTML(http.StatusOK, "settings.html", gin.H{
+				"title": "Fahrerübersicht",
+				"user":  c.MustGet("user"),
+				"year":  currentYear,
+			})
+		})
+
 		// Fahrzeugübersicht
 		authorized.GET("/vehicles", func(c *gin.Context) {
 			c.HTML(http.StatusOK, "vehicles.html", gin.H{
@@ -436,18 +445,6 @@ func InitializeRoutes(router *gin.Engine) {
 					"success": true,
 					"id":      id,
 					"message": "Fahrzeug erfolgreich aktualisiert",
-				})
-			})
-
-			// Fahrzeug löschen
-			api.DELETE("/vehicles/:id", func(c *gin.Context) {
-				id := c.Param("id")
-
-				// Hier würdest du das Fahrzeug aus der Datenbank löschen
-
-				c.JSON(http.StatusOK, gin.H{
-					"success": true,
-					"message": "Fahrzeug erfolgreich gelöscht",
 				})
 			})
 
