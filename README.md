@@ -2,26 +2,25 @@
 FleetDrive/
 ├── backend/
 │   ├── db/
-│   │
 │   ├── handler/
-│   │
 │   ├── model/
-│   │
-│   ├── router.go       // Gin Router Setup
+│   ├── router.go
 │   │
 ├── frontend/
 │   ├── static/
-│   │
-│   │
 │   ├── templates/
-│           ├── home.tmpl 
-│   │
+│   │   ├── components/
+│   │   │   ├── header.tmpl
+│   │   │   ├── navigation.tmpl
+│   │   │   ├── footer.tmpl
+│   │   │   ├── vehicle-card.tmpl
+│   │   │   └── driver-card.tmpl
+│   │   ├── home.tmpl
+│   │   └── login.tmpl
 │   ├── assets/
-│   │
-│   │
 │   └── views/
 │
-├── go.mod                 // Go Modul-Datei
-└── go.sum                 // Abhängigkeitsdatei (wird beim Bauen erzeugt)
+├── go.mod
+└── go.sum
 
 ````
