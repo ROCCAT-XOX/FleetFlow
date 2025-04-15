@@ -1,4 +1,5 @@
 {{ template "head" .}}
+
 <!-- Navbar würde hier stehen -->
 {{ template "navigation" .}}
 <!-- Hauptinhalt -->
@@ -25,8 +26,14 @@
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <!-- Karte: Hauptinformationen -->
         <div class="bg-white overflow-hidden shadow rounded-lg">
-            <div class="px-4 py-5 sm:px-6 bg-gray-50 border-b border-gray-200">
+            <div class="px-4 py-5 sm:px-6 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
                 <h3 class="text-lg leading-6 font-medium text-gray-900">Fahrzeuginformationen</h3>
+                <button type="button" id="edit-vehicle-btn" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <svg class="-ml-0.5 mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                    Bearbeiten
+                </button>
             </div>
             <div class="px-4 py-5 sm:p-6">
                 <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
@@ -68,8 +75,14 @@
 
         <!-- Karte: Aktuelle Nutzung -->
         <div class="bg-white overflow-hidden shadow rounded-lg">
-            <div class="px-4 py-5 sm:px-6 bg-gray-50 border-b border-gray-200">
+            <div class="px-4 py-5 sm:px-6 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
                 <h3 class="text-lg leading-6 font-medium text-gray-900">Aktuelle Nutzung</h3>
+                <button type="button" id="edit-current-usage-btn" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <svg class="-ml-0.5 mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                    Bearbeiten
+                </button>
             </div>
             <div class="px-4 py-5 sm:p-6">
                 <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
@@ -274,6 +287,80 @@
             </div>
         </div>
     </div>
+
+    <!-- Statistiken-Bereich -->
+    <div class="mt-6">
+        <div class="bg-white shadow sm:rounded-lg">
+            <div class="px-4 py-5 sm:px-6 bg-gray-50 border-b border-gray-200">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Fahrzeugstatistiken</h3>
+            </div>
+            <div class="px-4 py-5 sm:p-6">
+                <!-- Kosten der letzten 12 Monate - Volle Breite -->
+                <div class="mb-6">
+                    <div class="bg-white overflow-hidden shadow rounded-lg border border-gray-200">
+                        <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+                            <h3 class="text-base font-medium text-gray-900">Monatliche Kosten (letzte 12 Monate)</h3>
+                        </div>
+                        <div class="px-4 py-3 sm:px-6">
+                            <div id="costChart" class="h-80"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pie Charts nebeneinander in einer Zeile -->
+                <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                    <!-- Nutzung nach Mitarbeitern -->
+                    <div class="bg-white overflow-hidden shadow rounded-lg border border-gray-200">
+                        <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+                            <h3 class="text-base font-medium text-gray-900">Nutzung nach Mitarbeitern</h3>
+                        </div>
+                        <div class="px-4 py-3 sm:px-6">
+                            <div id="driverPieChart" class="h-80"></div>
+                        </div>
+                    </div>
+
+                    <!-- Nutzung nach Projekten -->
+                    <div class="bg-white overflow-hidden shadow rounded-lg border border-gray-200">
+                        <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+                            <h3 class="text-base font-medium text-gray-900">Nutzung nach Projekten</h3>
+                        </div>
+                        <div class="px-4 py-3 sm:px-6">
+                            <div id="projectPieChart" class="h-80"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Zusammenfassung -->
+                <div class="mt-6">
+                    <div class="bg-white overflow-hidden shadow rounded-lg border border-gray-200">
+                        <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+                            <h3 class="text-base font-medium text-gray-900">Zusammenfassung</h3>
+                        </div>
+                        <div class="px-4 py-3 sm:px-6">
+                            <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 md:grid-cols-4">
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">Gesamtkilometer</dt>
+                                    <dd class="mt-1 text-2xl text-gray-900 font-medium">18.452 km</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">Kosten pro km</dt>
+                                    <dd class="mt-1 text-2xl text-gray-900 font-medium">0,18 €</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">Gesamtkosten (12 Mon.)</dt>
+                                    <dd class="mt-1 text-2xl text-gray-900 font-medium">3.362 €</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">Auslastung</dt>
+                                    <dd class="mt-1 text-2xl text-gray-900 font-medium">78%</dd>
+                                </div>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Modal: Wartung/Inspektion hinzufügen -->
@@ -462,6 +549,247 @@
     </div>
 </div>
 
+<!-- Modal: Fahrzeug bearbeiten -->
+<div id="edit-vehicle-modal" class="fixed z-10 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <!-- Hintergrund-Overlay -->
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+
+        <!-- Zentriert den Modal-Inhalt -->
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+        <!-- Modal-Panel -->
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <form id="edit-vehicle-form">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="w-full">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="vehicle-modal-title">
+                                Fahrzeug bearbeiten
+                            </h3>
+
+                            <div class="mt-4">
+                                <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                                    <div class="sm:col-span-3">
+                                        <label for="license_plate" class="block text-sm font-medium text-gray-700">Kennzeichen</label>
+                                        <input type="text" name="license_plate" id="license_plate" value="M-CD 5678" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="model" class="block text-sm font-medium text-gray-700">Marke & Modell</label>
+                                        <input type="text" name="model" id="model" value="BMW 530e" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="year" class="block text-sm font-medium text-gray-700">Baujahr</label>
+                                        <input type="number" name="year" id="year" value="2023" min="1900" max="2099" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="color" class="block text-sm font-medium text-gray-700">Farbe</label>
+                                        <input type="text" name="color" id="color" value="Schwarz" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="vehicle_id" class="block text-sm font-medium text-gray-700">Fahrzeug-ID</label>
+                                        <input type="text" name="vehicle_id" id="vehicle_id" value="FD-2023-01254" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 bg-gray-100 rounded-md" readonly>
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="vin" class="block text-sm font-medium text-gray-700">VIN</label>
+                                        <input type="text" name="vin" id="vin" value="WBAJL51070G830415" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="fuel_type" class="block text-sm font-medium text-gray-700">Kraftstoffart</label>
+                                        <select name="fuel_type" id="fuel_type" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                            <option value="Benzin">Benzin</option>
+                                            <option value="Diesel">Diesel</option>
+                                            <option value="Elektro">Elektro</option>
+                                            <option value="Hybrid (Benzin/Elektro)" selected>Hybrid (Benzin/Elektro)</option>
+                                            <option value="Hybrid (Diesel/Elektro)">Hybrid (Diesel/Elektro)</option>
+                                            <option value="Wasserstoff">Wasserstoff</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="current_mileage" class="block text-sm font-medium text-gray-700">Aktueller Kilometerstand</label>
+                                        <div class="mt-1 relative rounded-md shadow-sm">
+                                            <input type="number" name="current_mileage" id="current_mileage" value="18452" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pr-12 sm:text-sm border-gray-300 rounded-md">
+                                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                                <span class="text-gray-500 sm:text-sm">km</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="sm:col-span-6">
+                                        <h4 class="text-sm font-medium text-gray-700 mb-2">Zulassung & Versicherung</h4>
+                                        <div class="h-px bg-gray-200 my-2"></div>
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="registration_date" class="block text-sm font-medium text-gray-700">Erstzulassung</label>
+                                        <input type="date" name="registration_date" id="registration_date" value="2023-01-12" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="next_inspection" class="block text-sm font-medium text-gray-700">Nächste HU/AU</label>
+                                        <input type="date" name="next_inspection" id="next_inspection" value="2025-01-12" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="insurance" class="block text-sm font-medium text-gray-700">Versicherung</label>
+                                        <input type="text" name="insurance" id="insurance" value="DEVK Versicherung" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="insurance_number" class="block text-sm font-medium text-gray-700">Versicherungsnummer</label>
+                                        <input type="text" name="insurance_number" id="insurance_number" value="VS-2023-78945213" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="insurance_type" class="block text-sm font-medium text-gray-700">Versicherungstyp</label>
+                                        <select name="insurance_type" id="insurance_type" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                            <option value="Haftpflicht">Haftpflicht</option>
+                                            <option value="Teilkasko">Teilkasko</option>
+                                            <option value="Vollkasko" selected>Vollkasko</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="insurance_cost" class="block text-sm font-medium text-gray-700">Jährliche Kosten</label>
+                                        <div class="mt-1 relative rounded-md shadow-sm">
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <span class="text-gray-500 sm:text-sm">€</span>
+                                            </div>
+                                            <input type="number" name="insurance_cost" id="insurance_cost" value="1245" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md" step="0.01">
+                                        </div>
+                                    </div>
+
+                                    <div class="sm:col-span-6">
+                                        <label for="vehicle_notes" class="block text-sm font-medium text-gray-700">Anmerkungen</label>
+                                        <div class="mt-1">
+                                            <textarea id="vehicle_notes" name="vehicle_notes" rows="3" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border border-gray-300 rounded-md"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm">
+                        Speichern
+                    </button>
+                    <button type="button" class="close-edit-modal-btn mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        Abbrechen
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Aktuelle Nutzung bearbeiten -->
+<div id="edit-usage-modal" class="fixed z-10 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <!-- Hintergrund-Overlay -->
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+
+        <!-- Zentriert den Modal-Inhalt -->
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+        <!-- Modal-Panel -->
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <form id="edit-current-usage-form">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="w-full">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="usage-modal-title">
+                                Aktuelle Nutzung bearbeiten
+                            </h3>
+
+                            <div class="mt-4">
+                                <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                                    <div class="sm:col-span-6">
+                                        <label for="current-driver" class="block text-sm font-medium text-gray-700">Aktueller Fahrer</label>
+                                        <select id="current-driver" name="current-driver" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                            <option value="1" selected>Max Mustermann</option>
+                                            <option value="2">Erika Musterfrau</option>
+                                            <option value="3">John Doe</option>
+                                            <option value="4">Jane Smith</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="current-department" class="block text-sm font-medium text-gray-700">Abteilung</label>
+                                        <select id="current-department" name="current-department" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                            <option value="sales" selected>Vertrieb</option>
+                                            <option value="marketing">Marketing</option>
+                                            <option value="it">IT</option>
+                                            <option value="hr">Personal</option>
+                                            <option value="management">Geschäftsführung</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="usage-status" class="block text-sm font-medium text-gray-700">Status</label>
+                                        <select id="usage-status" name="usage-status" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                            <option value="active" selected>Aktiv</option>
+                                            <option value="reserved">Reserviert</option>
+                                            <option value="maintenance">In Wartung</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="current-start-date" class="block text-sm font-medium text-gray-700">Nutzung seit (Datum)</label>
+                                        <input type="date" name="current-start-date" id="current-start-date" value="2025-04-15" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="current-start-time" class="block text-sm font-medium text-gray-700">Nutzung seit (Zeit)</label>
+                                        <input type="time" name="current-start-time" id="current-start-time" value="08:30" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="current-end-date" class="block text-sm font-medium text-gray-700">Geplante Rückgabe (Datum)</label>
+                                        <input type="date" name="current-end-date" id="current-end-date" value="2025-04-17" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="current-end-time" class="block text-sm font-medium text-gray-700">Geplante Rückgabe (Zeit)</label>
+                                        <input type="time" name="current-end-time" id="current-end-time" value="18:00" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+
+                                    <div class="sm:col-span-6">
+                                        <label for="current-project" class="block text-sm font-medium text-gray-700">Projekt/Zweck</label>
+                                        <input type="text" name="current-project" id="current-project" value="Kundenbesuch Frankfurt, Projekt &quot;Digital Transformation&quot;" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+
+                                    <div class="sm:col-span-6">
+                                        <label for="current-usage-notes" class="block text-sm font-medium text-gray-700">Anmerkungen</label>
+                                        <div class="mt-1">
+                                            <textarea id="current-usage-notes" name="current-usage-notes" rows="3" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border border-gray-300 rounded-md"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm">
+                        Speichern
+                    </button>
+                    <button type="button" class="close-current-usage-modal-btn mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        Abbrechen
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Elemente für Wartungs-Modal
@@ -546,6 +874,481 @@
             closeModals();
         });
     });
+</script>
+
+<!-- JavaScript-Code für das Bearbeiten-Modal -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Bisheriger Modal-Code...
+
+        // Elemente für Fahrzeug-Bearbeiten-Modal
+        const editVehicleModal = document.getElementById('edit-vehicle-modal');
+        const editVehicleBtn = document.getElementById('edit-vehicle-btn');
+        const editVehicleForm = document.getElementById('edit-vehicle-form');
+        const closeEditModalBtns = document.querySelectorAll('.close-edit-modal-btn');
+
+        // Funktion zum Öffnen des Bearbeiten-Modals
+        function openEditVehicleModal() {
+            editVehicleModal.classList.remove('hidden');
+
+            // Hier könnten die aktuellen Daten per API abgerufen werden
+            // Für diese Demo sind die Werte bereits vorausgefüllt
+        }
+
+        // Event Listener für den Bearbeiten-Button
+        if (editVehicleBtn) {
+            editVehicleBtn.addEventListener('click', openEditVehicleModal);
+        }
+
+        // Schließen des Bearbeiten-Modals
+        closeEditModalBtns.forEach(button => {
+            button.addEventListener('click', function() {
+                editVehicleModal.classList.add('hidden');
+            });
+        });
+
+        // Bearbeiten-Formular absenden
+        if (editVehicleForm) {
+            editVehicleForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+
+                const formData = new FormData(editVehicleForm);
+                const vehicleData = {};
+
+                for (let [key, value] of formData.entries()) {
+                    vehicleData[key] = value;
+                }
+
+                console.log('Fahrzeugdaten speichern:', vehicleData);
+
+                // In einer echten Anwendung würde hier ein API-Aufruf erfolgen
+                alert('Fahrzeugdaten erfolgreich aktualisiert!');
+                editVehicleModal.classList.add('hidden');
+
+                // Hier könnten die Anzeigen auf der Seite aktualisiert werden
+                // Für diese Demo aktualisieren wir die Werte direkt im DOM
+                updateVehicleDisplay(vehicleData);
+            });
+        }
+
+        // Funktion zum Aktualisieren der angezeigten Fahrzeugdaten
+        function updateVehicleDisplay(data) {
+            // Titel aktualisieren
+            const titleElement = document.querySelector('h1.text-2xl');
+            if (titleElement) {
+                titleElement.textContent = data.model;
+            }
+
+            // Fahrzeuginformationen aktualisieren
+            const infoDivs = document.querySelectorAll('.bg-white .px-4.py-5.sm\\:p-6 dl div');
+            infoDivs.forEach(div => {
+                const label = div.querySelector('dt');
+                const value = div.querySelector('dd');
+
+                if (label && value) {
+                    const labelText = label.textContent.trim();
+
+                    if (labelText === 'Kennzeichen' && data.license_plate) {
+                        value.textContent = data.license_plate;
+                    } else if (labelText === 'Marke & Modell' && data.model) {
+                        value.textContent = data.model;
+                    } else if (labelText === 'Baujahr' && data.year) {
+                        value.textContent = data.year;
+                    } else if (labelText === 'Farbe' && data.color) {
+                        value.textContent = data.color;
+                    } else if (labelText === 'Fahrzeug-ID' && data.vehicle_id) {
+                        value.textContent = data.vehicle_id;
+                    } else if (labelText === 'VIN' && data.vin) {
+                        value.textContent = data.vin;
+                    } else if (labelText === 'Kraftstoffart' && data.fuel_type) {
+                        value.textContent = data.fuel_type;
+                    } else if (labelText === 'Aktueller Kilometerstand' && data.current_mileage) {
+                        value.textContent = data.current_mileage + ' km';
+                    } else if (labelText === 'Erstzulassung' && data.registration_date) {
+                        // Datumsformat anpassen
+                        const date = new Date(data.registration_date);
+                        value.textContent = date.toLocaleDateString('de-DE');
+                    } else if (labelText === 'Nächste HU/AU' && data.next_inspection) {
+                        // Datumsformat anpassen
+                        const date = new Date(data.next_inspection);
+                        value.textContent = date.toLocaleDateString('de-DE');
+                    } else if (labelText === 'Versicherung' && data.insurance) {
+                        value.textContent = data.insurance;
+                    } else if (labelText === 'Versicherungsnummer' && data.insurance_number) {
+                        value.textContent = data.insurance_number;
+                    } else if (labelText === 'Versicherungstyp' && data.insurance_type) {
+                        value.textContent = data.insurance_type;
+                    } else if (labelText === 'Jährliche Kosten' && data.insurance_cost) {
+                        value.textContent = data.insurance_cost + ' €';
+                    }
+                }
+            });
+        }
+
+        // Schließen bei Klick außerhalb des Modals
+        window.addEventListener('click', function(event) {
+            if (event.target === editVehicleModal) {
+                editVehicleModal.classList.add('hidden');
+            }
+        });
+    });
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Bereits vorhandener Code...
+
+        // Elemente für aktuelle Nutzung bearbeiten
+        const editCurrentUsageModal = document.getElementById('edit-usage-modal');
+        const editCurrentUsageBtn = document.getElementById('edit-current-usage-btn');
+        const editCurrentUsageForm = document.getElementById('edit-current-usage-form');
+        const closeCurrentUsageModalBtns = document.querySelectorAll('.close-current-usage-modal-btn');
+
+        // Funktion zum Öffnen des Aktuelle-Nutzung-Bearbeiten-Modals
+        function openEditCurrentUsageModal() {
+            editCurrentUsageModal.classList.remove('hidden');
+
+            // Hier könnten aktuelle Daten per API abgerufen werden
+            // Für diese Demo sind die Werte bereits vorausgefüllt
+        }
+
+        // Event Listener für den Bearbeiten-Button
+        if (editCurrentUsageBtn) {
+            editCurrentUsageBtn.addEventListener('click', openEditCurrentUsageModal);
+        }
+
+        // Schließen des Aktuelle-Nutzung-Bearbeiten-Modals
+        closeCurrentUsageModalBtns.forEach(button => {
+            button.addEventListener('click', function() {
+                editCurrentUsageModal.classList.add('hidden');
+            });
+        });
+
+        // Aktuelle-Nutzung-Formular absenden
+        if (editCurrentUsageForm) {
+            editCurrentUsageForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+
+                const formData = new FormData(editCurrentUsageForm);
+                const usageData = {};
+
+                for (let [key, value] of formData.entries()) {
+                    usageData[key] = value;
+                }
+
+                console.log('Aktuelle Nutzungsdaten speichern:', usageData);
+
+                // In einer echten Anwendung würde hier ein API-Aufruf erfolgen
+                alert('Aktuelle Nutzungsdaten erfolgreich aktualisiert!');
+                editCurrentUsageModal.classList.add('hidden');
+
+                // Hier könnten die Anzeigen auf der Seite aktualisiert werden
+                updateCurrentUsageDisplay(usageData);
+            });
+        }
+
+        // Funktion zum Aktualisieren der angezeigten aktuellen Nutzungsdaten
+        function updateCurrentUsageDisplay(data) {
+            // Aktuelle Nutzung aktualisieren
+            const currentUsageContainer = document.querySelectorAll('.bg-white .px-4.py-5.sm\\:p-6 dl')[1]; // Die zweite dl ist für die aktuelle Nutzung
+
+            if (currentUsageContainer) {
+                const divs = currentUsageContainer.querySelectorAll('div');
+
+                divs.forEach(div => {
+                    const label = div.querySelector('dt');
+                    const value = div.querySelector('dd');
+
+                    if (label && value) {
+                        const labelText = label.textContent.trim();
+
+                        if (labelText === 'Aktueller Fahrer' && data['current-driver']) {
+                            // Wir müssten hier eigentlich einen API-Call machen, um den Fahrernamen zu bekommen
+                            // Für diese Demo wählen wir einen festen Wert
+                            const driverNames = {
+                                '1': 'Max Mustermann',
+                                '2': 'Erika Musterfrau',
+                                '3': 'John Doe',
+                                '4': 'Jane Smith'
+                            };
+                            value.textContent = driverNames[data['current-driver']] || 'Unbekannt';
+                        } else if (labelText === 'Abteilung' && data['current-department']) {
+                            const departments = {
+                                'sales': 'Vertrieb',
+                                'marketing': 'Marketing',
+                                'it': 'IT',
+                                'hr': 'Personal',
+                                'management': 'Geschäftsführung'
+                            };
+                            value.textContent = departments[data['current-department']] || 'Unbekannt';
+                        } else if (labelText === 'Nutzung seit' && data['current-start-date'] && data['current-start-time']) {
+                            const date = new Date(data['current-start-date']);
+                            const dateStr = date.toLocaleDateString('de-DE');
+                            value.textContent = dateStr + ', ' + data['current-start-time'] + ' Uhr';
+                        } else if (labelText === 'Geplante Rückgabe' && data['current-end-date'] && data['current-end-time']) {
+                            const date = new Date(data['current-end-date']);
+                            const dateStr = date.toLocaleDateString('de-DE');
+                            value.textContent = dateStr + ', ' + data['current-end-time'] + ' Uhr';
+                        } else if (labelText === 'Projekt/Zweck' && data['current-project']) {
+                            value.textContent = data['current-project'];
+                        }
+                    }
+                });
+
+                // Status im Header aktualisieren
+                if (data['usage-status']) {
+                    const statusElement = document.querySelector('.bg-red-100.text-red-800');
+
+                    if (statusElement) {
+                        if (data['usage-status'] === 'active') {
+                            statusElement.textContent = 'In Benutzung';
+                            statusElement.className = 'px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800';
+                        } else if (data['usage-status'] === 'reserved') {
+                            statusElement.textContent = 'Reserviert';
+                            statusElement.className = 'px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800';
+                        } else if (data['usage-status'] === 'maintenance') {
+                            statusElement.textContent = 'In Wartung';
+                            statusElement.className = 'px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800';
+                        }
+                    }
+                }
+            }
+        }
+
+        // Schließen bei Klick außerhalb des Modals
+        window.addEventListener('click', function(event) {
+            if (event.target === editCurrentUsageModal) {
+                editCurrentUsageModal.classList.add('hidden');
+            }
+        });
+
+        initApexCharts();
+    });
+
+    function initApexCharts() {
+        // Kosten-Balkendiagramm
+        const months = ['Mai 24', 'Jun 24', 'Jul 24', 'Aug 24', 'Sep 24', 'Okt 24', 'Nov 24', 'Dez 24', 'Jan 25', 'Feb 25', 'Mär 25', 'Apr 25'];
+
+        const costChartOptions = {
+            series: [{
+                name: 'Wartungskosten',
+                data: [180, 250, 520, 120, 180, 320, 180, 150, 780, 0, 245, 0]
+            }, {
+                name: 'Versicherung & Steuern',
+                data: [104, 104, 104, 104, 104, 104, 104, 104, 104, 104, 104, 104]
+            }, {
+                name: 'Kraftstoffkosten',
+                data: [150, 180, 220, 210, 170, 190, 160, 180, 140, 170, 190, 230]
+            }],
+            chart: {
+                type: 'bar',
+                height: 320,
+                stacked: true,
+                toolbar: {
+                    show: true,
+                    tools: {
+                        download: false
+                    }
+                },
+                zoom: {
+                    enabled: false
+                }
+            },
+            responsive: [{
+                breakpoint: 480,
+                options: {
+                    legend: {
+                        position: 'bottom',
+                        offsetX: -10,
+                        offsetY: 0
+                    }
+                }
+            }],
+            plotOptions: {
+                bar: {
+                    horizontal: false,
+                    borderRadius: 2,
+                    columnWidth: '70%'
+                }
+            },
+            xaxis: {
+                categories: months
+            },
+            yaxis: {
+                title: {
+                    text: 'Kosten in €'
+                },
+                labels: {
+                    formatter: function (value) {
+                        return value + ' €';
+                    }
+                }
+            },
+            colors: ['#6366f1', '#10b981', '#fbbf24'],
+            fill: {
+                opacity: 0.8
+            },
+            legend: {
+                position: 'top',
+                horizontalAlign: 'left'
+            },
+            dataLabels: {
+                enabled: false
+            },
+            tooltip: {
+                shared: true,
+                intersect: false,  // Diese Option sicherstellen
+                y: {
+                    formatter: function (value) {
+                        return value + ' €';
+                    }
+                },
+                custom: function({ series, seriesIndex, dataPointIndex, w }) {
+                    let total = 0;
+                    series.forEach(s => {
+                        total += s[dataPointIndex];
+                    });
+
+                    return '<div class="apexcharts-tooltip-title" style="font-weight: bold; margin-bottom: 5px;">' +
+                        months[dataPointIndex] +
+                        '</div>' +
+                        w.globals.seriesNames.map((name, i) => {
+                            return '<div style="display: flex; justify-content: space-between; margin: 3px 0;">' +
+                                '<span style="display: inline-flex; align-items: center;">' +
+                                '<span style="width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; background-color: ' + w.globals.colors[i] + '"></span>' +
+                                name + ':</span>' +
+                                '<span>' + series[i][dataPointIndex] + ' €</span>' +
+                                '</div>';
+                        }).join('') +
+                        '<div style="display: flex; justify-content: space-between; border-top: 1px solid #e0e0e0; margin-top: 5px; padding-top: 5px; font-weight: bold;">' +
+                        '<span>Gesamt:</span>' +
+                        '<span>' + total + ' €</span>' +
+                        '</div>';
+                }
+            }
+        };
+
+        const costChart = new ApexCharts(document.querySelector("#costChart"), costChartOptions);
+        costChart.render();
+
+        // Fahrer Pie-Chart
+        const driverPieChartOptions = {
+            series: [35, 25, 20, 15, 5],
+            chart: {
+                type: 'donut',
+                height: 320
+            },
+            labels: ['Max Mustermann', 'Erika Musterfrau', 'John Doe', 'Jane Smith', 'Thomas Müller'],
+            colors: ['#6366f1', '#10b981', '#fbbf24', '#ef4444', '#8b5cf6'],
+            legend: {
+                position: 'bottom'
+            },
+            plotOptions: {
+                pie: {
+                    donut: {
+                        size: '50%',
+                        labels: {
+                            show: true,
+                            total: {
+                                show: true,
+                                label: 'Gesamt',
+                                formatter: function (w) {
+                                    return w.globals.series.reduce((a, b) => a + b, 0) + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            dataLabels: {
+                enabled: true,
+                formatter: function (val) {
+                    return val + '%';
+                }
+            },
+            tooltip: {
+                enabled: true,
+                y: {
+                    formatter: function (val) {
+                        return val + '%';
+                    }
+                }
+            },
+            responsive: [{
+                breakpoint: 480,
+                options: {
+                    chart: {
+                        height: 300
+                    },
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }]
+        };
+
+        const driverPieChart = new ApexCharts(document.querySelector("#driverPieChart"), driverPieChartOptions);
+        driverPieChart.render();
+
+        // Projekte Pie-Chart
+        const projectPieChartOptions = {
+            series: [30, 20, 15, 15, 10, 10],
+            chart: {
+                type: 'donut',
+                height: 320
+            },
+            labels: ['Digital Transformation', 'Future Mobility', 'Nachhaltigkeit', 'Kundentermine', 'Interne Meetings', 'Sonstiges'],
+            colors: ['#3b82f6', '#ec4899', '#10b981', '#f59e0b', '#7c3aed', '#9ca3af'],
+            legend: {
+                position: 'bottom'
+            },
+            plotOptions: {
+                pie: {
+                    donut: {
+                        size: '50%',
+                        labels: {
+                            show: true,
+                            total: {
+                                show: true,
+                                label: 'Gesamt',
+                                formatter: function (w) {
+                                    return w.globals.series.reduce((a, b) => a + b, 0) + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            dataLabels: {
+                enabled: true,
+                formatter: function (val) {
+                    return val + '%';
+                }
+            },
+            tooltip: {
+                enabled: true,
+                y: {
+                    formatter: function (val) {
+                        return val + '%';
+                    }
+                }
+            },
+            responsive: [{
+                breakpoint: 480,
+                options: {
+                    chart: {
+                        height: 300
+                    },
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }]
+        };
+
+        const projectPieChart = new ApexCharts(document.querySelector("#projectPieChart"), projectPieChartOptions);
+        projectPieChart.render();
+    }
 </script>
 </body>
 </html>
