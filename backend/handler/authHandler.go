@@ -1,4 +1,6 @@
 // backend/handler/authHandler.go
+// Diese Änderung ermöglicht die Anmeldung sowohl per E-Mail als auch per Benutzername
+
 package handler
 
 import (
@@ -26,8 +28,9 @@ func NewAuthHandler() *AuthHandler {
 
 // LoginRequest repräsentiert die Anfrage für den Login
 type LoginRequest struct {
-	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required"`
+	Email    string `json:"email" form:"email"`                          // Unterstützt JSON oder Formular
+	Username string `json:"username" form:"username"`                    // Unterstützt JSON oder Formular
+	Password string `json:"password" form:"password" binding:"required"` // Passwort ist erforderlich
 }
 
 // LoginResponse repräsentiert die Antwort für einen erfolgreichen Login
@@ -42,35 +45,66 @@ type LoginResponse struct {
 }
 
 // Login verarbeitet die Login-Anfrage
+// Login verarbeitet die Login-Anfrage
 func (h *AuthHandler) Login(c *gin.Context) {
-	var req LoginRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	email := c.PostForm("email")
+	password := c.PostForm("password")
+
+	if email == "" {
+		// Wenn kein E-Mail-Parameter gesendet wurde, zurück zum Login mit Fehlermeldung
+		c.HTML(http.StatusOK, "login.html", gin.H{
+			"error": "E-Mail ist erforderlich",
+			"year":  time.Now().Year(),
+		})
 		return
 	}
 
-	user, err := h.userRepo.FindByEmail(req.Email)
+	if password == "" {
+		// Wenn kein Passwort gesendet wurde, zurück zum Login mit Fehlermeldung
+		c.HTML(http.StatusOK, "login.html", gin.H{
+			"error": "Passwort ist erforderlich",
+			"year":  time.Now().Year(),
+		})
+		return
+	}
+
+	// Benutzer anhand der E-Mail finden
+	user, err := h.userRepo.FindByEmail(email)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Ungültige E-Mail oder Passwort"})
+		// Benutzer nicht gefunden, zurück zum Login mit Fehlermeldung
+		c.HTML(http.StatusOK, "login.html", gin.H{
+			"error": "Ungültige E-Mail oder Passwort",
+			"year":  time.Now().Year(),
+		})
 		return
 	}
 
 	// Überprüfen, ob das Passwort übereinstimmt
-	if !user.CheckPassword(req.Password) {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Ungültige E-Mail oder Passwort"})
+	if !user.CheckPassword(password) {
+		// Passwort stimmt nicht überein, zurück zum Login mit Fehlermeldung
+		c.HTML(http.StatusOK, "login.html", gin.H{
+			"error": "Ungültige E-Mail oder Passwort",
+			"year":  time.Now().Year(),
+		})
 		return
 	}
 
 	// Überprüfen, ob der Benutzer aktiv ist
 	if user.Status != model.StatusActive {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Ihr Konto ist inaktiv"})
+		c.HTML(http.StatusOK, "login.html", gin.H{
+			"error": "Ihr Konto ist inaktiv",
+			"year":  time.Now().Year(),
+		})
 		return
 	}
 
 	// JWT-Token generieren
 	token, err := utils.GenerateJWT(user.ID.Hex(), string(user.Role))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Fehler beim Generieren des Tokens"})
+		c.HTML(http.StatusOK, "login.html", gin.H{
+			"error": "Ein interner Fehler ist aufgetreten",
+			"year":  time.Now().Year(),
+		})
 		return
 	}
 
@@ -85,16 +119,8 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		true,
 	)
 
-	// Antwort senden
-	c.JSON(http.StatusOK, LoginResponse{
-		ID:        user.ID.Hex(),
-		FirstName: user.FirstName,
-		LastName:  user.LastName,
-		Email:     user.Email,
-		Role:      user.Role,
-		Status:    user.Status,
-		Token:     token,
-	})
+	// Nach erfolgreicher Anmeldung zum Dashboard weiterleiten
+	c.Redirect(http.StatusFound, "/dashboard")
 }
 
 // Logout behandelt die Logout-Anfrage

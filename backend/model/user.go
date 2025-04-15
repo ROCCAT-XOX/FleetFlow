@@ -30,6 +30,7 @@ type User struct {
 	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id"`
 	FirstName string             `bson:"firstName" json:"firstName"`
 	LastName  string             `bson:"lastName" json:"lastName"`
+	Username  string             `bson:"username" json:"username"` // Benutzername hinzugefügt
 	Email     string             `bson:"email" json:"email"`
 	Password  string             `bson:"password" json:"-"` // "-" verhindert, dass das Passwort in JSON-Antworten erscheint
 	Role      UserRole           `bson:"role" json:"role"`

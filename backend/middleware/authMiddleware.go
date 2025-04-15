@@ -18,7 +18,8 @@ func AuthMiddleware() gin.HandlerFunc {
 		// Token aus dem Cookie oder Auth-Header extrahieren
 		tokenString, err := extractToken(c)
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+			// Kein Token gefunden, zum Login umleiten
+			c.Redirect(http.StatusFound, "/login")
 			c.Abort()
 			return
 		}
@@ -26,7 +27,8 @@ func AuthMiddleware() gin.HandlerFunc {
 		// Token validieren
 		claims, err := utils.ValidateJWT(tokenString)
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Ungültiges Token"})
+			// Ungültiges Token, zum Login umleiten
+			c.Redirect(http.StatusFound, "/login")
 			c.Abort()
 			return
 		}
@@ -35,14 +37,16 @@ func AuthMiddleware() gin.HandlerFunc {
 		userRepo := repository.NewUserRepository()
 		user, err := userRepo.FindByID(claims.UserID)
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Benutzer nicht gefunden"})
+			// Benutzer nicht gefunden, zum Login umleiten
+			c.Redirect(http.StatusFound, "/login")
 			c.Abort()
 			return
 		}
 
 		// Überprüfen, ob der Benutzer aktiv ist
 		if user.Status != model.StatusActive {
-			c.JSON(http.StatusForbidden, gin.H{"error": "Ihr Konto ist inaktiv"})
+			// Benutzer inaktiv, zum Login umleiten
+			c.Redirect(http.StatusFound, "/login")
 			c.Abort()
 			return
 		}

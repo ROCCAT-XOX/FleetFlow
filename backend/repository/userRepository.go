@@ -173,3 +173,16 @@ func (r *UserRepository) CreateAdminUserIfNotExists() error {
 	_, err = r.collection.InsertOne(ctx, admin)
 	return err
 }
+
+func (r *UserRepository) FindByUsername(username string) (*model.User, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	var user model.User
+	err := r.collection.FindOne(ctx, bson.M{"username": username}).Decode(&user)
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
