@@ -1,6 +1,8 @@
 package main
 
 import (
+	"FleetDrive/backend/db"
+	"FleetDrive/backend/repository"
 	"html/template"
 	"log"
 	"net/http"
@@ -16,6 +18,20 @@ func main() {
 	// Set Gin to release mode in production
 	// gin.SetMode(gin.ReleaseMode)
 	gin.SetMode(gin.DebugMode)
+
+	// Datenbankverbindung herstellen
+	if err := db.ConnectDB(); err != nil {
+		log.Fatalf("Fehler beim Verbinden zur Datenbank: %v", err)
+	}
+	defer db.DisconnectDB()
+
+	// Admin-Benutzer erstellen, falls keiner existiert
+	userRepo := repository.NewUserRepository()
+	if err := userRepo.CreateAdminUserIfNotExists(); err != nil {
+		log.Printf("Warnung: Admin-Benutzer konnte nicht erstellt werden: %v", err)
+	} else {
+		log.Println("Admin-Benutzer wurde überprüft/erstellt")
+	}
 
 	// Initialize router
 	router := setupRouter()
