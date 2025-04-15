@@ -100,6 +100,22 @@ func InitializeRoutes(router *gin.Engine) {
 			})
 		})
 
+		authorized.GET("/vehicles", func(c *gin.Context) {
+			c.HTML(http.StatusOK, "vehicles.html", gin.H{
+				"title": "FleetDrive Dashboard",
+				"user":  c.MustGet("user"),
+				"year":  currentYear,
+			})
+		})
+
+		authorized.GET("/drivers", func(c *gin.Context) {
+			c.HTML(http.StatusOK, "driver.html", gin.H{
+				"title": "FleetDrive Dashboard",
+				"user":  c.MustGet("user"),
+				"year":  currentYear,
+			})
+		})
+
 		// API routes for backend operations
 		api := authorized.Group("/api")
 		{
@@ -120,6 +136,17 @@ func InitializeRoutes(router *gin.Engine) {
 					{"id": "2", "name": "Driver 2", "status": "On duty"},
 				}
 				c.JSON(http.StatusOK, gin.H{"drivers": drivers})
+			})
+
+			api.GET("/vehicle-details/:id", func(c *gin.Context) {
+				id := c.Param("id")
+				// Fahrzeugdaten laden
+				// ...
+				c.HTML(http.StatusOK, "vehicle-details.html", gin.H{
+					"title":   "Fahrzeugdetails",
+					"user":    c.MustGet("user"),
+					"vehicle": vehicle, // Das geladene Fahrzeugobjekt
+				})
 			})
 		}
 	}

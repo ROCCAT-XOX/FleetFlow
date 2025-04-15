@@ -1,0 +1,708 @@
+{{ template "head" .}}
+<body class="bg-gray-50">
+<!-- Navbar wie in vorherigem Code -->
+{{ template "navigation" .}}
+<!-- Hauptinhalt -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="md:flex md:items-center md:justify-between mb-6">
+        <div class="flex-1 min-w-0">
+            <h1 class="text-2xl font-bold text-gray-900">Fahrzeuge</h1>
+        </div>
+        <div class="mt-4 md:mt-0">
+            <button id="add-vehicle-btn" type="button" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                <svg class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Fahrzeug hinzufügen
+            </button>
+        </div>
+    </div>
+
+    <!-- Filter und Suche -->
+    <div class="bg-white p-4 rounded-md shadow-sm mb-6">
+        <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
+            <div class="flex-1">
+                <label for="search" class="sr-only">Suche</label>
+                <div class="relative rounded-md shadow-sm">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                    <input type="text" name="search" id="search" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 pr-12 sm:text-sm border-gray-300 rounded-md" placeholder="Fahrzeug suchen...">
+                </div>
+            </div>
+            <div class="sm:w-1/4">
+                <select id="status-filter" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                    <option value="all">Alle Status</option>
+                    <option value="available">Verfügbar</option>
+                    <option value="inuse">In Benutzung</option>
+                    <option value="maintenance">In Wartung</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fahrzeug-Grid -->
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <!-- Fahrzeug-Karte 1 -->
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">VW Passat</h3>
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                Verfügbar
+            </span>
+                </div>
+                <div class="mt-3 grid grid-cols-3 gap-3 text-sm text-gray-500">
+                    <div>
+                        <span class="block font-medium text-gray-700">Kennzeichen</span>
+                        <span>M-AB 1234</span>
+                    </div>
+                    <div>
+                        <span class="block font-medium text-gray-700">Baujahr</span>
+                        <span>2022</span>
+                    </div>
+                    <div>
+                        <span class="block font-medium text-gray-700">Fahrer</span>
+                        <span>Nicht zugewiesen</span>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-200 px-5 py-3 bg-gray-50 flex justify-end space-x-3">
+                <button type="button" class="edit-vehicle-btn inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" data-id="1">
+                    <svg class="-ml-0.5 mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Bearbeiten
+                </button>
+                <a href="/vehicle-details/1" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <svg class="-ml-0.5 mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    Details
+                </a>
+            </div>
+        </div>
+
+        <!-- Fahrzeug-Karte 2 -->
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">BMW 530e</h3>
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+              In Benutzung
+            </span>
+                </div>
+                <div class="mt-3 grid grid-cols-3 gap-3 text-sm text-gray-500">
+                    <div>
+                        <span class="block font-medium text-gray-700">Kennzeichen</span>
+                        <span>M-CD 5678</span>
+                    </div>
+                    <div>
+                        <span class="block font-medium text-gray-700">Baujahr</span>
+                        <span>2023</span>
+                    </div>
+                    <div>
+                        <span class="block font-medium text-gray-700">Fahrer</span>
+                        <span>Max Mustermann</span>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-200 px-5 py-3 bg-gray-50 flex justify-end space-x-3">
+                <button type="button" class="edit-vehicle-btn inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" data-id="2">
+                    <svg class="-ml-0.5 mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Bearbeiten
+                </button>
+                <button type="button" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <svg class="-ml-0.5 mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    Details
+                </button>
+            </div>
+        </div>
+
+        <!-- Fahrzeug-Karte 3 -->
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">Audi e-tron</h3>
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+              In Wartung
+            </span>
+                </div>
+                <div class="mt-3 grid grid-cols-3 gap-3 text-sm text-gray-500">
+                    <div>
+                        <span class="block font-medium text-gray-700">Kennzeichen</span>
+                        <span>M-EF 9012</span>
+                    </div>
+                    <div>
+                        <span class="block font-medium text-gray-700">Baujahr</span>
+                        <span>2023</span>
+                    </div>
+                    <div>
+                        <span class="block font-medium text-gray-700">Fahrer</span>
+                        <span>Erika Musterfrau</span>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-200 px-5 py-3 bg-gray-50 flex justify-end space-x-3">
+                <button type="button" class="edit-vehicle-btn inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" data-id="3">
+                    <svg class="-ml-0.5 mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Bearbeiten
+                </button>
+                <button type="button" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <svg class="-ml-0.5 mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    Details
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Fahrzeug hinzufügen/bearbeiten -->
+<div id="vehicle-modal" class="fixed z-10 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <!-- Hintergrund-Overlay -->
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+
+        <!-- Zentriert den Modal-Inhalt -->
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+        <!-- Modal-Panel -->
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full">
+            <form id="vehicle-form">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="w-full">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                                Fahrzeug hinzufügen
+                            </h3>
+
+                            <!-- Tabs für die verschiedenen Bereiche -->
+                            <div class="mt-4 border-b border-gray-200">
+                                <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                                    <button type="button" class="tab-btn border-indigo-500 text-indigo-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="vehicle-data">
+                                        Fahrzeugdaten
+                                    </button>
+                                    <button type="button" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="registration-data">
+                                        Zulassung & Versicherung
+                                    </button>
+                                    <button type="button" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="driver-assignment">
+                                        Fahrerzuordnung
+                                    </button>
+                                </nav>
+                            </div>
+
+                            <!-- Tab-Inhalte -->
+                            <div class="py-5">
+                                <!-- Tab 1: Fahrzeugdaten -->
+                                <div id="vehicle-data" class="tab-content">
+                                    <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                                        <div class="sm:col-span-3">
+                                            <label for="brand" class="block text-sm font-medium text-gray-700">Marke</label>
+                                            <input type="text" name="brand" id="brand" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                        </div>
+
+                                        <div class="sm:col-span-3">
+                                            <label for="model" class="block text-sm font-medium text-gray-700">Modell</label>
+                                            <input type="text" name="model" id="model" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                        </div>
+
+                                        <div class="sm:col-span-2">
+                                            <label for="year" class="block text-sm font-medium text-gray-700">Baujahr</label>
+                                            <input type="number" name="year" id="year" min="1900" max="2099" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                        </div>
+
+                                        <div class="sm:col-span-2">
+                                            <label for="license" class="block text-sm font-medium text-gray-700">Kennzeichen</label>
+                                            <input type="text" name="license" id="license" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                        </div>
+
+                                        <div class="sm:col-span-2">
+                                            <label for="color" class="block text-sm font-medium text-gray-700">Farbe</label>
+                                            <input type="text" name="color" id="color" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                        </div>
+
+                                        <div class="sm:col-span-6">
+                                            <label for="vin" class="block text-sm font-medium text-gray-700">Fahrzeug-Identifikationsnummer (VIN)</label>
+                                            <input type="text" name="vin" id="vin" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                        </div>
+
+                                        <div class="sm:col-span-3">
+                                            <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
+                                            <select id="status" name="status" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                                <option value="available">Verfügbar</option>
+                                                <option value="inuse">In Benutzung</option>
+                                                <option value="maintenance">In Wartung</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="sm:col-span-3">
+                                            <label for="fuel-type" class="block text-sm font-medium text-gray-700">Kraftstoffart</label>
+                                            <select id="fuel-type" name="fuel-type" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                                <option value="diesel">Diesel</option>
+                                                <option value="gasoline">Benzin</option>
+                                                <option value="electric">Elektro</option>
+                                                <option value="hybrid">Hybrid</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Tab 2: Zulassung & Versicherung -->
+                                <div id="registration-data" class="tab-content hidden">
+                                    <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                                        <div class="sm:col-span-3">
+                                            <label for="registration-date" class="block text-sm font-medium text-gray-700">Zulassungsdatum</label>
+                                            <input type="date" name="registration-date" id="registration-date" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                        </div>
+
+                                        <div class="sm:col-span-3">
+                                            <label for="registration-expiry" class="block text-sm font-medium text-gray-700">Ablaufdatum der Zulassung</label>
+                                            <input type="date" name="registration-expiry" id="registration-expiry" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                        </div>
+
+                                        <div class="sm:col-span-3">
+                                            <label for="insurance-company" class="block text-sm font-medium text-gray-700">Versicherungsgesellschaft</label>
+                                            <input type="text" name="insurance-company" id="insurance-company" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                        </div>
+
+                                        <div class="sm:col-span-3">
+                                            <label for="insurance-policy" class="block text-sm font-medium text-gray-700">Versicherungspolice-Nr.</label>
+                                            <input type="text" name="insurance-policy" id="insurance-policy" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                        </div>
+
+                                        <div class="sm:col-span-3">
+                                            <label for="insurance-type" class="block text-sm font-medium text-gray-700">Versicherungstyp</label>
+                                            <select id="insurance-type" name="insurance-type" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                                <option value="liability">Haftpflicht</option>
+                                                <option value="comprehensive">Vollkasko</option>
+                                                <option value="partial">Teilkasko</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="sm:col-span-3">
+                                            <label for="insurance-expiry" class="block text-sm font-medium text-gray-700">Ablaufdatum der Versicherung</label>
+                                            <input type="date" name="insurance-expiry" id="insurance-expiry" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                        </div>
+
+                                        <div class="sm:col-span-3">
+                                            <label for="next-inspection" class="block text-sm font-medium text-gray-700">Nächste HU/AU</label>
+                                            <input type="date" name="next-inspection" id="next-inspection" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Tab 3: Fahrerzuordnung -->
+                                <div id="driver-assignment" class="tab-content hidden">
+                                    <div class="mt-2">
+                                        <label for="assigned-driver" class="block text-sm font-medium text-gray-700">Zugewiesener Fahrer</label>
+                                        <select id="assigned-driver" name="assigned-driver" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                            <option value="">Keinen Fahrer zuweisen</option>
+                                            <option value="1">Max Mustermann</option>
+                                            <option value="2">Erika Musterfrau</option>
+                                            <option value="3">John Doe</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="mt-6">
+                                        <fieldset>
+                                            <legend class="text-base font-medium text-gray-900">Nutzungsbeschränkungen</legend>
+                                            <div class="mt-4 space-y-4">
+                                                <div class="flex items-start">
+                                                    <div class="flex items-center h-5">
+                                                        <input id="restricted-use" name="restricted-use" type="checkbox" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                                                    </div>
+                                                    <div class="ml-3 text-sm">
+                                                        <label for="restricted-use" class="font-medium text-gray-700">Eingeschränkte Nutzung</label>
+                                                        <p class="text-gray-500">Der Fahrer darf das Fahrzeug nur für bestimmte Zwecke nutzen.</p>
+                                                    </div>
+                                                </div>
+
+                                                <div class="flex items-start">
+                                                    <div class="flex items-center h-5">
+                                                        <input id="business-only" name="business-only" type="checkbox" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                                                    </div>
+                                                    <div class="ml-3 text-sm">
+                                                        <label for="business-only" class="font-medium text-gray-700">Nur geschäftliche Nutzung</label>
+                                                        <p class="text-gray-500">Das Fahrzeug darf nur für geschäftliche Zwecke verwendet werden.</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </fieldset>
+                                    </div>
+
+                                    <div class="mt-6">
+                                        <label for="assignment-notes" class="block text-sm font-medium text-gray-700">Anmerkungen zur Zuweisung</label>
+                                        <div class="mt-1">
+                                            <textarea id="assignment-notes" name="assignment-notes" rows="3" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border border-gray-300 rounded-md"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm">
+                        Speichern
+                    </button>
+                    <button type="button" id="close-modal-btn" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        Abbrechen
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Modal-Elemente
+        const modal = document.getElementById('vehicle-modal');
+        const addVehicleBtn = document.getElementById('add-vehicle-btn');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const vehicleForm = document.getElementById('vehicle-form');
+        const editButtons = document.querySelectorAll('.edit-vehicle-btn');
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const modalTitle = document.getElementById('modal-title');
+        const vehiclesContainer = document.getElementById('vehicles-container');
+
+        // Beispieldaten für Fahrzeuge (würden in einer echten Anwendung über API geladen)
+        const vehicles = [
+            {
+                id: "1",
+                brand: "VW",
+                model: "Passat",
+                year: "2022",
+                license: "M-AB 1234",
+                color: "Silber",
+                status: "available",
+                driver: ""
+            },
+            {
+                id: "2",
+                brand: "BMW",
+                model: "530e",
+                year: "2023",
+                license: "M-CD 5678",
+                color: "Schwarz",
+                status: "inuse",
+                driver: "Max Mustermann"
+            },
+            {
+                id: "3",
+                brand: "Audi",
+                model: "e-tron",
+                year: "2023",
+                license: "M-EF 9012",
+                color: "Blau",
+                status: "maintenance",
+                driver: "Erika Musterfrau"
+            }
+        ];
+
+        // Funktion zum Rendern der Fahrzeugkarten
+        function renderVehicleCards() {
+            if (!vehiclesContainer) return;
+
+            vehiclesContainer.innerHTML = ''; // Container leeren
+
+            vehicles.forEach(vehicle => {
+                // Status-Klassen bestimmen
+                let statusClass, statusText;
+
+                if (vehicle.status === 'available') {
+                    statusClass = 'bg-green-100 text-green-800';
+                    statusText = 'Verfügbar';
+                } else if (vehicle.status === 'inuse') {
+                    statusClass = 'bg-red-100 text-red-800';
+                    statusText = 'In Benutzung';
+                } else if (vehicle.status === 'maintenance') {
+                    statusClass = 'bg-yellow-100 text-yellow-800';
+                    statusText = 'In Wartung';
+                }
+
+                // Fahrzeugkarte erstellen
+                const card = document.createElement('div');
+                card.className = 'bg-white overflow-hidden shadow rounded-lg';
+                card.innerHTML = `
+                <div class="p-5">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">${vehicle.brand} ${vehicle.model}</h3>
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}">
+                            ${statusText}
+                        </span>
+                    </div>
+                    <div class="mt-3 grid grid-cols-3 gap-3 text-sm text-gray-500">
+                        <div>
+                            <span class="block font-medium text-gray-700">Kennzeichen</span>
+                            <span>${vehicle.license}</span>
+                        </div>
+                        <div>
+                            <span class="block font-medium text-gray-700">Baujahr</span>
+                            <span>${vehicle.year}</span>
+                        </div>
+                        <div>
+                            <span class="block font-medium text-gray-700">Fahrer</span>
+                            <span>${vehicle.driver || 'Nicht zugewiesen'}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="border-t border-gray-200 px-5 py-3 bg-gray-50 flex justify-end space-x-3">
+                    <button type="button" class="edit-vehicle-btn inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" data-id="${vehicle.id}">
+                        <svg class="-ml-0.5 mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        Bearbeiten
+                    </button>
+                    <a href="/vehicle-details/${vehicle.id}" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <svg class="-ml-0.5 mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        Details
+                    </a>
+                </div>
+            `;
+
+                vehiclesContainer.appendChild(card);
+            });
+
+            // Event-Listener für die neuen Bearbeiten-Buttons hinzufügen
+            document.querySelectorAll('.edit-vehicle-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const vehicleId = this.dataset.id;
+                    openModal(true, vehicleId);
+                });
+            });
+        }
+
+        // Modal-Funktionen
+        function openModal(isEdit = false, vehicleId = null) {
+            modal.classList.remove('hidden');
+            if (isEdit) {
+                modalTitle.textContent = 'Fahrzeug bearbeiten';
+                // Finde das Fahrzeug anhand der ID
+                const vehicle = vehicles.find(v => v.id === vehicleId);
+
+                if (vehicle) {
+                    document.getElementById('brand').value = vehicle.brand;
+                    document.getElementById('model').value = vehicle.model;
+                    document.getElementById('year').value = vehicle.year;
+                    document.getElementById('license').value = vehicle.license;
+                    document.getElementById('color').value = vehicle.color;
+                    document.getElementById('status').value = vehicle.status;
+
+                    // Weitere Felder würden hier gesetzt werden
+                    const assignedDriver = document.getElementById('assigned-driver');
+                    if (assignedDriver) {
+                        // Als Beispiel: Setze den Fahrer basierend auf der vehicle.driver-Eigenschaft
+                        if (vehicle.driver === "Max Mustermann") {
+                            assignedDriver.value = "1";
+                        } else if (vehicle.driver === "Erika Musterfrau") {
+                            assignedDriver.value = "2";
+                        } else {
+                            assignedDriver.value = "";
+                        }
+                    }
+                }
+            } else {
+                modalTitle.textContent = 'Fahrzeug hinzufügen';
+                vehicleForm.reset();
+            }
+        }
+
+        function closeModal() {
+            modal.classList.add('hidden');
+            vehicleForm.reset();
+        }
+
+        // Tab-Funktionen
+        function switchTab(tabId) {
+            // Alle Tab-Buttons zurücksetzen
+            tabButtons.forEach(btn => {
+                if (btn.dataset.tab === tabId) {
+                    btn.classList.add('border-indigo-500', 'text-indigo-600');
+                    btn.classList.remove('border-transparent', 'text-gray-500');
+                } else {
+                    btn.classList.remove('border-indigo-500', 'text-indigo-600');
+                    btn.classList.add('border-transparent', 'text-gray-500');
+                }
+            });
+
+            // Alle Tab-Inhalte verstecken und den ausgewählten anzeigen
+            tabContents.forEach(content => {
+                if (content.id === tabId) {
+                    content.classList.remove('hidden');
+                } else {
+                    content.classList.add('hidden');
+                }
+            });
+        }
+
+        // Event-Listener
+        if (addVehicleBtn) {
+            addVehicleBtn.addEventListener('click', () => openModal(false));
+        }
+
+        if (closeModalBtn) {
+            closeModalBtn.addEventListener('click', closeModal);
+        }
+
+        // Schließen des Modals, wenn außerhalb geklickt wird
+        if (modal) {
+            modal.addEventListener('click', function(event) {
+                if (event.target === modal) {
+                    closeModal();
+                }
+            });
+        }
+
+        // Event-Listener für Bearbeiten-Buttons
+        editButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const vehicleId = this.dataset.id;
+                openModal(true, vehicleId);
+            });
+        });
+
+        // Tab-Wechsel
+        tabButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                switchTab(this.dataset.tab);
+            });
+        });
+
+        // Formular-Absenden
+        if (vehicleForm) {
+            vehicleForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+
+                // Hier würden die Formulardaten verarbeitet und an die API gesendet werden
+                const formData = new FormData(vehicleForm);
+                const vehicleData = {};
+
+                for (let [key, value] of formData.entries()) {
+                    vehicleData[key] = value;
+                }
+
+                console.log('Fahrzeugdaten speichern:', vehicleData);
+
+                // In einer echten Anwendung würde hier ein API-Aufruf erfolgen
+                // Nach erfolgreichem Speichern würden die Fahrzeugkarten neu gerendert
+
+                // Fahrer-Anzeigenamen setzen basierend auf der ID
+                let driverName = "";
+                if (vehicleData['assigned-driver'] === "1") {
+                    driverName = "Max Mustermann";
+                } else if (vehicleData['assigned-driver'] === "2") {
+                    driverName = "Erika Musterfrau";
+                }
+
+                // Wenn ein bestehendes Fahrzeug bearbeitet wird, aktualisiere es
+                if (modalTitle.textContent === 'Fahrzeug bearbeiten') {
+                    const vehicleId = formData.get('id') || editButtons[0].dataset.id; // Fallback für fehlende ID
+                    const vehicleIndex = vehicles.findIndex(v => v.id === vehicleId);
+
+                    if (vehicleIndex !== -1) {
+                        vehicles[vehicleIndex] = {
+                            ...vehicles[vehicleIndex],
+                            brand: vehicleData.brand,
+                            model: vehicleData.model,
+                            year: vehicleData.year,
+                            license: vehicleData.license,
+                            color: vehicleData.color,
+                            status: vehicleData.status,
+                            driver: driverName
+                        };
+                    }
+                } else {
+                    // Neues Fahrzeug hinzufügen
+                    const newId = (parseInt(vehicles[vehicles.length - 1].id) + 1).toString();
+                    vehicles.push({
+                        id: newId,
+                        brand: vehicleData.brand,
+                        model: vehicleData.model,
+                        year: vehicleData.year,
+                        license: vehicleData.license,
+                        color: vehicleData.color,
+                        status: vehicleData.status,
+                        driver: driverName
+                    });
+                }
+
+                // UI aktualisieren
+                renderVehicleCards();
+
+                // Erfolgsmeldung und Modal schließen
+                alert('Fahrzeug erfolgreich gespeichert!');
+                closeModal();
+            });
+        }
+
+        // Suchfunktion
+        const searchInput = document.getElementById('search');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                const searchText = this.value.toLowerCase();
+                const vehicleCards = document.querySelectorAll('.grid > div');
+
+                vehicleCards.forEach(card => {
+                    const cardText = card.textContent.toLowerCase();
+                    if (cardText.includes(searchText)) {
+                        card.style.display = '';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        }
+
+        // Status-Filter
+        const statusFilter = document.getElementById('status-filter');
+        if (statusFilter) {
+            statusFilter.addEventListener('change', function() {
+                const selectedStatus = this.value;
+                const vehicleCards = document.querySelectorAll('.grid > div');
+
+                vehicleCards.forEach(card => {
+                    if (selectedStatus === 'all') {
+                        card.style.display = '';
+                        return;
+                    }
+
+                    const statusText = card.querySelector('.rounded-full').textContent.trim().toLowerCase();
+                    let matchesFilter = false;
+
+                    if (selectedStatus === 'available' && statusText === 'verfügbar') {
+                        matchesFilter = true;
+                    } else if (selectedStatus === 'inuse' && statusText === 'in benutzung') {
+                        matchesFilter = true;
+                    } else if (selectedStatus === 'maintenance' && statusText === 'in wartung') {
+                        matchesFilter = true;
+                    }
+
+                    card.style.display = matchesFilter ? '' : 'none';
+                });
+            });
+        }
+
+        // Fahrzeugkarten initial rendern
+        renderVehicleCards();
+    });
+</script>
+</body>
+</html>

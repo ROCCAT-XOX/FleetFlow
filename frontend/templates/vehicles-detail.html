@@ -1,0 +1,551 @@
+{{ templater "head" .}}
+<!-- Navbar würde hier stehen -->
+{{ template "navigation" .}}
+<!-- Hauptinhalt -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Zurück-Button und Titel -->
+    <div class="mb-6 flex items-center justify-between">
+        <div class="flex items-center">
+            <a href="/vehicles" class="inline-flex items-center mr-4 text-sm font-medium text-indigo-600 hover:text-indigo-500">
+                <svg class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Zurück zur Übersicht
+            </a>
+            <h1 class="text-2xl font-bold text-gray-900">BMW 530e</h1>
+        </div>
+        <div>
+        <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+          In Benutzung
+        </span>
+        </div>
+    </div>
+
+    <!-- Fahrzeugdetails-Karten -->
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <!-- Karte: Hauptinformationen -->
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="px-4 py-5 sm:px-6 bg-gray-50 border-b border-gray-200">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Fahrzeuginformationen</h3>
+            </div>
+            <div class="px-4 py-5 sm:p-6">
+                <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Kennzeichen</dt>
+                        <dd class="mt-1 text-sm text-gray-900">M-CD 5678</dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Marke & Modell</dt>
+                        <dd class="mt-1 text-sm text-gray-900">BMW 530e</dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Baujahr</dt>
+                        <dd class="mt-1 text-sm text-gray-900">2023</dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Farbe</dt>
+                        <dd class="mt-1 text-sm text-gray-900">Schwarz</dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Fahrzeug-ID</dt>
+                        <dd class="mt-1 text-sm text-gray-900">FD-2023-01254</dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">VIN</dt>
+                        <dd class="mt-1 text-sm text-gray-900">WBAJL51070G830415</dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Kraftstoffart</dt>
+                        <dd class="mt-1 text-sm text-gray-900">Hybrid (Benzin/Elektro)</dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Aktueller Kilometerstand</dt>
+                        <dd class="mt-1 text-sm text-gray-900">18.452 km</dd>
+                    </div>
+                </dl>
+            </div>
+        </div>
+
+        <!-- Karte: Aktuelle Nutzung -->
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="px-4 py-5 sm:px-6 bg-gray-50 border-b border-gray-200">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Aktuelle Nutzung</h3>
+            </div>
+            <div class="px-4 py-5 sm:p-6">
+                <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Aktueller Fahrer</dt>
+                        <dd class="mt-1 text-sm text-gray-900">Max Mustermann</dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Abteilung</dt>
+                        <dd class="mt-1 text-sm text-gray-900">Vertrieb</dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Nutzung seit</dt>
+                        <dd class="mt-1 text-sm text-gray-900">15.04.2025, 08:30 Uhr</dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Geplante Rückgabe</dt>
+                        <dd class="mt-1 text-sm text-gray-900">17.04.2025, 18:00 Uhr</dd>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <dt class="text-sm font-medium text-gray-500">Projekt/Zweck</dt>
+                        <dd class="mt-1 text-sm text-gray-900">Kundenbesuch Frankfurt, Projekt "Digital Transformation"</dd>
+                    </div>
+                </dl>
+            </div>
+        </div>
+
+        <!-- Karte: Zulassung und Versicherung -->
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="px-4 py-5 sm:px-6 bg-gray-50 border-b border-gray-200">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Zulassung & Versicherung</h3>
+            </div>
+            <div class="px-4 py-5 sm:p-6">
+                <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Erstzulassung</dt>
+                        <dd class="mt-1 text-sm text-gray-900">12.01.2023</dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Nächste HU/AU</dt>
+                        <dd class="mt-1 text-sm text-gray-900 font-medium">12.01.2025</dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Versicherung</dt>
+                        <dd class="mt-1 text-sm text-gray-900">DEVK Versicherung</dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Versicherungsnummer</dt>
+                        <dd class="mt-1 text-sm text-gray-900">VS-2023-78945213</dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Versicherungstyp</dt>
+                        <dd class="mt-1 text-sm text-gray-900">Vollkasko</dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Jährliche Kosten</dt>
+                        <dd class="mt-1 text-sm text-gray-900">1.245 €</dd>
+                    </div>
+                </dl>
+            </div>
+        </div>
+
+        <!-- Karte: Wartung -->
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="px-4 py-5 sm:px-6 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Wartung & Inspektionen</h3>
+                <button type="button" id="add-maintenance-btn" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <svg class="-ml-0.5 mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    Inspektion/Wartung hinzufügen
+                </button>
+            </div>
+            <div class="px-4 py-5 sm:p-6">
+                <div class="flow-root">
+                    <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                        <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+                            <table class="min-w-full divide-y divide-gray-300">
+                                <thead>
+                                <tr>
+                                    <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0">Datum</th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Typ</th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Kilometerstand</th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Kosten</th>
+                                    <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-0">
+                                        <span class="sr-only">Bearbeiten</span>
+                                    </th>
+                                </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200">
+                                <tr>
+                                    <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">10.02.2025</td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">Ölwechsel</td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">15.678 km</td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">245 €</td>
+                                    <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
+                                        <a href="#" class="text-indigo-600 hover:text-indigo-900">Bearbeiten</a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">03.01.2025</td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">Inspektion</td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">12.345 km</td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">780 €</td>
+                                    <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
+                                        <a href="#" class="text-indigo-600 hover:text-indigo-900">Bearbeiten</a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">15.07.2024</td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">Reifenwechsel</td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">8.954 km</td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">520 €</td>
+                                    <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
+                                        <a href="#" class="text-indigo-600 hover:text-indigo-900">Bearbeiten</a>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nutzungshistorie -->
+    <div class="mt-6">
+        <div class="bg-white shadow sm:rounded-lg">
+            <div class="px-4 py-5 sm:px-6 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Nutzungshistorie</h3>
+                <button type="button" id="add-usage-btn" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <svg class="-ml-0.5 mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    Nutzung eintragen
+                </button>
+            </div>
+            <div class="px-4 py-5 sm:p-6">
+                <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+                    <table class="min-w-full divide-y divide-gray-300">
+                        <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Zeitraum</th>
+                            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Fahrer</th>
+                            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Projekt/Zweck</th>
+                            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Kilometerstand</th>
+                            <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
+                                <span class="sr-only">Bearbeiten</span>
+                            </th>
+                        </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200 bg-white">
+                        <tr>
+                            <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900 sm:pl-6">
+                                <div class="font-medium">15.04.2025 - 17.04.2025</div>
+                                <div class="text-gray-500">08:30 - 18:00 Uhr</div>
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">Max Mustermann</td>
+                            <td class="px-3 py-4 text-sm text-gray-500">Kundenbesuch Frankfurt, Projekt "Digital Transformation"</td>
+                            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                <div>Start: 18.452 km</div>
+                                <div>Ende: noch aktiv</div>
+                            </td>
+                            <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                                <a href="#" class="text-indigo-600 hover:text-indigo-900">Bearbeiten</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900 sm:pl-6">
+                                <div class="font-medium">10.04.2025 - 12.04.2025</div>
+                                <div class="text-gray-500">09:00 - 19:30 Uhr</div>
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">Erika Musterfrau</td>
+                            <td class="px-3 py-4 text-sm text-gray-500">Geschäftsreise Berlin, Messe "Future Mobility"</td>
+                            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                <div>Start: 17.850 km</div>
+                                <div>Ende: 18.450 km</div>
+                            </td>
+                            <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                                <a href="#" class="text-indigo-600 hover:text-indigo-900">Bearbeiten</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900 sm:pl-6">
+                                <div class="font-medium">28.03.2025 - 02.04.2025</div>
+                                <div class="text-gray-500">08:00 - 17:00 Uhr</div>
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">John Doe</td>
+                            <td class="px-3 py-4 text-sm text-gray-500">Roadshow "Nachhaltigkeit im Unternehmen", verschiedene Standorte</td>
+                            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                <div>Start: 16.230 km</div>
+                                <div>Ende: 17.845 km</div>
+                            </td>
+                            <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                                <a href="#" class="text-indigo-600 hover:text-indigo-900">Bearbeiten</a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Wartung/Inspektion hinzufügen -->
+<div id="maintenance-modal" class="fixed z-10 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <!-- Hintergrund-Overlay -->
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+
+        <!-- Zentriert den Modal-Inhalt -->
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+        <!-- Modal-Panel -->
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <form id="maintenance-form">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="w-full">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="maintenance-modal-title">
+                                Wartung/Inspektion hinzufügen
+                            </h3>
+
+                            <div class="mt-4">
+                                <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                                    <div class="sm:col-span-3">
+                                        <label for="maintenance-date" class="block text-sm font-medium text-gray-700">Datum</label>
+                                        <input type="date" name="maintenance-date" id="maintenance-date" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="maintenance-type" class="block text-sm font-medium text-gray-700">Typ</label>
+                                        <select id="maintenance-type" name="maintenance-type" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                            <option value="inspection">Inspektion</option>
+                                            <option value="oil-change">Ölwechsel</option>
+                                            <option value="tire-change">Reifenwechsel</option>
+                                            <option value="repair">Reparatur</option>
+                                            <option value="other">Sonstiges</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="mileage" class="block text-sm font-medium text-gray-700">Kilometerstand</label>
+                                        <div class="mt-1 relative rounded-md shadow-sm">
+                                            <input type="number" name="mileage" id="mileage" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pr-12 sm:text-sm border-gray-300 rounded-md" placeholder="0">
+                                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                                <span class="text-gray-500 sm:text-sm">km</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="cost" class="block text-sm font-medium text-gray-700">Kosten</label>
+                                        <div class="mt-1 relative rounded-md shadow-sm">
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <span class="text-gray-500 sm:text-sm">€</span>
+                                            </div>
+                                            <input type="number" name="cost" id="cost" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md" placeholder="0.00" step="0.01">
+                                        </div>
+                                    </div>
+
+                                    <div class="sm:col-span-6">
+                                        <label for="workshop" class="block text-sm font-medium text-gray-700">Werkstatt</label>
+                                        <input type="text" name="workshop" id="workshop" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+
+                                    <div class="sm:col-span-6">
+                                        <label for="maintenance-notes" class="block text-sm font-medium text-gray-700">Anmerkungen</label>
+                                        <div class="mt-1">
+                                            <textarea id="maintenance-notes" name="maintenance-notes" rows="3" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border border-gray-300 rounded-md"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm">
+                        Speichern
+                    </button>
+                    <button type="button" class="close-modal-btn mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        Abbrechen
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Nutzung hinzufügen -->
+<div id="usage-modal" class="fixed z-10 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <!-- Hintergrund-Overlay -->
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+
+        <!-- Zentriert den Modal-Inhalt -->
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+        <!-- Modal-Panel -->
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <form id="usage-form">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="w-full">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="usage-modal-title">
+                                Nutzung eintragen
+                            </h3>
+
+                            <div class="mt-4">
+                                <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                                    <div class="sm:col-span-3">
+                                        <label for="start-date" class="block text-sm font-medium text-gray-700">Startdatum</label>
+                                        <input type="date" name="start-date" id="start-date" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="start-time" class="block text-sm font-medium text-gray-700">Startzeit</label>
+                                        <input type="time" name="start-time" id="start-time" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="end-date" class="block text-sm font-medium text-gray-700">Enddatum</label>
+                                        <input type="date" name="end-date" id="end-date" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="end-time" class="block text-sm font-medium text-gray-700">Endzeit</label>
+                                        <input type="time" name="end-time" id="end-time" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+
+                                    <div class="sm:col-span-6">
+                                        <label for="driver" class="block text-sm font-medium text-gray-700">Fahrer</label>
+                                        <select id="driver" name="driver" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                            <option value="">Fahrer auswählen</option>
+                                            <option value="1">Max Mustermann</option>
+                                            <option value="2">Erika Musterfrau</option>
+                                            <option value="3">John Doe</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="sm:col-span-6">
+                                        <label for="project" class="block text-sm font-medium text-gray-700">Projekt/Zweck</label>
+                                        <input type="text" name="project" id="project" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="start-mileage" class="block text-sm font-medium text-gray-700">Kilometerstand Start</label>
+                                        <div class="mt-1 relative rounded-md shadow-sm">
+                                            <input type="number" name="start-mileage" id="start-mileage" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pr-12 sm:text-sm border-gray-300 rounded-md" placeholder="0">
+                                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                                <span class="text-gray-500 sm:text-sm">km</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="end-mileage" class="block text-sm font-medium text-gray-700">Kilometerstand Ende</label>
+                                        <div class="mt-1 relative rounded-md shadow-sm">
+                                            <input type="number" name="end-mileage" id="end-mileage" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pr-12 sm:text-sm border-gray-300 rounded-md" placeholder="0">
+                                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                                <span class="text-gray-500 sm:text-sm">km</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="sm:col-span-6">
+                                        <label for="usage-notes" class="block text-sm font-medium text-gray-700">Anmerkungen</label>
+                                        <div class="mt-1">
+                                            <textarea id="usage-notes" name="usage-notes" rows="3" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border border-gray-300 rounded-md"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm">
+                        Speichern
+                    </button>
+                    <button type="button" class="close-modal-btn mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        Abbrechen
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Elemente für Wartungs-Modal
+        const maintenanceModal = document.getElementById('maintenance-modal');
+        const addMaintenanceBtn = document.getElementById('add-maintenance-btn');
+        const maintenanceForm = document.getElementById('maintenance-form');
+
+        // Elemente für Nutzungs-Modal
+        const usageModal = document.getElementById('usage-modal');
+        const addUsageBtn = document.getElementById('add-usage-btn');
+        const usageForm = document.getElementById('usage-form');
+
+        // Schließen-Buttons für beide Modals
+        const closeButtons = document.querySelectorAll('.close-modal-btn');
+
+        // Funktionen zum Öffnen und Schließen der Modals
+        function openMaintenanceModal() {
+            maintenanceModal.classList.remove('hidden');
+            document.getElementById('maintenance-date').value = new Date().toISOString().split('T')[0]; // Heutiges Datum vorausfüllen
+        }
+
+        function openUsageModal() {
+            usageModal.classList.remove('hidden');
+            document.getElementById('start-date').value = new Date().toISOString().split('T')[0]; // Heutiges Datum vorausfüllen
+
+            // Aktuellen Kilometerstand vorausfüllen
+            document.getElementById('start-mileage').value = '18452';
+        }
+
+        function closeModals() {
+            maintenanceModal.classList.add('hidden');
+            usageModal.classList.add('hidden');
+        }
+
+        // Event Listener
+        addMaintenanceBtn.addEventListener('click', openMaintenanceModal);
+        addUsageBtn.addEventListener('click', openUsageModal);
+
+        closeButtons.forEach(button => {
+            button.addEventListener('click', closeModals);
+        });
+
+        // Schließen bei Klick außerhalb des Modals
+        window.addEventListener('click', function(event) {
+            if (event.target === maintenanceModal || event.target === usageModal) {
+                closeModals();
+            }
+        });
+
+        // Formulare absenden
+        maintenanceForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const formData = new FormData(maintenanceForm);
+            const maintenanceData = {};
+
+            for (let [key, value] of formData.entries()) {
+                maintenanceData[key] = value;
+            }
+
+            console.log('Wartungsdaten speichern:', maintenanceData);
+
+            // In einer echten Anwendung würde hier ein API-Aufruf erfolgen
+            alert('Wartung erfolgreich eingetragen!');
+            closeModals();
+        });
+
+        usageForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const formData = new FormData(usageForm);
+            const usageData = {};
+
+            for (let [key, value] of formData.entries()) {
+                usageData[key] = value;
+            }
+
+            console.log('Nutzungsdaten speichern:', usageData);
+
+            // In einer echten Anwendung würde hier ein API-Aufruf erfolgen
+            alert('Nutzung erfolgreich eingetragen!');
+            closeModals();
+        });
+    });
+</script>
+</body>
+</html>

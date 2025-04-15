@@ -1,0 +1,442 @@
+{{ template "head" .}}
+
+<body class="bg-gray-50">
+<!-- Navbar würde hier stehen -->
+{{ template "navigation" .}}
+<!-- Hauptinhalt -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="md:flex md:items-center md:justify-between mb-6">
+        <div class="flex-1 min-w-0">
+            <h1 class="text-2xl font-bold text-gray-900">Fahrer</h1>
+        </div>
+        <div class="mt-4 md:mt-0">
+            <button id="add-driver-btn" type="button" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                <svg class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Fahrer hinzufügen
+            </button>
+        </div>
+    </div>
+
+    <!-- Filter und Suche -->
+    <div class="bg-white p-4 rounded-md shadow-sm mb-6">
+        <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
+            <div class="flex-1">
+                <label for="search" class="sr-only">Suche</label>
+                <div class="relative rounded-md shadow-sm">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                    <input type="text" name="search" id="search-driver" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 pr-12 sm:text-sm border-gray-300 rounded-md" placeholder="Fahrer suchen...">
+                </div>
+            </div>
+            <div class="sm:w-1/4">
+                <select id="status-filter" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                    <option value="all">Alle Status</option>
+                    <option value="available">Verfügbar</option>
+                    <option value="onduty">Im Dienst</option>
+                    <option value="offduty">Außer Dienst</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fahrer-Liste -->
+    <div class="bg-white shadow rounded-md">
+        <ul role="list" class="divide-y divide-gray-100">
+            <!-- Fahrer 1 -->
+            <li class="flex justify-between gap-x-6 py-5 px-5 hover:bg-gray-50 transition-colors duration-150">
+                <div class="flex min-w-0 gap-x-4">
+                    <img class="size-12 flex-none rounded-full bg-gray-50" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="">
+                    <div class="min-w-0 flex-auto">
+                        <p class="text-sm font-semibold text-gray-900">Max Mustermann</p>
+                        <p class="mt-1 truncate text-xs text-gray-500">max.mustermann@fleetdrive.com</p>
+                        <div class="mt-1 flex items-center gap-x-1.5">
+                            <div class="flex-none rounded-full bg-emerald-500/20 p-1">
+                                <div class="size-1.5 rounded-full bg-emerald-500"></div>
+                            </div>
+                            <p class="text-xs text-gray-500">Verfügbar</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="hidden sm:flex sm:flex-col sm:items-end">
+                    <div class="flex space-x-2">
+              <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                B
+              </span>
+                        <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                BE
+              </span>
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500">Aktuelles Fahrzeug: <span class="font-medium">BMW 530e</span></p>
+                    <div class="mt-2">
+                        <button type="button" class="edit-driver-btn inline-flex items-center px-2 py-1 text-xs font-medium text-indigo-700 hover:text-indigo-900" data-id="1">
+                            <svg class="mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                            Bearbeiten
+                        </button>
+                    </div>
+                </div>
+            </li>
+
+            <!-- Fahrer 2 -->
+            <li class="flex justify-between gap-x-6 py-5 px-5 hover:bg-gray-50 transition-colors duration-150">
+                <div class="flex min-w-0 gap-x-4">
+                    <img class="size-12 flex-none rounded-full bg-gray-50" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="">
+                    <div class="min-w-0 flex-auto">
+                        <p class="text-sm font-semibold text-gray-900">Erika Musterfrau</p>
+                        <p class="mt-1 truncate text-xs text-gray-500">erika.musterfrau@fleetdrive.com</p>
+                        <div class="mt-1 flex items-center gap-x-1.5">
+                            <div class="flex-none rounded-full bg-yellow-500/20 p-1">
+                                <div class="size-1.5 rounded-full bg-yellow-500"></div>
+                            </div>
+                            <p class="text-xs text-gray-500">Im Dienst</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="hidden sm:flex sm:flex-col sm:items-end">
+                    <div class="flex space-x-2">
+              <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                B
+              </span>
+                        <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                C1
+              </span>
+                        <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                CE
+              </span>
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500">Aktuelles Fahrzeug: <span class="font-medium">Audi e-tron</span></p>
+                    <div class="mt-2">
+                        <button type="button" class="edit-driver-btn inline-flex items-center px-2 py-1 text-xs font-medium text-indigo-700 hover:text-indigo-900" data-id="2">
+                            <svg class="mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                            Bearbeiten
+                        </button>
+                    </div>
+                </div>
+            </li>
+
+            <!-- Fahrer 3 -->
+            <li class="flex justify-between gap-x-6 py-5 px-5 hover:bg-gray-50 transition-colors duration-150">
+                <div class="flex min-w-0 gap-x-4">
+                    <img class="size-12 flex-none rounded-full bg-gray-50" src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="">
+                    <div class="min-w-0 flex-auto">
+                        <p class="text-sm font-semibold text-gray-900">John Doe</p>
+                        <p class="mt-1 truncate text-xs text-gray-500">john.doe@fleetdrive.com</p>
+                        <div class="mt-1 flex items-center gap-x-1.5">
+                            <div class="flex-none rounded-full bg-gray-500/20 p-1">
+                                <div class="size-1.5 rounded-full bg-gray-500"></div>
+                            </div>
+                            <p class="text-xs text-gray-500">Außer Dienst</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="hidden sm:flex sm:flex-col sm:items-end">
+                    <div class="flex space-x-2">
+              <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                B
+              </span>
+                        <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                D1
+              </span>
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500">Aktuelles Fahrzeug: <span class="font-medium">Keines</span></p>
+                    <div class="mt-2">
+                        <button type="button" class="edit-driver-btn inline-flex items-center px-2 py-1 text-xs font-medium text-indigo-700 hover:text-indigo-900" data-id="3">
+                            <svg class="mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                            Bearbeiten
+                        </button>
+                    </div>
+                </div>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<!-- Modal: Fahrer hinzufügen/bearbeiten -->
+<div id="driver-modal" class="fixed z-10 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <!-- Hintergrund-Overlay -->
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+
+        <!-- Zentriert den Modal-Inhalt -->
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+        <!-- Modal-Panel -->
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <form id="driver-form">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="w-full">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                                Fahrer hinzufügen
+                            </h3>
+
+                            <div class="mt-4">
+                                <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                                    <div class="sm:col-span-3">
+                                        <label for="first-name" class="block text-sm font-medium text-gray-700">Vorname</label>
+                                        <input type="text" name="first-name" id="first-name" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="last-name" class="block text-sm font-medium text-gray-700">Nachname</label>
+                                        <input type="text" name="last-name" id="last-name" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+
+                                    <div class="sm:col-span-6">
+                                        <label for="email" class="block text-sm font-medium text-gray-700">E-Mail</label>
+                                        <input type="email" name="email" id="email" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="phone" class="block text-sm font-medium text-gray-700">Telefon</label>
+                                        <input type="tel" name="phone" id="phone" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
+                                        <select id="status" name="status" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                            <option value="available">Verfügbar</option>
+                                            <option value="onduty">Im Dienst</option>
+                                            <option value="offduty">Außer Dienst</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="sm:col-span-6">
+                                        <label for="assigned-vehicle" class="block text-sm font-medium text-gray-700">Zugewiesenes Fahrzeug</label>
+                                        <select id="assigned-vehicle" name="assigned-vehicle" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                            <option value="">Kein Fahrzeug zugewiesen</option>
+                                            <option value="1">VW Passat (M-AB 1234)</option>
+                                            <option value="2">BMW 530e (M-CD 5678)</option>
+                                            <option value="3">Audi e-tron (M-EF 9012)</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="sm:col-span-6">
+                                        <span class="block text-sm font-medium text-gray-700 mb-2">Führerscheinklassen</span>
+                                        <div class="grid grid-cols-4 gap-2">
+                                            <div class="flex items-center">
+                                                <input id="license-a" name="license-a" type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                                <label for="license-a" class="ml-2 block text-sm text-gray-700">A</label>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <input id="license-a1" name="license-a1" type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                                <label for="license-a1" class="ml-2 block text-sm text-gray-700">A1</label>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <input id="license-b" name="license-b" type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                                <label for="license-b" class="ml-2 block text-sm text-gray-700">B</label>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <input id="license-be" name="license-be" type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                                <label for="license-be" class="ml-2 block text-sm text-gray-700">BE</label>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <input id="license-c" name="license-c" type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                                <label for="license-c" class="ml-2 block text-sm text-gray-700">C</label>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <input id="license-c1" name="license-c1" type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                                <label for="license-c1" class="ml-2 block text-sm text-gray-700">C1</label>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <input id="license-ce" name="license-ce" type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                                <label for="license-ce" class="ml-2 block text-sm text-gray-700">CE</label>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <input id="license-c1e" name="license-c1e" type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                                <label for="license-c1e" class="ml-2 block text-sm text-gray-700">C1E</label>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <input id="license-d" name="license-d" type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                                <label for="license-d" class="ml-2 block text-sm text-gray-700">D</label>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <input id="license-d1" name="license-d1" type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                                <label for="license-d1" class="ml-2 block text-sm text-gray-700">D1</label>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <input id="license-de" name="license-de" type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                                <label for="license-de" class="ml-2 block text-sm text-gray-700">DE</label>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <input id="license-d1e" name="license-d1e" type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                                <label for="license-d1e" class="ml-2 block text-sm text-gray-700">D1E</label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="sm:col-span-6">
+                                        <label for="notes" class="block text-sm font-medium text-gray-700">Anmerkungen</label>
+                                        <div class="mt-1">
+                                            <textarea id="notes" name="notes" rows="3" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border border-gray-300 rounded-md"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm">
+                        Speichern
+                    </button>
+                    <button type="button" id="close-modal-btn" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        Abbrechen
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+
+        document.addEventListener('DOMContentLoaded', function() {
+        // Modal-Elemente
+        const modal = document.getElementById('driver-modal');
+        const addDriverBtn = document.getElementById('add-driver-btn');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const driverForm = document.getElementById('driver-form');
+        const editButtons = document.querySelectorAll('.edit-driver-btn');
+        const modalTitle = document.getElementById('modal-title');
+
+        // Modal-Funktionen
+        function openModal(isEdit = false, driverId = null) {
+        modal.classList.remove('hidden');
+        if (isEdit) {
+        modalTitle.textContent = 'Fahrer bearbeiten';
+        // Hier würden in einer echten Anwendung die Fahrerdaten geladen werden
+        console.log(`Fahrer mit ID ${driverId} bearbeiten`);
+
+        // Beispiel für das Vorausfüllen von Daten (in einer echten Anwendung würden diese von der API kommen)
+        if (driverId === '1') {
+        document.getElementById('first-name').value = 'Max';
+        document.getElementById('last-name').value = 'Mustermann';
+        document.getElementById('email').value = 'max.mustermann@fleetdrive.com';
+        document.getElementById('phone').value = '+49 123 4567890';
+        document.getElementById('status').value = 'available';
+        document.getElementById('assigned-vehicle').value = '2'; // BMW 530e
+        document.getElementById('license-b').checked = true;
+        document.getElementById('license-be').checked = true;
+    } else if (driverId === '2') {
+        document.getElementById('first-name').value = 'Erika';
+        document.getElementById('last-name').value = 'Musterfrau';
+        document.getElementById('email').value = 'erika.musterfrau@fleetdrive.com';
+        document.getElementById('phone').value = '+49 123 4567891';
+        document.getElementById('status').value = 'onduty';
+        document.getElementById('assigned-vehicle').value = '3'; // Audi e-tron
+        document.getElementById('license-b').checked = true;
+        document.getElementById('license-c1').checked = true;
+        document.getElementById('license-ce').checked = true;
+    } else if (driverId === '3') {
+        document.getElementById('first-name').value = 'John';
+        document.getElementById('last-name').value = 'Doe';
+        document.getElementById('email').value = 'john.doe@fleetdrive.com';
+        document.getElementById('phone').value = '+49 123 4567892';
+        document.getElementById('status').value = 'offduty';
+        document.getElementById('assigned-vehicle').value = ''; // kein Fahrzeug
+        document.getElementById('license-b').checked = true;
+        document.getElementById('license-d1').checked = true;
+    }
+    } else {
+        modalTitle.textContent = 'Fahrer hinzufügen';
+        driverForm.reset();
+    }
+    }
+
+        function closeModal() {
+        modal.classList.add('hidden');
+        driverForm.reset();
+    }
+
+        // Event-Listener
+        addDriverBtn.addEventListener('click', () => openModal(false));
+
+        closeModalBtn.addEventListener('click', closeModal);
+
+        // Schließen des Modals, wenn außerhalb geklickt wird
+        modal.addEventListener('click', function(event) {
+        if (event.target === modal) {
+        closeModal();
+    }
+    });
+
+        // Event-Listener für Bearbeiten-Buttons
+        editButtons.forEach(button => {
+        button.addEventListener('click', function() {
+        const driverId = this.dataset.id;
+        openModal(true, driverId);
+    });
+    });
+
+        // Formular-Absenden
+        driverForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        // Hier würden die Formulardaten verarbeitet und an die API gesendet werden
+        const formData = new FormData(driverForm);
+        const driverData = {};
+
+        for (let [key, value] of formData.entries()) {
+        driverData[key] = value;
+    }
+
+        console.log('Fahrerdaten speichern:', driverData);
+
+        // Erfolgsmeldung (in einer echten Anwendung würde hier auf die API-Antwort gewartet werden)
+        alert('Fahrer erfolgreich gespeichert!');
+        closeModal();
+    });
+
+        // Suchfunktion
+        const searchInput = document.getElementById('search-driver');
+        searchInput.addEventListener('input', function() {
+        const searchText = this.value.toLowerCase();
+        const driverItems = document.querySelectorAll('ul > li');
+
+        driverItems.forEach(item => {
+        const itemText = item.textContent.toLowerCase();
+        if (itemText.includes(searchText)) {
+        item.style.display = '';
+    } else {
+        item.style.display = 'none';
+    }
+    });
+    });
+        const statusFilter = document.getElementById('status-filter');
+        statusFilter.addEventListener('change', function() {
+        const selectedStatus = this.value;
+        const driverItems = document.querySelectorAll('ul > li');
+
+        driverItems.forEach(item => {
+        if (selectedStatus === 'all') {
+        item.style.display = '';
+        return;
+    }
+
+        const statusText = item.querySelector('.rounded-full + p').textContent.trim().toLowerCase();
+        let matchesFilter = false;
+
+        if (selectedStatus === 'available' && statusText === 'verfügbar') {
+        matchesFilter = true;
+    } else if (selectedStatus === 'onduty' && statusText === 'im dienst') {
+        matchesFilter = true;
+    } else if (selectedStatus === 'offduty' && statusText === 'außer dienst') {
+        matchesFilter = true;
+    }
+
+        item.style.display = matchesFilter ? '' : 'none';
+    });
+    });
+    });
+</script>

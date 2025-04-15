@@ -12,7 +12,6 @@
                     <a href="/dashboard" class="inline-flex items-center border-b-2 border-indigo-500 px-1 pt-1 text-sm font-medium text-gray-900">Dashboard</a>
                     <a href="/vehicles" class="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700">Fahrzeuge</a>
                     <a href="/drivers" class="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700">Fahrer</a>
-                    <a href="/bookings" class="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700">Buchungen</a>
                     <a href="/reports" class="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700">Berichte</a>
                 </div>
             </div>
@@ -170,7 +169,56 @@
                 userMenuDropdown.classList.add('hidden');
             }
         });
+
+        // Funktion zum Hervorheben des aktuellen Menüpunkts basierend auf URL
+        function highlightCurrentNavItem() {
+            // Aktuelle URL-Pfad erhalten
+            const currentPath = window.location.pathname;
+
+            // Desktop Navigation Menüpunkte auswählen
+            const desktopNavItems = document.querySelectorAll('.sm\\:flex.sm\\:space-x-8 > a');
+
+            // Mobile Navigation Menüpunkte auswählen
+            const mobileNavItems = document.querySelectorAll('#mobile-menu .space-y-1 > a');
+
+            // Funktion zum Setzen der aktiven Klasse basierend auf dem Pfad
+            function setActiveClass(items, isMobile) {
+                items.forEach(item => {
+                    const href = item.getAttribute('href');
+
+                    // Entferne aktive Klassen von allen Items
+                    if (isMobile) {
+                        item.classList.remove('border-indigo-500', 'bg-indigo-50', 'text-indigo-700');
+                        item.classList.add('border-transparent', 'text-gray-500', 'hover:border-gray-300', 'hover:bg-gray-50', 'hover:text-gray-700');
+                    } else {
+                        item.classList.remove('border-indigo-500', 'text-gray-900');
+                        item.classList.add('border-transparent', 'text-gray-500', 'hover:border-gray-300', 'hover:text-gray-700');
+                    }
+
+                    // Prüfe, ob dies der aktuelle Pfad ist oder ob es der Root-Pfad ist und wir auf Dashboard sind
+                    if (href === currentPath || (href === '/dashboard' && (currentPath === '/' || currentPath === ''))) {
+                        if (isMobile) {
+                            item.classList.remove('border-transparent', 'text-gray-500', 'hover:border-gray-300', 'hover:bg-gray-50', 'hover:text-gray-700');
+                            item.classList.add('border-indigo-500', 'bg-indigo-50', 'text-indigo-700');
+                        } else {
+                            item.classList.remove('border-transparent', 'text-gray-500', 'hover:border-gray-300', 'hover:text-gray-700');
+                            item.classList.add('border-indigo-500', 'text-gray-900');
+                        }
+                    }
+                });
+            }
+
+            // Aktive Klassen für Desktop und Mobile Navigation setzen
+            setActiveClass(desktopNavItems, false);
+            setActiveClass(mobileNavItems, true);
+        }
+
+        // Beim Laden der Seite ausführen
+        highlightCurrentNavItem();
     });
+
+
+
 </script>
 
 {{ end }}
