@@ -3,6 +3,7 @@ package backend
 import (
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -63,10 +64,16 @@ func Logout(c *gin.Context) {
 }
 
 // InitializeRoutes sets up all the routes for the application
+// InitializeRoutes sets up all the routes for the application
 func InitializeRoutes(router *gin.Engine) {
+	// Jahr für das Copyright im Footer
+	currentYear := time.Now().Year()
+
 	// Public routes (no authentication required)
 	router.GET("/login", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "login.html", gin.H{})
+		c.HTML(http.StatusOK, "login.html", gin.H{
+			"year": currentYear,
+		})
 	})
 	router.POST("/auth", Login)
 	router.GET("/logout", Logout)
@@ -80,6 +87,7 @@ func InitializeRoutes(router *gin.Engine) {
 			c.HTML(http.StatusOK, "home.html", gin.H{
 				"title": "FleetDrive Dashboard",
 				"user":  c.MustGet("user"),
+				"year":  currentYear,
 			})
 		})
 
@@ -88,6 +96,7 @@ func InitializeRoutes(router *gin.Engine) {
 			c.HTML(http.StatusOK, "home.html", gin.H{
 				"title": "FleetDrive Dashboard",
 				"user":  c.MustGet("user"),
+				"year":  currentYear,
 			})
 		})
 

@@ -14,51 +14,8 @@
     </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 min-h-screen flex flex-col">
-<!-- Header -->
-<header class="bg-blue-600 text-white">
-    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-        <h1 class="text-2xl font-bold">FleetDrive</h1>
-        <div class="flex items-center">
-            <span class="text-sm text-blue-100">Eingeloggt als: <strong>{{.user}}</strong></span>
-            <a href="/logout" class="ml-4 px-3 py-1.5 bg-blue-700 hover:bg-blue-800 rounded-lg text-sm font-medium transition-colors duration-200">
-                Abmelden
-            </a>
-        </div>
-    </div>
-</header>
-
 <!-- Navigation -->
-<nav class="bg-gray-800 text-white shadow-md">
-    <div class="container mx-auto px-4">
-        <ul class="flex flex-wrap">
-            <li class="group">
-                <a href="/dashboard" class="block py-4 px-6 bg-gray-700 hover:bg-gray-600 transition-colors duration-200">
-                    Dashboard
-                </a>
-            </li>
-            <li class="group">
-                <a href="/vehicles" class="block py-4 px-6 hover:bg-gray-700 transition-colors duration-200">
-                    Fahrzeuge
-                </a>
-            </li>
-            <li class="group">
-                <a href="/drivers" class="block py-4 px-6 hover:bg-gray-700 transition-colors duration-200">
-                    Fahrer
-                </a>
-            </li>
-            <li class="group">
-                <a href="/bookings" class="block py-4 px-6 hover:bg-gray-700 transition-colors duration-200">
-                    Buchungen
-                </a>
-            </li>
-            <li class="group">
-                <a href="/reports" class="block py-4 px-6 hover:bg-gray-700 transition-colors duration-200">
-                    Berichte
-                </a>
-            </li>
-        </ul>
-    </div>
-</nav>
+{{ template "navigation" .}}
 
 <!-- Main Content -->
 <main class="container mx-auto px-4 py-6 flex-grow">

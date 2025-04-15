@@ -1,6 +1,7 @@
 package main
 
 import (
+	"html/template"
 	"log"
 	"net/http"
 	"time"
@@ -14,6 +15,7 @@ import (
 func main() {
 	// Set Gin to release mode in production
 	// gin.SetMode(gin.ReleaseMode)
+	gin.SetMode(gin.DebugMode)
 
 	// Initialize router
 	router := setupRouter()
@@ -52,8 +54,11 @@ func setupRouter() *gin.Engine {
 	router.Static("/static", "./frontend/static")
 	router.Static("/assets", "./frontend/assets")
 
-	// Load HTML templates
-	router.LoadHTMLGlob("frontend/templates/*.html")
+	// Load HTML templates - update to include subdirectories
+	// Alternative 2: Manuelles Laden von Templates
+	templ := template.Must(template.ParseGlob("frontend/templates/*.html"))
+	template.Must(templ.ParseGlob("frontend/templates/components/*.html"))
+	router.SetHTMLTemplate(templ)
 
 	// Import routes from router.go
 	backend.InitializeRoutes(router)

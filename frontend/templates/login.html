@@ -1,18 +1,4 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FleetDrive - Login</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-    </style>
-</head>
+{{ template "head" .}}
 <body class="bg-gray-100 dark:bg-gray-900 min-h-screen flex items-center justify-center p-4">
 <div class="w-full max-w-md">
     <!-- Login Card -->
@@ -70,12 +56,10 @@
         </div>
     </div>
 
-   {{ template "footer" .}}
+
 
     <!-- Footer -->
-    <p class="text-center text-gray-500 text-sm mt-6">
-        &copy; 2025 FleetDrive. Alle Rechte vorbehalten.
-    </p>
+    {{ template "footer" .}}
 </div>
 </body>
 </html>
