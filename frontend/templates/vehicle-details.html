@@ -790,6 +790,8 @@
     </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- JavaScript-Code für das Bearbeiten-Modal
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Elemente für Wartungs-Modal
@@ -873,13 +875,7 @@
             alert('Nutzung erfolgreich eingetragen!');
             closeModals();
         });
-    });
-</script>
 
-<!-- JavaScript-Code für das Bearbeiten-Modal -->
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Bisheriger Modal-Code...
 
         // Elemente für Fahrzeug-Bearbeiten-Modal
         const editVehicleModal = document.getElementById('edit-vehicle-modal');
@@ -993,362 +989,1116 @@
         });
     });
 </script>
-
+-->
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Bereits vorhandener Code...
+    // Funktionen für die vehicle-details.html Seite
 
-        // Elemente für aktuelle Nutzung bearbeiten
-        const editCurrentUsageModal = document.getElementById('edit-usage-modal');
-        const editCurrentUsageBtn = document.getElementById('edit-current-usage-btn');
-        const editCurrentUsageForm = document.getElementById('edit-current-usage-form');
-        const closeCurrentUsageModalBtns = document.querySelectorAll('.close-current-usage-modal-btn');
+    // Fahrzeugdaten laden und anzeigen
+    function loadVehicleDetails() {
+        // Fahrzeug-ID aus der URL extrahieren
+        const urlParams = new URLSearchParams(window.location.search);
+        const vehicleId = window.location.pathname.split('/').pop() || urlParams.get('id');
 
-        // Funktion zum Öffnen des Aktuelle-Nutzung-Bearbeiten-Modals
-        function openEditCurrentUsageModal() {
-            editCurrentUsageModal.classList.remove('hidden');
-
-            // Hier könnten aktuelle Daten per API abgerufen werden
-            // Für diese Demo sind die Werte bereits vorausgefüllt
+        if (!vehicleId) {
+            showError('Keine Fahrzeug-ID gefunden');
+            return;
         }
 
-        // Event Listener für den Bearbeiten-Button
-        if (editCurrentUsageBtn) {
-            editCurrentUsageBtn.addEventListener('click', openEditCurrentUsageModal);
-        }
+        console.log('Lade Details für Fahrzeug-ID:', vehicleId);
 
-        // Schließen des Aktuelle-Nutzung-Bearbeiten-Modals
-        closeCurrentUsageModalBtns.forEach(button => {
-            button.addEventListener('click', function() {
-                editCurrentUsageModal.classList.add('hidden');
-            });
-        });
+        // Fahrzeugdaten von der API laden
+        fetch(`/api/vehicles/${vehicleId}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Fahrzeug nicht gefunden');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const vehicle = data.vehicle;
+                console.log('Geladene Fahrzeugdaten:', vehicle);
 
-        // Aktuelle-Nutzung-Formular absenden
-        if (editCurrentUsageForm) {
-            editCurrentUsageForm.addEventListener('submit', function(event) {
-                event.preventDefault();
-
-                const formData = new FormData(editCurrentUsageForm);
-                const usageData = {};
-
-                for (let [key, value] of formData.entries()) {
-                    usageData[key] = value;
+                if (!vehicle) {
+                    throw new Error('Keine Fahrzeugdaten erhalten');
                 }
 
-                console.log('Aktuelle Nutzungsdaten speichern:', usageData);
+                // Fahrzeugtitel und Status aktualisieren
+                updateVehicleHeader(vehicle);
 
-                // In einer echten Anwendung würde hier ein API-Aufruf erfolgen
-                alert('Aktuelle Nutzungsdaten erfolgreich aktualisiert!');
-                editCurrentUsageModal.classList.add('hidden');
+                // Hauptinformationen aktualisieren
+                updateVehicleInformation(vehicle);
 
-                // Hier könnten die Anzeigen auf der Seite aktualisiert werden
-                updateCurrentUsageDisplay(usageData);
+                // Aktuelle Nutzung aktualisieren
+                if (vehicle.currentDriverId) {
+                    loadDriverDetails(vehicle.currentDriverId)
+                        .then(driver => {
+                            if (driver) {
+                                updateCurrentUsage(vehicle, driver);
+                            }
+                        });
+                } else {
+                    updateCurrentUsage(vehicle, null);
+                }
+
+                // Zulassung und Versicherung aktualisieren
+                updateRegistrationAndInsurance(vehicle);
+
+                // Wartungseinträge laden
+                loadMaintenanceEntries(vehicleId);
+
+                // Nutzungshistorie laden
+                loadUsageHistory(vehicleId);
+
+                // Statistiken laden
+                initializeVehicleStatistics(vehicle);
+            })
+            .catch(error => {
+                console.error('Fehler beim Laden der Fahrzeugdetails:', error);
+                showError(`Fehler beim Laden der Fahrzeugdetails: ${error.message}`);
             });
+    }
+
+    // Fahrerdaten laden
+    function loadDriverDetails(driverId) {
+        return fetch(`/api/drivers/${driverId}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Fahrer nicht gefunden');
+                }
+                return response.json();
+            })
+            .then(data => {
+                return data.driver;
+            })
+            .catch(error => {
+                console.error('Fehler beim Laden des Fahrerdetails:', error);
+                return null;
+            });
+    }
+
+    // Fahrzeugkopf (Titel und Status) aktualisieren
+    function updateVehicleHeader(vehicle) {
+        // Titel aktualisieren
+        const titleElement = document.querySelector('h1.text-2xl');
+        if (titleElement) {
+            titleElement.textContent = `${vehicle.brand} ${vehicle.model}`;
         }
 
-        // Funktion zum Aktualisieren der angezeigten aktuellen Nutzungsdaten
-        function updateCurrentUsageDisplay(data) {
-            // Aktuelle Nutzung aktualisieren
-            const currentUsageContainer = document.querySelectorAll('.bg-white .px-4.py-5.sm\\:p-6 dl')[1]; // Die zweite dl ist für die aktuelle Nutzung
+        // Status aktualisieren
+        const statusElement = document.querySelector('.px-2.5.py-1.rounded-full');
+        if (statusElement) {
+            let statusClass, statusText;
 
-            if (currentUsageContainer) {
-                const divs = currentUsageContainer.querySelectorAll('div');
+            switch (vehicle.status) {
+                case 'available':
+                    statusClass = 'bg-green-100 text-green-800';
+                    statusText = 'Verfügbar';
+                    break;
+                case 'inuse':
+                    statusClass = 'bg-red-100 text-red-800';
+                    statusText = 'In Benutzung';
+                    break;
+                case 'maintenance':
+                    statusClass = 'bg-yellow-100 text-yellow-800';
+                    statusText = 'In Wartung';
+                    break;
+                default:
+                    statusClass = 'bg-gray-100 text-gray-800';
+                    statusText = vehicle.status || 'Unbekannt';
+            }
 
-                divs.forEach(div => {
-                    const label = div.querySelector('dt');
-                    const value = div.querySelector('dd');
+            statusElement.className = `px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}`;
+            statusElement.textContent = statusText;
+        }
+    }
 
-                    if (label && value) {
-                        const labelText = label.textContent.trim();
+    // Hauptinformationen des Fahrzeugs aktualisieren
+    function updateVehicleInformation(vehicle) {
+        const infoContainer = document.querySelector('.px-4.py-5.sm\\:p-6');
+        if (!infoContainer) return;
 
-                        if (labelText === 'Aktueller Fahrer' && data['current-driver']) {
-                            // Wir müssten hier eigentlich einen API-Call machen, um den Fahrernamen zu bekommen
-                            // Für diese Demo wählen wir einen festen Wert
-                            const driverNames = {
-                                '1': 'Max Mustermann',
-                                '2': 'Erika Musterfrau',
-                                '3': 'John Doe',
-                                '4': 'Jane Smith'
-                            };
-                            value.textContent = driverNames[data['current-driver']] || 'Unbekannt';
-                        } else if (labelText === 'Abteilung' && data['current-department']) {
-                            const departments = {
-                                'sales': 'Vertrieb',
-                                'marketing': 'Marketing',
-                                'it': 'IT',
-                                'hr': 'Personal',
-                                'management': 'Geschäftsführung'
-                            };
-                            value.textContent = departments[data['current-department']] || 'Unbekannt';
-                        } else if (labelText === 'Nutzung seit' && data['current-start-date'] && data['current-start-time']) {
-                            const date = new Date(data['current-start-date']);
-                            const dateStr = date.toLocaleDateString('de-DE');
-                            value.textContent = dateStr + ', ' + data['current-start-time'] + ' Uhr';
-                        } else if (labelText === 'Geplante Rückgabe' && data['current-end-date'] && data['current-end-time']) {
-                            const date = new Date(data['current-end-date']);
-                            const dateStr = date.toLocaleDateString('de-DE');
-                            value.textContent = dateStr + ', ' + data['current-end-time'] + ' Uhr';
-                        } else if (labelText === 'Projekt/Zweck' && data['current-project']) {
-                            value.textContent = data['current-project'];
+        const infoItems = infoContainer.querySelectorAll('dl > div');
+        infoItems.forEach(item => {
+            const label = item.querySelector('dt');
+            const value = item.querySelector('dd');
+
+            if (!label || !value) return;
+
+            const labelText = label.textContent.trim();
+
+            switch (labelText) {
+                case 'Kennzeichen':
+                    value.textContent = vehicle.licensePlate || '';
+                    break;
+                case 'Marke & Modell':
+                    value.textContent = `${vehicle.brand} ${vehicle.model}`;
+                    break;
+                case 'Baujahr':
+                    value.textContent = vehicle.year || '';
+                    break;
+                case 'Farbe':
+                    value.textContent = vehicle.color || '';
+                    break;
+                case 'Fahrzeug-ID':
+                    value.textContent = vehicle.vehicleId || '';
+                    break;
+                case 'VIN':
+                    value.textContent = vehicle.vin || '';
+                    break;
+                case 'Kraftstoffart':
+                    value.textContent = vehicle.fuelType || '';
+                    break;
+                case 'Aktueller Kilometerstand':
+                    value.textContent = `${vehicle.mileage || 0} km`;
+                    break;
+            }
+        });
+    }
+
+    // Aktuelle Nutzung aktualisieren
+    function updateCurrentUsage(vehicle, driver) {
+        const usageContainer = document.querySelectorAll('.px-4.py-5.sm\\:p-6')[1]; // Zweiter Container
+        if (!usageContainer) return;
+
+        const usageItems = usageContainer.querySelectorAll('dl > div');
+        usageItems.forEach(item => {
+            const label = item.querySelector('dt');
+            const value = item.querySelector('dd');
+
+            if (!label || !value) return;
+
+            const labelText = label.textContent.trim();
+
+            if (labelText === 'Aktueller Fahrer') {
+                value.textContent = driver ? `${driver.firstName} ${driver.lastName}` : 'Nicht zugewiesen';
+            }
+        });
+    }
+
+    // Zulassung und Versicherung aktualisieren
+    function updateRegistrationAndInsurance(vehicle) {
+        const regContainer = document.querySelectorAll('.px-4.py-5.sm\\:p-6')[2]; // Dritter Container
+        if (!regContainer) return;
+
+        const regItems = regContainer.querySelectorAll('dl > div');
+        regItems.forEach(item => {
+            const label = item.querySelector('dt');
+            const value = item.querySelector('dd');
+
+            if (!label || !value) return;
+
+            const labelText = label.textContent.trim();
+
+            switch (labelText) {
+                case 'Erstzulassung':
+                    value.textContent = formatDate(vehicle.registrationDate);
+                    break;
+                case 'Nächste HU/AU':
+                    value.textContent = formatDate(vehicle.nextInspectionDate);
+                    break;
+                case 'Versicherung':
+                    value.textContent = vehicle.insuranceCompany || '';
+                    break;
+                case 'Versicherungsnummer':
+                    value.textContent = vehicle.insuranceNumber || '';
+                    break;
+                case 'Versicherungstyp':
+                    value.textContent = vehicle.insuranceType || '';
+                    break;
+                case 'Jährliche Kosten':
+                    // Wenn jährliche Kosten in den Daten verfügbar sind, ansonsten unverändert lassen
+                    break;
+            }
+        });
+    }
+
+    // Wartungseinträge laden
+    function loadMaintenanceEntries(vehicleId) {
+        fetch(`/api/maintenance/vehicle/${vehicleId}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Fehler beim Laden der Wartungseinträge');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const entries = data.maintenance || [];
+                console.log('Geladene Wartungseinträge:', entries);
+
+                updateMaintenanceTable(entries);
+            })
+            .catch(error => {
+                console.error('Fehler beim Laden der Wartungseinträge:', error);
+            });
+    }
+
+    // Wartungstabelle aktualisieren
+    function updateMaintenanceTable(entries) {
+        const tableBody = document.querySelector('.px-4.py-5.sm\\:p-6 table tbody');
+        if (!tableBody) return;
+
+        // Tabelle leeren
+        tableBody.innerHTML = '';
+
+        if (entries.length === 0) {
+            const emptyRow = document.createElement('tr');
+            emptyRow.innerHTML = `
+            <td colspan="5" class="py-4 text-center text-gray-500">
+                Keine Wartungseinträge gefunden.
+            </td>
+        `;
+            tableBody.appendChild(emptyRow);
+            return;
+        }
+
+        // Nach Datum sortieren (neueste zuerst)
+        entries.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        // Einträge hinzufügen
+        entries.forEach(entry => {
+            const row = document.createElement('tr');
+
+            let typeText;
+            switch (entry.type) {
+                case 'inspection':
+                    typeText = 'Inspektion';
+                    break;
+                case 'oil-change':
+                    typeText = 'Ölwechsel';
+                    break;
+                case 'tire-change':
+                    typeText = 'Reifenwechsel';
+                    break;
+                case 'repair':
+                    typeText = 'Reparatur';
+                    break;
+                default:
+                    typeText = entry.type || 'Sonstiges';
+            }
+
+            row.innerHTML = `
+            <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">${formatDate(entry.date)}</td>
+            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">${typeText}</td>
+            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">${entry.mileage || 0} km</td>
+            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">${entry.cost || 0} €</td>
+            <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
+                <a href="#" class="edit-maintenance-btn text-indigo-600 hover:text-indigo-900" data-id="${entry.id}">Bearbeiten</a>
+            </td>
+        `;
+
+            tableBody.appendChild(row);
+        });
+
+        // Event-Listener für Bearbeiten-Buttons hinzufügen
+        document.querySelectorAll('.edit-maintenance-btn').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const maintenanceId = this.dataset.id;
+                openMaintenanceModal(true, maintenanceId);
+            });
+        });
+    }
+
+    // Nutzungshistorie laden
+    function loadUsageHistory(vehicleId) {
+        fetch(`/api/usage/vehicle/${vehicleId}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Fehler beim Laden der Nutzungshistorie');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const entries = data.usage || [];
+                console.log('Geladene Nutzungshistorie:', entries);
+
+                updateUsageHistoryTable(entries);
+            })
+            .catch(error => {
+                console.error('Fehler beim Laden der Nutzungshistorie:', error);
+            });
+    }
+
+    // Nutzungshistorie-Tabelle aktualisieren
+    function updateUsageHistoryTable(entries) {
+        const tableBody = document.querySelector('.mt-6 .bg-white.shadow table tbody');
+        if (!tableBody) return;
+
+        // Tabelle leeren
+        tableBody.innerHTML = '';
+
+        if (entries.length === 0) {
+            const emptyRow = document.createElement('tr');
+            emptyRow.innerHTML = `
+            <td colspan="5" class="py-4 text-center text-gray-500">
+                Keine Nutzungseinträge gefunden.
+            </td>
+        `;
+            tableBody.appendChild(emptyRow);
+            return;
+        }
+
+        // Nach Startdatum sortieren (neueste zuerst)
+        entries.sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
+
+        // Einträge hinzufügen
+        entries.forEach(entry => {
+            const row = document.createElement('tr');
+
+            // Formatiere Daten
+            const startDate = formatDate(entry.startDate);
+            const endDate = entry.endDate ? formatDate(entry.endDate) : 'noch aktiv';
+            const startTime = formatTime(entry.startDate);
+            const endTime = entry.endDate ? formatTime(entry.endDate) : '';
+
+            row.innerHTML = `
+            <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900 sm:pl-6">
+                <div class="font-medium">${startDate} - ${endDate}</div>
+                <div class="text-gray-500">${startTime} - ${endTime || '–'} Uhr</div>
+            </td>
+            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">${entry.driverName || 'Unbekannt'}</td>
+            <td class="px-3 py-4 text-sm text-gray-500">${entry.purpose || entry.project || ''}</td>
+            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                <div>Start: ${entry.startMileage || 0} km</div>
+                <div>Ende: ${entry.endMileage ? `${entry.endMileage} km` : 'noch aktiv'}</div>
+            </td>
+            <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                <a href="#" class="edit-usage-btn text-indigo-600 hover:text-indigo-900" data-id="${entry.id}">Bearbeiten</a>
+            </td>
+        `;
+
+            tableBody.appendChild(row);
+        });
+
+        // Event-Listener für Bearbeiten-Buttons hinzufügen
+        document.querySelectorAll('.edit-usage-btn').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const usageId = this.dataset.id;
+                openUsageModal(true, usageId);
+            });
+        });
+    }
+
+    // Statistiken initialisieren
+    function initializeVehicleStatistics(vehicle) {
+        // Diese Funktion würde die verschiedenen Charts initialisieren
+        // Die Implementierung hängt davon ab, welche Bibliothek für Diagramme verwendet wird
+        console.log('Fahrzeugstatistiken initialisieren für:', vehicle.id);
+
+        // Beispiel: Kostengrafik initialisieren (wenn ApexCharts verfügbar ist)
+        if (typeof ApexCharts !== 'undefined' && document.getElementById('costChart')) {
+            initializeCostChart(vehicle.id);
+        }
+
+        // Weitere Diagramme initialisieren...
+    }
+
+    // Wartungs-Modal öffnen
+    function openMaintenanceModal(isEdit = false, maintenanceId = null) {
+        const modal = document.getElementById('maintenance-modal');
+        const modalTitle = document.getElementById('maintenance-modal-title');
+        const maintenanceForm = document.getElementById('maintenance-form');
+
+        if (!modal || !modalTitle || !maintenanceForm) {
+            console.error('Modal-Elemente nicht gefunden');
+            return;
+        }
+
+        modal.classList.remove('hidden');
+
+        if (isEdit && maintenanceId) {
+            modalTitle.textContent = 'Wartung/Inspektion bearbeiten';
+
+            // Wartungsdaten von der API laden
+            fetch(`/api/maintenance/${maintenanceId}`)
+                .then(response => response.json())
+                .then(data => {
+                    const maintenance = data.maintenance;
+                    console.log('Geladene Wartungsdaten:', maintenance);
+
+                    if (!maintenance) {
+                        throw new Error('Wartungsdaten nicht gefunden');
+                    }
+
+                    // Formularfelder befüllen
+                    if (document.getElementById('maintenance-date')) {
+                        document.getElementById('maintenance-date').value = formatDateForInput(maintenance.date);
+                    }
+                    if (document.getElementById('maintenance-type')) {
+                        document.getElementById('maintenance-type').value = maintenance.type || '';
+                    }
+                    if (document.getElementById('mileage')) {
+                        document.getElementById('mileage').value = maintenance.mileage || 0;
+                    }
+                    if (document.getElementById('cost')) {
+                        document.getElementById('cost').value = maintenance.cost || 0;
+                    }
+                    if (document.getElementById('workshop')) {
+                        document.getElementById('workshop').value = maintenance.workshop || '';
+                    }
+                    if (document.getElementById('maintenance-notes')) {
+                        document.getElementById('maintenance-notes').value = maintenance.notes || '';
+                    }
+
+                    // ID zum Formular hinzufügen
+                    let idInput = maintenanceForm.querySelector('input[name="id"]');
+                    if (!idInput) {
+                        idInput = document.createElement('input');
+                        idInput.type = 'hidden';
+                        idInput.name = 'id';
+                        maintenanceForm.appendChild(idInput);
+                    }
+                    idInput.value = maintenanceId;
+                })
+                .catch(error => {
+                    console.error('Fehler beim Laden der Wartungsdaten:', error);
+                    closeMaintenanceModal();
+                    alert('Fehler beim Laden der Wartungsdaten: ' + error.message);
+                });
+        } else {
+            modalTitle.textContent = 'Wartung/Inspektion hinzufügen';
+            maintenanceForm.reset();
+
+            // Aktuelles Datum vorausfüllen
+            if (document.getElementById('maintenance-date')) {
+                document.getElementById('maintenance-date').value = new Date().toISOString().split('T')[0];
+            }
+
+            // Aktuellen Kilometerstand vorausfüllen
+            const vehicleId = window.location.pathname.split('/').pop();
+            if (vehicleId) {
+                fetch(`/api/vehicles/${vehicleId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.vehicle && document.getElementById('mileage')) {
+                            document.getElementById('mileage').value = data.vehicle.mileage || 0;
                         }
+                    })
+                    .catch(err => console.error('Fehler beim Laden des Kilometerstands:', err));
+            }
+
+            // Entferne versteckte ID-Felder, falls vorhanden
+            const existingIdInput = maintenanceForm.querySelector('input[name="id"]');
+            if (existingIdInput) {
+                existingIdInput.remove();
+            }
+
+            // VehicleId hinzufügen
+            let vehicleIdInput = maintenanceForm.querySelector('input[name="vehicleId"]');
+            if (!vehicleIdInput) {
+                vehicleIdInput = document.createElement('input');
+                vehicleIdInput.type = 'hidden';
+                vehicleIdInput.name = 'vehicleId';
+                maintenanceForm.appendChild(vehicleIdInput);
+            }
+            vehicleIdInput.value = vehicleId;
+        }
+    }
+
+    // Nutzungs-Modal öffnen
+    function openUsageModal(isEdit = false, usageId = null) {
+        const modal = document.getElementById('usage-modal');
+        const modalTitle = document.getElementById('usage-modal-title');
+        const usageForm = document.getElementById('usage-form');
+
+        if (!modal || !modalTitle || !usageForm) {
+            console.error('Modal-Elemente nicht gefunden');
+            return;
+        }
+
+        modal.classList.remove('hidden');
+
+        // Fahrer für Dropdown laden
+        loadDriversForDropdown();
+
+        if (isEdit && usageId) {
+            modalTitle.textContent = 'Nutzung bearbeiten';
+
+            // Nutzungsdaten von der API laden
+            fetch(`/api/usage/${usageId}`)
+                .then(response => response.json())
+                .then(data => {
+                    const usage = data.usage;
+                    console.log('Geladene Nutzungsdaten:', usage);
+
+                    if (!usage) {
+                        throw new Error('Nutzungsdaten nicht gefunden');
+                    }
+
+                    // Formularfelder befüllen
+                    if (document.getElementById('start-date')) {
+                        document.getElementById('start-date').value = formatDateForInput(usage.startDate);
+                    }
+                    if (document.getElementById('start-time')) {
+                        document.getElementById('start-time').value = formatTimeForInput(usage.startDate);
+                    }
+                    if (document.getElementById('end-date') && usage.endDate) {
+                        document.getElementById('end-date').value = formatDateForInput(usage.endDate);
+                    }
+                    if (document.getElementById('end-time') && usage.endDate) {
+                        document.getElementById('end-time').value = formatTimeForInput(usage.endDate);
+                    }
+                    if (document.getElementById('driver')) {
+                        document.getElementById('driver').value = usage.driverId || '';
+                    }
+                    if (document.getElementById('project')) {
+                        document.getElementById('project').value = usage.project || usage.purpose || '';
+                    }
+                    if (document.getElementById('start-mileage')) {
+                        document.getElementById('start-mileage').value = usage.startMileage || 0;
+                    }
+                    if (document.getElementById('end-mileage')) {
+                        document.getElementById('end-mileage').value = usage.endMileage || '';
+                    }
+                    if (document.getElementById('usage-notes')) {
+                        document.getElementById('usage-notes').value = usage.notes || '';
+                    }
+
+                    // ID zum Formular hinzufügen
+                    let idInput = usageForm.querySelector('input[name="id"]');
+                    if (!idInput) {
+                        idInput = document.createElement('input');
+                        idInput.type = 'hidden';
+                        idInput.name = 'id';
+                        usageForm.appendChild(idInput);
+                    }
+                    idInput.value = usageId;
+                })
+                .catch(error => {
+                    console.error('Fehler beim Laden der Nutzungsdaten:', error);
+                    closeUsageModal();
+                    alert('Fehler beim Laden der Nutzungsdaten: ' + error.message);
+                });
+        } else {
+            modalTitle.textContent = 'Nutzung eintragen';
+            usageForm.reset();
+
+            // Aktuelles Datum vorausfüllen
+            if (document.getElementById('start-date')) {
+                document.getElementById('start-date').value = new Date().toISOString().split('T')[0];
+            }
+            if (document.getElementById('start-time')) {
+                const now = new Date();
+                document.getElementById('start-time').value = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            }
+
+            // Aktuellen Kilometerstand vorausfüllen
+            const vehicleId = window.location.pathname.split('/').pop();
+            if (vehicleId) {
+                fetch(`/api/vehicles/${vehicleId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.vehicle && document.getElementById('start-mileage')) {
+                            document.getElementById('start-mileage').value = data.vehicle.mileage || 0;
+                        }
+                    })
+                    .catch(err => console.error('Fehler beim Laden des Kilometerstands:', err));
+            }
+
+            // Entferne versteckte ID-Felder, falls vorhanden
+            const existingIdInput = usageForm.querySelector('input[name="id"]');
+            if (existingIdInput) {
+                existingIdInput.remove();
+            }
+
+            // VehicleId hinzufügen
+            let vehicleIdInput = usageForm.querySelector('input[name="vehicleId"]');
+            if (!vehicleIdInput) {
+                vehicleIdInput = document.createElement('input');
+                vehicleIdInput.type = 'hidden';
+                vehicleIdInput.name = 'vehicleId';
+                usageForm.appendChild(vehicleIdInput);
+            }
+            vehicleIdInput.value = vehicleId;
+        }
+    }
+
+    // Fahrer für Dropdown laden
+    function loadDriversForDropdown() {
+        const driverSelect = document.getElementById('driver');
+        if (!driverSelect) return;
+
+        fetch('/api/drivers')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Fehler beim Laden der Fahrer');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const drivers = data.drivers || [];
+
+                // Bestehende Optionen beibehalten (erste Option "Fahrer auswählen")
+                const firstOption = driverSelect.querySelector('option:first-child');
+                driverSelect.innerHTML = '';
+
+                if (firstOption) {
+                    driverSelect.appendChild(firstOption);
+                } else {
+                    const noDriverOption = document.createElement('option');
+                    noDriverOption.value = '';
+                    noDriverOption.textContent = 'Fahrer auswählen';
+                    driverSelect.appendChild(noDriverOption);
+                }
+
+                // Fahrer hinzufügen
+                drivers.forEach(driver => {
+                    const option = document.createElement('option');
+                    option.value = driver.id;
+                    option.textContent = `${driver.firstName} ${driver.lastName}`;
+                    driverSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Fehler beim Laden der Fahrer:', error);
+            });
+    }
+
+    // Modals schließen
+    function closeMaintenanceModal() {
+        const modal = document.getElementById('maintenance-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    }
+
+    function closeUsageModal() {
+        const modal = document.getElementById('usage-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    }
+
+    // Hilfsfunktionen für Datumsformatierung
+    function formatDate(dateString) {
+        if (!dateString) return '';
+
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return '';
+
+            return date.toLocaleDateString('de-DE', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        } catch (error) {
+            console.error('Fehler beim Formatieren des Datums:', error);
+            return '';
+        }
+    }
+
+    function formatTime(dateString) {
+        if (!dateString) return '';
+
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return '';
+
+            return date.toLocaleTimeString('de-DE', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        } catch (error) {
+            console.error('Fehler beim Formatieren der Zeit:', error);
+            return '';
+        }
+    }
+
+    function formatDateForInput(dateString) {
+        if (!dateString) return '';
+
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return '';
+
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+
+            return `${year}-${month}-${day}`;
+        } catch (error) {
+            console.error('Fehler beim Formatieren des Datums für Input:', error);
+            return '';
+        }
+    }
+
+    function formatTimeForInput(dateString) {
+        if (!dateString) return '';
+
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return '';
+
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+
+            return `${hours}:${minutes}`;
+        } catch (error) {
+            console.error('Fehler beim Formatieren der Zeit für Input:', error);
+            return '';
+        }
+    }
+
+    // Fehlermeldung anzeigen
+    function showError(message) {
+        const container = document.querySelector('.max-w-7xl.mx-auto');
+        if (container) {
+            const errorElement = document.createElement('div');
+            errorElement.className = 'bg-red-50 p-4 rounded-md mb-6 text-red-800 border border-red-200';
+            errorElement.innerHTML = `
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm">${message}</p>
+                </div>
+            </div>
+        `;
+
+            // Ans Anfang des Containers einfügen
+            container.insertBefore(errorElement, container.firstChild);
+
+            // Event-Handler für Formulare und Buttons
+            function setupEventHandlers() {
+                // Modal-Schließen-Buttons
+                document.querySelectorAll('.close-modal-btn').forEach(button => {
+                    button.addEventListener('click', function() {
+                        closeMaintenanceModal();
+                        closeUsageModal();
+                    });
+                });
+
+                // Klick außerhalb des Modals zum Schließen
+                window.addEventListener('click', function(event) {
+                    const maintenanceModal = document.getElementById('maintenance-modal');
+                    const usageModal = document.getElementById('usage-modal');
+
+                    if (event.target === maintenanceModal) {
+                        closeMaintenanceModal();
+                    }
+                    if (event.target === usageModal) {
+                        closeUsageModal();
                     }
                 });
 
-                // Status im Header aktualisieren
-                if (data['usage-status']) {
-                    const statusElement = document.querySelector('.bg-red-100.text-red-800');
+                // Wartung hinzufügen Button
+                const addMaintenanceBtn = document.getElementById('add-maintenance-btn');
+                if (addMaintenanceBtn) {
+                    addMaintenanceBtn.addEventListener('click', () => openMaintenanceModal(false));
+                }
 
-                    if (statusElement) {
-                        if (data['usage-status'] === 'active') {
-                            statusElement.textContent = 'In Benutzung';
-                            statusElement.className = 'px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800';
-                        } else if (data['usage-status'] === 'reserved') {
-                            statusElement.textContent = 'Reserviert';
-                            statusElement.className = 'px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800';
-                        } else if (data['usage-status'] === 'maintenance') {
-                            statusElement.textContent = 'In Wartung';
-                            statusElement.className = 'px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800';
+                // Nutzung hinzufügen Button
+                const addUsageBtn = document.getElementById('add-usage-btn');
+                if (addUsageBtn) {
+                    addUsageBtn.addEventListener('click', () => openUsageModal(false));
+                }
+
+                // Fahrzeug bearbeiten Button
+                const editVehicleBtn = document.getElementById('edit-vehicle-btn');
+                if (editVehicleBtn) {
+                    editVehicleBtn.addEventListener('click', function() {
+                        // Fahrzeug-ID aus der URL extrahieren
+                        const vehicleId = window.location.pathname.split('/').pop();
+                        if (vehicleId) {
+                            // Umleiten zur Bearbeitungsseite oder Modal öffnen
+                            window.location.href = `/vehicles/edit/${vehicleId}`;
                         }
-                    }
-                }
-            }
-        }
-
-        // Schließen bei Klick außerhalb des Modals
-        window.addEventListener('click', function(event) {
-            if (event.target === editCurrentUsageModal) {
-                editCurrentUsageModal.classList.add('hidden');
-            }
-        });
-
-        initApexCharts();
-    });
-
-    function initApexCharts() {
-        // Kosten-Balkendiagramm
-        const months = ['Mai 24', 'Jun 24', 'Jul 24', 'Aug 24', 'Sep 24', 'Okt 24', 'Nov 24', 'Dez 24', 'Jan 25', 'Feb 25', 'Mär 25', 'Apr 25'];
-
-        const costChartOptions = {
-            series: [{
-                name: 'Wartungskosten',
-                data: [180, 250, 520, 120, 180, 320, 180, 150, 780, 0, 245, 0]
-            }, {
-                name: 'Versicherung & Steuern',
-                data: [104, 104, 104, 104, 104, 104, 104, 104, 104, 104, 104, 104]
-            }, {
-                name: 'Kraftstoffkosten',
-                data: [150, 180, 220, 210, 170, 190, 160, 180, 140, 170, 190, 230]
-            }],
-            chart: {
-                type: 'bar',
-                height: 320,
-                stacked: true,
-                toolbar: {
-                    show: true,
-                    tools: {
-                        download: false
-                    }
-                },
-                zoom: {
-                    enabled: false
-                }
-            },
-            responsive: [{
-                breakpoint: 480,
-                options: {
-                    legend: {
-                        position: 'bottom',
-                        offsetX: -10,
-                        offsetY: 0
-                    }
-                }
-            }],
-            plotOptions: {
-                bar: {
-                    horizontal: false,
-                    borderRadius: 2,
-                    columnWidth: '70%'
-                }
-            },
-            xaxis: {
-                categories: months
-            },
-            yaxis: {
-                title: {
-                    text: 'Kosten in €'
-                },
-                labels: {
-                    formatter: function (value) {
-                        return value + ' €';
-                    }
-                }
-            },
-            colors: ['#6366f1', '#10b981', '#fbbf24'],
-            fill: {
-                opacity: 0.8
-            },
-            legend: {
-                position: 'top',
-                horizontalAlign: 'left'
-            },
-            dataLabels: {
-                enabled: false
-            },
-            tooltip: {
-                shared: true,
-                intersect: false,  // Diese Option sicherstellen
-                y: {
-                    formatter: function (value) {
-                        return value + ' €';
-                    }
-                },
-                custom: function({ series, seriesIndex, dataPointIndex, w }) {
-                    let total = 0;
-                    series.forEach(s => {
-                        total += s[dataPointIndex];
                     });
+                }
 
-                    return '<div class="apexcharts-tooltip-title" style="font-weight: bold; margin-bottom: 5px;">' +
-                        months[dataPointIndex] +
-                        '</div>' +
-                        w.globals.seriesNames.map((name, i) => {
-                            return '<div style="display: flex; justify-content: space-between; margin: 3px 0;">' +
-                                '<span style="display: inline-flex; align-items: center;">' +
-                                '<span style="width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; background-color: ' + w.globals.colors[i] + '"></span>' +
-                                name + ':</span>' +
-                                '<span>' + series[i][dataPointIndex] + ' €</span>' +
-                                '</div>';
-                        }).join('') +
-                        '<div style="display: flex; justify-content: space-between; border-top: 1px solid #e0e0e0; margin-top: 5px; padding-top: 5px; font-weight: bold;">' +
-                        '<span>Gesamt:</span>' +
-                        '<span>' + total + ' €</span>' +
-                        '</div>';
+                // Wartungsformular
+                const maintenanceForm = document.getElementById('maintenance-form');
+                if (maintenanceForm) {
+                    maintenanceForm.addEventListener('submit', function(event) {
+                        event.preventDefault();
+
+                        // Formulardaten sammeln
+                        const formData = new FormData(maintenanceForm);
+                        const maintenanceData = {};
+
+                        for (let [key, value] of formData.entries()) {
+                            maintenanceData[key] = value;
+                        }
+
+                        // Fahrzeug-ID aus der URL hinzufügen, falls nicht vorhanden
+                        if (!maintenanceData.vehicleId) {
+                            maintenanceData.vehicleId = window.location.pathname.split('/').pop();
+                        }
+
+                        // Prüfen, ob es eine Bearbeitung ist (ID vorhanden)
+                        const isEdit = !!maintenanceData.id;
+                        const url = isEdit ? `/api/maintenance/${maintenanceData.id}` : '/api/maintenance';
+                        const method = isEdit ? 'PUT' : 'POST';
+
+                        // API-Anfrage senden
+                        fetch(url, {
+                            method: method,
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                vehicleId: maintenanceData.vehicleId,
+                                date: maintenanceData['maintenance-date'],
+                                type: maintenanceData['maintenance-type'],
+                                mileage: parseInt(maintenanceData.mileage || 0),
+                                cost: parseFloat(maintenanceData.cost || 0),
+                                workshop: maintenanceData.workshop || '',
+                                notes: maintenanceData['maintenance-notes'] || ''
+                            })
+                        })
+                            .then(response => {
+                                if (!response.ok) {
+                                    return response.text().then(text => {
+                                        throw new Error(`Fehler beim Speichern der Wartung: ${text}`);
+                                    });
+                                }
+                                return response.json();
+                            })
+                            .then(data => {
+                                console.log('Wartung erfolgreich gespeichert:', data);
+                                closeMaintenanceModal();
+
+                                // Wartungseinträge neu laden
+                                const vehicleId = window.location.pathname.split('/').pop();
+                                loadMaintenanceEntries(vehicleId);
+
+                                alert('Wartung erfolgreich gespeichert!');
+                            })
+                            .catch(error => {
+                                console.error('Fehler:', error);
+                                alert(error.message);
+                            });
+                    });
+                }
+
+                // Nutzungsformular
+                const usageForm = document.getElementById('usage-form');
+                if (usageForm) {
+                    usageForm.addEventListener('submit', function(event) {
+                        event.preventDefault();
+
+                        // Formulardaten sammeln
+                        const formData = new FormData(usageForm);
+                        const usageData = {};
+
+                        for (let [key, value] of formData.entries()) {
+                            usageData[key] = value;
+                        }
+
+                        // Fahrzeug-ID aus der URL hinzufügen, falls nicht vorhanden
+                        if (!usageData.vehicleId) {
+                            usageData.vehicleId = window.location.pathname.split('/').pop();
+                        }
+
+                        // Start- und Enddatum kombinieren
+                        const startDateTime = `${usageData['start-date']}T${usageData['start-time']}:00`;
+                        let endDateTime = null;
+                        if (usageData['end-date'] && usageData['end-time']) {
+                            endDateTime = `${usageData['end-date']}T${usageData['end-time']}:00`;
+                        }
+
+                        // Prüfen, ob es eine Bearbeitung ist (ID vorhanden)
+                        const isEdit = !!usageData.id;
+                        const url = isEdit ? `/api/usage/${usageData.id}` : '/api/usage';
+                        const method = isEdit ? 'PUT' : 'POST';
+
+                        // API-Anfrage senden
+                        fetch(url, {
+                            method: method,
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                vehicleId: usageData.vehicleId,
+                                driverId: usageData.driver,
+                                startDate: startDateTime,
+                                endDate: endDateTime,
+                                startMileage: parseInt(usageData['start-mileage'] || 0),
+                                endMileage: usageData['end-mileage'] ? parseInt(usageData['end-mileage']) : null,
+                                project: usageData.project || '',
+                                purpose: usageData.project || '',
+                                status: endDateTime ? 'completed' : 'active',
+                                notes: usageData['usage-notes'] || ''
+                            })
+                        })
+                            .then(response => {
+                                if (!response.ok) {
+                                    return response.text().then(text => {
+                                        throw new Error(`Fehler beim Speichern der Nutzung: ${text}`);
+                                    });
+                                }
+                                return response.json();
+                            })
+                            .then(data => {
+                                console.log('Nutzung erfolgreich gespeichert:', data);
+                                closeUsageModal();
+
+                                // Seite neu laden, um alle Daten zu aktualisieren
+                                window.location.reload();
+                            })
+                            .catch(error => {
+                                console.error('Fehler:', error);
+                                alert(error.message);
+                            });
+                    });
                 }
             }
-        };
 
-        const costChart = new ApexCharts(document.querySelector("#costChart"), costChartOptions);
-        costChart.render();
+// Kostendiagramm initialisieren (Beispiel für ApexCharts)
+            function initializeCostChart(vehicleId) {
+                // Wartungsdaten für das Diagramm laden
+                fetch(`/api/maintenance/vehicle/${vehicleId}`)
+                    .then(response => response.json())
+                    .then(maintenanceData => {
+                        const entries = maintenanceData.maintenance || [];
 
-        // Fahrer Pie-Chart
-        const driverPieChartOptions = {
-            series: [35, 25, 20, 15, 5],
-            chart: {
-                type: 'donut',
-                height: 320
-            },
-            labels: ['Max Mustermann', 'Erika Musterfrau', 'John Doe', 'Jane Smith', 'Thomas Müller'],
-            colors: ['#6366f1', '#10b981', '#fbbf24', '#ef4444', '#8b5cf6'],
-            legend: {
-                position: 'bottom'
-            },
-            plotOptions: {
-                pie: {
-                    donut: {
-                        size: '50%',
-                        labels: {
-                            show: true,
-                            total: {
-                                show: true,
-                                label: 'Gesamt',
-                                formatter: function (w) {
-                                    return w.globals.series.reduce((a, b) => a + b, 0) + '%';
+                        // Nutzungsdaten für Kraftstoffkosten laden
+                        fetch(`/api/usage/vehicle/${vehicleId}`)
+                            .then(response => response.json())
+                            .then(usageData => {
+                                const usageEntries = usageData.usage || [];
+
+                                // Daten nach Monaten gruppieren und Kosten summieren
+                                const now = new Date();
+                                const lastYear = new Date(now.setFullYear(now.getFullYear() - 1));
+                                const monthNames = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+
+                                // Monate für die letzten 12 Monate erstellen
+                                const months = [];
+                                for (let i = 0; i < 12; i++) {
+                                    const date = new Date(lastYear);
+                                    date.setMonth(lastYear.getMonth() + i);
+                                    const monthName = monthNames[date.getMonth()] + ' ' + date.getFullYear().toString().substr(-2);
+                                    months.push(monthName);
                                 }
-                            }
-                        }
-                    }
-                }
-            },
-            dataLabels: {
-                enabled: true,
-                formatter: function (val) {
-                    return val + '%';
-                }
-            },
-            tooltip: {
-                enabled: true,
-                y: {
-                    formatter: function (val) {
-                        return val + '%';
-                    }
-                }
-            },
-            responsive: [{
-                breakpoint: 480,
-                options: {
-                    chart: {
-                        height: 300
-                    },
-                    legend: {
-                        position: 'bottom'
-                    }
-                }
-            }]
-        };
 
-        const driverPieChart = new ApexCharts(document.querySelector("#driverPieChart"), driverPieChartOptions);
-        driverPieChart.render();
+                                // Kosten nach Kategorien für jeden Monat gruppieren
+                                const maintenanceCosts = Array(12).fill(0);
+                                const insuranceCosts = Array(12).fill(100); // Beispiel: monatliche Versicherungskosten
+                                const fuelCosts = Array(12).fill(0);
 
-        // Projekte Pie-Chart
-        const projectPieChartOptions = {
-            series: [30, 20, 15, 15, 10, 10],
-            chart: {
-                type: 'donut',
-                height: 320
-            },
-            labels: ['Digital Transformation', 'Future Mobility', 'Nachhaltigkeit', 'Kundentermine', 'Interne Meetings', 'Sonstiges'],
-            colors: ['#3b82f6', '#ec4899', '#10b981', '#f59e0b', '#7c3aed', '#9ca3af'],
-            legend: {
-                position: 'bottom'
-            },
-            plotOptions: {
-                pie: {
-                    donut: {
-                        size: '50%',
-                        labels: {
-                            show: true,
-                            total: {
-                                show: true,
-                                label: 'Gesamt',
-                                formatter: function (w) {
-                                    return w.globals.series.reduce((a, b) => a + b, 0) + '%';
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            dataLabels: {
-                enabled: true,
-                formatter: function (val) {
-                    return val + '%';
-                }
-            },
-            tooltip: {
-                enabled: true,
-                y: {
-                    formatter: function (val) {
-                        return val + '%';
-                    }
-                }
-            },
-            responsive: [{
-                breakpoint: 480,
-                options: {
-                    chart: {
-                        height: 300
-                    },
-                    legend: {
-                        position: 'bottom'
-                    }
-                }
-            }]
-        };
+                                // Wartungskosten zuordnen
+                                entries.forEach(entry => {
+                                    const date = new Date(entry.date);
+                                    if (date >= lastYear) {
+                                        const monthIndex = (date.getMonth() - lastYear.getMonth() + 12) % 12;
+                                        maintenanceCosts[monthIndex] += parseFloat(entry.cost || 0);
+                                    }
+                                });
 
-        const projectPieChart = new ApexCharts(document.querySelector("#projectPieChart"), projectPieChartOptions);
-        projectPieChart.render();
-    }
+                                // Kraftstoffkosten schätzen (Beispiel)
+                                usageEntries.forEach(entry => {
+                                    if (entry.endDate && entry.endMileage && entry.startMileage) {
+                                        const date = new Date(entry.endDate);
+                                        if (date >= lastYear) {
+                                            const monthIndex = (date.getMonth() - lastYear.getMonth() + 12) % 12;
+                                            const distance = entry.endMileage - entry.startMileage;
+                                            // Angenommene Kosten pro km: 0,15 €
+                                            fuelCosts[monthIndex] += distance * 0.15;
+                                        }
+                                    }
+                                });
+
+                                // ApexCharts-Konfiguration
+                                const options = {
+                                    series: [
+                                        {
+                                            name: 'Wartungskosten',
+                                            data: maintenanceCosts
+                                        },
+                                        {
+                                            name: 'Versicherung & Steuern',
+                                            data: insuranceCosts
+                                        },
+                                        {
+                                            name: 'Kraftstoffkosten',
+                                            data: fuelCosts
+                                        }
+                                    ],
+                                    chart: {
+                                        type: 'bar',
+                                        height: 320,
+                                        stacked: true,
+                                        toolbar: {
+                                            show: true,
+                                            tools: {
+                                                download: false
+                                            }
+                                        },
+                                        zoom: {
+                                            enabled: false
+                                        }
+                                    },
+                                    responsive: [{
+                                        breakpoint: 480,
+                                        options: {
+                                            legend: {
+                                                position: 'bottom',
+                                                offsetX: -10,
+                                                offsetY: 0
+                                            }
+                                        }
+                                    }],
+                                    plotOptions: {
+                                        bar: {
+                                            horizontal: false,
+                                            borderRadius: 2,
+                                            columnWidth: '70%'
+                                        }
+                                    },
+                                    xaxis: {
+                                        categories: months
+                                    },
+                                    yaxis: {
+                                        title: {
+                                            text: 'Kosten in €'
+                                        },
+                                        labels: {
+                                            formatter: function (value) {
+                                                return value.toFixed(0) + ' €';
+                                            }
+                                        }
+                                    },
+                                    colors: ['#6366f1', '#10b981', '#fbbf24'],
+                                    fill: {
+                                        opacity: 0.8
+                                    },
+                                    legend: {
+                                        position: 'top',
+                                        horizontalAlign: 'left'
+                                    },
+                                    dataLabels: {
+                                        enabled: false
+                                    }
+                                };
+
+                                // Chart erstellen
+                                const chart = new ApexCharts(document.getElementById('costChart'), options);
+                                chart.render();
+                            })
+                            .catch(error => {
+                                console.error('Fehler beim Laden der Nutzungsdaten für das Diagramm:', error);
+                            });
+                    })
+                    .catch(error => {
+                        console.error('Fehler beim Laden der Wartungsdaten für das Diagramm:', error);
+                    });
+            }
+
+// Seite initialisieren
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log('DOM geladen, initialisiere Fahrzeugdetails...');
+
+                loadVehicleDetails();
+                setupEventHandlers();
+
+                console.log('Initialisierung der Fahrzeugdetails abgeschlossen.');
+            });
 </script>
 </body>
 </html>

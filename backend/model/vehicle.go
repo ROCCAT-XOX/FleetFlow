@@ -37,6 +37,7 @@ const (
 )
 
 // Vehicle repräsentiert ein Fahrzeug im System
+// Vehicle repräsentiert ein Fahrzeug im System
 type Vehicle struct {
 	ID                 primitive.ObjectID `bson:"_id,omitempty" json:"id"`
 	LicensePlate       string             `bson:"licensePlate" json:"licensePlate"`
@@ -49,9 +50,11 @@ type Vehicle struct {
 	FuelType           FuelType           `bson:"fuelType" json:"fuelType"`
 	Mileage            int                `bson:"mileage" json:"mileage"`
 	RegistrationDate   time.Time          `bson:"registrationDate" json:"registrationDate"`
+	RegistrationExpiry time.Time          `bson:"registrationExpiry" json:"registrationExpiry"` // Neues Feld
 	InsuranceCompany   string             `bson:"insuranceCompany" json:"insuranceCompany"`
 	InsuranceNumber    string             `bson:"insuranceNumber" json:"insuranceNumber"`
 	InsuranceType      InsuranceType      `bson:"insuranceType" json:"insuranceType"`
+	InsuranceExpiry    time.Time          `bson:"insuranceExpiry" json:"insuranceExpiry"` // Neues Feld
 	NextInspectionDate time.Time          `bson:"nextInspectionDate" json:"nextInspectionDate"`
 	Status             VehicleStatus      `bson:"status" json:"status"`
 	CurrentDriverID    primitive.ObjectID `bson:"currentDriverId,omitempty" json:"currentDriverId"`

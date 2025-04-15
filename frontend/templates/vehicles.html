@@ -376,30 +376,33 @@
         const url = isEdit ? `/api/vehicles/${vehicleData.id}` : '/api/vehicles';
         const method = isEdit ? 'PUT' : 'POST';
 
-        // Konvertiere Strings zu passenden Typen
-        const mileage = parseInt(vehicleData.mileage || vehicleData.current_mileage || 0);
-        const year = parseInt(vehicleData.year || 0);
+        // Erstelle das Anfrageobjekt mit allen Feldern
+        const requestData = {
+            licensePlate: vehicleData.license || vehicleData.licensePlate || '',
+            brand: vehicleData.brand || '',
+            model: vehicleData.model || '',
+            year: parseInt(vehicleData.year || 0),
+            color: vehicleData.color || '',
+            vehicleId: vehicleData.vehicleId || vehicleData.vehicle_id || '',
+            vin: vehicleData.vin || '',
+            fuelType: vehicleData['fuel-type'] || vehicleData.fuelType || '',
+            mileage: parseInt(vehicleData.mileage || vehicleData.current_mileage || 0),
+            status: vehicleData.status || 'available',
 
-        // Datumsfelder korrekt formatieren (falls vorhanden)
-        let registrationDate = null;
-        if (vehicleData['registration-date']) {
-            registrationDate = vehicleData['registration-date'];
-        }
+            // Datumsfelder
+            registrationDate: vehicleData['registration-date'] || null,
+            registrationExpiry: vehicleData['registration-expiry'] || null,
+            insuranceCompany: vehicleData['insurance-company'] || vehicleData.insuranceCompany || '',
+            insuranceNumber: vehicleData['insurance-policy'] || vehicleData.insuranceNumber || '',
+            insuranceType: vehicleData['insurance-type'] || vehicleData.insuranceType || '',
+            insuranceExpiry: vehicleData['insurance-expiry'] || null,
+            nextInspectionDate: vehicleData['next-inspection'] || null,
 
-        let registrationExpiry = null;
-        if (vehicleData['registration-expiry']) {
-            registrationExpiry = vehicleData['registration-expiry'];
-        }
+            // Fahrerzuordnung
+            currentDriverId: vehicleData['assigned-driver'] || null
+        };
 
-        let nextInspectionDate = null;
-        if (vehicleData['next-inspection']) {
-            nextInspectionDate = vehicleData['next-inspection'];
-        }
-
-        let insuranceExpiry = null;
-        if (vehicleData['insurance-expiry']) {
-            insuranceExpiry = vehicleData['insurance-expiry'];
-        }
+        console.log('Anfrage an API:', JSON.stringify(requestData, null, 2)); // Detailliertes Logging
 
         // API-Anfrage senden
         return fetch(url, {
@@ -407,33 +410,29 @@
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                licensePlate: vehicleData.license || vehicleData.licensePlate || '',
-                brand: vehicleData.brand || '',
-                model: vehicleData.model || '',
-                year: year,
-                color: vehicleData.color || '',
-                vehicleId: vehicleData.vehicleId || vehicleData.vehicle_id || '',
-                vin: vehicleData.vin || '',
-                fuelType: vehicleData['fuel-type'] || vehicleData.fuelType || '',
-                mileage: mileage,
-                registrationDate: registrationDate,
-                registrationExpiry: registrationExpiry,
-                insuranceCompany: vehicleData['insurance-company'] || vehicleData.insuranceCompany || '',
-                insuranceNumber: vehicleData['insurance-policy'] || vehicleData.insuranceNumber || '',
-                insuranceType: vehicleData['insurance-type'] || vehicleData.insuranceType || '',
-                insuranceExpiry: insuranceExpiry,
-                nextInspectionDate: nextInspectionDate,
-                status: vehicleData.status || 'available'
-            })
+            body: JSON.stringify(requestData)
         })
             .then(response => {
-                if (!response.ok) {
-                    return response.text().then(text => {
-                        throw new Error('Fehler beim Speichern des Fahrzeugs: ' + text);
-                    });
-                }
-                return response.json();
+                console.log('API Response Status:', response.status);
+                return response.text().then(text => {
+                    try {
+                        // Versuchen, die Antwort als JSON zu parsen
+                        const jsonResponse = JSON.parse(text);
+                        console.log('API Response Body:', jsonResponse);
+
+                        if (!response.ok) {
+                            throw new Error('Fehler beim Speichern des Fahrzeugs: ' + text);
+                        }
+
+                        return jsonResponse;
+                    } catch (e) {
+                        console.log('API Raw Response:', text);
+                        if (!response.ok) {
+                            throw new Error('Fehler beim Speichern des Fahrzeugs: ' + text);
+                        }
+                        return {};
+                    }
+                });
             });
     }
 
@@ -450,6 +449,90 @@
             });
     }
 
+    // Tab 3: Fahrerzuordnung - Fahrer laden
+    // Funktion zum Laden der Fahrer mit einer verbesserten Methode zum Setzen des ausgewählten Fahrers
+    function loadDriversForVehicleAssignment(currentDriverId = null) {
+        console.log('Lade Fahrer für Fahrzeugzuordnung, aktueller Fahrer ID:', currentDriverId);
+
+        return fetch('/api/drivers')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Fehler beim Laden der Fahrer');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const drivers = data.drivers || [];
+                console.log('Geladene Fahrer für Zuweisung:', drivers);
+
+                const assignedDriverSelect = document.getElementById('assigned-driver');
+                if (!assignedDriverSelect) {
+                    console.error('Select-Element für Fahrerzuweisung nicht gefunden');
+                    return;
+                }
+
+                // Bestehende Optionen löschen
+                assignedDriverSelect.innerHTML = '';
+
+                // Erste Option (keine Auswahl) hinzufügen
+                const noDriverOption = document.createElement('option');
+                noDriverOption.value = '';
+                noDriverOption.textContent = 'Keinen Fahrer zuweisen';
+                assignedDriverSelect.appendChild(noDriverOption);
+
+                // Alle Fahrer hinzufügen
+                drivers.forEach(driver => {
+                    const option = document.createElement('option');
+                    option.value = driver.id;
+                    option.textContent = `${driver.firstName} ${driver.lastName}`;
+                    assignedDriverSelect.appendChild(option);
+                });
+
+                // Nach dem Hinzufügen aller Optionen den Fahrer auswählen
+                if (currentDriverId) {
+                    // Direkte Ausgabe aller verfügbaren Optionen zur Fehlersuche
+                    console.log('Alle verfügbaren Optionen im Dropdown:');
+                    Array.from(assignedDriverSelect.options).forEach((option, index) => {
+                        console.log(`Option ${index}: value='${option.value}', text='${option.textContent}'`);
+                    });
+
+                    // Normalisieren des currentDriverId-Werts für den Vergleich
+                    const normalizedCurrentDriverId = currentDriverId.toString().trim();
+                    console.log('Normalisierte CurrentDriverId:', normalizedCurrentDriverId);
+
+                    // Explizit versuchen, den Wert zu setzen
+                    assignedDriverSelect.value = normalizedCurrentDriverId;
+
+                    // Überprüfen, ob die Auswahl geklappt hat
+                    if (assignedDriverSelect.value !== normalizedCurrentDriverId) {
+                        console.warn('Automatische Auswahl fehlgeschlagen, versuche manuelle Suche.');
+
+                        // Manuell nach der passenden Option suchen und auswählen
+                        for (let i = 0; i < assignedDriverSelect.options.length; i++) {
+                            const option = assignedDriverSelect.options[i];
+                            const optionValue = option.value.toString().trim();
+
+                            console.log(`Vergleiche Option ${i}: '${optionValue}' mit '${normalizedCurrentDriverId}'`);
+
+                            if (optionValue === normalizedCurrentDriverId) {
+                                console.log(`Match gefunden bei Option ${i}, setze selectedIndex`);
+                                assignedDriverSelect.selectedIndex = i;
+                                break;
+                            }
+                        }
+                    }
+
+                    // Überprüfen des Ergebnisses
+                    console.log('Finale Auswahl im Dropdown:', assignedDriverSelect.value);
+                }
+
+                return drivers;
+            })
+            .catch(error => {
+                console.error('Fehler beim Laden der Fahrer:', error);
+            });
+    }
+
     // Funktion zum Laden aller Fahrzeuge für die Übersicht
     function loadVehicles() {
         return fetch('/api/vehicles')
@@ -462,7 +545,53 @@
             .then(data => {
                 // Sicherstellen, dass das vehicles-Array existiert
                 const vehicles = data.vehicles || [];
-                renderVehicles(vehicles);
+                console.log('Geladene Fahrzeugdaten:', vehicles); // Debug-Ausgabe
+
+                // Wenn keine currentDriverId vorhanden ist, direkt rendern
+                if (!vehicles.some(v => v.currentDriverId)) {
+                    renderVehicles(vehicles);
+                    return;
+                }
+
+                // Alle Fahrer laden für die Lookup-Tabelle
+                return fetch('/api/drivers')
+                    .then(response => {
+                        if (!response.ok) {
+                            // Wenn Fahrer nicht geladen werden können, trotzdem Fahrzeuge anzeigen
+                            renderVehicles(vehicles);
+                            return;
+                        }
+                        return response.json();
+                    })
+                    .then(driversData => {
+                        if (!driversData || !driversData.drivers) {
+                            renderVehicles(vehicles);
+                            return;
+                        }
+
+                        // Fahrer-Lookup-Tabelle erstellen
+                        const driversMap = {};
+                        driversData.drivers.forEach(driver => {
+                            driversMap[driver.id] = driver;
+                        });
+
+                        console.log('Fahrer-Lookup-Tabelle:', driversMap);
+
+                        // Fahrzeuge mit Fahrernamen anreichern
+                        const enrichedVehicles = vehicles.map(vehicle => {
+                            if (vehicle.currentDriverId && driversMap[vehicle.currentDriverId]) {
+                                const driver = driversMap[vehicle.currentDriverId];
+                                vehicle.driverName = `${driver.firstName} ${driver.lastName}`;
+                            }
+                            return vehicle;
+                        });
+
+                        renderVehicles(enrichedVehicles);
+                    })
+                    .catch(error => {
+                        console.error('Fehler beim Laden der Fahrer:', error);
+                        renderVehicles(vehicles);
+                    });
             })
             .catch(error => {
                 console.error('Fehler:', error);
@@ -593,6 +722,13 @@
 
         modal.classList.remove('hidden');
 
+        // Standardmäßig zum ersten Tab wechseln
+        document.querySelectorAll('.tab-btn').forEach(button => {
+            if (button.dataset.tab === 'vehicle-data') {
+                button.click();
+            }
+        });
+
         if (isEdit && vehicleId) {
             modalTitle.textContent = 'Fahrzeug bearbeiten';
 
@@ -601,7 +737,7 @@
                 .then(response => response.json())
                 .then(data => {
                     const vehicle = data.vehicle;
-                    console.log('Geladene Fahrzeugdaten:', vehicle); // Debug-Ausgabe
+                    console.log('Geladene Fahrzeugdaten für Bearbeitung:', vehicle); // Debug-Ausgabe
 
                     if (!vehicle) {
                         throw new Error('Fahrzeugdaten nicht gefunden');
@@ -636,12 +772,12 @@
                     // Tab 2: Zulassung & Versicherung
                     // Zulassungsdatum
                     if (document.getElementById('registration-date')) {
-                        document.getElementById('registration-date').value = vehicle.registrationDate ? new Date(vehicle.registrationDate).toISOString().split('T')[0] : '';
+                        document.getElementById('registration-date').value = formatDateForInput(vehicle.registrationDate);
                     }
 
                     // Ablaufdatum der Zulassung
                     if (document.getElementById('registration-expiry')) {
-                        document.getElementById('registration-expiry').value = vehicle.registrationExpiry ? new Date(vehicle.registrationExpiry).toISOString().split('T')[0] : '';
+                        document.getElementById('registration-expiry').value = formatDateForInput(vehicle.registrationExpiry);
                     }
 
                     // Versicherungsgesellschaft
@@ -661,17 +797,64 @@
 
                     // Ablaufdatum der Versicherung
                     if (document.getElementById('insurance-expiry')) {
-                        document.getElementById('insurance-expiry').value = vehicle.insuranceExpiry ? new Date(vehicle.insuranceExpiry).toISOString().split('T')[0] : '';
+                        document.getElementById('insurance-expiry').value = formatDateForInput(vehicle.insuranceExpiry);
                     }
 
                     // Nächste HU/AU
                     if (document.getElementById('next-inspection')) {
-                        document.getElementById('next-inspection').value = vehicle.nextInspectionDate ? new Date(vehicle.nextInspectionDate).toISOString().split('T')[0] : '';
+                        document.getElementById('next-inspection').value = formatDateForInput(vehicle.nextInspectionDate);
                     }
 
                     // Status setzen
                     if (document.getElementById('status')) {
                         document.getElementById('status').value = vehicle.status || 'available';
+                    }
+
+                    // Tab 3: Fahrerzuordnung - In openVehicleModal-Funktion
+                    const currentDriverId = vehicle.currentDriverId ? vehicle.currentDriverId.toString() : '';
+                    console.log('Zugewiesener Fahrer ID:', currentDriverId);
+
+// Fahrer laden, falls es den Tab "driver-assignment" gibt
+                    const driverTab = document.getElementById('driver-assignment');
+                    if (driverTab) {
+                        // Tab öffnen, um sicherzustellen, dass die Elemente verfügbar sind
+                        document.querySelectorAll('.tab-btn').forEach(button => {
+                            if (button.dataset.tab === 'driver-assignment') {
+                                button.click();
+                            }
+                        });
+
+                        // Fahrer laden und zuweisen mit mehreren Versuchen
+                        loadDriversForVehicleAssignment(currentDriverId)
+                            .then(() => {
+                                // Nochmals explizit versuchen, den Wert zu setzen nach einer kurzen Verzögerung
+                                setTimeout(() => {
+                                    const assignedDriverSelect = document.getElementById('assigned-driver');
+                                    if (assignedDriverSelect && currentDriverId) {
+                                        console.log('Zusätzlicher Versuch, den Fahrer zu setzen:', currentDriverId);
+
+                                        // Direkter Versuch
+                                        assignedDriverSelect.value = currentDriverId;
+
+                                        // Falls das nicht klappt, über Event simulieren
+                                        if (assignedDriverSelect.value !== currentDriverId) {
+                                            // Erstelle und löse ein Change-Event aus
+                                            const event = new Event('change', { bubbles: true });
+                                            assignedDriverSelect.dispatchEvent(event);
+
+                                            // Überprüfe das Ergebnis
+                                            console.log('Nach Event-Auslösung:', assignedDriverSelect.value);
+                                        }
+                                    }
+                                }, 200);
+
+                                // Zurück zum ersten Tab wechseln
+                                document.querySelectorAll('.tab-btn').forEach(button => {
+                                    if (button.dataset.tab === 'vehicle-data') {
+                                        button.click();
+                                    }
+                                });
+                            });
                     }
 
                     // ID zum Formular hinzufügen
@@ -693,6 +876,29 @@
             modalTitle.textContent = 'Fahrzeug hinzufügen';
             vehicleForm.reset();
 
+            // Fahrer für neues Fahrzeug laden
+            const driverTab = document.getElementById('driver-assignment');
+            if (driverTab) {
+                // Tab öffnen, um sicherzustellen, dass die Elemente verfügbar sind
+                document.querySelectorAll('.tab-btn').forEach(button => {
+                    if (button.dataset.tab === 'driver-assignment') {
+                        button.click();
+                    }
+                });
+
+                // Fahrer laden
+                setTimeout(() => {
+                    loadDriversForVehicleAssignment();
+
+                    // Zurück zum ersten Tab wechseln
+                    document.querySelectorAll('.tab-btn').forEach(button => {
+                        if (button.dataset.tab === 'vehicle-data') {
+                            button.click();
+                        }
+                    });
+                }, 100);
+            }
+
             // Entferne versteckte ID-Felder, falls vorhanden
             const existingIdInput = vehicleForm.querySelector('input[name="id"]');
             if (existingIdInput) {
@@ -701,11 +907,85 @@
         }
     }
 
+    // Tab 3: Fahrerzuordnung - Fahrer laden
+    function loadDriversForVehicleAssignment(currentDriverId = null) {
+        return fetch('/api/drivers')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Fehler beim Laden der Fahrer');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const drivers = data.drivers || [];
+                console.log('Geladene Fahrer:', drivers);
+
+                const assignedDriverSelect = document.getElementById('assigned-driver');
+                if (!assignedDriverSelect) return;
+
+                // Bestehende Optionen löschen, aber die erste Option (keine Zuweisung) beibehalten
+                const firstOption = assignedDriverSelect.querySelector('option:first-child');
+                assignedDriverSelect.innerHTML = '';
+
+                // Erste Option wieder hinzufügen
+                if (firstOption) {
+                    assignedDriverSelect.appendChild(firstOption);
+                } else {
+                    const noDriverOption = document.createElement('option');
+                    noDriverOption.value = '';
+                    noDriverOption.textContent = 'Keinen Fahrer zuweisen';
+                    assignedDriverSelect.appendChild(noDriverOption);
+                }
+
+                // Alle Fahrer hinzufügen
+                drivers.forEach(driver => {
+                    const option = document.createElement('option');
+                    option.value = driver.id;
+                    option.textContent = `${driver.firstName} ${driver.lastName}`;
+
+                    // Wenn dieser Fahrer der aktuell zugewiesene ist, auswählen
+                    if (currentDriverId && driver.id === currentDriverId) {
+                        option.selected = true;
+                    }
+
+                    assignedDriverSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Fehler beim Laden der Fahrer:', error);
+            });
+    }
+
     // Funktion zum Schließen des Fahrzeug-Modals
     function closeVehicleModal() {
         const modal = document.getElementById('vehicle-modal');
         if (modal) {
             modal.classList.add('hidden');
+        }
+    }
+
+    function formatDateForInput(dateString) {
+        if (!dateString) return '';
+
+        try {
+            // Versuchen Sie, das Datum zu parsen (sowohl als ISO-String als auch als Timestamp)
+            const date = new Date(dateString);
+
+            // Überprüfen, ob das Datum gültig ist
+            if (isNaN(date.getTime())) {
+                console.warn('Ungültiges Datum:', dateString);
+                return '';
+            }
+
+            // Formatieren Sie das Datum als YYYY-MM-DD (für HTML input type="date")
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+
+            return `${year}-${month}-${day}`;
+        } catch (error) {
+            console.error('Fehler beim Formatieren des Datums:', error);
+            return '';
         }
     }
 

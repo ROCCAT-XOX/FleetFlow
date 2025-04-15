@@ -300,143 +300,487 @@
 </div>
 
 <script>
+    // Funktion zum Speichern eines Fahrers (Erstellen oder Aktualisieren)
+    function saveDriver(driverData, isEdit = false) {
+        console.log('Zu speichernde Fahrerdaten:', driverData); // Debug-Ausgabe
 
-        document.addEventListener('DOMContentLoaded', function() {
-        // Modal-Elemente
+        // API-Pfad und Methode basierend auf Bearbeitung oder Neuanlage
+        const url = isEdit ? `/api/drivers/${driverData.id}` : '/api/drivers';
+        const method = isEdit ? 'PUT' : 'POST';
+
+        // Lizenzklassen sammeln
+        const licenseClasses = [];
+        for (const key in driverData) {
+            if (key.startsWith('license-') && driverData[key] === 'on') {
+                // Extrahiere die Lizenzklasse aus dem Feldnamen (z.B. 'license-b' -> 'B')
+                const licenseClass = key.replace('license-', '').toUpperCase();
+                licenseClasses.push(licenseClass);
+            }
+        }
+
+        // API-Anfrage senden
+        return fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                firstName: driverData['first-name'] || '',
+                lastName: driverData['last-name'] || '',
+                email: driverData.email || '',
+                phone: driverData.phone || '',
+                status: driverData.status || 'available',
+                assignedVehicleId: driverData['assigned-vehicle'] || null,
+                licenseClasses: licenseClasses,
+                notes: driverData.notes || ''
+            })
+        })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error('Fehler beim Speichern des Fahrers: ' + text);
+                    });
+                }
+                return response.json();
+            });
+    }
+
+    // Funktion zum Löschen eines Fahrers
+    function deleteDriver(driverId) {
+        return fetch(`/api/drivers/${driverId}`, {
+            method: 'DELETE'
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Fehler beim Löschen des Fahrers');
+                }
+                return response.json();
+            });
+    }
+
+    // Funktion zum Laden aller Fahrer für die Übersicht
+    function loadDrivers() {
+        return fetch('/api/drivers')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Fehler beim Laden der Fahrer');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Sicherstellen, dass das drivers-Array existiert
+                const drivers = data.drivers || [];
+                renderDrivers(drivers);
+            })
+            .catch(error => {
+                console.error('Fehler:', error);
+                // Fehlermeldung anzeigen
+                const container = document.querySelector('ul[role="list"]');
+                if (container) {
+                    container.innerHTML = `
+                    <div class="w-full p-4 bg-red-50 text-red-700 rounded-lg">
+                        <p>Fehler beim Laden der Fahrer: ${error.message}</p>
+                    </div>
+                `;
+                }
+            });
+    }
+
+    // Funktion zum Rendern der Fahrer in der Übersicht
+    function renderDrivers(drivers) {
+        // Sicherstellung, dass drivers ein Array ist
+        if (!drivers || !Array.isArray(drivers)) {
+            drivers = [];
+        }
+
+        // Finden des Containers für die Fahrerliste
+        const container = document.querySelector('ul[role="list"]');
+        if (!container) {
+            console.error('Container für Fahrer nicht gefunden');
+            return;
+        }
+
+        container.innerHTML = '';
+
+        if (drivers.length === 0) {
+            container.innerHTML = `
+            <li class="py-4 text-center text-gray-500">
+                <p>Keine Fahrer gefunden.</p>
+            </li>
+        `;
+            return;
+        }
+
+        drivers.forEach(driver => {
+            // Status-Klassen und Text ermitteln
+            let statusClass, statusDotClass, statusText;
+
+            switch (driver.status) {
+                case 'available':
+                    statusDotClass = 'bg-emerald-500';
+                    statusBgClass = 'bg-emerald-500/20';
+                    statusText = 'Verfügbar';
+                    break;
+                case 'onduty':
+                    statusDotClass = 'bg-yellow-500';
+                    statusBgClass = 'bg-yellow-500/20';
+                    statusText = 'Im Dienst';
+                    break;
+                case 'offduty':
+                    statusDotClass = 'bg-gray-500';
+                    statusBgClass = 'bg-gray-500/20';
+                    statusText = 'Außer Dienst';
+                    break;
+                default:
+                    statusDotClass = 'bg-gray-500';
+                    statusBgClass = 'bg-gray-500/20';
+                    statusText = driver.status || 'Unbekannt';
+            }
+
+            // Führerscheinklassen anzeigen
+            const licenseClassElements = (driver.licenseClasses || []).map(licenseClass => `
+            <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                ${licenseClass}
+            </span>
+        `).join('');
+
+            // Fahrer-Eintrag erstellen
+            const listItem = document.createElement('li');
+            listItem.className = 'flex justify-between gap-x-6 py-5 px-5 hover:bg-gray-50 transition-colors duration-150';
+            listItem.innerHTML = `
+            <div class="flex min-w-0 gap-x-4">
+                <img class="size-12 flex-none rounded-full bg-gray-50" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="">
+                <div class="min-w-0 flex-auto">
+                    <p class="text-sm font-semibold text-gray-900">${driver.firstName} ${driver.lastName}</p>
+                    <p class="mt-1 truncate text-xs text-gray-500">${driver.email}</p>
+                    <div class="mt-1 flex items-center gap-x-1.5">
+                        <div class="flex-none rounded-full ${statusBgClass} p-1">
+                            <div class="size-1.5 rounded-full ${statusDotClass}"></div>
+                        </div>
+                        <p class="text-xs text-gray-500">${statusText}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="hidden sm:flex sm:flex-col sm:items-end">
+                <div class="flex space-x-2">
+                    ${licenseClassElements || '<span class="text-xs text-gray-400">Keine Führerscheinklassen</span>'}
+                </div>
+                <p class="mt-1 text-xs text-gray-500">Aktuelles Fahrzeug: <span class="font-medium">${driver.vehicleName || 'Keines'}</span></p>
+                <div class="mt-2">
+                    <button type="button" class="edit-driver-btn inline-flex items-center px-2 py-1 text-xs font-medium text-indigo-700 hover:text-indigo-900" data-id="${driver.id}">
+                        <svg class="mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        Bearbeiten
+                    </button>
+                </div>
+            </div>
+        `;
+
+            container.appendChild(listItem);
+        });
+
+        // Event-Listener für die Bearbeiten-Buttons hinzufügen
+        document.querySelectorAll('.edit-driver-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const driverId = this.dataset.id;
+                openDriverModal(true, driverId);
+            });
+        });
+    }
+
+    // Funktion zum Laden verfügbarer Fahrzeuge für die Fahrerauswahl
+    function loadVehiclesForDriverAssignment() {
+        return fetch('/api/vehicles?status=available')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Fehler beim Laden der verfügbaren Fahrzeuge');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const vehicles = data.vehicles || [];
+                const selectElement = document.getElementById('assigned-vehicle');
+
+                if (selectElement) {
+                    // Bestehende Optionen beibehalten (erste Option "Kein Fahrzeug")
+                    const firstOption = selectElement.querySelector('option:first-child');
+                    selectElement.innerHTML = '';
+
+                    if (firstOption) {
+                        selectElement.appendChild(firstOption);
+                    } else {
+                        const noVehicleOption = document.createElement('option');
+                        noVehicleOption.value = '';
+                        noVehicleOption.textContent = 'Kein Fahrzeug zugewiesen';
+                        selectElement.appendChild(noVehicleOption);
+                    }
+
+                    // Verfügbare Fahrzeuge hinzufügen
+                    vehicles.forEach(vehicle => {
+                        const option = document.createElement('option');
+                        option.value = vehicle.id;
+                        option.textContent = `${vehicle.brand} ${vehicle.model} (${vehicle.licensePlate})`;
+                        selectElement.appendChild(option);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Fehler beim Laden der Fahrzeuge:', error);
+            });
+    }
+
+    // Funktion zum Öffnen des Fahrer-Modals mit vorausgefüllten Daten bei Bearbeitung
+    function openDriverModal(isEdit = false, driverId = null) {
         const modal = document.getElementById('driver-modal');
-        const addDriverBtn = document.getElementById('add-driver-btn');
-        const closeModalBtn = document.getElementById('close-modal-btn');
-        const driverForm = document.getElementById('driver-form');
-        const editButtons = document.querySelectorAll('.edit-driver-btn');
         const modalTitle = document.getElementById('modal-title');
+        const driverForm = document.getElementById('driver-form');
 
-        // Modal-Funktionen
-        function openModal(isEdit = false, driverId = null) {
+        if (!modal || !modalTitle || !driverForm) {
+            console.error('Modal-Elemente nicht gefunden');
+            return;
+        }
+
         modal.classList.remove('hidden');
-        if (isEdit) {
-        modalTitle.textContent = 'Fahrer bearbeiten';
-        // Hier würden in einer echten Anwendung die Fahrerdaten geladen werden
-        console.log(`Fahrer mit ID ${driverId} bearbeiten`);
 
-        // Beispiel für das Vorausfüllen von Daten (in einer echten Anwendung würden diese von der API kommen)
-        if (driverId === '1') {
-        document.getElementById('first-name').value = 'Max';
-        document.getElementById('last-name').value = 'Mustermann';
-        document.getElementById('email').value = 'max.mustermann@fleetdrive.com';
-        document.getElementById('phone').value = '+49 123 4567890';
-        document.getElementById('status').value = 'available';
-        document.getElementById('assigned-vehicle').value = '2'; // BMW 530e
-        document.getElementById('license-b').checked = true;
-        document.getElementById('license-be').checked = true;
-    } else if (driverId === '2') {
-        document.getElementById('first-name').value = 'Erika';
-        document.getElementById('last-name').value = 'Musterfrau';
-        document.getElementById('email').value = 'erika.musterfrau@fleetdrive.com';
-        document.getElementById('phone').value = '+49 123 4567891';
-        document.getElementById('status').value = 'onduty';
-        document.getElementById('assigned-vehicle').value = '3'; // Audi e-tron
-        document.getElementById('license-b').checked = true;
-        document.getElementById('license-c1').checked = true;
-        document.getElementById('license-ce').checked = true;
-    } else if (driverId === '3') {
-        document.getElementById('first-name').value = 'John';
-        document.getElementById('last-name').value = 'Doe';
-        document.getElementById('email').value = 'john.doe@fleetdrive.com';
-        document.getElementById('phone').value = '+49 123 4567892';
-        document.getElementById('status').value = 'offduty';
-        document.getElementById('assigned-vehicle').value = ''; // kein Fahrzeug
-        document.getElementById('license-b').checked = true;
-        document.getElementById('license-d1').checked = true;
+        // Verfügbare Fahrzeuge für die Zuweisung laden
+        loadVehiclesForDriverAssignment();
+
+        if (isEdit && driverId) {
+            modalTitle.textContent = 'Fahrer bearbeiten';
+
+            // Fahrerdaten von der API laden
+            fetch(`/api/drivers/${driverId}`)
+                .then(response => response.json())
+                .then(data => {
+                    const driver = data.driver;
+                    console.log('Geladene Fahrerdaten:', driver); // Debug-Ausgabe
+
+                    if (!driver) {
+                        throw new Error('Fahrerdaten nicht gefunden');
+                    }
+
+                    // Formularfelder befüllen
+                    if (document.getElementById('first-name')) {
+                        document.getElementById('first-name').value = driver.firstName || '';
+                    }
+                    if (document.getElementById('last-name')) {
+                        document.getElementById('last-name').value = driver.lastName || '';
+                    }
+                    if (document.getElementById('email')) {
+                        document.getElementById('email').value = driver.email || '';
+                    }
+                    if (document.getElementById('phone')) {
+                        document.getElementById('phone').value = driver.phone || '';
+                    }
+                    if (document.getElementById('status')) {
+                        document.getElementById('status').value = driver.status || 'available';
+                    }
+
+                    // Fahrzeugzuweisung
+                    if (document.getElementById('assigned-vehicle') && driver.assignedVehicleId) {
+                        // Wenn das Element noch nicht im Select ist, warten wir auf das Laden der Fahrzeuge
+                        const assignedVehicleSelect = document.getElementById('assigned-vehicle');
+                        const setVehicleValue = () => {
+                            if (assignedVehicleSelect.querySelector(`option[value="${driver.assignedVehicleId}"]`)) {
+                                assignedVehicleSelect.value = driver.assignedVehicleId;
+                            } else {
+                                // Fahrzeug ist möglicherweise nicht verfügbar, aber dem Fahrer zugewiesen
+                                // Option für dieses spezifische Fahrzeug hinzufügen
+                                fetch(`/api/vehicles/${driver.assignedVehicleId}`)
+                                    .then(resp => resp.json())
+                                    .then(vehicleData => {
+                                        const vehicle = vehicleData.vehicle;
+                                        if (vehicle) {
+                                            const option = document.createElement('option');
+                                            option.value = vehicle.id;
+                                            option.textContent = `${vehicle.brand} ${vehicle.model} (${vehicle.licensePlate})`;
+                                            assignedVehicleSelect.appendChild(option);
+                                            assignedVehicleSelect.value = vehicle.id;
+                                        }
+                                    })
+                                    .catch(err => console.error('Fehler beim Laden des zugewiesenen Fahrzeugs:', err));
+                            }
+                        };
+
+                        // Prüfen, ob die Fahrzeuge bereits geladen sind
+                        if (assignedVehicleSelect.options.length > 1) {
+                            setVehicleValue();
+                        } else {
+                            // Warten und dann versuchen
+                            setTimeout(setVehicleValue, 500);
+                        }
+                    }
+
+                    // Führerscheinklassen zurücksetzen
+                    document.querySelectorAll('input[type="checkbox"][name^="license-"]').forEach(checkbox => {
+                        checkbox.checked = false;
+                    });
+
+                    // Führerscheinklassen setzen
+                    (driver.licenseClasses || []).forEach(licenseClass => {
+                        const checkbox = document.getElementById(`license-${licenseClass.toLowerCase()}`);
+                        if (checkbox) {
+                            checkbox.checked = true;
+                        }
+                    });
+
+                    // Anmerkungen
+                    if (document.getElementById('notes')) {
+                        document.getElementById('notes').value = driver.notes || '';
+                    }
+
+                    // ID zum Formular hinzufügen
+                    let idInput = driverForm.querySelector('input[name="id"]');
+                    if (!idInput) {
+                        idInput = document.createElement('input');
+                        idInput.type = 'hidden';
+                        idInput.name = 'id';
+                        driverForm.appendChild(idInput);
+                    }
+                    idInput.value = driverId;
+                })
+                .catch(error => {
+                    console.error('Fehler beim Laden des Fahrers:', error);
+                    closeDriverModal();
+                    alert('Fehler beim Laden des Fahrers: ' + error.message);
+                });
+        } else {
+            modalTitle.textContent = 'Fahrer hinzufügen';
+            driverForm.reset();
+
+            // Entferne versteckte ID-Felder, falls vorhanden
+            const existingIdInput = driverForm.querySelector('input[name="id"]');
+            if (existingIdInput) {
+                existingIdInput.remove();
+            }
+        }
     }
-    } else {
-        modalTitle.textContent = 'Fahrer hinzufügen';
-        driverForm.reset();
-    }
-    }
 
-        function closeModal() {
-        modal.classList.add('hidden');
-        driverForm.reset();
+    // Funktion zum Schließen des Fahrer-Modals
+    function closeDriverModal() {
+        const modal = document.getElementById('driver-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
     }
 
-        // Event-Listener
-        addDriverBtn.addEventListener('click', () => openModal(false));
+    // Event-Listener hinzufügen, wenn das DOM geladen ist
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM geladen, initialisiere Fahrerfunktionen...');
 
-        closeModalBtn.addEventListener('click', closeModal);
+        // Fahrer laden
+        loadDrivers();
 
-        // Schließen des Modals, wenn außerhalb geklickt wird
-        modal.addEventListener('click', function(event) {
-        if (event.target === modal) {
-        closeModal();
-    }
-    });
+        // Event-Listener für "Fahrer hinzufügen"-Button
+        const addDriverBtn = document.getElementById('add-driver-btn');
+        if (addDriverBtn) {
+            addDriverBtn.addEventListener('click', () => openDriverModal(false));
+        } else {
+            console.warn('Button "Fahrer hinzufügen" nicht gefunden');
+        }
 
-        // Event-Listener für Bearbeiten-Buttons
-        editButtons.forEach(button => {
-        button.addEventListener('click', function() {
-        const driverId = this.dataset.id;
-        openModal(true, driverId);
-    });
-    });
+        // Event-Listener für "Schließen"-Button im Modal
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        if (closeModalBtn) {
+            closeModalBtn.addEventListener('click', closeDriverModal);
+        } else {
+            console.warn('Button "Schließen" nicht gefunden');
+        }
 
-        // Formular-Absenden
-        driverForm.addEventListener('submit', function(event) {
-        event.preventDefault();
+        // Event-Listener für Klick außerhalb des Modals
+        const driverModal = document.getElementById('driver-modal');
+        if (driverModal) {
+            driverModal.addEventListener('click', function(event) {
+                if (event.target === driverModal) {
+                    closeDriverModal();
+                }
+            });
+        } else {
+            console.warn('Fahrer-Modal nicht gefunden');
+        }
 
-        // Hier würden die Formulardaten verarbeitet und an die API gesendet werden
-        const formData = new FormData(driverForm);
-        const driverData = {};
+        // Event-Listener für das Fahrer-Formular
+        const driverForm = document.getElementById('driver-form');
+        if (driverForm) {
+            driverForm.addEventListener('submit', function(event) {
+                event.preventDefault();
 
-        for (let [key, value] of formData.entries()) {
-        driverData[key] = value;
-    }
+                // Formulardaten sammeln
+                const formData = new FormData(driverForm);
+                const driverData = {};
 
-        console.log('Fahrerdaten speichern:', driverData);
+                for (let [key, value] of formData.entries()) {
+                    driverData[key] = value;
+                }
 
-        // Erfolgsmeldung (in einer echten Anwendung würde hier auf die API-Antwort gewartet werden)
-        alert('Fahrer erfolgreich gespeichert!');
-        closeModal();
-    });
+                // Prüfen, ob es eine Bearbeitung ist (ID vorhanden)
+                const isEdit = !!driverData.id;
 
-        // Suchfunktion
+                // Fahrer speichern
+                saveDriver(driverData, isEdit)
+                    .then(response => {
+                        console.log('Fahrer erfolgreich gespeichert:', response);
+                        closeDriverModal();
+                        loadDrivers(); // Liste aktualisieren
+                        alert('Fahrer erfolgreich gespeichert!');
+                    })
+                    .catch(error => {
+                        console.error('Fehler:', error);
+                        alert(`Fehler beim Speichern des Fahrers: ${error.message}`);
+                    });
+            });
+        } else {
+            console.warn('Fahrer-Formular nicht gefunden');
+        }
+
+        // Event-Listener für Suchfunktion
         const searchInput = document.getElementById('search-driver');
-        searchInput.addEventListener('input', function() {
-        const searchText = this.value.toLowerCase();
-        const driverItems = document.querySelectorAll('ul > li');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                const searchText = this.value.toLowerCase();
+                const driverItems = document.querySelectorAll('ul > li');
 
-        driverItems.forEach(item => {
-        const itemText = item.textContent.toLowerCase();
-        if (itemText.includes(searchText)) {
-        item.style.display = '';
-    } else {
-        item.style.display = 'none';
-    }
-    });
-    });
+                driverItems.forEach(item => {
+                    if (item.textContent.toLowerCase().includes(searchText)) {
+                        item.style.display = '';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+        }
+
+        // Event-Listener für Status-Filter
         const statusFilter = document.getElementById('status-filter');
-        statusFilter.addEventListener('change', function() {
-        const selectedStatus = this.value;
-        const driverItems = document.querySelectorAll('ul > li');
+        if (statusFilter) {
+            statusFilter.addEventListener('change', function() {
+                const selectedStatus = this.value;
+                const driverItems = document.querySelectorAll('ul > li');
 
-        driverItems.forEach(item => {
-        if (selectedStatus === 'all') {
-        item.style.display = '';
-        return;
-    }
+                driverItems.forEach(item => {
+                    if (selectedStatus === 'all') {
+                        item.style.display = '';
+                        return;
+                    }
 
-        const statusText = item.querySelector('.rounded-full + p').textContent.trim().toLowerCase();
-        let matchesFilter = false;
+                    const statusText = item.querySelector('.rounded-full + p')?.textContent.trim().toLowerCase();
+                    if (!statusText) return;
 
-        if (selectedStatus === 'available' && statusText === 'verfügbar') {
-        matchesFilter = true;
-    } else if (selectedStatus === 'onduty' && statusText === 'im dienst') {
-        matchesFilter = true;
-    } else if (selectedStatus === 'offduty' && statusText === 'außer dienst') {
-        matchesFilter = true;
-    }
+                    let matchesFilter = false;
+                    if (selectedStatus === 'available' && statusText === 'verfügbar') {
+                        matchesFilter = true;
+                    } else if (selectedStatus === 'onduty' && statusText === 'im dienst') {
+                        matchesFilter = true;
+                    } else if (selectedStatus === 'offduty' && statusText === 'außer dienst') {
+                        matchesFilter = true;
+                    }
 
-        item.style.display = matchesFilter ? '' : 'none';
-    });
-    });
+                    item.style.display = matchesFilter ? '' : 'none';
+                });
+            });
+        }
+
+        console.log('Initialisierung der Fahrerfunktionen abgeschlossen.');
     });
 </script>

@@ -35,9 +35,11 @@ type CreateVehicleRequest struct {
 	FuelType           model.FuelType      `json:"fuelType"`
 	Mileage            int                 `json:"mileage"`
 	RegistrationDate   string              `json:"registrationDate"`
+	RegistrationExpiry string              `json:"registrationExpiry"` // Neues Feld
 	InsuranceCompany   string              `json:"insuranceCompany"`
 	InsuranceNumber    string              `json:"insuranceNumber"`
 	InsuranceType      model.InsuranceType `json:"insuranceType"`
+	InsuranceExpiry    string              `json:"insuranceExpiry"` // Neues Feld
 	NextInspectionDate string              `json:"nextInspectionDate"`
 	Status             model.VehicleStatus `json:"status"`
 }
@@ -208,6 +210,26 @@ func (h *VehicleHandler) UpdateVehicle(c *gin.Context) {
 			return
 		}
 		vehicle.RegistrationDate = registrationDate
+	}
+
+	// Ablaufdatum der Zulassung parsen
+	if req.RegistrationExpiry != "" {
+		registrationExpiry, err := time.Parse("2006-01-02", req.RegistrationExpiry)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Ungültiges Ablaufdatum der Zulassung"})
+			return
+		}
+		vehicle.RegistrationExpiry = registrationExpiry
+	}
+
+	// Ablaufdatum der Versicherung parsen
+	if req.InsuranceExpiry != "" {
+		insuranceExpiry, err := time.Parse("2006-01-02", req.InsuranceExpiry)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Ungültiges Ablaufdatum der Versicherung"})
+			return
+		}
+		vehicle.InsuranceExpiry = insuranceExpiry
 	}
 
 	if req.NextInspectionDate != "" {
