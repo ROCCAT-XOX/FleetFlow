@@ -3,8 +3,10 @@ package handler
 import (
 	"FleetDrive/backend/model"
 	"FleetDrive/backend/repository"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"math/rand"
 	"net/http"
 	"time"
 )
@@ -128,6 +130,16 @@ func (h *VehicleHandler) CreateVehicle(c *gin.Context) {
 		return
 	}
 
+	// Generiere automatisch eine Fahrzeug-ID, wenn keine angegeben wurde
+	vehicleID := req.VehicleID
+	if vehicleID == "" {
+		// Format: FD-JAHR-RANDOMNR (z.B. FD-2025-12345)
+		year := time.Now().Year()
+		randomPart := rand.Intn(90000) + 10000 // 5-stellige Zufallszahl
+		vehicleID = fmt.Sprintf("FD-%d-%05d", year, randomPart)
+
+	}
+
 	// Datum parsen, wenn vorhanden
 	var registrationDate, nextInspectionDate time.Time
 	if req.RegistrationDate != "" {
@@ -155,7 +167,7 @@ func (h *VehicleHandler) CreateVehicle(c *gin.Context) {
 		Model:              req.Model,
 		Year:               req.Year,
 		Color:              req.Color,
-		VehicleID:          req.VehicleID,
+		VehicleID:          vehicleID,
 		VIN:                req.VIN,
 		FuelType:           req.FuelType,
 		Mileage:            req.Mileage,
@@ -200,6 +212,36 @@ func (h *VehicleHandler) UpdateVehicle(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Ein anderes Fahrzeug mit diesem Kennzeichen existiert bereits"})
 			return
 		}
+	}
+
+	// Daten aktualisieren, aber nur wenn Werte vorhanden sind
+	if req.LicensePlate != "" {
+		vehicle.LicensePlate = req.LicensePlate
+	}
+	if req.Brand != "" {
+		vehicle.Brand = req.Brand
+	}
+	if req.Model != "" {
+		vehicle.Model = req.Model
+	}
+	if req.Year > 0 {
+		vehicle.Year = req.Year
+	}
+	if req.Color != "" {
+		vehicle.Color = req.Color
+	}
+
+	if req.VIN != "" {
+		vehicle.VIN = req.VIN
+	}
+	if req.FuelType != "" {
+		vehicle.FuelType = req.FuelType
+	}
+	if req.Mileage > 0 {
+		vehicle.Mileage = req.Mileage
+	}
+	if req.Status != "" {
+		vehicle.Status = req.Status
 	}
 
 	// Datum parsen, wenn vorhanden
@@ -247,7 +289,6 @@ func (h *VehicleHandler) UpdateVehicle(c *gin.Context) {
 	vehicle.Model = req.Model
 	vehicle.Year = req.Year
 	vehicle.Color = req.Color
-	vehicle.VehicleID = req.VehicleID
 	vehicle.VIN = req.VIN
 	vehicle.FuelType = req.FuelType
 	vehicle.Mileage = req.Mileage
