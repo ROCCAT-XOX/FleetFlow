@@ -296,9 +296,9 @@
                                         <div class="sm:col-span-3">
                                             <label for="insurance-type" class="block text-sm font-medium text-gray-700">Versicherungstyp</label>
                                             <select id="insurance-type" name="insurance-type" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                                                <option value="liability">Haftpflicht</option>
-                                                <option value="comprehensive">Vollkasko</option>
-                                                <option value="partial">Teilkasko</option>
+                                                <option value="Haftpflicht">Haftpflicht</option>
+                                                <option value="Vollkasko">Vollkasko</option>
+                                                <option value="Teilkasko">Teilkasko</option>
                                             </select>
                                         </div>
 
@@ -396,12 +396,11 @@
             model: vehicleData.model || '',
             year: parseInt(vehicleData.year || 0),
             color: vehicleData.color || '',
-            vehicleId: vehicleData.vehicleId || vehicleData.vehicle_id || '',
             vin: vehicleData.vin || '',
             fuelType: vehicleData['fuel-type'] || vehicleData.fuelType || '',
-            mileage: parseInt(vehicleData.mileage || vehicleData.current_mileage || 0),
+            mileage: parseInt(vehicleData.mileage || vehicleData.mileage || 0),
             status: vehicleData.status || 'available',
-
+            vehicleId: vehicleData.vehicleId || vehicleData.vehicle_id || '',
             // Datumsfelder
             registrationDate: vehicleData['registration-date'] || null,
             registrationExpiry: vehicleData['registration-expiry'] || null,
@@ -414,6 +413,10 @@
             // Fahrerzuordnung
             currentDriverId: vehicleData['assigned-driver'] || null
         };
+
+        if (isEdit && (!requestData.vehicleId || requestData.vehicleId.trim() === '')) {
+            delete requestData.vehicleId;
+        }
 
         console.log('Anfrage an API:', JSON.stringify(requestData, null, 2)); // Detailliertes Logging
 
@@ -689,7 +692,7 @@
                     </div>
                     <div>
                         <span class="block font-medium text-gray-700">Fahrer</span>
-                        <span>${vehicle.driverName || 'Nicht zugewiesen'}</span>
+                        <span>${vehicle.driverName || vehicle.currentDriverId ? vehicle.driverName : 'Nicht zugewiesen'}</span>
                     </div>
                 </div>
             </div>
@@ -778,9 +781,10 @@
                     if (document.getElementById('fuel-type')) {
                         document.getElementById('fuel-type').value = vehicle.fuelType || '';
                     }
-                    if (document.getElementById('current_mileage')) {
-                        document.getElementById('current_mileage').value = vehicle.mileage || 0;
+                    if (document.getElementById('mileage')) {
+                        document.getElementById('mileage').value = vehicle.mileage || 0;
                     }
+
 
                     // Tab 2: Zulassung & Versicherung
                     // Zulassungsdatum
@@ -827,7 +831,7 @@
                     const currentDriverId = vehicle.currentDriverId ? vehicle.currentDriverId.toString() : '';
                     console.log('Zugewiesener Fahrer ID:', currentDriverId);
 
-// Fahrer laden, falls es den Tab "driver-assignment" gibt
+                    // Fahrer laden, falls es den Tab "driver-assignment" gibt
                     const driverTab = document.getElementById('driver-assignment');
                     if (driverTab) {
                         // Tab öffnen, um sicherzustellen, dass die Elemente verfügbar sind
