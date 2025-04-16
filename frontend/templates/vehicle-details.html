@@ -791,895 +791,527 @@
 </div>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<!-- JavaScript-Code für das Bearbeiten-Modal
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Elemente für Wartungs-Modal
+        // Get vehicle ID from URL path
+        const vehicleId = window.location.pathname.split('/').pop();
+
+        // Elements for maintenance modal
         const maintenanceModal = document.getElementById('maintenance-modal');
         const addMaintenanceBtn = document.getElementById('add-maintenance-btn');
         const maintenanceForm = document.getElementById('maintenance-form');
 
-        // Elemente für Nutzungs-Modal
+        // Elements for usage modal
         const usageModal = document.getElementById('usage-modal');
         const addUsageBtn = document.getElementById('add-usage-btn');
         const usageForm = document.getElementById('usage-form');
 
-        // Schließen-Buttons für beide Modals
-        const closeButtons = document.querySelectorAll('.close-modal-btn');
-
-        // Funktionen zum Öffnen und Schließen der Modals
-        function openMaintenanceModal() {
-            maintenanceModal.classList.remove('hidden');
-            document.getElementById('maintenance-date').value = new Date().toISOString().split('T')[0]; // Heutiges Datum vorausfüllen
-        }
-
-        function openUsageModal() {
-            usageModal.classList.remove('hidden');
-            document.getElementById('start-date').value = new Date().toISOString().split('T')[0]; // Heutiges Datum vorausfüllen
-
-            // Aktuellen Kilometerstand vorausfüllen
-            document.getElementById('start-mileage').value = '18452';
-        }
-
-        function closeModals() {
-            maintenanceModal.classList.add('hidden');
-            usageModal.classList.add('hidden');
-        }
-
-        // Event Listener
-        addMaintenanceBtn.addEventListener('click', openMaintenanceModal);
-        addUsageBtn.addEventListener('click', openUsageModal);
-
-        closeButtons.forEach(button => {
-            button.addEventListener('click', closeModals);
-        });
-
-        // Schließen bei Klick außerhalb des Modals
-        window.addEventListener('click', function(event) {
-            if (event.target === maintenanceModal || event.target === usageModal) {
-                closeModals();
-            }
-        });
-
-        // Formulare absenden
-        maintenanceForm.addEventListener('submit', function(event) {
-            event.preventDefault();
-
-            const formData = new FormData(maintenanceForm);
-            const maintenanceData = {};
-
-            for (let [key, value] of formData.entries()) {
-                maintenanceData[key] = value;
-            }
-
-            console.log('Wartungsdaten speichern:', maintenanceData);
-
-            // In einer echten Anwendung würde hier ein API-Aufruf erfolgen
-            alert('Wartung erfolgreich eingetragen!');
-            closeModals();
-        });
-
-        usageForm.addEventListener('submit', function(event) {
-            event.preventDefault();
-
-            const formData = new FormData(usageForm);
-            const usageData = {};
-
-            for (let [key, value] of formData.entries()) {
-                usageData[key] = value;
-            }
-
-            console.log('Nutzungsdaten speichern:', usageData);
-
-            // In einer echten Anwendung würde hier ein API-Aufruf erfolgen
-            alert('Nutzung erfolgreich eingetragen!');
-            closeModals();
-        });
-
-
-        // Elemente für Fahrzeug-Bearbeiten-Modal
+        // Elements for vehicle edit modal
         const editVehicleModal = document.getElementById('edit-vehicle-modal');
         const editVehicleBtn = document.getElementById('edit-vehicle-btn');
         const editVehicleForm = document.getElementById('edit-vehicle-form');
+
+        // Elements for current usage edit modal
+        const editUsageModal = document.getElementById('edit-usage-modal');
+        const editCurrentUsageBtn = document.getElementById('edit-current-usage-btn');
+        const editCurrentUsageForm = document.getElementById('edit-current-usage-form');
+
+        // Close buttons for all modals
+        const closeModalBtns = document.querySelectorAll('.close-modal-btn');
         const closeEditModalBtns = document.querySelectorAll('.close-edit-modal-btn');
+        const closeCurrentUsageModalBtns = document.querySelectorAll('.close-current-usage-modal-btn');
 
-        // Funktion zum Öffnen des Bearbeiten-Modals
-        function openEditVehicleModal() {
-            editVehicleModal.classList.remove('hidden');
+        // Load vehicle data initially
+        loadVehicleData();
 
-            // Hier könnten die aktuellen Daten per API abgerufen werden
-            // Für diese Demo sind die Werte bereits vorausgefüllt
+        // Load maintenance entries
+        loadMaintenanceEntries();
+
+        // Load usage history
+        loadUsageHistory();
+
+        // Functions to load data from API
+        function loadVehicleData() {
+            if (!vehicleId) return;
+
+            fetch(`/api/vehicles/${vehicleId}`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Vehicle not found');
+                    return response.json();
+                })
+                .then(data => {
+                    const vehicle = data.vehicle;
+
+                    // Update UI with vehicle data
+                    updateVehicleDisplay(vehicle);
+
+                    // Check if there's a valid current driver ID before trying to load driver data
+                    if (vehicle.currentDriverId &&
+                        vehicle.currentDriverId !== '000000000000000000000000' &&
+                        vehicle.currentDriverId !== '') {
+                        loadCurrentDriverData(vehicle.currentDriverId);
+                    } else {
+                        // Update UI to show no current driver
+                        updateCurrentUsageDisplay(null);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading vehicle data:', error);
+                    showNotification('Fehler beim Laden der Fahrzeugdaten', 'error');
+                });
         }
 
-        // Event Listener für den Bearbeiten-Button
-        if (editVehicleBtn) {
-            editVehicleBtn.addEventListener('click', openEditVehicleModal);
-        }
+        function updateCurrentUsageDisplay(driver) {
+            const usageContainer = document.querySelectorAll('.bg-white .px-4.py-5.sm\\:p-6')[1];
+            if (!usageContainer) return;
 
-        // Schließen des Bearbeiten-Modals
-        closeEditModalBtns.forEach(button => {
-            button.addEventListener('click', function() {
-                editVehicleModal.classList.add('hidden');
-            });
-        });
+            const fields = usageContainer.querySelectorAll('dl > div');
 
-        // Bearbeiten-Formular absenden
-        if (editVehicleForm) {
-            editVehicleForm.addEventListener('submit', function(event) {
-                event.preventDefault();
-
-                const formData = new FormData(editVehicleForm);
-                const vehicleData = {};
-
-                for (let [key, value] of formData.entries()) {
-                    vehicleData[key] = value;
-                }
-
-                console.log('Fahrzeugdaten speichern:', vehicleData);
-
-                // In einer echten Anwendung würde hier ein API-Aufruf erfolgen
-                alert('Fahrzeugdaten erfolgreich aktualisiert!');
-                editVehicleModal.classList.add('hidden');
-
-                // Hier könnten die Anzeigen auf der Seite aktualisiert werden
-                // Für diese Demo aktualisieren wir die Werte direkt im DOM
-                updateVehicleDisplay(vehicleData);
-            });
-        }
-
-        // Funktion zum Aktualisieren der angezeigten Fahrzeugdaten
-        function updateVehicleDisplay(data) {
-            // Titel aktualisieren
-            const titleElement = document.querySelector('h1.text-2xl');
-            if (titleElement) {
-                titleElement.textContent = data.model;
-            }
-
-            // Fahrzeuginformationen aktualisieren
-            const infoDivs = document.querySelectorAll('.bg-white .px-4.py-5.sm\\:p-6 dl div');
-            infoDivs.forEach(div => {
-                const label = div.querySelector('dt');
-                const value = div.querySelector('dd');
+            fields.forEach(field => {
+                const label = field.querySelector('dt');
+                const value = field.querySelector('dd');
 
                 if (label && value) {
                     const labelText = label.textContent.trim();
 
-                    if (labelText === 'Kennzeichen' && data.license_plate) {
-                        value.textContent = data.license_plate;
-                    } else if (labelText === 'Marke & Modell' && data.model) {
-                        value.textContent = data.model;
-                    } else if (labelText === 'Baujahr' && data.year) {
-                        value.textContent = data.year;
-                    } else if (labelText === 'Farbe' && data.color) {
-                        value.textContent = data.color;
-                    } else if (labelText === 'Fahrzeug-ID' && data.vehicle_id) {
-                        value.textContent = data.vehicle_id;
-                    } else if (labelText === 'VIN' && data.vin) {
-                        value.textContent = data.vin;
-                    } else if (labelText === 'Kraftstoffart' && data.fuel_type) {
-                        value.textContent = data.fuel_type;
-                    } else if (labelText === 'Aktueller Kilometerstand' && data.current_mileage) {
-                        value.textContent = data.current_mileage + ' km';
-                    } else if (labelText === 'Erstzulassung' && data.registration_date) {
-                        // Datumsformat anpassen
-                        const date = new Date(data.registration_date);
-                        value.textContent = date.toLocaleDateString('de-DE');
-                    } else if (labelText === 'Nächste HU/AU' && data.next_inspection) {
-                        // Datumsformat anpassen
-                        const date = new Date(data.next_inspection);
-                        value.textContent = date.toLocaleDateString('de-DE');
-                    } else if (labelText === 'Versicherung' && data.insurance) {
-                        value.textContent = data.insurance;
-                    } else if (labelText === 'Versicherungsnummer' && data.insurance_number) {
-                        value.textContent = data.insurance_number;
-                    } else if (labelText === 'Versicherungstyp' && data.insurance_type) {
-                        value.textContent = data.insurance_type;
-                    } else if (labelText === 'Jährliche Kosten' && data.insurance_cost) {
-                        value.textContent = data.insurance_cost + ' €';
+                    if (labelText === 'Aktueller Fahrer') {
+                        value.textContent = driver ? `${driver.firstName} ${driver.lastName}` : 'Nicht zugewiesen';
                     }
+                    // Add more fields for current usage if needed
                 }
             });
+
+            // Also update the form fields in edit current usage modal if driver exists
+            if (editCurrentUsageForm) {
+                if (document.getElementById('current-driver')) {
+                    document.getElementById('current-driver').value = driver ? driver.id : '';
+                }
+            }
         }
 
-        // Schließen bei Klick außerhalb des Modals
-        window.addEventListener('click', function(event) {
-            if (event.target === editVehicleModal) {
-                editVehicleModal.classList.add('hidden');
-            }
-        });
-    });
-</script>-->
-
-<script>
-    // Fahrzeug bearbeiten Button
-    const editVehicleBtn = document.getElementById('edit-vehicle-btn');
-    if (editVehicleBtn) {
-        editVehicleBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-
-            // Fahrzeug-ID aus der URL extrahieren
-            const vehicleId = window.location.pathname.split('/').pop();
-            if (!vehicleId) {
-                alert('Keine Fahrzeug-ID gefunden');
-                return;
-            }
-
-            const editVehicleModal = document.getElementById('edit-vehicle-modal');
-            if (!editVehicleModal) {
-                // Wenn kein Modal vorhanden ist, zur Bearbeitungsseite navigieren
-                window.location.href = `/vehicles/edit/${vehicleId}`;
-                return;
-            }
-
-            // Zeige einen Lade-Indikator an
-            const loadingIndicator = document.createElement('span');
-            loadingIndicator.className = 'ml-2 inline-block animate-pulse';
-            loadingIndicator.textContent = '...';
-            this.appendChild(loadingIndicator);
-
-            // Öffne das Modal mit den bereits vorhandenen Daten von der Seite
-            fetch(`/api/vehicles/${vehicleId}`)
+        function loadCurrentDriverData(driverId) {
+            fetch(`/api/drivers/${driverId}`)
                 .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`Server antwortete mit ${response.status}: ${response.statusText}`);
-                    }
+                    if (!response.ok) throw new Error('Driver not found');
                     return response.json();
                 })
                 .then(data => {
-                    // Formularfelder mit Fahrzeugdaten füllen
-                    if (data && data.vehicle) {
-                        populateEditVehicleForm(data.vehicle);
-                        // Modal anzeigen
-                        editVehicleModal.classList.remove('hidden');
-                    } else {
-                        throw new Error('Keine Fahrzeugdaten in der Antwort erhalten');
-                    }
+                    const driver = data.driver;
+
+                    // Update current usage display with driver data
+                    updateCurrentUsageDisplay(driver);
                 })
                 .catch(error => {
-                    console.error('Fehler beim Laden der Fahrzeugdaten:', error);
-                    alert(`Es konnte keine Verbindung zum Server hergestellt werden. Es wird zur Bearbeitungsseite navigiert.`);
-
-                    // Bei Fehler zur Bearbeitungsseite navigieren
-                    window.location.href = `/vehicles/edit/${vehicleId}`;
-                })
-                .finally(() => {
-                    // Lade-Indikator entfernen
-                    const loadingIndicator = this.querySelector('.animate-pulse');
-                    if (loadingIndicator) {
-                        this.removeChild(loadingIndicator);
-                    }
+                    console.error('Error loading driver data:', error);
                 });
-        });
-    }
-
-    // Hilfsfunktion zum Befüllen des Bearbeitungsformulars
-    function populateEditVehicleForm(vehicle) {
-        // Formularfelder mit den Fahrzeugdaten füllen
-        const form = document.getElementById('edit-vehicle-form');
-        if (!form) return;
-
-        // Grundlegende Fahrzeugdaten
-        if (document.getElementById('license_plate')) {
-            document.getElementById('license_plate').value = vehicle.licensePlate || '';
         }
 
-        // Brand und Model separat oder kombiniert
-        if (document.getElementById('brand')) {
-            document.getElementById('brand').value = vehicle.brand || '';
-        }
-        if (document.getElementById('model')) {
-            document.getElementById('model').value = vehicle.model || '';
-        }
-        // Falls ein kombiniertes Feld existiert
-        if (document.getElementById('model') && !document.getElementById('brand')) {
-            document.getElementById('model').value = `${vehicle.brand || ''} ${vehicle.model || ''}`;
-        }
-
-        if (document.getElementById('year')) {
-            document.getElementById('year').value = vehicle.year || '';
-        }
-        if (document.getElementById('color')) {
-            document.getElementById('color').value = vehicle.color || '';
-        }
-        if (document.getElementById('vehicle_id')) {
-            document.getElementById('vehicle_id').value = vehicle.vehicleId || '';
-        }
-        if (document.getElementById('vin')) {
-            document.getElementById('vin').value = vehicle.vin || '';
-        }
-        if (document.getElementById('fuel_type')) {
-            document.getElementById('fuel_type').value = vehicle.fuelType || '';
-        }
-        if (document.getElementById('current_mileage')) {
-            document.getElementById('current_mileage').value = vehicle.mileage || 0;
-        }
-
-        // Zulassungs- und Versicherungsdaten
-        if (document.getElementById('registration_date')) {
-            document.getElementById('registration_date').value = formatDateForInput(vehicle.registrationDate);
-        }
-        if (document.getElementById('registration_expiry')) {
-            document.getElementById('registration_expiry').value = formatDateForInput(vehicle.registrationExpiry);
-        }
-        if (document.getElementById('next_inspection')) {
-            document.getElementById('next_inspection').value = formatDateForInput(vehicle.nextInspectionDate);
-        }
-
-        // Versicherungsdaten
-        if (document.getElementById('insurance') || document.getElementById('insurance_company')) {
-            const insuranceField = document.getElementById('insurance') || document.getElementById('insurance_company');
-            insuranceField.value = vehicle.insuranceCompany || '';
-        }
-        if (document.getElementById('insurance_number')) {
-            document.getElementById('insurance_number').value = vehicle.insuranceNumber || '';
-        }
-        if (document.getElementById('insurance_type')) {
-            document.getElementById('insurance_type').value = vehicle.insuranceType || '';
-        }
-        if (document.getElementById('insurance_expiry')) {
-            document.getElementById('insurance_expiry').value = formatDateForInput(vehicle.insuranceExpiry);
-        }
-        if (document.getElementById('insurance_cost')) {
-            // Falls dieses Feld existiert, aber nicht im Datenmodell
-            document.getElementById('insurance_cost').value = vehicle.insuranceCost || '';
-        }
-
-        // Status
-        if (document.getElementById('status')) {
-            document.getElementById('status').value = vehicle.status || 'available';
-        }
-
-        // Anmerkungen/Notizen
-        if (document.getElementById('vehicle_notes')) {
-            document.getElementById('vehicle_notes').value = vehicle.notes || '';
-        }
-
-        // Fahrzeug-ID als verstecktes Feld hinzufügen
-        let vehicleIdInput = form.querySelector('input[name="id"]');
-        if (!vehicleIdInput) {
-            vehicleIdInput = document.createElement('input');
-            vehicleIdInput.type = 'hidden';
-            vehicleIdInput.name = 'id';
-            form.appendChild(vehicleIdInput);
-        }
-        vehicleIdInput.value = vehicle.id;
-
-        // Falls es ein Formular für aktuelle Nutzung gibt
-        if (document.getElementById('current-driver') && vehicle.currentDriverId) {
-            document.getElementById('current-driver').value = vehicle.currentDriverId;
-        }
-
-        console.log('Formular mit Fahrzeugdaten befüllt:', vehicle);
-    }
-
-    // Hilfsfunktion für die Datumsformatierung im Format YYYY-MM-DD für HTML-Datumsfelder
-    function formatDateForInput(dateString) {
-        if (!dateString) return '';
-
-        try {
-            const date = new Date(dateString);
-            if (isNaN(date.getTime())) return '';
-
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-
-            return `${year}-${month}-${day}`;
-        } catch (error) {
-            console.error('Fehler beim Formatieren des Datums für Input:', error);
-            return '';
-        }
-    }
-
-    // Funktionen für die vehicle-details.html Seite
-    // Fahrzeugdaten laden und anzeigen
-    function loadVehicleDetails() {
-        // Fahrzeug-ID aus der URL extrahieren
-        const urlParams = new URLSearchParams(window.location.search);
-        const vehicleId = window.location.pathname.split('/').pop() || urlParams.get('id');
-
-        if (!vehicleId) {
-            showError('Keine Fahrzeug-ID gefunden');
-            return;
-        }
-
-        console.log('Lade Details für Fahrzeug-ID:', vehicleId);
-
-        // Fahrzeugdaten von der API laden
-        fetch(`/api/vehicles/${vehicleId}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Fahrzeug nicht gefunden');
-                }
-                return response.json();
-            })
-            .then(data => {
-                const vehicle = data.vehicle;
-                console.log('Geladene Fahrzeugdaten:', vehicle);
-
-                if (!vehicle) {
-                    throw new Error('Keine Fahrzeugdaten erhalten');
-                }
-
-                // Fahrzeugtitel und Status aktualisieren
-                updateVehicleHeader(vehicle);
-
-                // Hauptinformationen aktualisieren
-                updateVehicleInformation(vehicle);
-
-                // Aktuelle Nutzung aktualisieren
-                if (vehicle.currentDriverId) {
-                    loadDriverDetails(vehicle.currentDriverId)
-                        .then(driver => {
-                            if (driver) {
-                                updateCurrentUsage(vehicle, driver);
-                            }
-                        });
-                } else {
-                    updateCurrentUsage(vehicle, null);
-                }
-
-                // Zulassung und Versicherung aktualisieren
-                updateRegistrationAndInsurance(vehicle);
-
-                // Wartungseinträge laden
-                loadMaintenanceEntries(vehicleId);
-
-                // Nutzungshistorie laden
-                loadUsageHistory(vehicleId);
-
-                // Statistiken laden
-                initializeVehicleStatistics(vehicle);
-            })
-            .catch(error => {
-                console.error('Fehler beim Laden der Fahrzeugdetails:', error);
-                showError(`Fehler beim Laden der Fahrzeugdetails: ${error.message}`);
-            });
-    }
-
-    // Fahrerdaten laden
-    function loadDriverDetails(driverId) {
-        // Prüfen, ob eine gültige ID vorliegt
-        if (!driverId || driverId === "000000000000000000000000") {
-            console.log('Keine gültige Fahrer-ID vorhanden');
-            return Promise.resolve(null);
-        }
-
-        return fetch(`/api/drivers/${driverId}`)
-            .then(response => {
-                if (!response.ok) {
-                    if (response.status === 404) {
-                        console.log(`Fahrer mit ID ${driverId} nicht gefunden`);
-                        return null;
-                    }
-                    throw new Error(`Fehler beim Laden des Fahrers: ${response.statusText}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (!data || !data.driver) {
-                    console.log('Keine Fahrerdaten in der Antwort erhalten');
-                    return null;
-                }
-                return data.driver;
-            })
-            .catch(error => {
-                console.error('Fehler beim Laden des Fahrerdetails:', error);
-                return null;
-            });
-    }
-
-    // Fahrzeugkopf (Titel und Status) aktualisieren
-    function updateVehicleHeader(vehicle) {
-        // Titel aktualisieren
-        const titleElement = document.querySelector('h1.text-2xl');
-        if (titleElement) {
-            titleElement.textContent = `${vehicle.brand} ${vehicle.model}`;
-        }
-
-        // Status aktualisieren
-        // Anstatt mit Klassen-Selektoren zu suchen, die Punkte enthalten,
-        // verwenden wir einen allgemeineren Selektor und prüfen den Inhalt
-        const statusElements = document.querySelectorAll('span.rounded-full');
-        let statusElement = null;
-
-        // Wir durchlaufen alle gefundenen Elemente und suchen das richtige
-        for (const element of statusElements) {
-            if (element.classList.contains('py-1') && element.classList.contains('px-2.5')) {
-                statusElement = element;
-                break;
-            }
-        }
-
-        if (statusElement) {
-            let statusClass, statusText;
-
-            switch (vehicle.status) {
-                case 'available':
-                    statusClass = 'bg-green-100 text-green-800';
-                    statusText = 'Verfügbar';
-                    break;
-                case 'inuse':
-                    statusClass = 'bg-red-100 text-red-800';
-                    statusText = 'In Benutzung';
-                    break;
-                case 'maintenance':
-                    statusClass = 'bg-yellow-100 text-yellow-800';
-                    statusText = 'In Wartung';
-                    break;
-                default:
-                    statusClass = 'bg-gray-100 text-gray-800';
-                    statusText = vehicle.status || 'Unbekannt';
-            }
-
-            // Alle bestehenden Klassen entfernen außer Basisklassen
-            statusElement.className = '';
-            // Neue Klassen hinzufügen
-            statusElement.classList.add('px-2.5', 'py-1', 'inline-flex', 'text-xs', 'leading-5', 'font-semibold', 'rounded-full');
-            // Status-spezifische Klassen hinzufügen
-            const statusClasses = statusClass.split(' ');
-            statusClasses.forEach(cls => statusElement.classList.add(cls));
-
-            statusElement.textContent = statusText;
-        }
-    }
-
-    // Hauptinformationen des Fahrzeugs aktualisieren
-    function updateVehicleInformation(vehicle) {
-        const infoContainer = document.querySelector('.px-4.py-5.sm\\:p-6');
-        if (!infoContainer) return;
-
-        const infoItems = infoContainer.querySelectorAll('dl > div');
-        infoItems.forEach(item => {
-            const label = item.querySelector('dt');
-            const value = item.querySelector('dd');
-
-            if (!label || !value) return;
-
-            const labelText = label.textContent.trim();
-
-            switch (labelText) {
-                case 'Kennzeichen':
-                    value.textContent = vehicle.licensePlate || '';
-                    break;
-                case 'Marke & Modell':
-                    value.textContent = `${vehicle.brand} ${vehicle.model}`;
-                    break;
-                case 'Baujahr':
-                    value.textContent = vehicle.year || '';
-                    break;
-                case 'Farbe':
-                    value.textContent = vehicle.color || '';
-                    break;
-                case 'Fahrzeug-ID':
-                    value.textContent = vehicle.vehicleId || '';
-                    break;
-                case 'VIN':
-                    value.textContent = vehicle.vin || '';
-                    break;
-                case 'Kraftstoffart':
-                    value.textContent = vehicle.fuelType || '';
-                    break;
-                case 'Aktueller Kilometerstand':
-                    value.textContent = `${vehicle.mileage || 0} km`;
-                    break;
-            }
-        });
-    }
-
-    // Aktuelle Nutzung aktualisieren
-    function updateCurrentUsage(vehicle, driver) {
-        const usageContainer = document.querySelectorAll('.px-4.py-5.sm\\:p-6')[1]; // Zweiter Container
-        if (!usageContainer) return;
-
-        const usageItems = usageContainer.querySelectorAll('dl > div');
-        usageItems.forEach(item => {
-            const label = item.querySelector('dt');
-            const value = item.querySelector('dd');
-
-            if (!label || !value) return;
-
-            const labelText = label.textContent.trim();
-
-            if (labelText === 'Aktueller Fahrer') {
-                value.textContent = driver ? `${driver.firstName} ${driver.lastName}` : 'Nicht zugewiesen';
-            }
-        });
-    }
-
-    // Zulassung und Versicherung aktualisieren
-    function updateRegistrationAndInsurance(vehicle) {
-        const regContainer = document.querySelectorAll('.px-4.py-5.sm\\:p-6')[2]; // Dritter Container
-        if (!regContainer) return;
-
-        const regItems = regContainer.querySelectorAll('dl > div');
-        regItems.forEach(item => {
-            const label = item.querySelector('dt');
-            const value = item.querySelector('dd');
-
-            if (!label || !value) return;
-
-            const labelText = label.textContent.trim();
-
-            switch (labelText) {
-                case 'Erstzulassung':
-                    value.textContent = formatDate(vehicle.registrationDate);
-                    break;
-                case 'Nächste HU/AU':
-                    value.textContent = formatDate(vehicle.nextInspectionDate);
-                    break;
-                case 'Versicherung':
-                    value.textContent = vehicle.insuranceCompany || '';
-                    break;
-                case 'Versicherungsnummer':
-                    value.textContent = vehicle.insuranceNumber || '';
-                    break;
-                case 'Versicherungstyp':
-                    value.textContent = vehicle.insuranceType || '';
-                    break;
-                case 'Jährliche Kosten':
-                    // Wenn jährliche Kosten in den Daten verfügbar sind, ansonsten unverändert lassen
-                    break;
-            }
-        });
-    }
-
-    // Wartungseinträge laden
-    function loadMaintenanceEntries(vehicleId) {
-        fetch(`/api/maintenance/vehicle/${vehicleId}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Fehler beim Laden der Wartungseinträge');
-                }
-                return response.json();
-            })
-            .then(data => {
-                const entries = data.maintenance || [];
-                console.log('Geladene Wartungseinträge:', entries);
-
-                updateMaintenanceTable(entries);
-            })
-            .catch(error => {
-                console.error('Fehler beim Laden der Wartungseinträge:', error);
-            });
-    }
-
-    // Wartungstabelle aktualisieren
-    function updateMaintenanceTable(entries) {
-        const tableBody = document.querySelector('.px-4.py-5.sm\\:p-6 table tbody');
-        if (!tableBody) return;
-
-        // Tabelle leeren
-        tableBody.innerHTML = '';
-
-        if (entries.length === 0) {
-            const emptyRow = document.createElement('tr');
-            emptyRow.innerHTML = `
-            <td colspan="5" class="py-4 text-center text-gray-500">
-                Keine Wartungseinträge gefunden.
-            </td>
-        `;
-            tableBody.appendChild(emptyRow);
-            return;
-        }
-
-        // Nach Datum sortieren (neueste zuerst)
-        entries.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-        // Einträge hinzufügen
-        entries.forEach(entry => {
-            const row = document.createElement('tr');
-
-            let typeText;
-            switch (entry.type) {
-                case 'inspection':
-                    typeText = 'Inspektion';
-                    break;
-                case 'oil-change':
-                    typeText = 'Ölwechsel';
-                    break;
-                case 'tire-change':
-                    typeText = 'Reifenwechsel';
-                    break;
-                case 'repair':
-                    typeText = 'Reparatur';
-                    break;
-                default:
-                    typeText = entry.type || 'Sonstiges';
-            }
-
-            row.innerHTML = `
-            <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">${formatDate(entry.date)}</td>
-            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">${typeText}</td>
-            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">${entry.mileage || 0} km</td>
-            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">${entry.cost || 0} €</td>
-            <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
-                <a href="#" class="edit-maintenance-btn text-indigo-600 hover:text-indigo-900" data-id="${entry.id}">Bearbeiten</a>
-            </td>
-        `;
-
-            tableBody.appendChild(row);
-        });
-
-        // Event-Listener für Bearbeiten-Buttons hinzufügen
-        document.querySelectorAll('.edit-maintenance-btn').forEach(button => {
-            button.addEventListener('click', function(e) {
-                e.preventDefault();
-                const maintenanceId = this.dataset.id;
-                openMaintenanceModal(true, maintenanceId);
-            });
-        });
-    }
-
-    // Nutzungshistorie laden
-    function loadUsageHistory(vehicleId) {
-        fetch(`/api/usage/vehicle/${vehicleId}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Fehler beim Laden der Nutzungshistorie');
-                }
-                return response.json();
-            })
-            .then(data => {
-                const entries = data.usage || [];
-                console.log('Geladene Nutzungshistorie:', entries);
-
-                updateUsageHistoryTable(entries);
-            })
-            .catch(error => {
-                console.error('Fehler beim Laden der Nutzungshistorie:', error);
-            });
-    }
-
-    // Nutzungshistorie-Tabelle aktualisieren
-    function updateUsageHistoryTable(entries) {
-        const tableBody = document.querySelector('.mt-6 .bg-white.shadow table tbody');
-        if (!tableBody) return;
-
-        // Tabelle leeren
-        tableBody.innerHTML = '';
-
-        if (entries.length === 0) {
-            const emptyRow = document.createElement('tr');
-            emptyRow.innerHTML = `
-            <td colspan="5" class="py-4 text-center text-gray-500">
-                Keine Nutzungseinträge gefunden.
-            </td>
-        `;
-            tableBody.appendChild(emptyRow);
-            return;
-        }
-
-        // Nach Startdatum sortieren (neueste zuerst)
-        entries.sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
-
-        // Einträge hinzufügen
-        entries.forEach(entry => {
-            const row = document.createElement('tr');
-
-            // Formatiere Daten
-            const startDate = formatDate(entry.startDate);
-            const endDate = entry.endDate ? formatDate(entry.endDate) : 'noch aktiv';
-            const startTime = formatTime(entry.startDate);
-            const endTime = entry.endDate ? formatTime(entry.endDate) : '';
-
-            row.innerHTML = `
-            <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900 sm:pl-6">
-                <div class="font-medium">${startDate} - ${endDate}</div>
-                <div class="text-gray-500">${startTime} - ${endTime || '–'} Uhr</div>
-            </td>
-            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">${entry.driverName || 'Unbekannt'}</td>
-            <td class="px-3 py-4 text-sm text-gray-500">${entry.purpose || entry.project || ''}</td>
-            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                <div>Start: ${entry.startMileage || 0} km</div>
-                <div>Ende: ${entry.endMileage ? `${entry.endMileage} km` : 'noch aktiv'}</div>
-            </td>
-            <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                <a href="#" class="edit-usage-btn text-indigo-600 hover:text-indigo-900" data-id="${entry.id}">Bearbeiten</a>
-            </td>
-        `;
-
-            tableBody.appendChild(row);
-        });
-
-        // Event-Listener für Bearbeiten-Buttons hinzufügen
-        document.querySelectorAll('.edit-usage-btn').forEach(button => {
-            button.addEventListener('click', function(e) {
-                e.preventDefault();
-                const usageId = this.dataset.id;
-                openUsageModal(true, usageId);
-            });
-        });
-    }
-
-    // Statistiken initialisieren
-    function initializeVehicleStatistics(vehicle) {
-        // Diese Funktion würde die verschiedenen Charts initialisieren
-        // Die Implementierung hängt davon ab, welche Bibliothek für Diagramme verwendet wird
-        console.log('Fahrzeugstatistiken initialisieren für:', vehicle.id);
-
-        // Beispiel: Kostengrafik initialisieren (wenn ApexCharts verfügbar ist)
-        if (typeof ApexCharts !== 'undefined' && document.getElementById('costChart')) {
-            initializeCostChart(vehicle.id);
-        }
-
-        // Weitere Diagramme initialisieren...
-    }
-
-    // Wartungs-Modal öffnen
-    function openMaintenanceModal(isEdit = false, maintenanceId = null) {
-        const modal = document.getElementById('maintenance-modal');
-        const modalTitle = document.getElementById('maintenance-modal-title');
-        const maintenanceForm = document.getElementById('maintenance-form');
-
-        if (!modal || !modalTitle || !maintenanceForm) {
-            console.error('Modal-Elemente nicht gefunden');
-            return;
-        }
-
-        modal.classList.remove('hidden');
-
-        if (isEdit && maintenanceId) {
-            modalTitle.textContent = 'Wartung/Inspektion bearbeiten';
-
-            // Wartungsdaten von der API laden
-            fetch(`/api/maintenance/${maintenanceId}`)
-                .then(response => response.json())
+        function loadMaintenanceEntries() {
+            if (!vehicleId) return;
+
+            fetch(`/api/maintenance/vehicle/${vehicleId}`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Failed to load maintenance data');
+                    return response.json();
+                })
                 .then(data => {
-                    const maintenance = data.maintenance;
-                    console.log('Geladene Wartungsdaten:', maintenance);
+                    const entries = data.maintenance || [];
 
-                    if (!maintenance) {
-                        throw new Error('Wartungsdaten nicht gefunden');
-                    }
-
-                    // Formularfelder befüllen
-                    if (document.getElementById('maintenance-date')) {
-                        document.getElementById('maintenance-date').value = formatDateForInput(maintenance.date);
-                    }
-                    if (document.getElementById('maintenance-type')) {
-                        document.getElementById('maintenance-type').value = maintenance.type || '';
-                    }
-                    if (document.getElementById('mileage')) {
-                        document.getElementById('mileage').value = maintenance.mileage || 0;
-                    }
-                    if (document.getElementById('cost')) {
-                        document.getElementById('cost').value = maintenance.cost || 0;
-                    }
-                    if (document.getElementById('workshop')) {
-                        document.getElementById('workshop').value = maintenance.workshop || '';
-                    }
-                    if (document.getElementById('maintenance-notes')) {
-                        document.getElementById('maintenance-notes').value = maintenance.notes || '';
-                    }
-
-                    // ID zum Formular hinzufügen
-                    let idInput = maintenanceForm.querySelector('input[name="id"]');
-                    if (!idInput) {
-                        idInput = document.createElement('input');
-                        idInput.type = 'hidden';
-                        idInput.name = 'id';
-                        maintenanceForm.appendChild(idInput);
-                    }
-                    idInput.value = maintenanceId;
+                    // Update maintenance table with entries
+                    updateMaintenanceTable(entries);
                 })
                 .catch(error => {
-                    console.error('Fehler beim Laden der Wartungsdaten:', error);
-                    closeMaintenanceModal();
-                    alert('Fehler beim Laden der Wartungsdaten: ' + error.message);
+                    console.error('Error loading maintenance entries:', error);
+                    showNotification('Fehler beim Laden der Wartungseinträge', 'error');
                 });
-        } else {
-            modalTitle.textContent = 'Wartung/Inspektion hinzufügen';
-            maintenanceForm.reset();
+        }
 
-            // Aktuelles Datum vorausfüllen
-            if (document.getElementById('maintenance-date')) {
-                document.getElementById('maintenance-date').value = new Date().toISOString().split('T')[0];
+        function loadUsageHistory() {
+            if (!vehicleId) return;
+
+            fetch(`/api/usage/vehicle/${vehicleId}`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Failed to load usage history');
+                    return response.json();
+                })
+                .then(data => {
+                    const entries = data.usage || [];
+
+                    // Update usage history table with entries
+                    updateUsageHistoryTable(entries);
+                })
+                .catch(error => {
+                    console.error('Error loading usage history:', error);
+                    showNotification('Fehler beim Laden der Nutzungshistorie', 'error');
+                });
+        }
+
+        // Functions to update UI with loaded data
+        function updateVehicleDisplay(vehicle) {
+            // Update page title
+            const titleElement = document.querySelector('h1.text-2xl');
+            if (titleElement) {
+                titleElement.textContent = `${vehicle.brand} ${vehicle.model}`;
             }
 
-            // Aktuellen Kilometerstand vorausfüllen
-            const vehicleId = window.location.pathname.split('/').pop();
-            if (vehicleId) {
+            // Update status badge
+            const statusElement = document.querySelector('span.rounded-full');
+            if (statusElement) {
+                let statusClass, statusText;
+
+                switch (vehicle.status) {
+                    case 'available':
+                        statusClass = 'bg-green-100 text-green-800';
+                        statusText = 'Verfügbar';
+                        break;
+                    case 'inuse':
+                        statusClass = 'bg-red-100 text-red-800';
+                        statusText = 'In Benutzung';
+                        break;
+                    case 'maintenance':
+                        statusClass = 'bg-yellow-100 text-yellow-800';
+                        statusText = 'In Wartung';
+                        break;
+                    default:
+                        statusClass = 'bg-gray-100 text-gray-800';
+                        statusText = vehicle.status || 'Unbekannt';
+                }
+
+                statusElement.className = `px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}`;
+                statusElement.textContent = statusText;
+            }
+
+            // Update vehicle information fields
+            const vehicleInfoContainer = document.querySelector('.bg-white .px-4.py-5.sm\\:p-6');
+            if (vehicleInfoContainer) {
+                const fields = vehicleInfoContainer.querySelectorAll('dl > div');
+
+                fields.forEach(field => {
+                    const label = field.querySelector('dt');
+                    const value = field.querySelector('dd');
+
+                    if (label && value) {
+                        const labelText = label.textContent.trim();
+
+                        switch (labelText) {
+                            case 'Kennzeichen':
+                                value.textContent = vehicle.licensePlate || '';
+                                break;
+                            case 'Marke & Modell':
+                                value.textContent = `${vehicle.brand} ${vehicle.model}`;
+                                break;
+                            case 'Baujahr':
+                                value.textContent = vehicle.year || '';
+                                break;
+                            case 'Farbe':
+                                value.textContent = vehicle.color || '';
+                                break;
+                            case 'Fahrzeug-ID':
+                                value.textContent = vehicle.vehicleId || '';
+                                break;
+                            case 'VIN':
+                                value.textContent = vehicle.vin || '';
+                                break;
+                            case 'Kraftstoffart':
+                                value.textContent = vehicle.fuelType || '';
+                                break;
+                            case 'Aktueller Kilometerstand':
+                                value.textContent = `${vehicle.mileage || 0} km`;
+                                break;
+                        }
+                    }
+                });
+            }
+
+            // Update registration and insurance information
+            const regInfoContainer = document.querySelectorAll('.bg-white .px-4.py-5.sm\\:p-6')[2];
+            if (regInfoContainer) {
+                const fields = regInfoContainer.querySelectorAll('dl > div');
+
+                fields.forEach(field => {
+                    const label = field.querySelector('dt');
+                    const value = field.querySelector('dd');
+
+                    if (label && value) {
+                        const labelText = label.textContent.trim();
+
+                        switch (labelText) {
+                            case 'Erstzulassung':
+                                value.textContent = formatDate(vehicle.registrationDate);
+                                break;
+                            case 'Nächste HU/AU':
+                                value.textContent = formatDate(vehicle.nextInspectionDate);
+                                break;
+                            case 'Versicherung':
+                                value.textContent = vehicle.insuranceCompany || '';
+                                break;
+                            case 'Versicherungsnummer':
+                                value.textContent = vehicle.insuranceNumber || '';
+                                break;
+                            case 'Versicherungstyp':
+                                value.textContent = vehicle.insuranceType || '';
+                                break;
+                        }
+                    }
+                });
+            }
+
+            // Also update the form fields in edit vehicle modal
+            if (editVehicleForm) {
+                if (document.getElementById('license_plate')) {
+                    document.getElementById('license_plate').value = vehicle.licensePlate || '';
+                }
+                if (document.getElementById('model')) {
+                    document.getElementById('model').value = `${vehicle.brand} ${vehicle.model}`;
+                }
+                if (document.getElementById('year')) {
+                    document.getElementById('year').value = vehicle.year || '';
+                }
+                if (document.getElementById('color')) {
+                    document.getElementById('color').value = vehicle.color || '';
+                }
+                if (document.getElementById('vin')) {
+                    document.getElementById('vin').value = vehicle.vin || '';
+                }
+                if (document.getElementById('current_mileage')) {
+                    document.getElementById('current_mileage').value = vehicle.mileage || 0;
+                }
+                if (document.getElementById('fuel_type')) {
+                    document.getElementById('fuel_type').value = vehicle.fuelType || '';
+                }
+                if (document.getElementById('registration_date')) {
+                    document.getElementById('registration_date').value = formatDateForInput(vehicle.registrationDate);
+                }
+                if (document.getElementById('next_inspection')) {
+                    document.getElementById('next_inspection').value = formatDateForInput(vehicle.nextInspectionDate);
+                }
+                if (document.getElementById('insurance')) {
+                    document.getElementById('insurance').value = vehicle.insuranceCompany || '';
+                }
+                if (document.getElementById('insurance_number')) {
+                    document.getElementById('insurance_number').value = vehicle.insuranceNumber || '';
+                }
+                if (document.getElementById('insurance_type')) {
+                    document.getElementById('insurance_type').value = vehicle.insuranceType || '';
+                }
+            }
+        }
+
+        function updateCurrentUsageDisplay(driver) {
+            const usageContainer = document.querySelectorAll('.bg-white .px-4.py-5.sm\\:p-6')[1];
+            if (!usageContainer) return;
+
+            const fields = usageContainer.querySelectorAll('dl > div');
+
+            fields.forEach(field => {
+                const label = field.querySelector('dt');
+                const value = field.querySelector('dd');
+
+                if (label && value) {
+                    const labelText = label.textContent.trim();
+
+                    if (labelText === 'Aktueller Fahrer' && driver) {
+                        value.textContent = `${driver.firstName} ${driver.lastName}`;
+                    }
+                    // Add more fields for current usage if needed
+                }
+            });
+
+            // Also update the form fields in edit current usage modal
+            if (editCurrentUsageForm && driver) {
+                if (document.getElementById('current-driver')) {
+                    document.getElementById('current-driver').value = driver.id;
+                }
+            }
+        }
+
+        function updateMaintenanceTable(entries) {
+            const tableBody = document.querySelector('.bg-white table tbody');
+            if (!tableBody) return;
+
+            // Clear existing rows
+            tableBody.innerHTML = '';
+
+            if (entries.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                <td colspan="5" class="py-4 text-center text-gray-500">
+                    Keine Wartungseinträge gefunden.
+                </td>
+            `;
+                tableBody.appendChild(row);
+                return;
+            }
+
+            // Sort entries by date (newest first)
+            entries.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            // Add entries to table
+            entries.forEach(entry => {
+                const row = document.createElement('tr');
+
+                let typeText;
+                switch (entry.type) {
+                    case 'inspection':
+                        typeText = 'Inspektion';
+                        break;
+                    case 'oil-change':
+                        typeText = 'Ölwechsel';
+                        break;
+                    case 'tire-change':
+                        typeText = 'Reifenwechsel';
+                        break;
+                    case 'repair':
+                        typeText = 'Reparatur';
+                        break;
+                    default:
+                        typeText = entry.type || 'Sonstiges';
+                }
+
+                row.innerHTML = `
+                <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">${formatDate(entry.date)}</td>
+                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">${typeText}</td>
+                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">${entry.mileage} km</td>
+                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">${entry.cost} €</td>
+                <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
+                    <a href="#" class="edit-maintenance-btn text-indigo-600 hover:text-indigo-900" data-id="${entry.id}">Bearbeiten</a>
+                </td>
+            `;
+
+                tableBody.appendChild(row);
+            });
+
+            // Add event listeners to edit buttons
+            document.querySelectorAll('.edit-maintenance-btn').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const maintenanceId = this.getAttribute('data-id');
+                    openMaintenanceModal(true, maintenanceId);
+                });
+            });
+        }
+
+        function updateUsageHistoryTable(entries) {
+            const tableBody = document.querySelector('.mt-6 .bg-white table tbody');
+            if (!tableBody) return;
+
+            // Clear existing rows
+            tableBody.innerHTML = '';
+
+            if (entries.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                <td colspan="5" class="py-4 text-center text-gray-500">
+                    Keine Nutzungseinträge gefunden.
+                </td>
+            `;
+                tableBody.appendChild(row);
+                return;
+            }
+
+            // Sort entries by start date (newest first)
+            entries.sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
+
+            // Add entries to table
+            entries.forEach(entry => {
+                const row = document.createElement('tr');
+
+                const startDate = formatDate(entry.startDate);
+                const endDate = entry.endDate ? formatDate(entry.endDate) : 'noch aktiv';
+                const startTime = formatTime(entry.startDate);
+                const endTime = entry.endDate ? formatTime(entry.endDate) : '';
+
+                row.innerHTML = `
+                <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900 sm:pl-6">
+                    <div class="font-medium">${startDate} - ${endDate}</div>
+                    <div class="text-gray-500">${startTime} - ${endTime || ''} Uhr</div>
+                </td>
+                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">${entry.driverName || 'Unbekannt'}</td>
+                <td class="px-3 py-4 text-sm text-gray-500">${entry.purpose || entry.project || ''}</td>
+                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                    <div>Start: ${entry.startMileage || 0} km</div>
+                    <div>Ende: ${entry.endMileage ? entry.endMileage + ' km' : 'noch aktiv'}</div>
+                </td>
+                <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                    <a href="#" class="edit-usage-btn text-indigo-600 hover:text-indigo-900" data-id="${entry.id}">Bearbeiten</a>
+                </td>
+            `;
+
+                tableBody.appendChild(row);
+            });
+
+            // Add event listeners to edit buttons
+            document.querySelectorAll('.edit-usage-btn').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const usageId = this.getAttribute('data-id');
+                    openUsageModal(true, usageId);
+                });
+            });
+        }
+
+        // Functions to open and close modals
+        function openMaintenanceModal(isEdit = false, maintenanceId = null) {
+            if (!maintenanceModal) return;
+
+            maintenanceModal.classList.remove('hidden');
+
+            const modalTitle = document.getElementById('maintenance-modal-title');
+
+            if (isEdit && maintenanceId) {
+                if (modalTitle) modalTitle.textContent = 'Wartung/Inspektion bearbeiten';
+
+                // Fetch maintenance data from API
+                fetch(`/api/maintenance/${maintenanceId}`)
+                    .then(response => {
+                        if (!response.ok) throw new Error('Maintenance entry not found');
+                        return response.json();
+                    })
+                    .then(data => {
+                        const maintenance = data.maintenance;
+
+                        // Fill form with maintenance data
+                        if (document.getElementById('maintenance-date')) {
+                            document.getElementById('maintenance-date').value = formatDateForInput(maintenance.date);
+                        }
+                        if (document.getElementById('maintenance-type')) {
+                            document.getElementById('maintenance-type').value = maintenance.type || 'inspection';
+                        }
+                        if (document.getElementById('mileage')) {
+                            document.getElementById('mileage').value = maintenance.mileage || 0;
+                        }
+                        if (document.getElementById('cost')) {
+                            document.getElementById('cost').value = maintenance.cost || 0;
+                        }
+                        if (document.getElementById('workshop')) {
+                            document.getElementById('workshop').value = maintenance.workshop || '';
+                        }
+                        if (document.getElementById('maintenance-notes')) {
+                            document.getElementById('maintenance-notes').value = maintenance.notes || '';
+                        }
+
+                        // Add ID to form for update
+                        let idInput = document.createElement('input');
+                        idInput.type = 'hidden';
+                        idInput.name = 'maintenance-id';
+                        idInput.value = maintenanceId;
+                        maintenanceForm.appendChild(idInput);
+                    })
+                    .catch(error => {
+                        console.error('Error loading maintenance data:', error);
+                        showNotification('Fehler beim Laden der Wartungsdaten', 'error');
+                        closeModals();
+                    });
+            } else {
+                if (modalTitle) modalTitle.textContent = 'Wartung/Inspektion hinzufügen';
+                maintenanceForm.reset();
+
+                // Set current date
+                if (document.getElementById('maintenance-date')) {
+                    document.getElementById('maintenance-date').value = new Date().toISOString().split('T')[0];
+                }
+
+                // Fetch current mileage from vehicle
                 fetch(`/api/vehicles/${vehicleId}`)
                     .then(response => response.json())
                     .then(data => {
@@ -1687,117 +1319,101 @@
                             document.getElementById('mileage').value = data.vehicle.mileage || 0;
                         }
                     })
-                    .catch(err => console.error('Fehler beim Laden des Kilometerstands:', err));
-            }
+                    .catch(error => {
+                        console.error('Error fetching vehicle mileage:', error);
+                    });
 
-            // Entferne versteckte ID-Felder, falls vorhanden
-            const existingIdInput = maintenanceForm.querySelector('input[name="id"]');
-            if (existingIdInput) {
-                existingIdInput.remove();
-            }
+                // Remove any existing ID input
+                const existingId = maintenanceForm.querySelector('input[name="maintenance-id"]');
+                if (existingId) existingId.remove();
 
-            // VehicleId hinzufügen
-            let vehicleIdInput = maintenanceForm.querySelector('input[name="vehicleId"]');
-            if (!vehicleIdInput) {
-                vehicleIdInput = document.createElement('input');
+                // Add vehicle ID
+                let vehicleIdInput = document.createElement('input');
                 vehicleIdInput.type = 'hidden';
-                vehicleIdInput.name = 'vehicleId';
+                vehicleIdInput.name = 'vehicle-id';
+                vehicleIdInput.value = vehicleId;
                 maintenanceForm.appendChild(vehicleIdInput);
             }
-            vehicleIdInput.value = vehicleId;
-        }
-    }
-
-    // Nutzungs-Modal öffnen
-    function openUsageModal(isEdit = false, usageId = null) {
-        const modal = document.getElementById('usage-modal');
-        const modalTitle = document.getElementById('usage-modal-title');
-        const usageForm = document.getElementById('usage-form');
-
-        if (!modal || !modalTitle || !usageForm) {
-            console.error('Modal-Elemente nicht gefunden');
-            return;
         }
 
-        modal.classList.remove('hidden');
+        function openUsageModal(isEdit = false, usageId = null) {
+            if (!usageModal) return;
 
-        // Fahrer für Dropdown laden
-        loadDriversForDropdown();
+            usageModal.classList.remove('hidden');
 
-        if (isEdit && usageId) {
-            modalTitle.textContent = 'Nutzung bearbeiten';
+            const modalTitle = document.getElementById('usage-modal-title');
 
-            // Nutzungsdaten von der API laden
-            fetch(`/api/usage/${usageId}`)
-                .then(response => response.json())
-                .then(data => {
-                    const usage = data.usage;
-                    console.log('Geladene Nutzungsdaten:', usage);
+            // Load available drivers for dropdown
+            loadDriversForDropdown();
 
-                    if (!usage) {
-                        throw new Error('Nutzungsdaten nicht gefunden');
-                    }
+            if (isEdit && usageId) {
+                if (modalTitle) modalTitle.textContent = 'Nutzung bearbeiten';
 
-                    // Formularfelder befüllen
-                    if (document.getElementById('start-date')) {
-                        document.getElementById('start-date').value = formatDateForInput(usage.startDate);
-                    }
-                    if (document.getElementById('start-time')) {
-                        document.getElementById('start-time').value = formatTimeForInput(usage.startDate);
-                    }
-                    if (document.getElementById('end-date') && usage.endDate) {
-                        document.getElementById('end-date').value = formatDateForInput(usage.endDate);
-                    }
-                    if (document.getElementById('end-time') && usage.endDate) {
-                        document.getElementById('end-time').value = formatTimeForInput(usage.endDate);
-                    }
-                    if (document.getElementById('driver')) {
-                        document.getElementById('driver').value = usage.driverId || '';
-                    }
-                    if (document.getElementById('project')) {
-                        document.getElementById('project').value = usage.project || usage.purpose || '';
-                    }
-                    if (document.getElementById('start-mileage')) {
-                        document.getElementById('start-mileage').value = usage.startMileage || 0;
-                    }
-                    if (document.getElementById('end-mileage')) {
-                        document.getElementById('end-mileage').value = usage.endMileage || '';
-                    }
-                    if (document.getElementById('usage-notes')) {
-                        document.getElementById('usage-notes').value = usage.notes || '';
-                    }
+                // Fetch usage data from API
+                fetch(`/api/usage/${usageId}`)
+                    .then(response => {
+                        if (!response.ok) throw new Error('Usage entry not found');
+                        return response.json();
+                    })
+                    .then(data => {
+                        const usage = data.usage;
 
-                    // ID zum Formular hinzufügen
-                    let idInput = usageForm.querySelector('input[name="id"]');
-                    if (!idInput) {
-                        idInput = document.createElement('input');
+                        // Fill form with usage data
+                        if (document.getElementById('start-date')) {
+                            document.getElementById('start-date').value = formatDateForInput(usage.startDate);
+                        }
+                        if (document.getElementById('start-time')) {
+                            document.getElementById('start-time').value = formatTimeForInput(usage.startDate);
+                        }
+                        if (document.getElementById('end-date') && usage.endDate) {
+                            document.getElementById('end-date').value = formatDateForInput(usage.endDate);
+                        }
+                        if (document.getElementById('end-time') && usage.endDate) {
+                            document.getElementById('end-time').value = formatTimeForInput(usage.endDate);
+                        }
+                        if (document.getElementById('driver')) {
+                            document.getElementById('driver').value = usage.driverId || '';
+                        }
+                        if (document.getElementById('project')) {
+                            document.getElementById('project').value = usage.purpose || usage.project || '';
+                        }
+                        if (document.getElementById('start-mileage')) {
+                            document.getElementById('start-mileage').value = usage.startMileage || 0;
+                        }
+                        if (document.getElementById('end-mileage')) {
+                            document.getElementById('end-mileage').value = usage.endMileage || '';
+                        }
+                        if (document.getElementById('usage-notes')) {
+                            document.getElementById('usage-notes').value = usage.notes || '';
+                        }
+
+                        // Add ID to form for update
+                        let idInput = document.createElement('input');
                         idInput.type = 'hidden';
-                        idInput.name = 'id';
+                        idInput.name = 'usage-id';
+                        idInput.value = usageId;
                         usageForm.appendChild(idInput);
-                    }
-                    idInput.value = usageId;
-                })
-                .catch(error => {
-                    console.error('Fehler beim Laden der Nutzungsdaten:', error);
-                    closeUsageModal();
-                    alert('Fehler beim Laden der Nutzungsdaten: ' + error.message);
-                });
-        } else {
-            modalTitle.textContent = 'Nutzung eintragen';
-            usageForm.reset();
+                    })
+                    .catch(error => {
+                        console.error('Error loading usage data:', error);
+                        showNotification('Fehler beim Laden der Nutzungsdaten', 'error');
+                        closeModals();
+                    });
+            } else {
+                if (modalTitle) modalTitle.textContent = 'Nutzung eintragen';
+                usageForm.reset();
 
-            // Aktuelles Datum vorausfüllen
-            if (document.getElementById('start-date')) {
-                document.getElementById('start-date').value = new Date().toISOString().split('T')[0];
-            }
-            if (document.getElementById('start-time')) {
+                // Set current date and time
                 const now = new Date();
-                document.getElementById('start-time').value = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-            }
+                if (document.getElementById('start-date')) {
+                    document.getElementById('start-date').value = now.toISOString().split('T')[0];
+                }
+                if (document.getElementById('start-time')) {
+                    document.getElementById('start-time').value =
+                        `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                }
 
-            // Aktuellen Kilometerstand vorausfüllen
-            const vehicleId = window.location.pathname.split('/').pop();
-            if (vehicleId) {
+                // Fetch current mileage from vehicle
                 fetch(`/api/vehicles/${vehicleId}`)
                     .then(response => response.json())
                     .then(data => {
@@ -1805,233 +1421,234 @@
                             document.getElementById('start-mileage').value = data.vehicle.mileage || 0;
                         }
                     })
-                    .catch(err => console.error('Fehler beim Laden des Kilometerstands:', err));
-            }
+                    .catch(error => {
+                        console.error('Error fetching vehicle mileage:', error);
+                    });
 
-            // Entferne versteckte ID-Felder, falls vorhanden
-            const existingIdInput = usageForm.querySelector('input[name="id"]');
-            if (existingIdInput) {
-                existingIdInput.remove();
-            }
+                // Remove any existing ID input
+                const existingId = usageForm.querySelector('input[name="usage-id"]');
+                if (existingId) existingId.remove();
 
-            // VehicleId hinzufügen
-            let vehicleIdInput = usageForm.querySelector('input[name="vehicleId"]');
-            if (!vehicleIdInput) {
-                vehicleIdInput = document.createElement('input');
+                // Add vehicle ID
+                let vehicleIdInput = document.createElement('input');
                 vehicleIdInput.type = 'hidden';
-                vehicleIdInput.name = 'vehicleId';
+                vehicleIdInput.name = 'vehicle-id';
+                vehicleIdInput.value = vehicleId;
                 usageForm.appendChild(vehicleIdInput);
             }
-            vehicleIdInput.value = vehicleId;
         }
-    }
 
-    // Fahrer für Dropdown laden
-    function loadDriversForDropdown() {
-        const driverSelect = document.getElementById('driver');
-        if (!driverSelect) return;
+        function openEditVehicleModal() {
+            if (!editVehicleModal) return;
 
-        fetch('/api/drivers')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Fehler beim Laden der Fahrer');
-                }
-                return response.json();
-            })
-            .then(data => {
-                const drivers = data.drivers || [];
+            editVehicleModal.classList.remove('hidden');
 
-                // Bestehende Optionen beibehalten (erste Option "Fahrer auswählen")
-                const firstOption = driverSelect.querySelector('option:first-child');
-                driverSelect.innerHTML = '';
+            // Fetch vehicle data from API
+            fetch(`/api/vehicles/${vehicleId}`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Vehicle not found');
+                    return response.json();
+                })
+                .then(data => {
+                    const vehicle = data.vehicle;
 
-                if (firstOption) {
-                    driverSelect.appendChild(firstOption);
-                } else {
-                    const noDriverOption = document.createElement('option');
-                    noDriverOption.value = '';
-                    noDriverOption.textContent = 'Fahrer auswählen';
-                    driverSelect.appendChild(noDriverOption);
-                }
+                    // Fill form with vehicle data
+                    if (document.getElementById('license_plate')) {
+                        document.getElementById('license_plate').value = vehicle.licensePlate || '';
+                    }
+                    if (document.getElementById('model')) {
+                        document.getElementById('model').value = `${vehicle.brand} ${vehicle.model}`;
+                    }
+                    if (document.getElementById('year')) {
+                        document.getElementById('year').value = vehicle.year || '';
+                    }
+                    if (document.getElementById('color')) {
+                        document.getElementById('color').value = vehicle.color || '';
+                    }
+                    if (document.getElementById('vehicle_id')) {
+                        document.getElementById('vehicle_id').value = vehicle.vehicleId || '';
+                    }
+                    if (document.getElementById('vin')) {
+                        document.getElementById('vin').value = vehicle.vin || '';
+                    }
+                    if (document.getElementById('fuel_type')) {
+                        document.getElementById('fuel_type').value = vehicle.fuelType || '';
+                    }
+                    if (document.getElementById('current_mileage')) {
+                        document.getElementById('current_mileage').value = vehicle.mileage || 0;
+                    }
+                    if (document.getElementById('registration_date')) {
+                        document.getElementById('registration_date').value = formatDateForInput(vehicle.registrationDate);
+                    }
+                    if (document.getElementById('next_inspection')) {
+                        document.getElementById('next_inspection').value = formatDateForInput(vehicle.nextInspectionDate);
+                    }
+                    if (document.getElementById('insurance')) {
+                        document.getElementById('insurance').value = vehicle.insuranceCompany || '';
+                    }
+                    if (document.getElementById('insurance_number')) {
+                        document.getElementById('insurance_number').value = vehicle.insuranceNumber || '';
+                    }
+                    if (document.getElementById('insurance_type')) {
+                        document.getElementById('insurance_type').value = vehicle.insuranceType || '';
+                    }
 
-                // Fahrer hinzufügen
-                drivers.forEach(driver => {
-                    const option = document.createElement('option');
-                    option.value = driver.id;
-                    option.textContent = `${driver.firstName} ${driver.lastName}`;
-                    driverSelect.appendChild(option);
+                    // Add vehicle ID to form
+                    let idInput = document.createElement('input');
+                    idInput.type = 'hidden';
+                    idInput.name = 'vehicle-id';
+                    idInput.value = vehicleId;
+                    editVehicleForm.appendChild(idInput);
+                })
+                .catch(error => {
+                    console.error('Error loading vehicle data:', error);
+                    showNotification('Fehler beim Laden der Fahrzeugdaten', 'error');
+                    closeModals();
                 });
-            })
-            .catch(error => {
-                console.error('Fehler beim Laden der Fahrer:', error);
-            });
-    }
-
-    // Modals schließen
-    function closeMaintenanceModal() {
-        const modal = document.getElementById('maintenance-modal');
-        if (modal) {
-            modal.classList.add('hidden');
-        }
-    }
-
-    function closeUsageModal() {
-        const modal = document.getElementById('usage-modal');
-        if (modal) {
-            modal.classList.add('hidden');
-        }
-    }
-
-    // Hilfsfunktionen für Datumsformatierung
-    function formatDate(dateString) {
-        if (!dateString) return '';
-
-        try {
-            const date = new Date(dateString);
-            if (isNaN(date.getTime())) return '';
-
-            return date.toLocaleDateString('de-DE', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
-            });
-        } catch (error) {
-            console.error('Fehler beim Formatieren des Datums:', error);
-            return '';
-        }
-    }
-
-    function formatTime(dateString) {
-        if (!dateString) return '';
-
-        try {
-            const date = new Date(dateString);
-            if (isNaN(date.getTime())) return '';
-
-            return date.toLocaleTimeString('de-DE', {
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-        } catch (error) {
-            console.error('Fehler beim Formatieren der Zeit:', error);
-            return '';
-        }
-    }
-
-    function formatDateForInput(dateString) {
-        if (!dateString) return '';
-
-        try {
-            const date = new Date(dateString);
-            if (isNaN(date.getTime())) return '';
-
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-
-            return `${year}-${month}-${day}`;
-        } catch (error) {
-            console.error('Fehler beim Formatieren des Datums für Input:', error);
-            return '';
-        }
-    }
-
-    function formatTimeForInput(dateString) {
-        if (!dateString) return '';
-
-        try {
-            const date = new Date(dateString);
-            if (isNaN(date.getTime())) return '';
-
-            const hours = String(date.getHours()).padStart(2, '0');
-            const minutes = String(date.getMinutes()).padStart(2, '0');
-
-            return `${hours}:${minutes}`;
-        } catch (error) {
-            console.error('Fehler beim Formatieren der Zeit für Input:', error);
-            return '';
-        }
-    }
-
-    // Fehlermeldung anzeigen
-    function showError(message) {
-        const container = document.querySelector('.max-w-7xl.mx-auto');
-        if (container) {
-            const errorElement = document.createElement('div');
-            errorElement.className = 'bg-red-50 p-4 rounded-md mb-6 text-red-800 border border-red-200';
-            errorElement.innerHTML = `
-            <div class="flex">
-                <div class="flex-shrink-0">
-                    <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
-                    </svg>
-                </div>
-                <div class="ml-3">
-                    <p class="text-sm">${message}</p>
-                </div>
-            </div>
-        `;
-
-            // Ans Anfang des Containers einfügen
-            container.insertBefore(errorElement, container.firstChild);
-        }
-    }
-
-    // Event-Handler für Formulare und Buttons
-    function setupEventHandlers() {
-        // Modal-Schließen-Buttons
-        document.querySelectorAll('.close-modal-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                closeMaintenanceModal();
-                closeUsageModal();
-            });
-        });
-
-        // Klick außerhalb des Modals zum Schließen
-        window.addEventListener('click', function(event) {
-            const maintenanceModal = document.getElementById('maintenance-modal');
-            const usageModal = document.getElementById('usage-modal');
-
-            if (event.target === maintenanceModal) {
-                closeMaintenanceModal();
-            }
-            if (event.target === usageModal) {
-                closeUsageModal();
-            }
-        });
-
-        // Wartung hinzufügen Button
-        const addMaintenanceBtn = document.getElementById('add-maintenance-btn');
-        if (addMaintenanceBtn) {
-            addMaintenanceBtn.addEventListener('click', () => openMaintenanceModal(false));
         }
 
-        // Nutzung hinzufügen Button
-        const addUsageBtn = document.getElementById('add-usage-btn');
-        if (addUsageBtn) {
-            addUsageBtn.addEventListener('click', () => openUsageModal(false));
+        function openEditCurrentUsageModal() {
+            if (!editUsageModal) return;
+
+            editUsageModal.classList.remove('hidden');
+
+            // Fetch current usage data from API
+            fetch(`/api/usage/vehicle/${vehicleId}?status=active`)
+                .then(response => {
+                    if (!response.ok) throw new Error('No active usage found');
+                    return response.json();
+                })
+                .then(data => {
+                    const currentUsage = data.usage && data.usage.length > 0 ? data.usage[0] : null;
+
+                    if (!currentUsage) {
+                        showNotification('Keine aktive Nutzung gefunden', 'warning');
+                        closeModals();
+                        return;
+                    }
+
+                    // Load drivers for dropdown
+                    loadDriversForDropdown().then(() => {
+                        // Fill form with current usage data
+                        if (document.getElementById('current-driver')) {
+                            document.getElementById('current-driver').value = currentUsage.driverId || '';
+                        }
+                        if (document.getElementById('current-department')) {
+                            document.getElementById('current-department').value = currentUsage.department || 'sales';
+                        }
+                        if (document.getElementById('usage-status')) {
+                            document.getElementById('usage-status').value = currentUsage.status || 'active';
+                        }
+                        if (document.getElementById('current-start-date')) {
+                            document.getElementById('current-start-date').value = formatDateForInput(currentUsage.startDate);
+                        }
+                        if (document.getElementById('current-start-time')) {
+                            document.getElementById('current-start-time').value = formatTimeForInput(currentUsage.startDate);
+                        }
+                        if (document.getElementById('current-end-date')) {
+                            document.getElementById('current-end-date').value = currentUsage.endDate ?
+                                formatDateForInput(currentUsage.endDate) : '';
+                        }
+                        if (document.getElementById('current-end-time')) {
+                            document.getElementById('current-end-time').value = currentUsage.endDate ?
+                                formatTimeForInput(currentUsage.endDate) : '';
+                        }
+                        if (document.getElementById('current-project')) {
+                            document.getElementById('current-project').value = currentUsage.purpose || currentUsage.project || '';
+                        }
+
+                        // Add usage ID to form
+                        let idInput = document.createElement('input');
+                        idInput.type = 'hidden';
+                        idInput.name = 'current-usage-id';
+                        idInput.value = currentUsage.id;
+                        editCurrentUsageForm.appendChild(idInput);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading current usage data:', error);
+                    showNotification('Keine aktive Nutzung gefunden', 'warning');
+                    closeModals();
+                });
         }
 
-        // Fahrzeug bearbeiten Button
-        const editVehicleBtn = document.getElementById('edit-vehicle-btn');
-        if (editVehicleBtn) {
-            editVehicleBtn.addEventListener('click', function() {
-                // Fahrzeug-ID aus der URL extrahieren
-                const vehicleId = window.location.pathname.split('/').pop();
-                if (vehicleId) {
-                    // Umleiten zur Bearbeitungsseite oder Modal öffnen
-                    window.location.href = `/vehicles/edit/${vehicleId}`;
-                }
-            });
+        function closeModals() {
+            if (maintenanceModal) maintenanceModal.classList.add('hidden');
+            if (usageModal) usageModal.classList.add('hidden');
+            if (editVehicleModal) editVehicleModal.classList.add('hidden');
+            if (editUsageModal) editUsageModal.classList.add('hidden');
         }
 
-        // Wartungsformular
-        const maintenanceForm = document.getElementById('maintenance-form');
+        // Helper function to load drivers for dropdowns
+        // Helper function to load drivers for dropdowns
+        function loadDriversForDropdown() {
+            return fetch('/api/drivers')
+                .then(response => {
+                    if (!response.ok) throw new Error('Failed to load drivers');
+                    return response.json();
+                })
+                .then(data => {
+                    const drivers = data.drivers || [];
+
+                    // Update driver dropdown in usage modal
+                    const driverSelect = document.getElementById('driver');
+                    if (driverSelect) {
+                        // Keep the first option (no driver)
+                        const firstOption = driverSelect.options[0];
+                        driverSelect.innerHTML = '';
+
+                        if (firstOption) {
+                            driverSelect.appendChild(firstOption);
+                        } else {
+                            const noDriverOption = document.createElement('option');
+                            noDriverOption.value = '';
+                            noDriverOption.textContent = 'Fahrer auswählen';
+                            driverSelect.appendChild(noDriverOption);
+                        }
+
+                        // Add all drivers
+                        drivers.forEach(driver => {
+                            const option = document.createElement('option');
+                            option.value = driver.id;
+                            option.textContent = `${driver.firstName} ${driver.lastName}`;
+                            driverSelect.appendChild(option);
+                        });
+                    }
+
+                    // Update driver dropdown in current usage modal
+                    const currentDriverSelect = document.getElementById('current-driver');
+                    if (currentDriverSelect) {
+                        // Keep the first option
+                        const firstOption = currentDriverSelect.options[0];
+                        currentDriverSelect.innerHTML = '';
+
+                        if (firstOption) {
+                            currentDriverSelect.appendChild(firstOption);
+                        }
+
+                        // Add all drivers
+                        drivers.forEach(driver => {
+                            const option = document.createElement('option');
+                            option.value = driver.id;
+                            option.textContent = `${driver.firstName} ${driver.lastName}`;
+                            currentDriverSelect.appendChild(option);
+                        });
+                    }
+
+                    return drivers;
+                })
+                .catch(error => {
+                    console.error('Error loading drivers:', error);
+                    showNotification('Fehler beim Laden der Fahrer', 'error');
+                    return [];
+                });
+        }
+
+        // Form submission handlers
         if (maintenanceForm) {
             maintenanceForm.addEventListener('submit', function(event) {
                 event.preventDefault();
 
-                // Formulardaten sammeln
                 const formData = new FormData(maintenanceForm);
                 const maintenanceData = {};
 
@@ -2039,59 +1656,51 @@
                     maintenanceData[key] = value;
                 }
 
-                // Fahrzeug-ID aus der URL hinzufügen, falls nicht vorhanden
-                if (!maintenanceData.vehicleId) {
-                    maintenanceData.vehicleId = window.location.pathname.split('/').pop();
-                }
-
-                // Prüfen, ob es eine Bearbeitung ist (ID vorhanden)
-                const isEdit = !!maintenanceData.id;
-                const url = isEdit ? `/api/maintenance/${maintenanceData.id}` : '/api/maintenance';
+                const isEdit = !!maintenanceData['maintenance-id'];
                 const method = isEdit ? 'PUT' : 'POST';
+                const url = isEdit ?
+                    `/api/maintenance/${maintenanceData['maintenance-id']}` :
+                    '/api/maintenance';
 
-                // API-Anfrage senden
+                // Prepare request data
+                const requestData = {
+                    vehicleId: maintenanceData['vehicle-id'] || vehicleId,
+                    date: maintenanceData['maintenance-date'] || new Date().toISOString().split('T')[0],
+                    type: maintenanceData['maintenance-type'] || 'inspection',
+                    mileage: parseInt(maintenanceData['mileage'] || 0),
+                    cost: parseFloat(maintenanceData['cost'] || 0),
+                    workshop: maintenanceData['workshop'] || '',
+                    notes: maintenanceData['maintenance-notes'] || ''
+                };
+
+                // Send request to API
                 fetch(url, {
                     method: method,
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({
-                        vehicleId: maintenanceData.vehicleId,
-                        date: maintenanceData['maintenance-date'],
-                        type: maintenanceData['maintenance-type'],
-                        mileage: parseInt(maintenanceData.mileage || 0),
-                        cost: parseFloat(maintenanceData.cost || 0),
-                        workshop: maintenanceData.workshop || '',
-                        notes: maintenanceData['maintenance-notes'] || ''
-                    })
+                    body: JSON.stringify(requestData)
                 })
                     .then(response => {
                         if (!response.ok) {
                             return response.text().then(text => {
-                                throw new Error(`Fehler beim Speichern der Wartung: ${text}`);
+                                throw new Error('Failed to save maintenance: ' + text);
                             });
                         }
                         return response.json();
                     })
                     .then(data => {
-                        console.log('Wartung erfolgreich gespeichert:', data);
-                        closeMaintenanceModal();
-
-                        // Wartungseinträge neu laden
-                        const vehicleId = window.location.pathname.split('/').pop();
-                        loadMaintenanceEntries(vehicleId);
-
-                        alert('Wartung erfolgreich gespeichert!');
+                        showNotification('Wartung erfolgreich gespeichert', 'success');
+                        closeModals();
+                        loadMaintenanceEntries();
                     })
                     .catch(error => {
-                        console.error('Fehler:', error);
-                        alert(error.message);
+                        console.error('Error saving maintenance:', error);
+                        showNotification('Fehler beim Speichern der Wartung: ' + error.message, 'error');
                     });
             });
         }
 
-        // Nutzungsformular
-        const usageForm = document.getElementById('usage-form');
         if (usageForm) {
             usageForm.addEventListener('submit', function(event) {
                 event.preventDefault();
@@ -2109,19 +1718,10 @@
                     usageData.vehicleId = window.location.pathname.split('/').pop();
                 }
 
-                // Start- und Enddatum kombinieren
-                const startDateTime = `${usageData['start-date']}T${usageData['start-time']}:00`;
-                let endDateTime = null;
-                if (usageData['end-date'] && usageData['end-time']) {
-                    endDateTime = `${usageData['end-date']}T${usageData['end-time']}:00`;
-                }
-
-                // Prüfen, ob es eine Bearbeitung ist (ID vorhanden)
-                const isEdit = !!usageData.id;
-                const url = isEdit ? `/api/usage/${usageData.id}` : '/api/usage';
-                const method = isEdit ? 'PUT' : 'POST';
-
                 // API-Anfrage senden
+                const url = usageData.id ? `/api/usage/${usageData.id}` : '/api/usage';
+                const method = usageData.id ? 'PUT' : 'POST';
+
                 fetch(url, {
                     method: method,
                     headers: {
@@ -2130,13 +1730,16 @@
                     body: JSON.stringify({
                         vehicleId: usageData.vehicleId,
                         driverId: usageData.driver,
-                        startDate: startDateTime,
-                        endDate: endDateTime,
+                        // Wichtig: Diese Felder müssen separat gesendet werden
+                        startDate: usageData['start-date'],
+                        startTime: usageData['start-time'],
+                        endDate: usageData['end-date'] || null,
+                        endTime: usageData['end-time'] || null,
                         startMileage: parseInt(usageData['start-mileage'] || 0),
                         endMileage: usageData['end-mileage'] ? parseInt(usageData['end-mileage']) : null,
                         project: usageData.project || '',
                         purpose: usageData.project || '',
-                        status: endDateTime ? 'completed' : 'active',
+                        status: (usageData['end-date'] && usageData['end-time']) ? 'completed' : 'active',
                         notes: usageData['usage-notes'] || ''
                     })
                 })
@@ -2150,7 +1753,7 @@
                     })
                     .then(data => {
                         console.log('Nutzung erfolgreich gespeichert:', data);
-                        closeUsageModal();
+                        closeModals();
 
                         // Seite neu laden, um alle Daten zu aktualisieren
                         window.location.reload();
@@ -2161,157 +1764,393 @@
                     });
             });
         }
-    }
 
-// Kostendiagramm initialisieren (Beispiel für ApexCharts)
-    function initializeCostChart(vehicleId) {
-        // Wartungsdaten für das Diagramm laden
-        fetch(`/api/maintenance/vehicle/${vehicleId}`)
-            .then(response => response.json())
-            .then(maintenanceData => {
-                const entries = maintenanceData.maintenance || [];
+        if (editVehicleForm) {
+            editVehicleForm.addEventListener('submit', function(event) {
+                event.preventDefault();
 
-                // Nutzungsdaten für Kraftstoffkosten laden
-                fetch(`/api/usage/vehicle/${vehicleId}`)
-                    .then(response => response.json())
-                    .then(usageData => {
-                        const usageEntries = usageData.usage || [];
+                const formData = new FormData(editVehicleForm);
+                const vehicleData = {};
 
-                        // Daten nach Monaten gruppieren und Kosten summieren
-                        const now = new Date();
-                        const lastYear = new Date(now.setFullYear(now.getFullYear() - 1));
-                        const monthNames = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+                for (let [key, value] of formData.entries()) {
+                    vehicleData[key] = value;
+                }
 
-                        // Monate für die letzten 12 Monate erstellen
-                        const months = [];
-                        for (let i = 0; i < 12; i++) {
-                            const date = new Date(lastYear);
-                            date.setMonth(lastYear.getMonth() + i);
-                            const monthName = monthNames[date.getMonth()] + ' ' + date.getFullYear().toString().substr(-2);
-                            months.push(monthName);
+                // Split brand and model from combined field
+                let brand = '';
+                let model = '';
+
+                if (vehicleData['model']) {
+                    const parts = vehicleData['model'].split(' ');
+                    if (parts.length >= 2) {
+                        brand = parts[0];
+                        model = parts.slice(1).join(' ');
+                    } else {
+                        brand = vehicleData['model'];
+                    }
+                }
+
+                // Prepare request data
+                const requestData = {
+                    licensePlate: vehicleData['license_plate'] || '',
+                    brand: brand,
+                    model: model,
+                    year: parseInt(vehicleData['year'] || 0),
+                    color: vehicleData['color'] || '',
+                    vehicleId: vehicleData['vehicle_id'] || '',
+                    vin: vehicleData['vin'] || '',
+                    fuelType: vehicleData['fuel_type'] || '',
+                    mileage: parseInt(vehicleData['current_mileage'] || 0),
+                    registrationDate: vehicleData['registration_date'] || null,
+                    nextInspectionDate: vehicleData['next_inspection'] || null,
+                    insuranceCompany: vehicleData['insurance'] || '',
+                    insuranceNumber: vehicleData['insurance_number'] || '',
+                    insuranceType: vehicleData['insurance_type'] || ''
+                };
+
+                // Send request to API
+                fetch(`/api/vehicles/${vehicleId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestData)
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.text().then(text => {
+                                throw new Error('Failed to update vehicle: ' + text);
+                            });
                         }
-
-                        // Kosten nach Kategorien für jeden Monat gruppieren
-                        const maintenanceCosts = Array(12).fill(0);
-                        const insuranceCosts = Array(12).fill(100); // Beispiel: monatliche Versicherungskosten
-                        const fuelCosts = Array(12).fill(0);
-
-                        // Wartungskosten zuordnen
-                        entries.forEach(entry => {
-                            const date = new Date(entry.date);
-                            if (date >= lastYear) {
-                                const monthIndex = (date.getMonth() - lastYear.getMonth() + 12) % 12;
-                                maintenanceCosts[monthIndex] += parseFloat(entry.cost || 0);
-                            }
-                        });
-
-                        // Kraftstoffkosten schätzen (Beispiel)
-                        usageEntries.forEach(entry => {
-                            if (entry.endDate && entry.endMileage && entry.startMileage) {
-                                const date = new Date(entry.endDate);
-                                if (date >= lastYear) {
-                                    const monthIndex = (date.getMonth() - lastYear.getMonth() + 12) % 12;
-                                    const distance = entry.endMileage - entry.startMileage;
-                                    // Angenommene Kosten pro km: 0,15 €
-                                    fuelCosts[monthIndex] += distance * 0.15;
-                                }
-                            }
-                        });
-
-                        // ApexCharts-Konfiguration
-                        const options = {
-                            series: [
-                                {
-                                    name: 'Wartungskosten',
-                                    data: maintenanceCosts
-                                },
-                                {
-                                    name: 'Versicherung & Steuern',
-                                    data: insuranceCosts
-                                },
-                                {
-                                    name: 'Kraftstoffkosten',
-                                    data: fuelCosts
-                                }
-                            ],
-                            chart: {
-                                type: 'bar',
-                                height: 320,
-                                stacked: true,
-                                toolbar: {
-                                    show: true,
-                                    tools: {
-                                        download: false
-                                    }
-                                },
-                                zoom: {
-                                    enabled: false
-                                }
-                            },
-                            responsive: [{
-                                breakpoint: 480,
-                                options: {
-                                    legend: {
-                                        position: 'bottom',
-                                        offsetX: -10,
-                                        offsetY: 0
-                                    }
-                                }
-                            }],
-                            plotOptions: {
-                                bar: {
-                                    horizontal: false,
-                                    borderRadius: 2,
-                                    columnWidth: '70%'
-                                }
-                            },
-                            xaxis: {
-                                categories: months
-                            },
-                            yaxis: {
-                                title: {
-                                    text: 'Kosten in €'
-                                },
-                                labels: {
-                                    formatter: function (value) {
-                                        return value.toFixed(0) + ' €';
-                                    }
-                                }
-                            },
-                            colors: ['#6366f1', '#10b981', '#fbbf24'],
-                            fill: {
-                                opacity: 0.8
-                            },
-                            legend: {
-                                position: 'top',
-                                horizontalAlign: 'left'
-                            },
-                            dataLabels: {
-                                enabled: false
-                            }
-                        };
-
-                        // Chart erstellen
-                        const chart = new ApexCharts(document.getElementById('costChart'), options);
-                        chart.render();
+                        return response.json();
+                    })
+                    .then(data => {
+                        showNotification('Fahrzeug erfolgreich aktualisiert', 'success');
+                        closeModals();
+                        loadVehicleData();
                     })
                     .catch(error => {
-                        console.error('Fehler beim Laden der Nutzungsdaten für das Diagramm:', error);
+                        console.error('Error updating vehicle:', error);
+                        showNotification('Fehler beim Aktualisieren des Fahrzeugs: ' + error.message, 'error');
                     });
-            })
-            .catch(error => {
-                console.error('Fehler beim Laden der Wartungsdaten für das Diagramm:', error);
             });
-    }
+        }
 
-// Seite initialisieren
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('DOM geladen, initialisiere Fahrzeugdetails...');
+        if (editCurrentUsageForm) {
+            //Test
+            editCurrentUsageForm.addEventListener('submit', function(event) {
+                event.preventDefault();
 
-        loadVehicleDetails();
-        setupEventHandlers();
+                const formData = new FormData(editCurrentUsageForm);
+                const usageData = {};
 
-        console.log('Initialisierung der Fahrzeugdetails abgeschlossen.');
+                for (let [key, value] of formData.entries()) {
+                    usageData[key] = value;
+                }
+
+                const usageId = usageData['current-usage-id'];
+                if (!usageId) {
+                    showNotification('Keine Nutzungs-ID gefunden', 'error');
+                    return;
+                }
+
+                // Combine date and time fields
+                const startDateTime = `${usageData['current-start-date']}T${usageData['current-start-time']}:00`;
+                let endDateTime = null;
+                if (usageData['current-end-date'] && usageData['current-end-time']) {
+                    endDateTime = `${usageData['current-end-date']}T${usageData['current-end-time']}:00`;
+                }
+
+                // Prepare request data
+                const requestData = {
+                    vehicleId: vehicleId,
+                    driverId: usageData['current-driver'] || '',
+                    startDate: startDateTime,
+                    endDate: endDateTime,
+                    department: usageData['current-department'] || '',
+                    purpose: usageData['current-project'] || '',
+                    project: usageData['current-project'] || '',
+                    status: usageData['usage-status'] || 'active',
+                    notes: usageData['current-usage-notes'] || ''
+                };
+
+                // Send request to API
+                fetch(`/api/usage/${usageId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestData)
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.text().then(text => {
+                                throw new Error('Failed to update usage: ' + text);
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        showNotification('Nutzung erfolgreich aktualisiert', 'success');
+                        closeModals();
+
+                        // Reload both vehicle data and usage history
+                        loadVehicleData();
+                        loadUsageHistory();
+                    })
+                    .catch(error => {
+                        console.error('Error updating usage:', error);
+                        showNotification('Fehler beim Aktualisieren der Nutzung: ' + error.message, 'error');
+                    });
+            });
+        }
+
+        // Event Listeners for buttons
+        if (addMaintenanceBtn) {
+            addMaintenanceBtn.addEventListener('click', function() {
+                openMaintenanceModal(false);
+            });
+        }
+
+        if (addUsageBtn) {
+            addUsageBtn.addEventListener('click', function() {
+                openUsageModal(false);
+            });
+        }
+
+        if (editVehicleBtn) {
+            editVehicleBtn.addEventListener('click', function() {
+                openEditVehicleModal();
+            });
+        }
+
+        if (editCurrentUsageBtn) {
+            editCurrentUsageBtn.addEventListener('click', function() {
+                openEditCurrentUsageModal();
+            });
+        }
+
+        // Event listeners for close buttons
+        closeModalBtns.forEach(button => {
+            button.addEventListener('click', closeModals);
+        });
+
+        closeEditModalBtns.forEach(button => {
+            button.addEventListener('click', closeModals);
+        });
+
+        closeCurrentUsageModalBtns.forEach(button => {
+            button.addEventListener('click', closeModals);
+        });
+
+        // Close on click outside modal
+        window.addEventListener('click', function(event) {
+            if (event.target === maintenanceModal ||
+                event.target === usageModal ||
+                event.target === editVehicleModal ||
+                event.target === editUsageModal) {
+                closeModals();
+            }
+        });
+
+        // Helper functions for formatting
+        function formatDate(dateString) {
+            if (!dateString) return '';
+
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return '';
+
+            return date.toLocaleDateString('de-DE', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        }
+
+        function formatTime(dateString) {
+            if (!dateString) return '';
+
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return '';
+
+            return date.toLocaleTimeString('de-DE', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function formatDateForInput(dateString) {
+            if (!dateString) return '';
+
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return '';
+
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+
+            return `${year}-${month}-${day}`;
+        }
+
+        function formatTimeForInput(dateString) {
+            if (!dateString) return '';
+
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return '';
+
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+
+            return `${hours}:${minutes}`;
+        }
+
+        // Notification system
+        function showNotification(message, type = 'info') {
+            // Create notification element
+            const notification = document.createElement('div');
+
+            let bgColor, textColor;
+            switch (type) {
+                case 'success':
+                    bgColor = 'bg-green-100';
+                    textColor = 'text-green-800';
+                    break;
+                case 'error':
+                    bgColor = 'bg-red-100';
+                    textColor = 'text-red-800';
+                    break;
+                case 'warning':
+                    bgColor = 'bg-yellow-100';
+                    textColor = 'text-yellow-800';
+                    break;
+                default: // info
+                    bgColor = 'bg-blue-100';
+                    textColor = 'text-blue-800';
+            }
+
+            notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg ${bgColor} ${textColor} transition-opacity duration-500`;
+            notification.innerHTML = message;
+
+            // Add to document
+            document.body.appendChild(notification);
+
+            // Remove after delay
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => {
+                    notification.remove();
+                }, 500);
+            }, 3000);
+        }
+
+        // Initialize charts when ApexCharts is available
+        if (typeof ApexCharts !== 'undefined') {
+            // Cost chart - monthly costs over time
+            if (document.getElementById('costChart')) {
+                const costOptions = {
+                    series: [
+                        {
+                            name: 'Wartungskosten',
+                            data: [120, 200, 150, 80, 70, 110, 130, 90, 85, 95, 190, 210]
+                        },
+                        {
+                            name: 'Versicherung',
+                            data: [100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100]
+                        },
+                        {
+                            name: 'Kraftstoffkosten',
+                            data: [85, 100, 90, 80, 110, 95, 70, 75, 80, 90, 105, 115]
+                        }
+                    ],
+                    chart: {
+                        type: 'bar',
+                        height: 320,
+                        stacked: true,
+                        toolbar: {
+                            show: true
+                        }
+                    },
+                    plotOptions: {
+                        bar: {
+                            horizontal: false,
+                            columnWidth: '55%',
+                        },
+                    },
+                    xaxis: {
+                        categories: ['Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez', 'Jan', 'Feb', 'Mär'],
+                    },
+                    yaxis: {
+                        title: {
+                            text: 'Kosten in €'
+                        },
+                    },
+                    fill: {
+                        opacity: 1
+                    },
+                    legend: {
+                        position: 'top',
+                    },
+                    colors: ['#4f46e5', '#10b981', '#f59e0b']
+                };
+
+                const costChart = new ApexCharts(document.getElementById('costChart'), costOptions);
+                costChart.render();
+            }
+
+            // Driver pie chart - usage by driver
+            if (document.getElementById('driverPieChart')) {
+                const driverPieOptions = {
+                    series: [45, 30, 25],
+                    chart: {
+                        type: 'pie',
+                        height: 320,
+                    },
+                    labels: ['Max Mustermann', 'Erika Musterfrau', 'John Doe'],
+                    colors: ['#4f46e5', '#10b981', '#f59e0b'],
+                    responsive: [{
+                        breakpoint: 480,
+                        options: {
+                            chart: {
+                                width: 200
+                            },
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }]
+                };
+
+                const driverPieChart = new ApexCharts(document.getElementById('driverPieChart'), driverPieOptions);
+                driverPieChart.render();
+            }
+
+            // Project pie chart - usage by project
+            if (document.getElementById('projectPieChart')) {
+                const projectPieOptions = {
+                    series: [40, 35, 25],
+                    chart: {
+                        type: 'pie',
+                        height: 320,
+                    },
+                    labels: ['Kundenprojekte', 'Interne Projekte', 'Sonstige'],
+                    colors: ['#4f46e5', '#10b981', '#f59e0b'],
+                    responsive: [{
+                        breakpoint: 480,
+                        options: {
+                            chart: {
+                                width: 200
+                            },
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }]
+                };
+
+                const projectPieChart = new ApexCharts(document.getElementById('projectPieChart'), projectPieOptions);
+                projectPieChart.render();
+            }
+        }
     });
 </script>
 </body>
