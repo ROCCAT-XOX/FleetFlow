@@ -127,6 +127,10 @@
                     const vehicle = data.vehicle;
                     console.log("Geladene Fahrzeugdaten:", vehicle);
 
+                    if (!vehicle) {
+                        throw new Error('Keine Fahrzeugdaten in der Antwort');
+                    }
+
                     // Seitentitel und Status aktualisieren
                     updateHeaderInfo(vehicle);
 
@@ -147,9 +151,9 @@
                     // Nutzungshistorie laden
                     loadUsageHistory();
 
-                    // Wenn ApexCharts verfügbar ist, Charts erstellen
+                    // Wenn ApexCharts verfügbar ist, Charts erstellen mit echten Fahrzeugdaten
                     if (typeof ApexCharts !== 'undefined') {
-                        createCharts();
+                        createCharts(vehicle);
                     }
                 })
                 .catch(error => {
@@ -194,23 +198,27 @@
         }
 
         // Funktion zum Aktualisieren der Fahrzeugdetails im UI
+        // Funktion zum Aktualisieren der Fahrzeugdetails im UI
         function updateVehicleDisplay(vehicle) {
+            console.log("Aktualisiere Fahrzeugdetails mit:", vehicle); // Debug-Ausgabe
+
             // Grundlegende Informationen
-            setElementText('license-plate-display', vehicle.licensePlate);
-            setElementText('brand-model-display', vehicle.brand + ' ' + vehicle.model);
-            setElementText('year-display', vehicle.year);
-            setElementText('color-display', vehicle.color);
-            setElementText('vehicle-id-display', vehicle.vehicleId);
-            setElementText('vin-display', vehicle.vin);
-            setElementText('fuel-type-display', vehicle.fuelType);
-            setElementText('mileage-display', `${vehicle.mileage} km`);
+            setElementText('license-plate-display', vehicle.licensePlate || '-');
+            setElementText('brand-model-display', (vehicle.brand + ' ' + vehicle.model) || '-');
+            setElementText('year-display', vehicle.year || '-');
+            setElementText('color-display', vehicle.color || '-');
+            setElementText('vehicle-id-display', vehicle.vehicleId || '-');
+            setElementText('vin-display', vehicle.vin || '-');
+            setElementText('fuel-type-display', vehicle.fuelType || '-');
+            setElementText('mileage-display', vehicle.mileage ? `${vehicle.mileage} km` : '-');
 
             // Zulassung und Versicherung
-            setElementText('registration-date-display', formatDate(vehicle.registrationDate));
-            setElementText('next-inspection-display', formatDate(vehicle.nextInspectionDate));
-            setElementText('insurance-company-display', vehicle.insuranceCompany);
-            setElementText('insurance-number-display', vehicle.insuranceNumber);
-            setElementText('insurance-type-display', vehicle.insuranceType);
+            setElementText('registration-date-display', formatDate(vehicle.registrationDate) || '-');
+            setElementText('next-inspection-display', formatDate(vehicle.nextInspectionDate) || '-');
+            setElementText('insurance-company-display', vehicle.insuranceCompany || '-');
+            setElementText('insurance-number-display', vehicle.insuranceNumber || '-');
+            setElementText('insurance-type-display', vehicle.insuranceType || '-');
+            setElementText('insurance-cost-display', vehicle.insuranceCost ? `${vehicle.insuranceCost} €` : '-');
 
             // Auch Formulare mit Werten vorausfüllen (für Modals)
             if (document.getElementById('edit-vehicle-form')) {
@@ -234,7 +242,18 @@
                 document.getElementById('insurance').value = vehicle.insuranceCompany || '';
                 document.getElementById('insurance_number').value = vehicle.insuranceNumber || '';
                 document.getElementById('insurance_type').value = vehicle.insuranceType || '';
+                document.getElementById('insurance_cost').value = vehicle.insuranceCost || '';
                 document.getElementById('vehicle_notes').value = vehicle.notes || '';
+            }
+        }
+
+// Hilfsfunktion zum Setzen von Text in einem Element
+        function setElementText(elementId, text) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.textContent = text || '-'; // Fallback auf "-" wenn kein Text vorhanden
+            } else {
+                console.warn(`Element mit ID ${elementId} nicht gefunden`);
             }
         }
 
@@ -364,6 +383,7 @@
         `;
 
             // Event-Listener für den "Bearbeiten"-Button
+            // Event-Listener für den "Bearbeiten"-Button
             const editUsageBtn = document.getElementById('edit-current-usage-btn');
             if (editUsageBtn) {
                 editUsageBtn.addEventListener('click', () => {
@@ -373,6 +393,16 @@
                         if (activeUsage) {
                             const form = document.getElementById('edit-current-usage-form');
                             if (form) {
+                                // Verstecktes Feld für die Nutzungs-ID hinzufügen
+                                let idInput = form.querySelector('input[name="usage-id"]');
+                                if (!idInput) {
+                                    idInput = document.createElement('input');
+                                    idInput.type = 'hidden';
+                                    idInput.name = 'usage-id';
+                                    form.appendChild(idInput);
+                                }
+                                idInput.value = activeUsage.id || '';
+
                                 // Select-Feld für Fahrer suchen und den aktuellen Fahrer auswählen
                                 const driverSelect = form.querySelector('#current-driver');
                                 if (driverSelect) {
@@ -387,6 +417,7 @@
                                     }
 
                                     driverSelect.value = driver.id;
+                                    console.log("Fahrer-ID gesetzt auf:", driver.id); // Debug
                                 }
 
                                 // Startdatum und -zeit setzen
@@ -395,8 +426,14 @@
                                     const startDateInput = form.querySelector('#current-start-date');
                                     const startTimeInput = form.querySelector('#current-start-time');
 
-                                    if (startDateInput) startDateInput.value = formatDateForInput(startDate);
-                                    if (startTimeInput) startTimeInput.value = formatTimeForInput(startDate);
+                                    if (startDateInput) {
+                                        startDateInput.value = formatDateForInput(startDate);
+                                        console.log("Startdatum gesetzt auf:", formatDateForInput(startDate)); // Debug
+                                    }
+                                    if (startTimeInput) {
+                                        startTimeInput.value = formatTimeForInput(startDate);
+                                        console.log("Startzeit gesetzt auf:", formatTimeForInput(startDate)); // Debug
+                                    }
                                 }
 
                                 // Enddatum und -zeit setzen
@@ -431,15 +468,18 @@
                                     notesInput.value = activeUsage.notes || '';
                                 }
 
-                                // Verstecktes Feld für die Nutzungs-ID hinzufügen
-                                let idInput = form.querySelector('input[name="usage-id"]');
-                                if (!idInput) {
-                                    idInput = document.createElement('input');
-                                    idInput.type = 'hidden';
-                                    idInput.name = 'usage-id';
-                                    form.appendChild(idInput);
+                                // Status setzen, falls vorhanden
+                                const statusInput = form.querySelector('#usage-status');
+                                if (statusInput) {
+                                    statusInput.value = activeUsage.status || 'active';
                                 }
-                                idInput.value = activeUsage.id || '';
+
+                                // Kilometerstand setzen, falls nötig
+                                const startMileageInput = document.createElement('input');
+                                startMileageInput.type = 'hidden';
+                                startMileageInput.name = 'start-mileage';
+                                startMileageInput.value = activeUsage.startMileage || 0;
+                                form.appendChild(startMileageInput);
                             }
                         }
 
@@ -601,26 +641,39 @@
         }
 
         // Funktion zum Erstellen der Charts für die Statistikseite
-        function createCharts() {
+        // Funktion zum Erstellen der Charts für die Statistikseite mit echten Daten
+        // Funktion zum Erstellen der Charts für die Statistikseite mit echten Daten
+        function createCharts(vehicle) {
             // Charts nur erstellen, wenn der Tab existiert
             if (!document.getElementById('statistics')) return;
 
-            // Beispieldaten für die Charts (sollten in der Produktion aus der API kommen)
-            const costData = [
-                { month: 'Apr', year: '2024', cost: 380 },
-                { month: 'Mai', year: '2024', cost: 420 },
-                { month: 'Jun', year: '2024', cost: 350 },
-                { month: 'Jul', year: '2024', cost: 500 },
-                { month: 'Aug', year: '2024', cost: 420 },
-                { month: 'Sep', year: '2024', cost: 380 },
-                { month: 'Okt', year: '2024', cost: 450 },
-                { month: 'Nov', year: '2024', cost: 380 },
-                { month: 'Dez', year: '2024', cost: 520 },
-                { month: 'Jan', year: '2025', cost: 450 },
-                { month: 'Feb', year: '2025', cost: 380 },
-                { month: 'Mär', year: '2025', cost: 400 }
-            ];
+            // Versicherungskosten pro Monat berechnen (falls vorhanden)
+            // Sicherstellen, dass wir einen numerischen Wert haben
+            const insuranceCost = vehicle.insuranceCost ? parseFloat(vehicle.insuranceCost) : 0;
+            const monthlyInsuranceCost = insuranceCost / 12;
 
+            // Aktuelle Daten für die letzten 12 Monate generieren
+            const currentDate = new Date();
+            let costData = []; // Sicherstellen, dass es ein Array ist
+
+            for (let i = 11; i >= 0; i--) {
+                const date = new Date(currentDate);
+                date.setMonth(currentDate.getMonth() - i);
+
+                const monthName = date.toLocaleDateString('de-DE', { month: 'short' });
+                const year = date.getFullYear();
+
+                // Hier könnten in Zukunft weitere Kosten wie Wartung etc. hinzugefügt werden
+                costData.push({
+                    month: monthName,
+                    year: year.toString(),
+                    cost: monthlyInsuranceCost.toFixed(2)
+                });
+            }
+
+            console.log("Generierte Kostendaten:", costData); // Debugging
+
+            // Fahrerdaten - können später aus der echten Nutzungshistorie ermittelt werden
             const driverData = [
                 { driver: 'Max Mustermann', usage: 42 },
                 { driver: 'Erika Musterfrau', usage: 28 },
@@ -645,8 +698,10 @@
             createProjectPieChart(projectData);
 
             // Kennzahlen aktualisieren
-            updateStatisticsSummary(costData, driverData);
+            updateStatisticsSummary(vehicle, costData, driverData);
         }
+
+
 
         // Funktion zum Erstellen des Kostendiagramms
         function createCostChart(data) {
@@ -780,18 +835,36 @@
         }
 
         // Funktion zum Aktualisieren der Statistikzusammenfassung
-        function updateStatisticsSummary(costData, driverData) {
-            // Gesamtkosten berechnen
-            const totalCost = costData.reduce((sum, item) => sum + item.cost, 0);
+        // Funktion zur Aktualisierung der Statistikzusammenfassung mit echten Daten
+        function updateStatisticsSummary(vehicle, costData, driverData) {
+            // Sicherstellen, dass costData ein Array ist, bevor reduce verwendet wird
+            if (!Array.isArray(costData)) {
+                console.error("costData ist kein Array:", costData);
+                costData = []; // Notfallzurücksetzung auf leeres Array
+            }
 
-            // Weitere Statistiken könnten aus API-Daten kommen
-            const totalKilometers = 12500;
-            const costPerKm = totalCost / totalKilometers;
-            const utilization = 65; // Prozent
+            // Gesamtkosten berechnen mit Fehlerbehandlung
+            let totalCost = 0;
+            try {
+                totalCost = costData.reduce((sum, item) => {
+                    // Sicherstellen, dass cost ein numerischer Wert ist
+                    const itemCost = parseFloat(item.cost) || 0;
+                    return sum + itemCost;
+                }, 0);
+            } catch (error) {
+                console.error("Fehler bei der Berechnung der Gesamtkosten:", error);
+            }
+
+            // Reale Daten verwenden wo verfügbar
+            const totalKilometers = vehicle.mileage || 0;
+            const costPerKm = totalKilometers > 0 ? (totalCost / totalKilometers).toFixed(4) : 0;
+
+            // Auslastung könnte später aus der Nutzungshistorie berechnet werden
+            const utilization = 65; // Platzhalter, bis echte Daten verfügbar sind
 
             // UI aktualisieren
             setElementText('total-kilometers', `${totalKilometers.toLocaleString()} km`);
-            setElementText('cost-per-km', `${costPerKm.toFixed(2)} € / km`);
+            setElementText('cost-per-km', `${costPerKm} € / km`);
             setElementText('total-cost', `${totalCost.toLocaleString()} €`);
             setElementText('utilization', `${utilization}%`);
         }
@@ -955,120 +1028,87 @@
             }
         }
 
-        // Funktion zum Öffnen des Nutzungsmodals
+        // Verbesserte Funktion zum Laden der Fahrer für das Nutzungsformular
         function openUsageModal(isEdit = false, usageId = null) {
             const modal = document.getElementById('usage-modal');
-            const modalTitle = document.getElementById('usage-modal-title');
-            const form = document.getElementById('usage-form');
+            if (!modal) return;
 
-            if (!modal || !modalTitle || !form) return;
+            // Modal anzeigen
+            modal.classList.remove('hidden');
 
-            // Formulardaten zurücksetzen
-            form.reset();
-
-            // Fahrer für die Auswahl laden
+            // Fahrer für das Formular laden
             loadDriversForUsageForm();
 
-            if (isEdit && usageId) {
-                modalTitle.textContent = 'Nutzung bearbeiten';
-
-                // Nutzungseintrag von der API laden
-                fetch(`/api/usage/${usageId}`)
-                    .then(response => {
-                        if (!response.ok) throw new Error('Nutzungseintrag nicht gefunden');
-                        return response.json();
-                    })
-                    .then(data => {
-                        const usage = data.usage;
-
-                        // Startdatum und -zeit ausfüllen
-                        if (usage.startDate) {
-                            const startDate = new Date(usage.startDate);
-                            document.getElementById('start-date').value = formatDateForInput(startDate);
-                            document.getElementById('start-time').value = formatTimeForInput(startDate);
-                        }
-
-                        // Enddatum und -zeit ausfüllen, falls vorhanden
-                        if (usage.endDate) {
-                            const endDate = new Date(usage.endDate);
-                            document.getElementById('end-date').value = formatDateForInput(endDate);
-                            document.getElementById('end-time').value = formatTimeForInput(endDate);
-                        }
-
-                        // Fahrer auswählen
-                        if (usage.driverId) {
-                            const driverSelect = document.getElementById('driver');
-                            if (driverSelect) {
-                                // Warten, bis die Fahrer geladen sind
-                                const waitForDriverOptions = setInterval(() => {
-                                    if (driverSelect.options.length > 1) {
-                                        clearInterval(waitForDriverOptions);
-
-                                        // Prüfen, ob der Fahrer in der Liste ist
-                                        let driverOption = Array.from(driverSelect.options).find(option =>
-                                            option.value === usage.driverId);
-
-                                        if (!driverOption && data.driver) {
-                                            // Fahrer zur Liste hinzufügen
-                                            driverOption = document.createElement('option');
-                                            driverOption.value = usage.driverId;
-                                            driverOption.textContent = `${data.driver.firstName} ${data.driver.lastName}`;
-                                            driverSelect.appendChild(driverOption);
-                                        }
-
-                                        if (driverOption) {
-                                            driverSelect.value = usage.driverId;
-                                        }
-                                    }
-                                }, 100);
-                            }
-                        }
-
-                        // Weitere Felder ausfüllen
-                        document.getElementById('project').value = usage.project || usage.purpose || '';
-                        document.getElementById('start-mileage').value = usage.startMileage || '';
-                        document.getElementById('end-mileage').value = usage.endMileage || '';
-                        document.getElementById('usage-notes').value = usage.notes || '';
-
-                        // Verstecktes Feld für die Nutzungs-ID hinzufügen
-                        let idInput = form.querySelector('input[name="usage-id"]');
-                        if (!idInput) {
-                            idInput = document.createElement('input');
-                            idInput.type = 'hidden';
-                            idInput.name = 'usage-id';
-                            form.appendChild(idInput);
-                        }
-                        idInput.value = usageId;
-                    })
-                    .catch(error => {
-                        console.error('Fehler beim Laden des Nutzungseintrags:', error);
-                        closeUsageModal();
-                        showNotification('Fehler beim Laden des Nutzungseintrags', 'error');
-                    });
-            } else {
-                modalTitle.textContent = 'Nutzung eintragen';
-
-                // Aktuelles Datum und Uhrzeit vorausfüllen
-                const now = new Date();
-                document.getElementById('start-date').value = formatDateForInput(now);
-                document.getElementById('start-time').value = formatTimeForInput(now);
-
-                // Aktuellen Kilometerstand abfragen und vorausfüllen
-                fetch(`/api/vehicles/${vehicleId}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.vehicle && data.vehicle.mileage) {
-                            document.getElementById('start-mileage').value = data.vehicle.mileage;
-                        }
-                    })
-                    .catch(error => console.error('Fehler beim Laden des Kilometerstands:', error));
-
-                // Das Versteckte ID-Feld entfernen, falls vorhanden
-                const idInput = form.querySelector('input[name="usage-id"]');
-                if (idInput) idInput.remove();
+            // Rest der Modal-Initialisierung, abhängig davon ob ein neuer Eintrag oder Bearbeitung
+            const modalTitle = document.getElementById('usage-modal-title');
+            if (modalTitle) {
+                modalTitle.textContent = isEdit ? 'Nutzung bearbeiten' : 'Nutzung eintragen';
             }
 
-            modal.classList.remove('hidden');
+            const form = document.getElementById('usage-form');
+            if (form) {
+                // Formular zurücksetzen
+                form.reset();
+
+                // Wenn wir einen vorhandenen Eintrag bearbeiten
+                if (isEdit && usageId) {
+                    // ID-Feld hinzufügen
+                    let idField = form.querySelector('input[name="usage-id"]');
+                    if (!idField) {
+                        idField = document.createElement('input');
+                        idField.type = 'hidden';
+                        idField.name = 'usage-id';
+                        form.appendChild(idField);
+                    }
+                    idField.value = usageId;
+
+                    // Daten vom Server laden und Formular vorausfüllen
+                    fetch(`/api/usage/${usageId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            // Formular mit den geladenen Daten füllen
+                            // ...
+                        })
+                        .catch(error => {
+                            console.error('Fehler beim Laden der Nutzungsdaten:', error);
+                            showNotification('Fehler beim Laden der Nutzungsdaten', 'error');
+                        });
+                } else {
+                    // Neuer Eintrag: Aktuelles Datum/Zeit und Kilometerstand vorausfüllen
+                    const now = new Date();
+                    const dateInput = form.querySelector('#start-date');
+                    const timeInput = form.querySelector('#start-time');
+
+                    if (dateInput) {
+                        const year = now.getFullYear();
+                        const month = String(now.getMonth() + 1).padStart(2, '0');
+                        const day = String(now.getDate()).padStart(2, '0');
+                        dateInput.value = `${year}-${month}-${day}`;
+                    }
+
+                    if (timeInput) {
+                        const hours = String(now.getHours()).padStart(2, '0');
+                        const minutes = String(now.getMinutes()).padStart(2, '0');
+                        timeInput.value = `${hours}:${minutes}`;
+                    }
+
+                    // Aktuellen Kilometerstand vorausfüllen, falls bekannt
+                    const mileageInput = form.querySelector('#start-mileage');
+                    if (mileageInput) {
+                        // Aktuelle Fahrzeugdaten abrufen
+                        fetch(`/api/vehicles/${vehicleId}`)
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.vehicle && data.vehicle.mileage) {
+                                    mileageInput.value = data.vehicle.mileage;
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Fehler beim Laden des Kilometerstands:', error);
+                            });
+                    }
+                }
+            }
         }
 
         // Funktion zum Schließen des Nutzungsmodals
@@ -1090,40 +1130,64 @@
         // Funktion zum Laden der Fahrer für das Nutzungsformular
         function loadDriversForUsageForm() {
             const driverSelect = document.getElementById('driver');
-            if (!driverSelect) return;
+            if (!driverSelect) {
+                console.error("Fahrer-Select-Element nicht gefunden");
+                return;
+            }
 
-            // Bestehende Optionen behalten, aber den Rest zurücksetzen
-            const firstOption = driverSelect.querySelector('option:first-child');
+            console.log("Lade Fahrer für das Formular...");
+
+            // Bestehende Optionen löschen, aber die erste Option beibehalten
+            const firstOption = driverSelect.firstElementChild;
             driverSelect.innerHTML = '';
 
             if (firstOption) {
                 driverSelect.appendChild(firstOption);
             } else {
-                const noDriverOption = document.createElement('option');
-                noDriverOption.value = '';
-                noDriverOption.textContent = 'Fahrer auswählen';
-                driverSelect.appendChild(noDriverOption);
+                // Standardoption hinzufügen, falls keine existiert
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = 'Fahrer auswählen';
+                driverSelect.appendChild(defaultOption);
             }
 
-            // Fahrer von der API laden
+            // Fahrer laden
             fetch('/api/drivers')
                 .then(response => {
-                    if (!response.ok) throw new Error('Fehler beim Laden der Fahrer');
+                    if (!response.ok) {
+                        throw new Error(`Fehler beim Laden der Fahrer: ${response.status} ${response.statusText}`);
+                    }
                     return response.json();
                 })
                 .then(data => {
-                    const drivers = data.drivers || [];
+                    console.log("Geladene Fahrerdaten:", data);
 
-                    // Fahrer zur Select-Liste hinzufügen
-                    drivers.forEach(driver => {
+                    if (!data.drivers || !Array.isArray(data.drivers) || data.drivers.length === 0) {
+                        console.warn("Keine Fahrerdaten verfügbar");
+                        return;
+                    }
+
+                    // Fahrer zur Auswahlliste hinzufügen
+                    data.drivers.forEach(driver => {
                         const option = document.createElement('option');
                         option.value = driver.id;
                         option.textContent = `${driver.firstName} ${driver.lastName}`;
                         driverSelect.appendChild(option);
+                        console.log(`Fahrer hinzugefügt: ${driver.firstName} ${driver.lastName} (ID: ${driver.id})`);
                     });
                 })
                 .catch(error => {
-                    console.error('Fehler beim Laden der Fahrer:', error);
+                    console.error("Fehler beim Laden der Fahrer:", error);
+
+                    // Fehlerhafte Option hinzufügen
+                    const errorOption = document.createElement('option');
+                    errorOption.value = '';
+                    errorOption.textContent = 'Fehler beim Laden der Fahrer';
+                    errorOption.disabled = true;
+                    driverSelect.appendChild(errorOption);
+
+                    // Benutzerbenachrichtigung
+                    showNotification('Fehler beim Laden der Fahrer: ' + error.message, 'error');
                 });
         }
 
@@ -1189,7 +1253,7 @@
                 });
         }
 
-        // Funktion zur Verarbeitung des Nutzungsformulars
+        // Modifizierte handleUsageSubmit-Funktion, die mit dem Backend-Format kompatibel ist
         function handleUsageSubmit(event) {
             event.preventDefault();
 
@@ -1197,44 +1261,59 @@
             const formData = new FormData(form);
             const usageData = {};
 
-            // Formulardaten in ein Objekt umwandeln
+            // Formulardaten sammeln
             for (let [key, value] of formData.entries()) {
                 usageData[key] = value;
             }
 
-            // Prüfen, ob es eine Bearbeitung ist
+            // API-Anfrage vorbereiten
             const usageId = usageData['usage-id'];
             const isEdit = !!usageId;
-
-            // API-Anfrage vorbereiten
-            const apiUrl = isEdit ?
-                `/api/usage/${usageId}` :
-                '/api/usage';
-
+            const apiUrl = isEdit ? `/api/usage/${usageId}` : '/api/usage';
             const method = isEdit ? 'PUT' : 'POST';
 
-            // Prüfen, ob ein Fahrer ausgewählt wurde
+            // Validierung des Fahrers
             if (!usageData.driver) {
                 showNotification('Bitte wählen Sie einen Fahrer aus', 'error');
                 return;
             }
 
-            // Daten in das von der API erwartete Format umwandeln
+            // Vereinfachte API-Daten, die exakt dem Format entsprechen, das der Server erwartet
             const apiData = {
                 vehicleId: vehicleId,
                 driverId: usageData.driver,
                 startDate: usageData['start-date'],
                 startTime: usageData['start-time'],
-                endDate: usageData['end-date'] || null,
-                endTime: usageData['end-time'] || null,
-                startMileage: parseInt(usageData['start-mileage']) || 0,
-                endMileage: parseInt(usageData['end-mileage']) || 0,
-                project: usageData.project,
-                status: (usageData['end-date'] && usageData['end-time']) ? 'completed' : 'active',
-                notes: usageData['usage-notes']
+                startMileage: parseInt(usageData['start-mileage']) || 0
             };
 
-            // API-Anfrage senden
+            // Optionale Felder nur hinzufügen, wenn sie tatsächlich Werte haben
+            if (usageData['end-date'] && usageData['end-date'].trim() !== '') {
+                apiData.endDate = usageData['end-date'];
+            }
+
+            if (usageData['end-time'] && usageData['end-time'].trim() !== '') {
+                apiData.endTime = usageData['end-time'];
+            }
+
+            if (usageData['end-mileage'] && usageData['end-mileage'].trim() !== '') {
+                apiData.endMileage = parseInt(usageData['end-mileage']);
+            }
+
+            if (usageData.project && usageData.project.trim() !== '') {
+                apiData.purpose = usageData.project; // Das Backend erwartet 'purpose' statt 'project'
+            }
+
+            if (usageData['usage-notes'] && usageData['usage-notes'].trim() !== '') {
+                apiData.notes = usageData['usage-notes'];
+            }
+
+            // Status basierend auf End-Datum/-Zeit setzen
+            apiData.status = (usageData['end-date'] && usageData['end-time']) ? 'completed' : 'active';
+
+            console.log("Sende an API:", JSON.stringify(apiData, null, 2));
+
+            // API-Anfrage mit detaillierter Fehlerbehandlung
             fetch(apiUrl, {
                 method: method,
                 headers: {
@@ -1243,12 +1322,32 @@
                 body: JSON.stringify(apiData)
             })
                 .then(response => {
-                    if (!response.ok) throw new Error('Fehler beim Speichern des Nutzungseintrags');
-                    return response.json();
+                    console.log("API-Antwort Status:", response.status);
+
+                    return response.text().then(text => {
+                        console.log("API-Antwort Text:", text);
+
+                        try {
+                            // Versuchen, als JSON zu parsen
+                            const data = JSON.parse(text);
+
+                            if (!response.ok) {
+                                throw new Error(data.error || 'Fehler beim Speichern des Nutzungseintrags');
+                            }
+
+                            return data;
+                        } catch (e) {
+                            if (!response.ok) {
+                                throw new Error('Fehler beim Speichern des Nutzungseintrags: ' + text);
+                            }
+
+                            return {}; // Leeres Objekt zurückgeben, wenn kein JSON
+                        }
+                    });
                 })
                 .then(data => {
                     closeUsageModal();
-                    loadVehicleData(); // Fahrzeugdaten komplett neu laden
+                    loadAllData(); // Alle Daten neu laden
                     showNotification(
                         isEdit ? 'Nutzungseintrag erfolgreich aktualisiert' :
                             'Nutzungseintrag erfolgreich erstellt',
@@ -1256,10 +1355,6 @@
                     );
                 })
                 .catch(error => {
-                    console.error('Fehler:', error);
-                    showNotification('Fehler beim Speichern: ' + error.message, 'error');
-                });
-        }
 
         // Funktion zur Verarbeitung des Formulars für die aktuelle Nutzung
         function handleCurrentUsageSubmit(event) {
@@ -1274,10 +1369,23 @@
                 usageData[key] = value;
             }
 
+            console.log("Gesammelte Formulardaten für aktuelle Nutzung:", usageData); // Debug-Ausgabe
+
             // API-Anfrage vorbereiten
             const usageId = usageData['usage-id'];
             if (!usageId) {
                 showNotification('Fehler: Keine Nutzungs-ID gefunden', 'error');
+                return;
+            }
+
+            // Validierung der Pflichtfelder
+            if (!usageData['current-driver']) {
+                showNotification('Bitte wählen Sie einen Fahrer aus', 'error');
+                return;
+            }
+
+            if (!usageData['current-start-date'] || !usageData['current-start-time']) {
+                showNotification('Bitte geben Sie Startdatum und Startzeit an', 'error');
                 return;
             }
 
@@ -1289,11 +1397,16 @@
                 startTime: usageData['current-start-time'],
                 endDate: usageData['current-end-date'] || null,
                 endTime: usageData['current-end-time'] || null,
-                project: usageData['current-project'],
-                department: usageData['current-department'] || '',
+                project: usageData['current-project'] || "",
+                purpose: usageData['current-project'] || "", // Duplizieren für Kompatibilität
+                department: usageData['current-department'] || "",
                 status: usageData['usage-status'] || 'active',
-                notes: usageData['current-usage-notes']
+                notes: usageData['current-usage-notes'] || "",
+                // Da wir eine bestehende Nutzung bearbeiten, brauchen wir möglicherweise den aktuellen Kilometerstand
+                startMileage: parseInt(usageData['start-mileage'] || 0)
             };
+
+            console.log("Sende aktualisierte Nutzungsdaten an API:", apiData); // Debug-Ausgabe
 
             // API-Anfrage senden
             fetch(`/api/usage/${usageId}`, {
@@ -1304,7 +1417,12 @@
                 body: JSON.stringify(apiData)
             })
                 .then(response => {
-                    if (!response.ok) throw new Error('Fehler beim Aktualisieren der aktuellen Nutzung');
+                    if (!response.ok) {
+                        return response.text().then(text => {
+                            console.error("API-Fehlerantwort:", text);
+                            throw new Error('Fehler beim Aktualisieren der aktuellen Nutzung: ' + text);
+                        });
+                    }
                     return response.json();
                 })
                 .then(data => {
@@ -1331,6 +1449,8 @@
                 vehicleData[key] = value;
             }
 
+            console.log("Gesammelte Formulardaten:", vehicleData); // Debug-Ausgabe
+
             // Marke und Modell aufteilen
             let brand = "";
             let model = "";
@@ -1345,24 +1465,32 @@
                 }
             }
 
+            // Validierung der Pflichtfelder
+            if (!vehicleData.license_plate) {
+                showNotification('Bitte geben Sie ein Kennzeichen ein', 'error');
+                return;
+            }
+
             // Daten in das von der API erwartete Format umwandeln
             const apiData = {
                 licensePlate: vehicleData.license_plate,
                 brand: brand,
                 model: model,
-                year: parseInt(vehicleData.year) || 0,
-                color: vehicleData.color,
-                // VehicleID wird nicht aktualisiert
-                vin: vehicleData.vin,
-                fuelType: vehicleData.fuel_type,
+                year: parseInt(vehicleData.year) || null,
+                color: vehicleData.color || "",
+                vin: vehicleData.vin || "",
+                fuelType: vehicleData.fuel_type || "",
                 mileage: parseInt(vehicleData.current_mileage) || 0,
                 registrationDate: vehicleData.registration_date || null,
                 nextInspectionDate: vehicleData.next_inspection || null,
-                insuranceCompany: vehicleData.insurance,
-                insuranceNumber: vehicleData.insurance_number,
-                insuranceType: vehicleData.insurance_type,
-                notes: vehicleData.vehicle_notes
+                insuranceCompany: vehicleData.insurance || "",
+                insuranceNumber: vehicleData.insurance_number || "",
+                insuranceType: vehicleData.insurance_type || "",
+                insuranceCost: parseFloat(vehicleData.insurance_cost) || 0,
+                notes: vehicleData.vehicle_notes || ""
             };
+
+            console.log("Sende Fahrzeugdaten an API:", apiData); // Debug-Ausgabe
 
             // API-Anfrage senden
             fetch(`/api/vehicles/${vehicleId}`, {
@@ -1373,7 +1501,12 @@
                 body: JSON.stringify(apiData)
             })
                 .then(response => {
-                    if (!response.ok) throw new Error('Fehler beim Aktualisieren des Fahrzeugs');
+                    if (!response.ok) {
+                        return response.text().then(text => {
+                            console.error("API-Fehlerantwort:", text);
+                            throw new Error('Fehler beim Aktualisieren des Fahrzeugs: ' + text);
+                        });
+                    }
                     return response.json();
                 })
                 .then(data => {

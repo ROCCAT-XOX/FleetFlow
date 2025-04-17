@@ -55,6 +55,7 @@ type Vehicle struct {
 	InsuranceNumber    string             `bson:"insuranceNumber" json:"insuranceNumber"`
 	InsuranceType      InsuranceType      `bson:"insuranceType" json:"insuranceType"`
 	InsuranceExpiry    time.Time          `bson:"insuranceExpiry" json:"insuranceExpiry"` // Neues Feld
+	InsuranceCost      float64            `bson:"insuranceCost" json:"insuranceCost"`
 	NextInspectionDate time.Time          `bson:"nextInspectionDate" json:"nextInspectionDate"`
 	Status             VehicleStatus      `bson:"status" json:"status"`
 	CurrentDriverID    primitive.ObjectID `bson:"currentDriverId,omitempty" json:"currentDriverId"`
