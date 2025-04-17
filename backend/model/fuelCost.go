@@ -1,4 +1,3 @@
-// backend/model/fuelCost.go
 package model
 
 import (
@@ -8,14 +7,6 @@ import (
 )
 
 // FuelType repräsentiert den Kraftstofftyp
-type FuelType string
-
-const (
-	FuelTypeDiesel   FuelType = "Diesel"
-	FuelTypePetrol   FuelType = "Benzin"
-	FuelTypeElectric FuelType = "Elektro"
-	FuelTypeGas      FuelType = "Gas"
-)
 
 // FuelCost repräsentiert einen Tankkosteneintrag im System
 type FuelCost struct {

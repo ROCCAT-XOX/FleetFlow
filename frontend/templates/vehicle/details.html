@@ -6,56 +6,103 @@
 
 <!-- Main Content -->
 <main class="container mx-auto px-4 py-6 flex-grow">
-    <!-- Zurück-Button und Titel -->
-    <div class="mb-6 flex items-center justify-between">
-        <div class="flex items-center">
-            <a href="/vehicles" class="inline-flex items-center mr-4 text-sm font-medium text-indigo-600 hover:text-indigo-500">
-                <svg class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                Zurück zur Übersicht
-            </a>
-            <h1 class="text-2xl font-bold text-gray-900" id="vehicle-title">Fahrzeugdetails</h1>
-        </div>
-        <div>
-        <span id="vehicle-status" class="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
-          Wird geladen...
-        </span>
-        </div>
-    </div>
-
-    <!-- Tab Navigation -->
-    <div class="mb-6 border-b border-gray-200">
-        <nav class="flex flex-wrap space-x-8" aria-label="Tabs">
-            <button type="button" class="vehicle-tab-btn border-blue-500 text-blue-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="basic-info">
-                Fahrzeuginformationen
-            </button>
-            <button type="button" class="vehicle-tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="current-usage">
-                Aktuelle Nutzung
-            </button>
-            <button type="button" class="vehicle-tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="registration-insurance">
-                Zulassung & Versicherung
-            </button>
-            <button type="button" class="vehicle-tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="maintenance">
-                Wartung & Inspektion
-            </button>
-            <button type="button" class="vehicle-tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="usage-history">
-                Nutzungshistorie
-            </button>
-            <button type="button" class="vehicle-tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="statistics">
-                Statistiken
-            </button>
+    <div class="mb-6">
+        <nav class="flex" aria-label="Breadcrumb">
+            <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                <li class="inline-flex items-center">
+                    <a href="/dashboard" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white">
+                        <svg class="w-3 h-3 mr-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="m19.707 9.293-2-2-7-7a1 1 0 0 0-1.414 0l-7 7-2 2a1 1 0 0 0 1.414 1.414L2 10.414V18a2 2 0 0 0 2 2h3a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h3a2 2 0 0 0 2-2v-7.586l.293.293a1 1 0 0 0 1.414-1.414Z"/>
+                        </svg>
+                        Dashboard
+                    </a>
+                </li>
+                <li>
+                    <div class="flex items-center">
+                        <svg class="w-3 h-3 text-gray-400 mx-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
+                        </svg>
+                        <a href="/vehicles" class="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2 dark:text-gray-400 dark:hover:text-white">Fahrzeuge</a>
+                    </div>
+                </li>
+                <li aria-current="page">
+                    <div class="flex items-center">
+                        <svg class="w-3 h-3 text-gray-400 mx-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
+                        </svg>
+                        <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2 dark:text-gray-400" id="vehicle-title">Fahrzeugdetails</span>
+                    </div>
+                </li>
+            </ol>
         </nav>
     </div>
 
-    <!-- Tab Contents -->
-    <div id="vehicle-tab-contents">
-        {{ template "vehicle/basic_info" . }}
-        {{ template "vehicle/current_usage" . }}
-        {{ template "vehicle/registration" . }}
-        {{ template "vehicle/maintenance" . }}
-        {{ template "vehicle/usage_history" . }}
-        {{ template "vehicle/statistics" . }}
+    <!-- Fahrzeug-Header mit Status -->
+    <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white" id="vehicle-header">Fahrzeugdetails</h1>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400" id="vehicle-subheader">Detaillierte Informationen</p>
+            </div>
+            <div class="mt-4 md:mt-0 flex items-center">
+                    <span id="vehicle-status-badge" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                        Verfügbar
+                    </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fahrzeug-Tabs -->
+    <div class="mb-6">
+        <div class="sm:hidden">
+            <label for="tabs" class="sr-only">Tab auswählen</label>
+            <select id="tabs" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                <option value="basic-info">Grunddaten</option>
+                <option value="current-usage">Aktuelle Nutzung</option>
+                <option value="usage-history">Nutzungshistorie</option>
+                <option value="maintenance">Wartung & Inspektion</option>
+                <option value="fuel-costs">Tankkosten</option>
+                <option value="registration-insurance">Zulassung & Versicherung</option>
+                <option value="statistics">Statistiken</option>
+            </select>
+        </div>
+        <div class="hidden sm:block">
+            <div class="border-b border-gray-200 dark:border-gray-700">
+                <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                    <button class="vehicle-tab-btn border-blue-500 text-blue-600 dark:text-blue-500 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="basic-info">Grunddaten</button>
+                    <button class="vehicle-tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="current-usage">Aktuelle Nutzung</button>
+                    <button class="vehicle-tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="usage-history">Nutzungshistorie</button>
+                    <button class="vehicle-tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="maintenance">Wartung</button>
+                    <button class="vehicle-tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="fuel-costs">Tankkosten</button>
+                    <button class="vehicle-tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="registration-insurance">Zulassung</button>
+                    <button class="vehicle-tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="statistics">Statistiken</button>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab-Inhalte -->
+    <div id="vehicle-tabs-content">
+        <!-- Grunddaten -->
+        {{ template "vehicle/basic_info" .}}
+
+        <!-- Aktuelle Nutzung -->
+        {{ template "vehicle/current_usage" .}}
+
+        <!-- Nutzungshistorie -->
+        {{ template "vehicle/usage_history" .}}
+
+        <!-- Wartung & Inspektionen -->
+        {{ template "vehicle/maintenance" .}}
+
+        <!-- Tankkosten -->
+        {{ template "vehicle/fuel_costs" .}}
+
+        <!-- Zulassung & Versicherung -->
+        {{ template "vehicle/registration" .}}
+
+        <!-- Statistiken -->
+        {{ template "vehicle/statistics" .}}
     </div>
 </main>
 
@@ -174,7 +221,7 @@
             if (vehicleStatus) {
                 let statusClass, statusText;
 
-                switch(vehicle.status) {
+                switch (vehicle.status) {
                     case 'available':
                         statusClass = 'bg-green-100 text-green-800';
                         statusText = 'Verfügbar';
@@ -279,7 +326,7 @@
                             const activeUsage = usageData.usage.find(entry => entry.status === 'active');
 
                             updateCurrentUsageDisplay(driver, activeUsage);
-                            return { driver, activeUsage };
+                            return {driver, activeUsage};
                         });
                 })
                 .catch(error => {
@@ -533,10 +580,18 @@
                 let type = 'Sonstiges';
 
                 switch (entry.type) {
-                    case 'inspection': type = 'Inspektion'; break;
-                    case 'oil-change': type = 'Ölwechsel'; break;
-                    case 'tire-change': type = 'Reifenwechsel'; break;
-                    case 'repair': type = 'Reparatur'; break;
+                    case 'inspection':
+                        type = 'Inspektion';
+                        break;
+                    case 'oil-change':
+                        type = 'Ölwechsel';
+                        break;
+                    case 'tire-change':
+                        type = 'Reifenwechsel';
+                        break;
+                    case 'repair':
+                        type = 'Reparatur';
+                        break;
                 }
 
                 return `
@@ -557,7 +612,7 @@
             // Event-Listener für die Bearbeiten-Buttons
             const editButtons = tableBody.querySelectorAll('.edit-maintenance-btn');
             editButtons.forEach(button => {
-                button.addEventListener('click', function() {
+                button.addEventListener('click', function () {
                     const entryId = this.getAttribute('data-id');
                     openMaintenanceModal(true, entryId);
                 });
@@ -633,7 +688,7 @@
             // Event-Listener für die Bearbeiten-Buttons
             const editButtons = tableBody.querySelectorAll('.edit-usage-btn');
             editButtons.forEach(button => {
-                button.addEventListener('click', function() {
+                button.addEventListener('click', function () {
                     const entryId = this.getAttribute('data-id');
                     openUsageModal(true, entryId);
                 });
@@ -660,7 +715,7 @@
                 const date = new Date(currentDate);
                 date.setMonth(currentDate.getMonth() - i);
 
-                const monthName = date.toLocaleDateString('de-DE', { month: 'short' });
+                const monthName = date.toLocaleDateString('de-DE', {month: 'short'});
                 const year = date.getFullYear();
 
                 // Hier könnten in Zukunft weitere Kosten wie Wartung etc. hinzugefügt werden
@@ -675,17 +730,17 @@
 
             // Fahrerdaten - können später aus der echten Nutzungshistorie ermittelt werden
             const driverData = [
-                { driver: 'Max Mustermann', usage: 42 },
-                { driver: 'Erika Musterfrau', usage: 28 },
-                { driver: 'John Doe', usage: 18 },
-                { driver: 'Andere', usage: 12 }
+                {driver: 'Max Mustermann', usage: 42},
+                {driver: 'Erika Musterfrau', usage: 28},
+                {driver: 'John Doe', usage: 18},
+                {driver: 'Andere', usage: 12}
             ];
 
             const projectData = [
-                { project: 'Digital Transformation', usage: 35 },
-                { project: 'Vertriebsbesuche', usage: 25 },
-                { project: 'Schulungen', usage: 20 },
-                { project: 'Andere', usage: 20 }
+                {project: 'Digital Transformation', usage: 35},
+                {project: 'Vertriebsbesuche', usage: 25},
+                {project: 'Schulungen', usage: 20},
+                {project: 'Andere', usage: 20}
             ];
 
             // Kostenchart erstellen
@@ -700,7 +755,6 @@
             // Kennzahlen aktualisieren
             updateStatisticsSummary(vehicle, costData, driverData);
         }
-
 
 
         // Funktion zum Erstellen des Kostendiagramms
@@ -750,7 +804,7 @@
                 },
                 tooltip: {
                     y: {
-                        formatter: function(val) {
+                        formatter: function (val) {
                             return val + " €";
                         }
                     }
@@ -791,7 +845,7 @@
                 },
                 tooltip: {
                     y: {
-                        formatter: function(val) {
+                        formatter: function (val) {
                             return val + "%";
                         }
                     }
@@ -823,7 +877,7 @@
                 },
                 tooltip: {
                     y: {
-                        formatter: function(val) {
+                        formatter: function (val) {
                             return val + "%";
                         }
                     }
@@ -1356,255 +1410,260 @@
                 })
                 .catch(error => {
 
-        // Funktion zur Verarbeitung des Formulars für die aktuelle Nutzung
-        function handleCurrentUsageSubmit(event) {
-            event.preventDefault();
+                    // Funktion zur Verarbeitung des Formulars für die aktuelle Nutzung
+                    function handleCurrentUsageSubmit(event) {
+                        event.preventDefault();
 
-            const form = event.target;
-            const formData = new FormData(form);
-            const usageData = {};
+                        const form = event.target;
+                        const formData = new FormData(form);
+                        const usageData = {};
 
-            // Formulardaten in ein Objekt umwandeln
-            for (let [key, value] of formData.entries()) {
-                usageData[key] = value;
-            }
+                        // Formulardaten in ein Objekt umwandeln
+                        for (let [key, value] of formData.entries()) {
+                            usageData[key] = value;
+                        }
 
-            console.log("Gesammelte Formulardaten für aktuelle Nutzung:", usageData); // Debug-Ausgabe
+                        console.log("Gesammelte Formulardaten für aktuelle Nutzung:", usageData); // Debug-Ausgabe
 
-            // API-Anfrage vorbereiten
-            const usageId = usageData['usage-id'];
-            if (!usageId) {
-                showNotification('Fehler: Keine Nutzungs-ID gefunden', 'error');
-                return;
-            }
+                        // API-Anfrage vorbereiten
+                        const usageId = usageData['usage-id'];
+                        if (!usageId) {
+                            showNotification('Fehler: Keine Nutzungs-ID gefunden', 'error');
+                            return;
+                        }
 
-            // Validierung der Pflichtfelder
-            if (!usageData['current-driver']) {
-                showNotification('Bitte wählen Sie einen Fahrer aus', 'error');
-                return;
-            }
+                        // Validierung der Pflichtfelder
+                        if (!usageData['current-driver']) {
+                            showNotification('Bitte wählen Sie einen Fahrer aus', 'error');
+                            return;
+                        }
 
-            if (!usageData['current-start-date'] || !usageData['current-start-time']) {
-                showNotification('Bitte geben Sie Startdatum und Startzeit an', 'error');
-                return;
-            }
+                        if (!usageData['current-start-date'] || !usageData['current-start-time']) {
+                            showNotification('Bitte geben Sie Startdatum und Startzeit an', 'error');
+                            return;
+                        }
 
-            // Daten in das von der API erwartete Format umwandeln
-            const apiData = {
-                vehicleId: vehicleId,
-                driverId: usageData['current-driver'],
-                startDate: usageData['current-start-date'],
-                startTime: usageData['current-start-time'],
-                endDate: usageData['current-end-date'] || null,
-                endTime: usageData['current-end-time'] || null,
-                project: usageData['current-project'] || "",
-                purpose: usageData['current-project'] || "", // Duplizieren für Kompatibilität
-                department: usageData['current-department'] || "",
-                status: usageData['usage-status'] || 'active',
-                notes: usageData['current-usage-notes'] || "",
-                // Da wir eine bestehende Nutzung bearbeiten, brauchen wir möglicherweise den aktuellen Kilometerstand
-                startMileage: parseInt(usageData['start-mileage'] || 0)
-            };
+                        // Daten in das von der API erwartete Format umwandeln
+                        const apiData = {
+                            vehicleId: vehicleId,
+                            driverId: usageData['current-driver'],
+                            startDate: usageData['current-start-date'],
+                            startTime: usageData['current-start-time'],
+                            endDate: usageData['current-end-date'] || null,
+                            endTime: usageData['current-end-time'] || null,
+                            project: usageData['current-project'] || "",
+                            purpose: usageData['current-project'] || "", // Duplizieren für Kompatibilität
+                            department: usageData['current-department'] || "",
+                            status: usageData['usage-status'] || 'active',
+                            notes: usageData['current-usage-notes'] || "",
+                            // Da wir eine bestehende Nutzung bearbeiten, brauchen wir möglicherweise den aktuellen Kilometerstand
+                            startMileage: parseInt(usageData['start-mileage'] || 0)
+                        };
 
-            console.log("Sende aktualisierte Nutzungsdaten an API:", apiData); // Debug-Ausgabe
+                        console.log("Sende aktualisierte Nutzungsdaten an API:", apiData); // Debug-Ausgabe
 
-            // API-Anfrage senden
-            fetch(`/api/usage/${usageId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(apiData)
-            })
-                .then(response => {
-                    if (!response.ok) {
-                        return response.text().then(text => {
-                            console.error("API-Fehlerantwort:", text);
-                            throw new Error('Fehler beim Aktualisieren der aktuellen Nutzung: ' + text);
+                        // API-Anfrage senden
+                        fetch(`/api/usage/${usageId}`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(apiData)
+                        })
+                            .then(response => {
+                                if (!response.ok) {
+                                    return response.text().then(text => {
+                                        console.error("API-Fehlerantwort:", text);
+                                        throw new Error('Fehler beim Aktualisieren der aktuellen Nutzung: ' + text);
+                                    });
+                                }
+                                return response.json();
+                            })
+                            .then(data => {
+                                closeCurrentUsageModal();
+                                loadVehicleData(); // Fahrzeugdaten komplett neu laden
+                                showNotification('Aktuelle Nutzung erfolgreich aktualisiert', 'success');
+                            })
+                            .catch(error => {
+                                console.error('Fehler:', error);
+                                showNotification('Fehler beim Speichern: ' + error.message, 'error');
+                            });
+                    }
+
+                    // Funktion zur Verarbeitung des Fahrzeug-Bearbeiten-Formulars
+                    function handleVehicleEditSubmit(event) {
+                        event.preventDefault();
+
+                        const form = event.target;
+                        const formData = new FormData(form);
+                        const vehicleData = {};
+
+                        // Formulardaten in ein Objekt umwandeln
+                        for (let [key, value] of formData.entries()) {
+                            vehicleData[key] = value;
+                        }
+
+                        console.log("Gesammelte Formulardaten:", vehicleData); // Debug-Ausgabe
+
+                        // Marke und Modell aufteilen
+                        let brand = "";
+                        let model = "";
+
+                        if (vehicleData.model) {
+                            const brandModelParts = vehicleData.model.split(' ');
+                            if (brandModelParts.length > 1) {
+                                brand = brandModelParts[0];
+                                model = brandModelParts.slice(1).join(' ');
+                            } else {
+                                brand = vehicleData.model;
+                            }
+                        }
+
+                        // Validierung der Pflichtfelder
+                        if (!vehicleData.license_plate) {
+                            showNotification('Bitte geben Sie ein Kennzeichen ein', 'error');
+                            return;
+                        }
+
+                        // Daten in das von der API erwartete Format umwandeln
+                        const apiData = {
+                            licensePlate: vehicleData.license_plate,
+                            brand: brand,
+                            model: model,
+                            year: parseInt(vehicleData.year) || null,
+                            color: vehicleData.color || "",
+                            vin: vehicleData.vin || "",
+                            fuelType: vehicleData.fuel_type || "",
+                            mileage: parseInt(vehicleData.current_mileage) || 0,
+                            registrationDate: vehicleData.registration_date || null,
+                            nextInspectionDate: vehicleData.next_inspection || null,
+                            insuranceCompany: vehicleData.insurance || "",
+                            insuranceNumber: vehicleData.insurance_number || "",
+                            insuranceType: vehicleData.insurance_type || "",
+                            insuranceCost: parseFloat(vehicleData.insurance_cost) || 0,
+                            notes: vehicleData.vehicle_notes || ""
+                        };
+
+                        console.log("Sende Fahrzeugdaten an API:", apiData); // Debug-Ausgabe
+
+                        // API-Anfrage senden
+                        fetch(`/api/vehicles/${vehicleId}`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(apiData)
+                        })
+                            .then(response => {
+                                if (!response.ok) {
+                                    return response.text().then(text => {
+                                        console.error("API-Fehlerantwort:", text);
+                                        throw new Error('Fehler beim Aktualisieren des Fahrzeugs: ' + text);
+                                    });
+                                }
+                                return response.json();
+                            })
+                            .then(data => {
+                                const editVehicleModal = document.getElementById('edit-vehicle-modal');
+                                if (editVehicleModal) {
+                                    editVehicleModal.classList.add('hidden');
+                                }
+
+                                loadVehicleData(); // Fahrzeugdaten komplett neu laden
+                                showNotification('Fahrzeug erfolgreich aktualisiert', 'success');
+                            })
+                            .catch(error => {
+                                console.error('Fehler:', error);
+                                showNotification('Fehler beim Speichern: ' + error.message, 'error');
+                            });
+                    }
+
+                    // === Hilfsfunktionen ===
+
+                    // Funktion zum Formatieren von Datumsangaben
+                    function formatDate(dateString) {
+                        if (!dateString) return '-';
+
+                        const date = new Date(dateString);
+                        if (isNaN(date.getTime())) return '-';
+
+                        return date.toLocaleDateString('de-DE', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric'
                         });
                     }
-                    return response.json();
-                })
-                .then(data => {
-                    closeCurrentUsageModal();
-                    loadVehicleData(); // Fahrzeugdaten komplett neu laden
-                    showNotification('Aktuelle Nutzung erfolgreich aktualisiert', 'success');
-                })
-                .catch(error => {
-                    console.error('Fehler:', error);
-                    showNotification('Fehler beim Speichern: ' + error.message, 'error');
-                });
-        }
 
-        // Funktion zur Verarbeitung des Fahrzeug-Bearbeiten-Formulars
-        function handleVehicleEditSubmit(event) {
-            event.preventDefault();
+                    // Funktion zum Formatieren von Datums- und Zeitangaben
+                    function formatDateTime(dateString) {
+                        if (!dateString) return '-';
 
-            const form = event.target;
-            const formData = new FormData(form);
-            const vehicleData = {};
+                        const date = new Date(dateString);
+                        if (isNaN(date.getTime())) return '-';
 
-            // Formulardaten in ein Objekt umwandeln
-            for (let [key, value] of formData.entries()) {
-                vehicleData[key] = value;
-            }
-
-            console.log("Gesammelte Formulardaten:", vehicleData); // Debug-Ausgabe
-
-            // Marke und Modell aufteilen
-            let brand = "";
-            let model = "";
-
-            if (vehicleData.model) {
-                const brandModelParts = vehicleData.model.split(' ');
-                if (brandModelParts.length > 1) {
-                    brand = brandModelParts[0];
-                    model = brandModelParts.slice(1).join(' ');
-                } else {
-                    brand = vehicleData.model;
-                }
-            }
-
-            // Validierung der Pflichtfelder
-            if (!vehicleData.license_plate) {
-                showNotification('Bitte geben Sie ein Kennzeichen ein', 'error');
-                return;
-            }
-
-            // Daten in das von der API erwartete Format umwandeln
-            const apiData = {
-                licensePlate: vehicleData.license_plate,
-                brand: brand,
-                model: model,
-                year: parseInt(vehicleData.year) || null,
-                color: vehicleData.color || "",
-                vin: vehicleData.vin || "",
-                fuelType: vehicleData.fuel_type || "",
-                mileage: parseInt(vehicleData.current_mileage) || 0,
-                registrationDate: vehicleData.registration_date || null,
-                nextInspectionDate: vehicleData.next_inspection || null,
-                insuranceCompany: vehicleData.insurance || "",
-                insuranceNumber: vehicleData.insurance_number || "",
-                insuranceType: vehicleData.insurance_type || "",
-                insuranceCost: parseFloat(vehicleData.insurance_cost) || 0,
-                notes: vehicleData.vehicle_notes || ""
-            };
-
-            console.log("Sende Fahrzeugdaten an API:", apiData); // Debug-Ausgabe
-
-            // API-Anfrage senden
-            fetch(`/api/vehicles/${vehicleId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(apiData)
-            })
-                .then(response => {
-                    if (!response.ok) {
-                        return response.text().then(text => {
-                            console.error("API-Fehlerantwort:", text);
-                            throw new Error('Fehler beim Aktualisieren des Fahrzeugs: ' + text);
-                        });
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    const editVehicleModal = document.getElementById('edit-vehicle-modal');
-                    if (editVehicleModal) {
-                        editVehicleModal.classList.add('hidden');
+                        return date.toLocaleDateString('de-DE', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric'
+                        }) + ', ' + date.toLocaleTimeString('de-DE', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        }) + ' Uhr';
                     }
 
-                    loadVehicleData(); // Fahrzeugdaten komplett neu laden
-                    showNotification('Fahrzeug erfolgreich aktualisiert', 'success');
-                })
-                .catch(error => {
-                    console.error('Fehler:', error);
-                    showNotification('Fehler beim Speichern: ' + error.message, 'error');
+                    // Funktion zum Formatieren eines Datums für Input-Felder
+                    function formatDateForInput(dateString) {
+                        if (!dateString) return '';
+
+                        const date = new Date(dateString);
+                        if (isNaN(date.getTime())) return '';
+
+                        const year = date.getFullYear();
+                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                        const day = String(date.getDate()).padStart(2, '0');
+
+                        return `${year}-${month}-${day}`;
+                    }
+
+                    // Funktion zum Formatieren einer Zeit für Input-Felder
+                    function formatTimeForInput(dateString) {
+                        if (!dateString) return '';
+
+                        const date = new Date(dateString);
+                        if (isNaN(date.getTime())) return '';
+
+                        const hours = String(date.getHours()).padStart(2, '0');
+                        const minutes = String(date.getMinutes()).padStart(2, '0');
+
+                        return `${hours}:${minutes}`;
+                    }
+
+                    // Funktion zum Setzen von Text in einem Element
+                    function setElementText(elementId, text) {
+                        const element = document.getElementById(elementId);
+                        if (element) {
+                            element.textContent = text;
+                        }
+                    }
+
+                    // Funktion zum Anzeigen von Benachrichtigungen (kann je nach UI-Framework angepasst werden)
+                    function showNotification(message, type = 'info') {
+                        // Hier könnte eine UI-Benachrichtigungsfunktion eingebunden werden
+                        console.log(`Benachrichtigung (${type}):`, message);
+
+                        // Einfache Alert-Nachricht, in der Produktion durch ein besseres UI-Element ersetzen
+                        if (type === 'error') {
+                            alert('Fehler: ' + message);
+                        } else if (type === 'success') {
+                            alert('Erfolg: ' + message);
+                        }
+                    }
                 });
         }
+    }
+    );
 
-        // === Hilfsfunktionen ===
 
-        // Funktion zum Formatieren von Datumsangaben
-        function formatDate(dateString) {
-            if (!dateString) return '-';
-
-            const date = new Date(dateString);
-            if (isNaN(date.getTime())) return '-';
-
-            return date.toLocaleDateString('de-DE', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
-            });
-        }
-
-        // Funktion zum Formatieren von Datums- und Zeitangaben
-        function formatDateTime(dateString) {
-            if (!dateString) return '-';
-
-            const date = new Date(dateString);
-            if (isNaN(date.getTime())) return '-';
-
-            return date.toLocaleDateString('de-DE', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
-            }) + ', ' + date.toLocaleTimeString('de-DE', {
-                hour: '2-digit',
-                minute: '2-digit'
-            }) + ' Uhr';
-        }
-
-        // Funktion zum Formatieren eines Datums für Input-Felder
-        function formatDateForInput(dateString) {
-            if (!dateString) return '';
-
-            const date = new Date(dateString);
-            if (isNaN(date.getTime())) return '';
-
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-
-            return `${year}-${month}-${day}`;
-        }
-
-        // Funktion zum Formatieren einer Zeit für Input-Felder
-        function formatTimeForInput(dateString) {
-            if (!dateString) return '';
-
-            const date = new Date(dateString);
-            if (isNaN(date.getTime())) return '';
-
-            const hours = String(date.getHours()).padStart(2, '0');
-            const minutes = String(date.getMinutes()).padStart(2, '0');
-
-            return `${hours}:${minutes}`;
-        }
-
-        // Funktion zum Setzen von Text in einem Element
-        function setElementText(elementId, text) {
-            const element = document.getElementById(elementId);
-            if (element) {
-                element.textContent = text;
-            }
-        }
-
-        // Funktion zum Anzeigen von Benachrichtigungen (kann je nach UI-Framework angepasst werden)
-        function showNotification(message, type = 'info') {
-            // Hier könnte eine UI-Benachrichtigungsfunktion eingebunden werden
-            console.log(`Benachrichtigung (${type}):`, message);
-
-            // Einfache Alert-Nachricht, in der Produktion durch ein besseres UI-Element ersetzen
-            if (type === 'error') {
-                alert('Fehler: ' + message);
-            } else if (type === 'success') {
-                alert('Erfolg: ' + message);
-            }
-        }
-    });
 </script>
 </body>
 </html>
