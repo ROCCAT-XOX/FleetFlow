@@ -103,9 +103,9 @@ func InitializeRoutes(router *gin.Engine) {
 		})
 
 		// Fahrzeugdetails anzeigen
+		// Fahrzeugdetails anzeigen
 		authorized.GET("/vehicle-details/:id", func(c *gin.Context) {
-
-			c.HTML(http.StatusOK, "vehicle-details.html", gin.H{
+			c.HTML(http.StatusOK, "vehicle/details.html", gin.H{
 				"title": "Fahrzeugdetails",
 				"user":  c.MustGet("user"),
 				"year":  currentYear,

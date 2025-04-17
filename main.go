@@ -72,8 +72,10 @@ func setupRouter() *gin.Engine {
 
 	// Load HTML templates - update to include subdirectories
 	// Alternative 2: Manuelles Laden von Templates
+	// Load HTML templates - update to include subdirectories
 	templ := template.Must(template.ParseGlob("frontend/templates/*.html"))
 	template.Must(templ.ParseGlob("frontend/templates/components/*.html"))
+	template.Must(templ.ParseGlob("frontend/templates/vehicle/*.html")) // Wichtig: Subdirectory einbeziehen
 	router.SetHTMLTemplate(templ)
 
 	// Import routes from router.go

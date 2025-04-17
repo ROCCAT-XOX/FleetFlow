@@ -1,0 +1,155 @@
+{{ define "vehicle/details.html" }}
+{{ template "head" .}}
+<body class="bg-gray-50 dark:bg-gray-900 min-h-screen flex flex-col">
+<!-- Navigation -->
+{{ template "navigation" .}}
+
+<!-- Main Content -->
+<main class="container mx-auto px-4 py-6 flex-grow">
+    <!-- Zurück-Button und Titel -->
+    <div class="mb-6 flex items-center justify-between">
+        <div class="flex items-center">
+            <a href="/vehicles" class="inline-flex items-center mr-4 text-sm font-medium text-indigo-600 hover:text-indigo-500">
+                <svg class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Zurück zur Übersicht
+            </a>
+            <h1 class="text-2xl font-bold text-gray-900" id="vehicle-title">Fahrzeugdetails</h1>
+        </div>
+        <div>
+        <span id="vehicle-status" class="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+          Wird geladen...
+        </span>
+        </div>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="mb-6 border-b border-gray-200">
+        <nav class="flex flex-wrap space-x-8" aria-label="Tabs">
+            <button type="button" class="vehicle-tab-btn border-blue-500 text-blue-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="basic-info">
+                Fahrzeuginformationen
+            </button>
+            <button type="button" class="vehicle-tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="current-usage">
+                Aktuelle Nutzung
+            </button>
+            <button type="button" class="vehicle-tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="registration-insurance">
+                Zulassung & Versicherung
+            </button>
+            <button type="button" class="vehicle-tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="maintenance">
+                Wartung & Inspektion
+            </button>
+            <button type="button" class="vehicle-tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="usage-history">
+                Nutzungshistorie
+            </button>
+            <button type="button" class="vehicle-tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="statistics">
+                Statistiken
+            </button>
+        </nav>
+    </div>
+
+    <!-- Tab Contents -->
+    <div id="vehicle-tab-contents">
+        {{ template "vehicle/basic_info" . }}
+        {{ template "vehicle/current_usage" . }}
+        {{ template "vehicle/registration" . }}
+        {{ template "vehicle/maintenance" . }}
+        {{ template "vehicle/usage_history" . }}
+        {{ template "vehicle/statistics" . }}
+    </div>
+</main>
+
+<!-- Footer -->
+{{ template "footer" .}}
+
+<!-- Modals -->
+{{ template "vehicle/modals" . }}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+<script>
+    // Der existierende JavaScript-Code für die Fahrzeugdetails
+    document.addEventListener('DOMContentLoaded', function() {
+        // Tab-Funktionalität
+        const tabButtons = document.querySelectorAll('.vehicle-tab-btn');
+        const tabContents = document.querySelectorAll('.vehicle-tab-content');
+
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const tabName = button.getAttribute('data-tab');
+
+                // Alle Tabs ausblenden
+                tabContents.forEach(content => {
+                    content.classList.add('hidden');
+                });
+
+                // Alle Tab-Buttons zurücksetzen
+                tabButtons.forEach(btn => {
+                    btn.classList.remove('border-blue-500', 'text-blue-600');
+                    btn.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+                });
+
+                // Ausgewählten Tab anzeigen
+                document.getElementById(tabName).classList.remove('hidden');
+
+                // Aktuellen Button hervorheben
+                button.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+                button.classList.add('border-blue-500', 'text-blue-600');
+            });
+        });
+
+        // Parameter aus der URL extrahieren
+        const vehicleId = window.location.pathname.split('/').pop();
+
+        // Fahrzeugdaten laden
+        loadVehicleData();
+
+        // Funktion zum Laden der Fahrzeugdaten
+        function loadVehicleData() {
+            fetch(`/api/vehicles/${vehicleId}`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Vehicle not found');
+                    return response.json();
+                })
+                .then(data => {
+                    const vehicle = data.vehicle;
+
+                    // Seitentitel und Status aktualisieren
+                    updateHeaderInfo(vehicle);
+
+                    // UI mit Fahrzeugdaten aktualisieren
+                    updateVehicleDisplay(vehicle);
+
+                    // Wenn ein Fahrer zugewiesen ist, Fahrerdaten laden
+                    if (vehicle.currentDriverId &&
+                        vehicle.currentDriverId !== '000000000000000000000000') {
+                        loadCurrentDriverData(vehicle.currentDriverId);
+                    } else {
+                        updateCurrentUsageDisplay(null);
+                    }
+
+                    // Wartungseinträge laden
+                    loadMaintenanceEntries();
+
+                    // Nutzungshistorie laden
+                    loadUsageHistory();
+
+                    // Wenn ApexCharts verfügbar ist, Charts erstellen
+                    if (typeof ApexCharts !== 'undefined') {
+                        createCharts();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading vehicle data:', error);
+                    showNotification('Fehler beim Laden der Fahrzeugdaten', 'error');
+                });
+        }
+
+        // Hier folgt der restliche JS-Code für die Fahrzeugdetail-Seite
+        // ...
+    });
+</script>
+</body>
+</html>
+{{ end }}

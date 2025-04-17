@@ -1,0 +1,59 @@
+{{ define "vehicle/basic_info" }}
+<div id="basic-info" class="vehicle-tab-content">
+    <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="px-4 py-5 sm:px-6 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">Fahrzeuginformationen</h3>
+            <button type="button" id="edit-vehicle-btn" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                <svg class="-ml-0.5 mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+                Bearbeiten
+            </button>
+        </div>
+        <div class="px-4 py-5 sm:p-6">
+            <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+                <div class="sm:col-span-1">
+                    <dt class="text-sm font-medium text-gray-500">Kennzeichen</dt>
+                    <dd class="mt-1 text-sm text-gray-900" id="license-plate-display">-</dd>
+                </div>
+                <div class="px-4 py-5 sm:p-6">
+                    <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+                        <div class="sm:col-span-1">
+                            <dt class="text-sm font-medium text-gray-500">Kennzeichen</dt>
+                            <dd class="mt-1 text-sm text-gray-900">M-CD 5678</dd>
+                        </div>
+                        <div class="sm:col-span-1">
+                            <dt class="text-sm font-medium text-gray-500">Marke & Modell</dt>
+                            <dd class="mt-1 text-sm text-gray-900">BMW 530e</dd>
+                        </div>
+                        <div class="sm:col-span-1">
+                            <dt class="text-sm font-medium text-gray-500">Baujahr</dt>
+                            <dd class="mt-1 text-sm text-gray-900">2023</dd>
+                        </div>
+                        <div class="sm:col-span-1">
+                            <dt class="text-sm font-medium text-gray-500">Farbe</dt>
+                            <dd class="mt-1 text-sm text-gray-900">Schwarz</dd>
+                        </div>
+                        <div class="sm:col-span-1">
+                            <dt class="text-sm font-medium text-gray-500">Fahrzeug-ID</dt>
+                            <dd class="mt-1 text-sm text-gray-900">FD-2023-01254</dd>
+                        </div>
+                        <div class="sm:col-span-1">
+                            <dt class="text-sm font-medium text-gray-500">VIN</dt>
+                            <dd class="mt-1 text-sm text-gray-900">WBAJL51070G830415</dd>
+                        </div>
+                        <div class="sm:col-span-1">
+                            <dt class="text-sm font-medium text-gray-500">Kraftstoffart</dt>
+                            <dd class="mt-1 text-sm text-gray-900">Hybrid (Benzin/Elektro)</dd>
+                        </div>
+                        <div class="sm:col-span-1">
+                            <dt class="text-sm font-medium text-gray-500">Aktueller Kilometerstand</dt>
+                            <dd class="mt-1 text-sm text-gray-900">18.452 km</dd>
+                        </div>
+                    </dl>
+                </div>
+            </dl>
+        </div>
+    </div>
+</div>
+{{ end }}
