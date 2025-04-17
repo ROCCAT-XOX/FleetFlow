@@ -1,0 +1,737 @@
+{{ template "head" .}}
+<body class="bg-gray-50 dark:bg-gray-900 min-h-screen flex flex-col">
+<!-- Navigation -->
+{{ template "navigation" .}}
+
+<!-- Main Content -->
+<main class="container mx-auto px-4 py-6 flex-grow">
+    <div class="md:flex md:items-center md:justify-between mb-6">
+        <div class="flex-1 min-w-0">
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Tankkosten</h1>
+        </div>
+        <div class="mt-4 md:mt-0">
+            <button id="add-fuel-cost-btn" type="button" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                <svg class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Tankkosten hinzufügen
+            </button>
+        </div>
+    </div>
+
+    <!-- Filter und Suche -->
+    <div class="bg-white dark:bg-gray-800 p-4 rounded-md shadow-sm mb-6">
+        <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
+            <div class="flex-1">
+                <label for="search" class="sr-only">Suche</label>
+                <div class="relative rounded-md shadow-sm">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                    <input type="text" name="search" id="search-fuel-cost" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 pr-12 sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Suchen...">
+                </div>
+            </div>
+            <div class="sm:w-1/4">
+                <select id="vehicle-filter" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    <option value="all">Alle Fahrzeuge</option>
+                    <!-- Wird dynamisch gefüllt -->
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tankkosten-Tabelle -->
+    <div class="bg-white dark:bg-gray-800 shadow overflow-hidden rounded-md">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead class="bg-gray-50 dark:bg-gray-700">
+                <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Datum</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Fahrzeug</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Fahrer</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Kraftstoff</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Menge</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Preis/Einheit</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Gesamtkosten</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Kilometerstand</th>
+                    <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Aktionen</th>
+                </tr>
+                </thead>
+                <tbody id="fuel-costs-body" class="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
+                <!-- Wird dynamisch gefüllt -->
+                <tr>
+                    <td colspan="9" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                        Daten werden geladen...
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<!-- Modal: Tankkosten hinzufügen/bearbeiten -->
+<div id="fuel-cost-modal" class="fixed z-10 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <!-- Hintergrund-Overlay -->
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+
+        <!-- Zentriert den Modal-Inhalt -->
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+        <!-- Modal-Panel -->
+        <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <form id="fuel-cost-form">
+                <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="w-full">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white" id="modal-title">
+                                Tankkosten hinzufügen
+                            </h3>
+
+                            <div class="mt-4">
+                                <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                                    <div class="sm:col-span-3">
+                                        <label for="fuel-date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Datum</label>
+                                        <input type="date" name="fuel-date" id="fuel-date" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="vehicle" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Fahrzeug</label>
+                                        <select id="vehicle" name="vehicle" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                            <option value="">Fahrzeug auswählen</option>
+                                            <!-- Wird dynamisch gefüllt -->
+                                        </select>
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="driver" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Fahrer (optional)</label>
+                                        <select id="driver" name="driver" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                            <option value="">Keinen Fahrer auswählen</option>
+                                            <!-- Wird dynamisch gefüllt -->
+                                        </select>
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="fuel-type" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Kraftstoffart</label>
+                                        <select id="fuel-type" name="fuel-type" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                            <option value="Diesel">Diesel</option>
+                                            <option value="Benzin">Benzin</option>
+                                            <option value="Elektro">Elektro</option>
+                                            <option value="Gas">Gas</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="amount" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Menge (Liter/kWh)</label>
+                                        <input type="number" name="amount" id="amount" step="0.01" min="0" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="price-per-unit" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Preis pro Einheit (€)</label>
+                                        <input type="number" name="price-per-unit" id="price-per-unit" step="0.001" min="0" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="total-cost" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Gesamtkosten (€)</label>
+                                        <input type="number" name="total-cost" id="total-cost" step="0.01" min="0" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="mileage" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Kilometerstand</label>
+                                        <input type="number" name="mileage" id="mileage" min="0" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="location" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tankstelle/Ort</label>
+                                        <input type="text" name="location" id="location" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="receipt-number" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Beleg-Nr. (optional)</label>
+                                        <input type="text" name="receipt-number" id="receipt-number" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                    </div>
+
+                                    <div class="sm:col-span-6">
+                                        <label for="notes" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Anmerkungen</label>
+                                        <textarea id="notes" name="notes" rows="2" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm">
+                        Speichern
+                    </button>
+                    <button type="button" id="close-modal-btn" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600">
+                        Abbrechen
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Footer -->
+{{ template "footer" .}}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Tankkosten laden
+        loadFuelCosts();
+
+        // Fahrzeuge für Filter und Formular laden
+        loadVehiclesForSelect();
+
+        // Fahrer für Formular laden
+        loadDriversForSelect();
+
+        // Event-Listener für das Modal
+        setupModalListeners();
+
+        // Event-Listener für Berechnungen im Formular
+        setupCalculationListeners();
+
+        // Event-Listener für Filter
+        setupFilterListeners();
+    });
+
+    // Funktion zum Laden aller Tankkosten
+    function loadFuelCosts() {
+        fetch('/api/fuelcosts')
+            .then(response => {
+                if (!response.ok) throw new Error('Fehler beim Laden der Tankkosten');
+                return response.json();
+            })
+            .then(data => {
+                renderFuelCostsTable(data.fuelCosts || []);
+            })
+            .catch(error => {
+                console.error('Fehler:', error);
+                showErrorMessage('Fehler beim Laden der Tankkosten: ' + error.message);
+            });
+    }
+
+    // Funktion zum Darstellen der Tankkosten in der Tabelle
+    function renderFuelCostsTable(fuelCosts) {
+        const tableBody = document.getElementById('fuel-costs-body');
+        if (!tableBody) return;
+
+        if (!fuelCosts.length) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="9" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                        Keine Tankkosten gefunden.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tableBody.innerHTML = fuelCosts.map(entry => {
+            const date = formatDate(entry.date);
+            const amount = formatNumber(entry.amount, 2);
+            const pricePerUnit = formatCurrency(entry.pricePerUnit);
+            const totalCost = formatCurrency(entry.totalCost);
+
+            return `
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">${date}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">${entry.vehicleName || '-'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">${entry.driverName || '-'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">${entry.fuelType || '-'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">${amount} ${entry.fuelType === 'Elektro' ? 'kWh' : 'L'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">${pricePerUnit}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">${totalCost}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">${entry.mileage} km</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button type="button" class="edit-fuel-cost-btn text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-3" data-id="${entry.id}">
+                            Bearbeiten
+                        </button>
+                        <button type="button" class="delete-fuel-cost-btn text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300" data-id="${entry.id}">
+                            Löschen
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+        // Event-Listener für Bearbeiten-Buttons
+        document.querySelectorAll('.edit-fuel-cost-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const id = this.getAttribute('data-id');
+                openFuelCostModal(true, id);
+            });
+        });
+
+        // Event-Listener für Löschen-Buttons
+        document.querySelectorAll('.delete-fuel-cost-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const id = this.getAttribute('data-id');
+                if (confirm('Möchten Sie diesen Tankkosteneintrag wirklich löschen?')) {
+                    deleteFuelCost(id);
+                }
+            });
+        });
+    }
+
+    // Funktion zum Laden der Fahrzeuge für das Auswahlfeld
+    function loadVehiclesForSelect() {
+        fetch('/api/vehicles')
+            .then(response => {
+                if (!response.ok) throw new Error('Fehler beim Laden der Fahrzeuge');
+                return response.json();
+            })
+            .then(data => {
+                const vehicles = data.vehicles || [];
+
+                // Fahrzeuge für das Formular
+                const vehicleSelect = document.getElementById('vehicle');
+                if (vehicleSelect) {
+                    // Erste Option behalten
+                    const firstOption = vehicleSelect.firstElementChild;
+                    vehicleSelect.innerHTML = '';
+                    if (firstOption) vehicleSelect.appendChild(firstOption);
+
+                    // Fahrzeuge hinzufügen
+                    vehicles.forEach(vehicle => {
+                        const option = document.createElement('option');
+                        option.value = vehicle.id;
+                        option.textContent = `${vehicle.brand} ${vehicle.model} (${vehicle.licensePlate})`;
+                        vehicleSelect.appendChild(option);
+                    });
+                }
+
+                // Fahrzeuge für den Filter
+                const vehicleFilter = document.getElementById('vehicle-filter');
+                if (vehicleFilter) {
+                    // Erste Option behalten
+                    const firstOption = vehicleFilter.firstElementChild;
+                    vehicleFilter.innerHTML = '';
+                    if (firstOption) vehicleFilter.appendChild(firstOption);
+
+                    // Fahrzeuge hinzufügen
+                    vehicles.forEach(vehicle => {
+                        const option = document.createElement('option');
+                        option.value = vehicle.id;
+                        option.textContent = `${vehicle.brand} ${vehicle.model} (${vehicle.licensePlate})`;
+                        vehicleFilter.appendChild(option);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Fehler beim Laden der Fahrzeuge:', error);
+            });
+    }
+
+    // Funktion zum Laden der Fahrer für das Auswahlfeld
+    function loadDriversForSelect() {
+        fetch('/api/drivers')
+            .then(response => {
+                if (!response.ok) throw new Error('Fehler beim Laden der Fahrer');
+                return response.json();
+            })
+            .then(data => {
+                const drivers = data.drivers || [];
+                const driverSelect = document.getElementById('driver');
+
+                if (driverSelect) {
+                    // Erste Option behalten
+                    const firstOption = driverSelect.firstElementChild;
+                    driverSelect.innerHTML = '';
+                    if (firstOption) driverSelect.appendChild(firstOption);
+
+                    // Fahrer hinzufügen
+                    drivers.forEach(driver => {
+                        const option = document.createElement('option');
+                        option.value = driver.id;
+                        option.textContent = `${driver.firstName} ${driver.lastName}`;
+                        driverSelect.appendChild(option);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Fehler beim Laden der Fahrer:', error);
+            });
+    }
+
+    // Funktion zum Einrichten der Modal-Event-Listener
+    function setupModalListeners() {
+        // Button zum Öffnen des Modals
+        const addButton = document.getElementById('add-fuel-cost-btn');
+        if (addButton) {
+            addButton.addEventListener('click', () => openFuelCostModal(false));
+        }
+
+        // Button zum Schließen des Modals
+        const closeButton = document.getElementById('close-modal-btn');
+        if (closeButton) {
+            closeButton.addEventListener('click', closeFuelCostModal);
+        }
+
+        // Modal außerhalb schließen
+        const modal = document.getElementById('fuel-cost-modal');
+        if (modal) {
+            modal.addEventListener('click', function(event) {
+                if (event.target === this) {
+                    closeFuelCostModal();
+                }
+            });
+        }
+
+        // Formular absenden
+        const form = document.getElementById('fuel-cost-form');
+        if (form) {
+            form.addEventListener('submit', handleFuelCostSubmit);
+        }
+    }
+
+    // Funktion zum Einrichten der Berechnungslistener im Formular
+    function setupCalculationListeners() {
+        const amountInput = document.getElementById('amount');
+        const pricePerUnitInput = document.getElementById('price-per-unit');
+        const totalCostInput = document.getElementById('total-cost');
+
+        if (amountInput && pricePerUnitInput && totalCostInput) {
+            // Bei Änderung von Menge oder Preis pro Einheit den Gesamtpreis berechnen
+            const calculateTotal = () => {
+                const amount = parseFloat(amountInput.value) || 0;
+                const pricePerUnit = parseFloat(pricePerUnitInput.value) || 0;
+
+                if (amount > 0 && pricePerUnit > 0) {
+                    totalCostInput.value = (amount * pricePerUnit).toFixed(2);
+                }
+            };
+
+            amountInput.addEventListener('input', calculateTotal);
+            pricePerUnitInput.addEventListener('input', calculateTotal);
+
+            // Bei Änderung des Gesamtpreises den Preis pro Einheit berechnen, wenn Menge > 0
+            totalCostInput.addEventListener('input', () => {
+                const amount = parseFloat(amountInput.value) || 0;
+                const totalCost = parseFloat(totalCostInput.value) || 0;
+
+                if (amount > 0 && totalCost > 0) {
+                    pricePerUnitInput.value = (totalCost / amount).toFixed(3);
+                }
+            });
+
+            // Bei Änderung des Fahrzeugs den Kilometerstand vorausfüllen
+            const vehicleSelect = document.getElementById('vehicle');
+            if (vehicleSelect) {
+                vehicleSelect.addEventListener('change', function() {
+                    const vehicleId = this.value;
+                    if (vehicleId) {
+                        fetch(`/api/vehicles/${vehicleId}`)
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.vehicle && data.vehicle.mileage) {
+                                    document.getElementById('mileage').value = data.vehicle.mileage;
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Fehler beim Laden des Fahrzeugkilometerstands:', error);
+                            });
+                    }
+                });
+            }
+        }
+    }
+
+    // Funktion zum Einrichten der Filter-Event-Listener
+    function setupFilterListeners() {
+        // Suchfilter
+        const searchInput = document.getElementById('search-fuel-cost');
+        if (searchInput) {
+            searchInput.addEventListener('input', filterFuelCosts);
+        }
+
+        // Fahrzeugfilter
+        const vehicleFilter = document.getElementById('vehicle-filter');
+        if (vehicleFilter) {
+            vehicleFilter.addEventListener('change', filterFuelCosts);
+        }
+    }
+
+    // Funktion zum Filtern der Tankkosten
+    function filterFuelCosts() {
+        const searchText = document.getElementById('search-fuel-cost').value.toLowerCase();
+        const selectedVehicleId = document.getElementById('vehicle-filter').value;
+
+        const rows = document.querySelectorAll('#fuel-costs-body tr');
+
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            const vehicleId = row.querySelector('.edit-fuel-cost-btn')?.getAttribute('data-vehicle-id');
+
+            // Prüfen, ob die Zeile den Suchtext enthält
+            const matchesSearch = !searchText || text.includes(searchText);
+
+            // Prüfen, ob die Zeile das ausgewählte Fahrzeug hat
+            const matchesVehicle = selectedVehicleId === 'all' || !selectedVehicleId || vehicleId === selectedVehicleId;
+
+            // Zeile anzeigen oder ausblenden
+            row.style.display = matchesSearch && matchesVehicle ? '' : 'none';
+        });
+    }
+
+    // Funktion zum Öffnen des Modals für Tankkosten
+    function openFuelCostModal(isEdit = false, id = null) {
+        const modal = document.getElementById('fuel-cost-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const form = document.getElementById('fuel-cost-form');
+
+        if (!modal || !modalTitle || !form) return;
+
+        // Formular zurücksetzen
+        form.reset();
+
+        // Das heutige Datum als Standard setzen
+        document.getElementById('fuel-date').value = new Date().toISOString().split('T')[0];
+
+        if (isEdit && id) {
+            modalTitle.textContent = 'Tankkosten bearbeiten';
+
+            // Tankkostendaten laden
+            fetch(`/api/fuelcosts/${id}`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Fehler beim Laden der Tankkostendaten');
+                    return response.json();
+                })
+                .then(data => {
+                    const fuelCost = data.fuelCost;
+
+                    // Formularfelder füllen
+                    document.getElementById('fuel-date').value = formatDateForInput(fuelCost.date);
+
+                    // Fahrzeug auswählen
+                    const vehicleSelect = document.getElementById('vehicle');
+                    if (vehicleSelect) {
+                        // Prüfen, ob die Option bereits existiert
+                        const option = Array.from(vehicleSelect.options).find(option => option.value === fuelCost.vehicleId);
+                        if (option) {
+                            vehicleSelect.value = fuelCost.vehicleId;
+                        } else {
+                            // Wenn nicht, eine neue Option hinzufügen (z.B. für inaktive Fahrzeuge)
+                            const newOption = document.createElement('option');
+                            newOption.value = fuelCost.vehicleId;
+                            newOption.textContent = data.vehicle ? `${data.vehicle.brand} ${data.vehicle.model} (${data.vehicle.licensePlate})` : 'Unbekanntes Fahrzeug';
+                            vehicleSelect.appendChild(newOption);
+                            vehicleSelect.value = fuelCost.vehicleId;
+                        }
+                    }
+
+                    // Fahrer auswählen, falls vorhanden
+                    if (fuelCost.driverId && !fuelCost.driverId.match(/^0+$/)) {
+                        const driverSelect = document.getElementById('driver');
+                        if (driverSelect) {
+                            // Prüfen, ob die Option bereits existiert
+                            const option = Array.from(driverSelect.options).find(option => option.value === fuelCost.driverId);
+                            if (option) {
+                                driverSelect.value = fuelCost.driverId;
+                            } else if (data.driver) {
+                                // Wenn nicht, eine neue Option hinzufügen (z.B. für inaktive Fahrer)
+                                const newOption = document.createElement('option');
+                                newOption.value = fuelCost.driverId;
+                                newOption.textContent = `${data.driver.firstName} ${data.driver.lastName}`;
+                                driverSelect.appendChild(newOption);
+                                driverSelect.value = fuelCost.driverId;
+                            }
+                        }
+                    }
+
+                    // Weitere Felder füllen
+                    document.getElementById('fuel-type').value = fuelCost.fuelType || 'Diesel';
+                    document.getElementById('amount').value = fuelCost.amount || '';
+                    document.getElementById('price-per-unit').value = fuelCost.pricePerUnit || '';
+                    document.getElementById('total-cost').value = fuelCost.totalCost || '';
+                    document.getElementById('mileage').value = fuelCost.mileage || '';
+                    document.getElementById('location').value = fuelCost.location || '';
+                    document.getElementById('receipt-number').value = fuelCost.receiptNumber || '';
+                    document.getElementById('notes').value = fuelCost.notes || '';
+
+                    // ID zum Formular hinzufügen
+                    let idInput = form.querySelector('input[name="id"]');
+                    if (!idInput) {
+                        idInput = document.createElement('input');
+                        idInput.type = 'hidden';
+                        idInput.name = 'id';
+                        form.appendChild(idInput);
+                    }
+                    idInput.value = id;
+                })
+                .catch(error => {
+                    console.error('Fehler:', error);
+                    closeFuelCostModal();
+                    showErrorMessage('Fehler beim Laden der Tankkostendaten: ' + error.message);
+                });
+        } else {
+            modalTitle.textContent = 'Tankkosten hinzufügen';
+
+            // Versteckte ID entfernen
+            const idInput = form.querySelector('input[name="id"]');
+            if (idInput) idInput.remove();
+        }
+
+        modal.classList.remove('hidden');
+    }
+
+    // Funktion zum Schließen des Modals
+    function closeFuelCostModal() {
+        const modal = document.getElementById('fuel-cost-modal');
+        if (modal) modal.classList.add('hidden');
+    }
+
+    // Funktion zur Verarbeitung des Formularabsendens
+    function handleFuelCostSubmit(event) {
+        event.preventDefault();
+
+        const form = event.target;
+        const formData = new FormData(form);
+        const fuelCostData = {};
+
+        // Formulardaten sammeln
+        // Formulardaten sammeln
+        for (let [key, value] of formData.entries()) {
+            fuelCostData[key] = value;
+        }
+
+        // Validierung der Pflichtfelder
+        if (!fuelCostData['fuel-date']) {
+            showErrorMessage('Bitte geben Sie ein Datum ein.');
+            return;
+        }
+
+        if (!fuelCostData.vehicle) {
+            showErrorMessage('Bitte wählen Sie ein Fahrzeug aus.');
+            return;
+        }
+
+        if (!fuelCostData.amount || parseFloat(fuelCostData.amount) <= 0) {
+            showErrorMessage('Bitte geben Sie eine gültige Menge ein.');
+            return;
+        }
+
+        if (!fuelCostData.mileage || parseInt(fuelCostData.mileage) <= 0) {
+            showErrorMessage('Bitte geben Sie einen gültigen Kilometerstand ein.');
+            return;
+        }
+
+        // Gesamtkosten berechnen, falls nicht angegeben
+        if (!fuelCostData['total-cost']) {
+            const amount = parseFloat(fuelCostData.amount);
+            const pricePerUnit = parseFloat(fuelCostData['price-per-unit']);
+            if (amount > 0 && pricePerUnit > 0) {
+                fuelCostData['total-cost'] = (amount * pricePerUnit).toFixed(2);
+            } else {
+                showErrorMessage('Bitte geben Sie einen Preis pro Einheit oder Gesamtkosten ein.');
+                return;
+            }
+        }
+
+        // Prüfen, ob es eine Bearbeitung ist
+        const isEdit = !!fuelCostData.id;
+
+        // API-Daten vorbereiten
+        const apiData = {
+            vehicleId: fuelCostData.vehicle,
+            driverId: fuelCostData.driver || '',
+            date: fuelCostData['fuel-date'],
+            fuelType: fuelCostData['fuel-type'],
+            amount: parseFloat(fuelCostData.amount),
+            pricePerUnit: parseFloat(fuelCostData['price-per-unit']),
+            totalCost: parseFloat(fuelCostData['total-cost']),
+            mileage: parseInt(fuelCostData.mileage),
+            location: fuelCostData.location || '',
+            receiptNumber: fuelCostData['receipt-number'] || '',
+            notes: fuelCostData.notes || ''
+        };
+
+        // API-Anfrage senden
+        const url = isEdit ? `/api/fuelcosts/${fuelCostData.id}` : '/api/fuelcosts';
+        const method = isEdit ? 'PUT' : 'POST';
+
+        fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(apiData)
+        })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(text);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                closeFuelCostModal();
+                loadFuelCosts();
+                showSuccessMessage(isEdit ? 'Tankkosten erfolgreich aktualisiert!' : 'Tankkosten erfolgreich hinzugefügt!');
+            })
+            .catch(error => {
+                console.error('Fehler:', error);
+                showErrorMessage('Fehler beim Speichern der Tankkosten: ' + error.message);
+            });
+    }
+
+    // Funktion zum Löschen eines Tankkosteneintrags
+    function deleteFuelCost(id) {
+        fetch(`/api/fuelcosts/${id}`, {
+            method: 'DELETE'
+        })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(text);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                loadFuelCosts();
+                showSuccessMessage('Tankkosten erfolgreich gelöscht!');
+            })
+            .catch(error => {
+                console.error('Fehler:', error);
+                showErrorMessage('Fehler beim Löschen der Tankkosten: ' + error.message);
+            });
+    }
+
+    // Hilfsfunktionen
+    function formatDate(dateString) {
+        if (!dateString) return '-';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('de-DE');
+    }
+
+    function formatDateForInput(dateString) {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toISOString().split('T')[0];
+    }
+
+    function formatNumber(number, decimals = 0) {
+        if (number === undefined || number === null) return '-';
+        return parseFloat(number).toLocaleString('de-DE', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+    }
+
+    function formatCurrency(number) {
+        if (number === undefined || number === null) return '-';
+        return parseFloat(number).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+    }
+
+    function showErrorMessage(message) {
+        alert('Fehler: ' + message);
+    }
+
+    function showSuccessMessage(message) {
+        alert(message);
+    }
+</script>

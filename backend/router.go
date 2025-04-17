@@ -266,5 +266,33 @@ func InitializeRoutes(router *gin.Engine) {
 			projects.PUT("/:id", projectHandler.UpdateProject)
 			projects.DELETE("/:id", middleware.AdminMiddleware(), projectHandler.DeleteProject)
 		}
+
+		fuelCostHandler := handler.NewFuelCostHandler()
+		fuelCosts := api.Group("/fuelcosts")
+		{
+			fuelCosts.GET("", fuelCostHandler.GetFuelCosts)
+			fuelCosts.GET("/vehicle/:vehicleId", fuelCostHandler.GetVehicleFuelCosts)
+			fuelCosts.GET("/:id", fuelCostHandler.GetFuelCost)
+			fuelCosts.POST("", fuelCostHandler.CreateFuelCost)
+			fuelCosts.PUT("/:id", fuelCostHandler.UpdateFuelCost)
+			fuelCosts.DELETE("/:id", fuelCostHandler.DeleteFuelCost)
+		}
+
+		// Füge auch die Route für die Frontend-Darstellung hinzu
+		authorized.GET("/fuel-costs", func(c *gin.Context) {
+			c.HTML(http.StatusOK, "fuel-costs.html", gin.H{
+				"title": "Tankkosten",
+				"user":  c.MustGet("user"),
+				"year":  currentYear,
+			})
+		})
+
+		authorized.GET("/vehicle/:id/fuel-costs", func(c *gin.Context) {
+			c.HTML(http.StatusOK, "vehicle-fuel-costs.html", gin.H{
+				"title": "Fahrzeug Tankkosten",
+				"user":  c.MustGet("user"),
+				"year":  currentYear,
+			})
+		})
 	}
 }
