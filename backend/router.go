@@ -186,6 +186,15 @@ func InitializeRoutes(router *gin.Engine) {
 			})
 		})
 
+		// Hinzufügen der Route für die Projektseite
+		authorized.GET("/projects", func(c *gin.Context) {
+			c.HTML(http.StatusOK, "projects.html", gin.H{
+				"title": "Projektübersicht",
+				"user":  c.MustGet("user"),
+				"year":  currentYear,
+			})
+		})
+
 		// API-Routen für Backend-Operationen
 		api := authorized.Group("/api")
 		{
@@ -246,6 +255,16 @@ func InitializeRoutes(router *gin.Engine) {
 				usage.PUT("/:id", usageHandler.UpdateUsageEntry)
 				usage.DELETE("/:id", usageHandler.DeleteUsageEntry)
 			}
+		}
+
+		projectHandler := handler.NewProjectHandler()
+		projects := api.Group("/projects")
+		{
+			projects.GET("", projectHandler.GetProjects)
+			projects.GET("/:id", projectHandler.GetProject)
+			projects.POST("", projectHandler.CreateProject)
+			projects.PUT("/:id", projectHandler.UpdateProject)
+			projects.DELETE("/:id", middleware.AdminMiddleware(), projectHandler.DeleteProject)
 		}
 	}
 }
