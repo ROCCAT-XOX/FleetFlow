@@ -91,33 +91,58 @@ function renderVehicleFuelCostsTable(fuelCosts) {
     });
 }
 
-// Funktion zum Berechnen der Verbrauchsstatistiken
+// Verbesserte Funktion zum Berechnen der Verbrauchsstatistiken
 function calculateFuelStatistics(fuelCosts, vehicle) {
     if (!fuelCosts || !fuelCosts.length) return;
 
     // Gesamtkosten berechnen
     let totalCosts = 0;
     let totalDistance = 0;
-    let totalConsumption = 0;
+    let totalFuel = 0;
 
-    // Nach Datum sortieren (älteste zuerst)
+    // Monatliche Kosten für Diagramm
+    const monthlyCosts = {};
+    const currentYear = new Date().getFullYear();
+
+    // Sortieren nach Datum (älteste zuerst)
     fuelCosts.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-    // Für jeden Eintrag (außer dem ersten) berechnen wir den Verbrauch basierend auf dem Kilometerstand
+    // Erste Berechnung für Gesamtkosten und monatliche Aufschlüsselung
+    fuelCosts.forEach(entry => {
+        totalCosts += entry.totalCost;
+
+        // Für das monatliche Kostendiagramm
+        const entryDate = new Date(entry.date);
+        const monthKey = `${entryDate.getFullYear()}-${entryDate.getMonth() + 1}`;
+
+        if (!monthlyCosts[monthKey]) {
+            monthlyCosts[monthKey] = {
+                total: 0,
+                month: entryDate.toLocaleString('de-DE', { month: 'short' }),
+                year: entryDate.getFullYear()
+            };
+        }
+
+        monthlyCosts[monthKey].total += entry.totalCost;
+    });
+
+    // Berechnung der gefahrenen Kilometer und Verbrauch
     for (let i = 1; i < fuelCosts.length; i++) {
         const current = fuelCosts[i];
         const previous = fuelCosts[i-1];
 
-        totalCosts += current.totalCost;
-
         // Differenz der Kilometerstände berechnen
         const distance = current.mileage - previous.mileage;
+
+        // Nur positive Distanzen berücksichtigen
         if (distance > 0) {
             totalDistance += distance;
 
-            // Verbrauch hinzufügen (nur für Tankfüllungen, nicht für Elektro)
-            if (current.fuelType !== 'Elektro') {
-                totalConsumption += current.amount;
+            // Verbrauch je nach Kraftstofftyp hinzufügen
+            // Wir betrachten nur den Verbrauch zwischen zwei Tankfüllungen mit gleichem Kraftstofftyp
+            if (current.fuelType === previous.fuelType &&
+                (current.fuelType === 'Diesel' || current.fuelType === 'Benzin' || current.fuelType === 'Gas')) {
+                totalFuel += previous.amount; // Der Verbrauch basiert auf der vorherigen Tankfüllung
             }
         }
     }
@@ -126,12 +151,11 @@ function calculateFuelStatistics(fuelCosts, vehicle) {
     let avgConsumption = 0;
     let consumptionUnit = 'L/100km';
 
-    if (totalDistance > 0) {
+    if (totalDistance > 0 && totalFuel > 0) {
+        avgConsumption = (totalFuel / totalDistance) * 100;
+
         if (fuelCosts[0].fuelType === 'Elektro') {
-            avgConsumption = (totalConsumption / totalDistance) * 100;
             consumptionUnit = 'kWh/100km';
-        } else {
-            avgConsumption = (totalConsumption / totalDistance) * 100;
         }
     }
 
@@ -143,6 +167,224 @@ function calculateFuelStatistics(fuelCosts, vehicle) {
     document.getElementById('consumption-unit').textContent = consumptionUnit;
     document.getElementById('total-fuel-costs').textContent = formatCurrency(totalCosts);
     document.getElementById('cost-per-km').textContent = formatCurrency(costPerKm) + '/km';
+
+    // Monatliche Kosten ins Vehicle-Statistik-Widget übertragen
+    updateMonthlyCostsInStatistics(monthlyCosts);
+
+    // Aktualisiertes Chart erstellen mit monatlichen Daten
+    createMonthlyFuelCostsChart(monthlyCosts);
+}
+
+// Funktion zum Aktualisieren der monatlichen Kosten in der Fahrzeugstatistik
+function updateMonthlyCostsInStatistics(monthlyCosts) {
+    // Diese Funktion fügt die Tankkosten zu den Gesamtkosten im Statistik-Tab hinzu
+    // Hier müsste der Code ergänzt werden, der die Tankkosten zu den vorhandenen monatlichen Kosten addiert
+
+    // Beispiel:
+    const vehicleStatsCost = document.getElementById('vehicle-monthly-costs');
+    if (vehicleStatsCost) {
+        let totalYearCosts = 0;
+
+        // Aktuelle Jahresdaten summieren
+        const currentYear = new Date().getFullYear();
+        Object.values(monthlyCosts).forEach(month => {
+            if (month.year === currentYear) {
+                totalYearCosts += month.total;
+            }
+        });
+
+        // Gesamtkosten für das laufende Jahr anzeigen
+        vehicleStatsCost.textContent = formatCurrency(totalYearCosts);
+    }
+}
+
+// Funktion zum Erstellen eines verbesserten monatlichen Kosten-Charts
+function createMonthlyFuelCostsChart(monthlyCosts) {
+    const chartElement = document.getElementById('fuel-costs-chart');
+    if (!chartElement || !window.ApexCharts) return;
+
+    // Daten für die letzten 12 Monate extrahieren
+    const today = new Date();
+    const last12Months = [];
+
+    for (let i = 11; i >= 0; i--) {
+        const d = new Date(today);
+        d.setMonth(d.getMonth() - i);
+        const yearMonth = `${d.getFullYear()}-${d.getMonth() + 1}`;
+        const month = d.toLocaleString('de-DE', { month: 'short' });
+        const year = d.getFullYear();
+
+        last12Months.push({
+            key: yearMonth,
+            label: `${month} ${year}`,
+            cost: monthlyCosts[yearMonth] ? monthlyCosts[yearMonth].total : 0
+        });
+    }
+
+    // Chart-Daten vorbereiten
+    const categories = last12Months.map(m => m.label);
+    const costs = last12Months.map(m => m.cost);
+
+    const options = {
+        chart: {
+            type: 'bar',
+            height: 350,
+            toolbar: {
+                show: false
+            }
+        },
+        colors: ['#4F46E5'],
+        series: [{
+            name: 'Tankkosten',
+            data: costs
+        }],
+        xaxis: {
+            categories: categories,
+            labels: {
+                style: {
+                    fontSize: '12px'
+                }
+            }
+        },
+        yaxis: {
+            title: {
+                text: 'Kosten (€)'
+            }
+        },
+        tooltip: {
+            y: {
+                formatter: function(value) {
+                    return formatCurrency(value);
+                }
+            }
+        },
+        plotOptions: {
+            bar: {
+                borderRadius: 4,
+                dataLabels: {
+                    position: 'top'
+                }
+            }
+        },
+        dataLabels: {
+            enabled: false
+        }
+    };
+
+    // Chart löschen, falls es bereits existiert
+    if (window.fuelCostsChart) {
+        window.fuelCostsChart.destroy();
+    }
+
+    // Neues Chart erstellen und global speichern
+    window.fuelCostsChart = new ApexCharts(chartElement, options);
+    window.fuelCostsChart.render();
+}
+
+// Funktion zum Aktualisieren der monatlichen Kosten in der Fahrzeugstatistik
+function updateMonthlyCostsInStatistics(monthlyCosts) {
+    // Diese Funktion fügt die Tankkosten zu den Gesamtkosten im Statistik-Tab hinzu
+    // Hier müsste der Code ergänzt werden, der die Tankkosten zu den vorhandenen monatlichen Kosten addiert
+
+    // Beispiel:
+    const vehicleStatsCost = document.getElementById('vehicle-monthly-costs');
+    if (vehicleStatsCost) {
+        let totalYearCosts = 0;
+
+        // Aktuelle Jahresdaten summieren
+        const currentYear = new Date().getFullYear();
+        Object.values(monthlyCosts).forEach(month => {
+            if (month.year === currentYear) {
+                totalYearCosts += month.total;
+            }
+        });
+
+        // Gesamtkosten für das laufende Jahr anzeigen
+        vehicleStatsCost.textContent = formatCurrency(totalYearCosts);
+    }
+}
+
+// Funktion zum Erstellen eines verbesserten monatlichen Kosten-Charts
+function createMonthlyFuelCostsChart(monthlyCosts) {
+    const chartElement = document.getElementById('fuel-costs-chart');
+    if (!chartElement || !window.ApexCharts) return;
+
+    // Daten für die letzten 12 Monate extrahieren
+    const today = new Date();
+    const last12Months = [];
+
+    for (let i = 11; i >= 0; i--) {
+        const d = new Date(today);
+        d.setMonth(d.getMonth() - i);
+        const yearMonth = `${d.getFullYear()}-${d.getMonth() + 1}`;
+        const month = d.toLocaleString('de-DE', { month: 'short' });
+        const year = d.getFullYear();
+
+        last12Months.push({
+            key: yearMonth,
+            label: `${month} ${year}`,
+            cost: monthlyCosts[yearMonth] ? monthlyCosts[yearMonth].total : 0
+        });
+    }
+
+    // Chart-Daten vorbereiten
+    const categories = last12Months.map(m => m.label);
+    const costs = last12Months.map(m => m.cost);
+
+    const options = {
+        chart: {
+            type: 'bar',
+            height: 350,
+            toolbar: {
+                show: false
+            }
+        },
+        colors: ['#4F46E5'],
+        series: [{
+            name: 'Tankkosten',
+            data: costs
+        }],
+        xaxis: {
+            categories: categories,
+            labels: {
+                style: {
+                    fontSize: '12px'
+                }
+            }
+        },
+        yaxis: {
+            title: {
+                text: 'Kosten (€)'
+            }
+        },
+        tooltip: {
+            y: {
+                formatter: function(value) {
+                    return formatCurrency(value);
+                }
+            }
+        },
+        plotOptions: {
+            bar: {
+                borderRadius: 4,
+                dataLabels: {
+                    position: 'top'
+                }
+            }
+        },
+        dataLabels: {
+            enabled: false
+        }
+    };
+
+    // Chart löschen, falls es bereits existiert
+    if (window.fuelCostsChart) {
+        window.fuelCostsChart.destroy();
+    }
+
+    // Neues Chart erstellen und global speichern
+    window.fuelCostsChart = new ApexCharts(chartElement, options);
+    window.fuelCostsChart.render();
 }
 
 // Funktion zum Erstellen des Tankkosten-Charts
