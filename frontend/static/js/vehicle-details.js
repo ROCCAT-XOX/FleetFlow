@@ -1,3 +1,5 @@
+document.addEventListener('DOMContentLoaded', function() {
+
 // Funktion zum Laden und Anzeigen der Tankkosten für ein Fahrzeug
 function loadVehicleFuelCosts() {
     const vehicleId = window.location.pathname.split('/').pop();
@@ -740,12 +742,8 @@ function handleCurrentUsageSubmit(event) {
 
     console.log("Gesammelte Formulardaten für aktuelle Nutzung:", usageData); // Debug-Ausgabe
 
-    // API-Anfrage vorbereiten
-    const usageId = usageData['usage-id'];
-    if (!usageId) {
-        showNotification('Fehler: Keine Nutzungs-ID gefunden', 'error');
-        return;
-    }
+    // Fahrzeug-ID aus der URL extrahieren
+    const vehicleId = window.location.pathname.split('/').pop();
 
     // Validierung der Pflichtfelder
     if (!usageData['current-driver']) {
@@ -758,7 +756,7 @@ function handleCurrentUsageSubmit(event) {
         return;
     }
 
-    // Daten in das von der API erwartete Format umwandeln
+    // Gemeinsame Daten für API-Anfrage vorbereiten
     const apiData = {
         vehicleId: vehicleId,
         driverId: usageData['current-driver'],
@@ -769,27 +767,48 @@ function handleCurrentUsageSubmit(event) {
         project: usageData['current-project'] || "",
         purpose: usageData['current-project'] || "", // Duplizieren für Kompatibilität
         department: usageData['current-department'] || "",
-        status: usageData['usage-status'] || 'active',
+        status: 'active', // Immer als aktiv setzen
         notes: usageData['current-usage-notes'] || "",
-        // Da wir eine bestehende Nutzung bearbeiten, brauchen wir möglicherweise den aktuellen Kilometerstand
         startMileage: parseInt(usageData['start-mileage'] || 0)
     };
 
-    console.log("Sende aktualisierte Nutzungsdaten an API:", apiData); // Debug-Ausgabe
+    // Aktive Nutzung für das Fahrzeug abrufen
+    fetch(`/api/usage/vehicle/${vehicleId}`)
+        .then(response => {
+            if (!response.ok) throw new Error('Nutzungsdaten nicht gefunden');
+            return response.json();
+        })
+        .then(data => {
+            // Aktive Nutzung herausfiltern
+            const activeUsage = data.usage.find(entry => entry.status === 'active');
 
-    // API-Anfrage senden
-    fetch(`/api/usage/${usageId}`, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(apiData)
-    })
+            if (activeUsage && activeUsage.id) {
+                // Wenn aktive Nutzung gefunden wurde, diese aktualisieren
+                console.log("Aktive Nutzung gefunden, aktualisiere:", activeUsage.id);
+                return fetch(`/api/usage/${activeUsage.id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(apiData)
+                });
+            } else {
+                // Wenn keine aktive Nutzung gefunden wurde, neue erstellen
+                console.log("Keine aktive Nutzung gefunden, erstelle neue");
+                return fetch('/api/usage', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(apiData)
+                });
+            }
+        })
         .then(response => {
             if (!response.ok) {
                 return response.text().then(text => {
                     console.error("API-Fehlerantwort:", text);
-                    throw new Error('Fehler beim Aktualisieren der aktuellen Nutzung: ' + text);
+                    throw new Error('Fehler beim Verarbeiten der Nutzung: ' + text);
                 });
             }
             return response.json();
@@ -797,7 +816,7 @@ function handleCurrentUsageSubmit(event) {
         .then(data => {
             closeCurrentUsageModal();
             loadVehicleData(); // Fahrzeugdaten komplett neu laden
-            showNotification('Aktuelle Nutzung erfolgreich aktualisiert', 'success');
+            showNotification('Nutzung erfolgreich ' + (data.message && data.message.includes('aktualisiert') ? 'aktualisiert' : 'erstellt'), 'success');
         })
         .catch(error => {
             console.error('Fehler:', error);
@@ -808,6 +827,9 @@ function handleCurrentUsageSubmit(event) {
 // Funktion zur Verarbeitung des Fahrzeug-Bearbeiten-Formulars
 function handleVehicleEditSubmit(event) {
     event.preventDefault();
+
+    // Extrahiere vehicleId aus der URL
+    const vehicleId = window.location.pathname.split('/').pop();
 
     const form = event.target;
     const formData = new FormData(form);
@@ -884,7 +906,10 @@ function handleVehicleEditSubmit(event) {
                 editVehicleModal.classList.add('hidden');
             }
 
-            loadVehicleData(); // Fahrzeugdaten komplett neu laden
+            // Seite neu laden, um Änderungen anzuzeigen
+            window.location.reload();
+
+            // Erfolgsbenachrichtigung (wird angezeigt bevor die Seite neu geladen wird)
             showNotification('Fahrzeug erfolgreich aktualisiert', 'success');
         })
         .catch(error => {
@@ -893,8 +918,297 @@ function handleVehicleEditSubmit(event) {
         });
 }
 
+// Verbesserte Benachrichtigungsfunktion mit Tailwind CSS
+function showNotification(message, type = 'info') {
+    // Container für die Benachrichtigung erstellen oder vorhandenen holen
+    let container = document.getElementById('notification-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'notification-container';
+        container.className = 'fixed top-4 right-4 z-50 flex flex-col gap-2 items-end';
+        document.body.appendChild(container);
+    }
+
+    // Neue Benachrichtigung erstellen
+    const notification = document.createElement('div');
+
+    // Stil basierend auf dem Typ setzen
+    let bgColorClass, textColorClass, iconSvg;
+
+    switch (type) {
+        case 'success':
+            bgColorClass = 'bg-green-100 dark:bg-green-800';
+            textColorClass = 'text-green-800 dark:text-green-100';
+            iconSvg = `<svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+            </svg>`;
+            break;
+        case 'error':
+            bgColorClass = 'bg-red-100 dark:bg-red-800';
+            textColorClass = 'text-red-800 dark:text-red-100';
+            iconSvg = `<svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+            </svg>`;
+            break;
+        case 'warning':
+            bgColorClass = 'bg-yellow-100 dark:bg-yellow-800';
+            textColorClass = 'text-yellow-800 dark:text-yellow-100';
+            iconSvg = `<svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+            </svg>`;
+            break;
+        default: // info
+            bgColorClass = 'bg-blue-100 dark:bg-blue-800';
+            textColorClass = 'text-blue-800 dark:text-blue-100';
+            iconSvg = `<svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd"></path>
+            </svg>`;
+    }
+
+    // Benachrichtigung zusammensetzen
+    notification.className = `${bgColorClass} ${textColorClass} p-4 rounded-lg shadow-md flex items-center max-w-md transform transition-all duration-300 ease-in-out translate-x-full`;
+    notification.innerHTML = `
+        ${iconSvg}
+        <div class="flex-1">${message}</div>
+        <button type="button" class="ml-4 text-gray-400 hover:text-gray-900 dark:hover:text-gray-100" onclick="this.parentElement.remove()">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+            </svg>
+        </button>
+    `;
+
+    // Zur DOM hinzufügen
+    container.appendChild(notification);
+
+    // Animation zum Einblenden
+    setTimeout(() => {
+        notification.classList.remove('translate-x-full');
+    }, 10);
+
+    // Automatisch nach 5 Sekunden ausblenden
+    setTimeout(() => {
+        notification.classList.add('translate-x-full');
+        notification.addEventListener('transitionend', () => {
+            notification.remove();
+        });
+    }, 5000);
+
+    // In die Konsole loggen
+    console.log(`Benachrichtigung (${type}):`, message);
+}
+
+// Funktion zum Öffnen des Modals für die aktuelle Nutzung
+function openCurrentUsageModal(isEdit = false, activeUsage = null) {
+    const modal = document.getElementById('edit-usage-modal');
+    if (!modal) return;
+
+    // Modal anzeigen
+    modal.classList.remove('hidden');
+
+    // Fahrzeug-ID aus der URL extrahieren
+    const vehicleId = window.location.pathname.split('/').pop();
+
+    // Aktuellen Fahrer, Fahrzeug und Projekte laden
+    Promise.all([
+        fetch('/api/drivers'),
+        fetch(`/api/vehicles/${vehicleId}`),
+        fetch('/api/projects')  // Projekte laden, falls API-Endpoint existiert
+    ])
+        .then(responses => {
+            // Fehlerbehandlung für den Fall, dass projects-Endpoint nicht existiert
+            if (responses[2].status === 404) {
+                console.warn("Projekte-API nicht verfügbar, fahre ohne Projekte fort");
+                return Promise.all([
+                    responses[0].json(),
+                    responses[1].json(),
+                    { projects: [] } // Leeres Projekt-Objekt als Fallback
+                ]);
+            }
+            return Promise.all(responses.map(res => res.json()));
+        })
+        .then(([driversData, vehicleData, projectsData]) => {
+            const drivers = driversData.drivers || [];
+            const vehicle = vehicleData.vehicle;
+            const projects = projectsData.projects || [];
+
+            // Formular konfigurieren
+            const form = document.getElementById('edit-current-usage-form');
+            if (form) {
+                // Fahrer-Auswahlliste befüllen
+                const driverSelect = form.querySelector('#current-driver');
+                if (driverSelect) {
+                    // Bestehende Optionen entfernen
+                    driverSelect.innerHTML = '';
+
+                    // Standardoption hinzufügen
+                    const defaultOption = document.createElement('option');
+                    defaultOption.value = '';
+                    defaultOption.textContent = 'Fahrer auswählen';
+                    driverSelect.appendChild(defaultOption);
+
+                    // Fahrer hinzufügen
+                    drivers.forEach(driver => {
+                        const option = document.createElement('option');
+                        option.value = driver.id;
+                        option.textContent = `${driver.firstName} ${driver.lastName}`;
+                        driverSelect.appendChild(option);
+                    });
+                }
+
+                // Projekt-Auswahlliste befüllen, wenn vorhanden
+                const projectInput = form.querySelector('#current-project');
+                if (projectInput && projects.length > 0) {
+                    // Datalist für Projekte erstellen, falls nicht vorhanden
+                    let dataList = document.getElementById('project-list');
+                    if (!dataList) {
+                        dataList = document.createElement('datalist');
+                        dataList.id = 'project-list';
+                        document.body.appendChild(dataList);
+                        projectInput.setAttribute('list', 'project-list');
+                    }
+
+                    // Optionen hinzufügen
+                    dataList.innerHTML = '';
+                    projects.forEach(project => {
+                        const option = document.createElement('option');
+                        option.value = project.name;
+                        dataList.appendChild(option);
+                    });
+                }
+
+                // Heutiges Datum und Uhrzeit vorausfüllen
+                const now = new Date();
+                const tomorrow = new Date(now);
+                tomorrow.setDate(tomorrow.getDate() + 1);
+
+                const startDateInput = form.querySelector('#current-start-date');
+                const startTimeInput = form.querySelector('#current-start-time');
+                const endDateInput = form.querySelector('#current-end-date');
+                const endTimeInput = form.querySelector('#current-end-time');
+
+                if (startDateInput) startDateInput.value = formatDateForInput(now);
+                if (startTimeInput) startTimeInput.value = formatTimeForInput(now);
+                if (endDateInput) endDateInput.value = formatDateForInput(tomorrow);
+                if (endTimeInput) endTimeInput.value = formatTimeForInput(now);
+
+                // Kilometerstand vorausfüllen
+                if (vehicle && vehicle.mileage) {
+                    const hiddenMileageInput = document.createElement('input');
+                    hiddenMileageInput.type = 'hidden';
+                    hiddenMileageInput.name = 'start-mileage';
+                    hiddenMileageInput.value = vehicle.mileage;
+                    form.appendChild(hiddenMileageInput);
+                }
+
+                // Bei Bearbeitung die vorhandenen Daten einfüllen
+                if (isEdit && activeUsage) {
+                    if (driverSelect && activeUsage.driverId) driverSelect.value = activeUsage.driverId;
+
+                    if (startDateInput && activeUsage.startDate)
+                        startDateInput.value = formatDateForInput(activeUsage.startDate);
+
+                    if (startTimeInput && activeUsage.startDate)
+                        startTimeInput.value = formatTimeForInput(activeUsage.startDate);
+
+                    if (endDateInput && activeUsage.endDate)
+                        endDateInput.value = formatDateForInput(activeUsage.endDate);
+
+                    if (endTimeInput && activeUsage.endDate)
+                        endTimeInput.value = formatTimeForInput(activeUsage.endDate);
+
+                    const departmentSelect = form.querySelector('#current-department');
+                    if (departmentSelect && activeUsage.department) {
+                        // Versuchen, passende Option zu finden
+                        const options = Array.from(departmentSelect.options);
+                        const option = options.find(opt =>
+                            opt.textContent.toLowerCase().includes(activeUsage.department.toLowerCase())
+                        );
+                        if (option) departmentSelect.value = option.value;
+                    }
+
+                    if (projectInput)
+                        projectInput.value = activeUsage.project || activeUsage.purpose || '';
+
+                    const notesInput = form.querySelector('#current-usage-notes');
+                    if (notesInput)
+                        notesInput.value = activeUsage.notes || '';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Fehler beim Laden der Daten:', error);
+            showNotification('Fehler beim Laden der Daten: ' + error.message, 'error');
+        });
+}
+
+// Funktion zum Formatieren einer Zeit für Input-Felder
+function formatTimeForInput(dateString) {
+    if (!dateString) return '';
+
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
+
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+
+    return `${hours}:${minutes}`;
+}
+
+function closeCurrentUsageModal() {
+    const modal = document.getElementById('edit-usage-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+}
+
+// Funktion zum Laden der Fahrzeugdaten
+function loadVehicleData() {
+    fetch(`/api/vehicles/${vehicleId}`)
+        .then(response => {
+            if (!response.ok) throw new Error('Fahrzeug nicht gefunden');
+            return response.json();
+        })
+        .then(data => {
+            const vehicle = data.vehicle;
+            console.log("Geladene Fahrzeugdaten:", vehicle);
+
+            if (!vehicle) {
+                throw new Error('Keine Fahrzeugdaten in der Antwort');
+            }
+
+            // Seitentitel und Status aktualisieren
+            updateHeaderInfo(vehicle);
+
+            // UI mit Fahrzeugdaten aktualisieren
+            updateVehicleDisplay(vehicle);
+
+            // Wenn ein Fahrer zugewiesen ist, Fahrerdaten laden
+            if (vehicle.currentDriverId &&
+                vehicle.currentDriverId !== '000000000000000000000000') {
+                loadCurrentDriverData(vehicle.currentDriverId);
+            } else {
+                updateCurrentUsageDisplay(null);
+            }
+
+            // Wartungseinträge laden
+            loadMaintenanceEntries();
+
+            // Nutzungshistorie laden
+            loadUsageHistory();
+
+            // Wenn ApexCharts verfügbar ist, Charts erstellen mit echten Fahrzeugdaten
+            if (typeof ApexCharts !== 'undefined') {
+                createCharts(vehicle);
+            }
+        })
+        .catch(error => {
+            console.error('Fehler beim Laden der Fahrzeugdaten:', error);
+            showNotification('Fehler beim Laden der Fahrzeugdaten', 'error');
+        });
+}
+
 // Event-Listener für Modal und Formular
-document.addEventListener('DOMContentLoaded', function() {
+
     // "Tankkosten hinzufügen"-Button
     const addFuelCostBtn = document.getElementById('add-vehicle-fuel-cost-btn');
     if (addFuelCostBtn) {
@@ -1010,52 +1324,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Event-Listener für das Fahrzeug-Bearbeiten-Modal
         setupVehicleEditModal();
-
-        // Funktion zum Laden der Fahrzeugdaten
-        function loadVehicleData() {
-            fetch(`/api/vehicles/${vehicleId}`)
-                .then(response => {
-                    if (!response.ok) throw new Error('Fahrzeug nicht gefunden');
-                    return response.json();
-                })
-                .then(data => {
-                    const vehicle = data.vehicle;
-                    console.log("Geladene Fahrzeugdaten:", vehicle);
-
-                    if (!vehicle) {
-                        throw new Error('Keine Fahrzeugdaten in der Antwort');
-                    }
-
-                    // Seitentitel und Status aktualisieren
-                    updateHeaderInfo(vehicle);
-
-                    // UI mit Fahrzeugdaten aktualisieren
-                    updateVehicleDisplay(vehicle);
-
-                    // Wenn ein Fahrer zugewiesen ist, Fahrerdaten laden
-                    if (vehicle.currentDriverId &&
-                        vehicle.currentDriverId !== '000000000000000000000000') {
-                        loadCurrentDriverData(vehicle.currentDriverId);
-                    } else {
-                        updateCurrentUsageDisplay(null);
-                    }
-
-                    // Wartungseinträge laden
-                    loadMaintenanceEntries();
-
-                    // Nutzungshistorie laden
-                    loadUsageHistory();
-
-                    // Wenn ApexCharts verfügbar ist, Charts erstellen mit echten Fahrzeugdaten
-                    if (typeof ApexCharts !== 'undefined') {
-                        createCharts(vehicle);
-                    }
-                })
-                .catch(error => {
-                    console.error('Fehler beim Laden der Fahrzeugdaten:', error);
-                    showNotification('Fehler beim Laden der Fahrzeugdaten', 'error');
-                });
-        }
 
         // Funktion zum Aktualisieren des Headers (Titel und Status)
         function updateHeaderInfo(vehicle) {
@@ -1183,7 +1451,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
         }
 
-        // Funktion zum Aktualisieren der Anzeige der aktuellen Nutzung
         function updateCurrentUsageDisplay(driver, activeUsage = null) {
             const currentUsageTab = document.getElementById('current-usage');
 
@@ -1192,30 +1459,27 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!driver) {
                 // Kein Fahrer zugewiesen
                 currentUsageTab.innerHTML = `
-                <div class="bg-white overflow-hidden shadow rounded-lg">
-                    <div class="px-4 py-5 sm:px-6 bg-gray-50 border-b border-gray-200">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900">Aktuelle Nutzung</h3>
-                    </div>
-                    <div class="px-4 py-5 sm:p-6 text-center text-gray-500">
-                        <p>Dieses Fahrzeug wird derzeit nicht genutzt.</p>
-                        <button id="start-usage-btn" type="button" class="mt-4 inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            <svg class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                            </svg>
-                            Nutzung starten
-                        </button>
-                    </div>
-                </div>
-            `;
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="px-4 py-5 sm:px-6 bg-gray-50 border-b border-gray-200">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Aktuelle Nutzung</h3>
+            </div>
+            <div class="px-4 py-5 sm:p-6 text-center text-gray-500">
+                <p>Dieses Fahrzeug wird derzeit nicht genutzt.</p>
+                <button id="start-usage-btn" type="button" class="mt-4 inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <svg class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    Nutzung starten
+                </button>
+            </div>
+        </div>
+        `;
 
                 // Event-Listener für den "Nutzung starten"-Button
                 const startUsageBtn = document.getElementById('start-usage-btn');
                 if (startUsageBtn) {
                     startUsageBtn.addEventListener('click', () => {
-                        const usageModal = document.getElementById('usage-modal');
-                        if (usageModal) {
-                            usageModal.classList.remove('hidden');
-                        }
+                        openCurrentUsageModal(false);
                     });
                 }
 
@@ -1240,149 +1504,52 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             currentUsageTab.innerHTML = `
-            <div class="bg-white overflow-hidden shadow rounded-lg">
-                <div class="px-4 py-5 sm:px-6 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
-                    <h3 class="text-lg leading-6 font-medium text-gray-900">Aktuelle Nutzung</h3>
-                    <button type="button" id="edit-current-usage-btn" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        <svg class="-ml-0.5 mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                        </svg>
-                        Bearbeiten
-                    </button>
+    <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="px-4 py-5 sm:px-6 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">Aktuelle Nutzung</h3>
+            <button type="button" id="edit-current-usage-btn" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                <svg class="-ml-0.5 mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+                Bearbeiten
+            </button>
+        </div>
+        <div class="px-4 py-5 sm:p-6">
+            <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+                <div class="sm:col-span-1">
+                    <dt class="text-sm font-medium text-gray-500">Aktueller Fahrer</dt>
+                    <dd class="mt-1 text-sm text-gray-900">${driver.firstName} ${driver.lastName}</dd>
                 </div>
-                <div class="px-4 py-5 sm:p-6">
-                    <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
-                        <div class="sm:col-span-1">
-                            <dt class="text-sm font-medium text-gray-500">Aktueller Fahrer</dt>
-                            <dd class="mt-1 text-sm text-gray-900">${driver.firstName} ${driver.lastName}</dd>
-                        </div>
-                        <div class="sm:col-span-1">
-                            <dt class="text-sm font-medium text-gray-500">Abteilung</dt>
-                            <dd class="mt-1 text-sm text-gray-900">${department || "Nicht angegeben"}</dd>
-                        </div>
-                        <div class="sm:col-span-1">
-                            <dt class="text-sm font-medium text-gray-500">Nutzung seit</dt>
-                            <dd class="mt-1 text-sm text-gray-900">${usageStartDate}</dd>
-                        </div>
-                        <div class="sm:col-span-1">
-                            <dt class="text-sm font-medium text-gray-500">Geplante Rückgabe</dt>
-                            <dd class="mt-1 text-sm text-gray-900">${usageEndDate}</dd>
-                        </div>
-                        <div class="sm:col-span-2">
-                            <dt class="text-sm font-medium text-gray-500">Projekt/Zweck</dt>
-                            <dd class="mt-1 text-sm text-gray-900">${project || "Nicht angegeben"}</dd>
-                        </div>
-                    </dl>
+                <div class="sm:col-span-1">
+                    <dt class="text-sm font-medium text-gray-500">Abteilung</dt>
+                    <dd class="mt-1 text-sm text-gray-900">${department || "Nicht angegeben"}</dd>
                 </div>
-            </div>
-        `;
+                <div class="sm:col-span-1">
+                    <dt class="text-sm font-medium text-gray-500">Nutzung seit</dt>
+                    <dd class="mt-1 text-sm text-gray-900">${usageStartDate}</dd>
+                </div>
+                <div class="sm:col-span-1">
+                    <dt class="text-sm font-medium text-gray-500">Geplante Rückgabe</dt>
+                    <dd class="mt-1 text-sm text-gray-900">${usageEndDate}</dd>
+                </div>
+                <div class="sm:col-span-2">
+                    <dt class="text-sm font-medium text-gray-500">Projekt/Zweck</dt>
+                    <dd class="mt-1 text-sm text-gray-900">${project || "Nicht angegeben"}</dd>
+                </div>
+            </dl>
+        </div>
+    </div>
+    `;
 
             // Event-Listener für den "Bearbeiten"-Button
-            // Event-Listener für den "Bearbeiten"-Button
-            const editUsageBtn = document.getElementById('edit-current-usage-btn');
-            if (editUsageBtn) {
-                editUsageBtn.addEventListener('click', () => {
-                    const editUsageModal = document.getElementById('edit-usage-modal');
-                    if (editUsageModal) {
-                        // Formularelemente mit aktuellen Werten füllen
-                        if (activeUsage) {
-                            const form = document.getElementById('edit-current-usage-form');
-                            if (form) {
-                                // Verstecktes Feld für die Nutzungs-ID hinzufügen
-                                let idInput = form.querySelector('input[name="usage-id"]');
-                                if (!idInput) {
-                                    idInput = document.createElement('input');
-                                    idInput.type = 'hidden';
-                                    idInput.name = 'usage-id';
-                                    form.appendChild(idInput);
-                                }
-                                idInput.value = activeUsage.id || '';
+    const editUsageBtn = document.getElementById('edit-current-usage-btn');
+    if (editUsageBtn) {
+        editUsageBtn.addEventListener('click', () => {
+            openCurrentUsageModal(true, activeUsage);
+        });
+    }
+}
 
-                                // Select-Feld für Fahrer suchen und den aktuellen Fahrer auswählen
-                                const driverSelect = form.querySelector('#current-driver');
-                                if (driverSelect) {
-                                    // Prüfen, ob der Fahrer in der Liste ist, sonst dynamisch hinzufügen
-                                    let driverOption = Array.from(driverSelect.options).find(option => option.value === driver.id);
-
-                                    if (!driverOption) {
-                                        driverOption = document.createElement('option');
-                                        driverOption.value = driver.id;
-                                        driverOption.textContent = `${driver.firstName} ${driver.lastName}`;
-                                        driverSelect.appendChild(driverOption);
-                                    }
-
-                                    driverSelect.value = driver.id;
-                                    console.log("Fahrer-ID gesetzt auf:", driver.id); // Debug
-                                }
-
-                                // Startdatum und -zeit setzen
-                                if (activeUsage.startDate) {
-                                    const startDate = new Date(activeUsage.startDate);
-                                    const startDateInput = form.querySelector('#current-start-date');
-                                    const startTimeInput = form.querySelector('#current-start-time');
-
-                                    if (startDateInput) {
-                                        startDateInput.value = formatDateForInput(startDate);
-                                        console.log("Startdatum gesetzt auf:", formatDateForInput(startDate)); // Debug
-                                    }
-                                    if (startTimeInput) {
-                                        startTimeInput.value = formatTimeForInput(startDate);
-                                        console.log("Startzeit gesetzt auf:", formatTimeForInput(startDate)); // Debug
-                                    }
-                                }
-
-                                // Enddatum und -zeit setzen
-                                if (activeUsage.endDate) {
-                                    const endDate = new Date(activeUsage.endDate);
-                                    const endDateInput = form.querySelector('#current-end-date');
-                                    const endTimeInput = form.querySelector('#current-end-time');
-
-                                    if (endDateInput) endDateInput.value = formatDateForInput(endDate);
-                                    if (endTimeInput) endTimeInput.value = formatTimeForInput(endDate);
-                                }
-
-                                // Weitere Felder setzen
-                                const departmentInput = form.querySelector('#current-department');
-                                if (departmentInput && activeUsage.department) {
-                                    // Versuche den passenden Wert zu finden oder wähle den ersten aus
-                                    const option = Array.from(departmentInput.options).find(opt =>
-                                        opt.textContent.toLowerCase() === activeUsage.department.toLowerCase());
-
-                                    if (option) {
-                                        departmentInput.value = option.value;
-                                    }
-                                }
-
-                                const projectInput = form.querySelector('#current-project');
-                                if (projectInput) {
-                                    projectInput.value = activeUsage.project || activeUsage.purpose || '';
-                                }
-
-                                const notesInput = form.querySelector('#current-usage-notes');
-                                if (notesInput) {
-                                    notesInput.value = activeUsage.notes || '';
-                                }
-
-                                // Status setzen, falls vorhanden
-                                const statusInput = form.querySelector('#usage-status');
-                                if (statusInput) {
-                                    statusInput.value = activeUsage.status || 'active';
-                                }
-
-                                // Kilometerstand setzen, falls nötig
-                                const startMileageInput = document.createElement('input');
-                                startMileageInput.type = 'hidden';
-                                startMileageInput.name = 'start-mileage';
-                                startMileageInput.value = activeUsage.startMileage || 0;
-                                form.appendChild(startMileageInput);
-                            }
-                        }
-
-                        editUsageModal.classList.remove('hidden');
-                    }
-                });
-            }
-        }
 
         // Funktion zum Laden und Anzeigen der Wartungseinträge
         function loadMaintenanceEntries() {
@@ -2021,13 +2188,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        // Funktion zum Schließen des Modals für aktuelle Nutzung
-        function closeCurrentUsageModal() {
-            const modal = document.getElementById('edit-usage-modal');
-            if (modal) {
-                modal.classList.add('hidden');
-            }
-        }
+
 
         // Funktion zum Laden der Fahrer für das Nutzungsformular
         function loadDriversForUsageForm() {
