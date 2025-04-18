@@ -37,15 +37,6 @@
                 <li class="mr-2" role="presentation">
                     <button class="inline-block p-4 border-b-2 border-blue-600 rounded-t-lg active dark:text-blue-500 dark:border-blue-500" id="users-tab" data-tabs-target="#users" type="button" role="tab" aria-controls="users" aria-selected="true">Benutzerverwaltung</button>
                 </li>
-                <li class="mr-2" role="presentation">
-                    <button class="inline-block p-4 border-b-2 rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300" id="system-tab" data-tabs-target="#system" type="button" role="tab" aria-controls="system" aria-selected="false">Systemeinstellungen</button>
-                </li>
-                <li class="mr-2" role="presentation">
-                    <button class="inline-block p-4 border-b-2 rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300" id="security-tab" data-tabs-target="#security" type="button" role="tab" aria-controls="security" aria-selected="false">Sicherheit</button>
-                </li>
-                <li role="presentation">
-                    <button class="inline-block p-4 border-b-2 rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300" id="appearance-tab" data-tabs-target="#appearance" type="button" role="tab" aria-controls="appearance" aria-selected="false">Darstellung</button>
-                </li>
             </ul>
         </div>
 
@@ -250,115 +241,6 @@
                     </table>
                 </div>
 
-                <!-- Pagination -->
-                <div class="flex items-center justify-between mt-4 bg-white dark:bg-gray-800 px-4 py-3 sm:px-6 rounded-md shadow-sm">
-                    <div class="flex-1 flex justify-between sm:hidden">
-                        <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600">
-                            Zurück
-                        </a>
-                        <a href="#" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600">
-                            Weiter
-                        </a>
-                    </div>
-                    <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                        <div>
-                            <p class="text-sm text-gray-700 dark:text-gray-300">
-                                Zeige <span class="font-medium">1</span> bis <span class="font-medium">3</span> von <span class="font-medium">10</span> Ergebnissen
-                            </p>
-                        </div>
-                        <div>
-                            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                                <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600">
-                                    <span class="sr-only">Vorherige</span>
-                                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                        <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                    </svg>
-                                </a>
-                                <a href="#" aria-current="page" class="z-10 bg-blue-50 border-blue-500 text-blue-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium dark:bg-blue-900 dark:text-blue-200 dark:border-blue-800">
-                                    1
-                                </a>
-                                <a href="#" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600">
-                                    2
-                                </a>
-                                <a href="#" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600">
-                                    3
-                                </a>
-                                <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600">
-                                    ...
-                                </span>
-                                <a href="#" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600">
-                                    8
-                                </a>
-                                <a href="#" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600">
-                                    9
-                                </a>
-                                <a href="#" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600">
-                                    10
-                                </a>
-                                <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600">
-                                    <span class="sr-only">Nächste</span>
-                                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                                    </svg>
-                                </a>
-                            </nav>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Systemeinstellungen Tab (Placeholder) -->
-            <div class="hidden" id="system" role="tabpanel" aria-labelledby="system-tab">
-                <div class="bg-white dark:bg-gray-800 shadow rounded-md p-6">
-                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Systemeinstellungen</h2>
-                    <p class="text-gray-600 dark:text-gray-300 mb-4">Diese Seite befindet sich noch in der Entwicklung. Hier werden später allgemeine Systemeinstellungen verfügbar sein.</p>
-                    <div class="border border-gray-200 dark:border-gray-700 rounded-md p-8 flex items-center justify-center">
-                        <span class="text-gray-400 dark:text-gray-500">Demnächst verfügbar</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Sicherheit Tab (Placeholder) -->
-            <div class="hidden" id="security" role="tabpanel" aria-labelledby="security-tab">
-                <div class="bg-white dark:bg-gray-800 shadow rounded-md p-6">
-                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Sicherheitseinstellungen</h2>
-                    <p class="text-gray-600 dark:text-gray-300 mb-4">Diese Seite befindet sich noch in der Entwicklung. Hier werden später Sicherheitseinstellungen und Optionen für Zwei-Faktor-Authentifizierung verfügbar sein.</p>
-                    <div class="border border-gray-200 dark:border-gray-700 rounded-md p-8 flex items-center justify-center">
-                        <span class="text-gray-400 dark:text-gray-500">Demnächst verfügbar</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Darstellung Tab (Placeholder) -->
-            <div class="hidden" id="appearance" role="tabpanel" aria-labelledby="appearance-tab">
-                <div class="bg-white dark:bg-gray-800 shadow rounded-md p-6">
-                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Darstellungseinstellungen</h2>
-                    <p class="text-gray-600 dark:text-gray-300 mb-4">Passen Sie das Erscheinungsbild der Anwendung an.</p>
-
-                    <div class="mt-6">
-                        <h3 class="text-lg font-medium text-gray-900 dark:text-white">Farbmodus</h3>
-                        <div class="mt-2 space-y-4">
-                            <div class="flex items-center">
-                                <input id="light-mode" name="color-scheme" type="radio" class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600" checked>
-                                <label for="light-mode" class="ml-3 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    Heller Modus
-                                </label>
-                            </div>
-                            <div class="flex items-center">
-                                <input id="dark-mode" name="color-scheme" type="radio" class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600">
-                                <label for="dark-mode" class="ml-3 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    Dunkler Modus
-                                </label>
-                            </div>
-                            <div class="flex items-center">
-                                <input id="system-mode" name="color-scheme" type="radio" class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600">
-                                <label for="system-mode" class="ml-3 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    Systemeinstellung nutzen
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
@@ -455,7 +337,7 @@
         &copy; {{.year}} FleetDrive. Alle Rechte vorbehalten.
     </div>
 </footer>
-
+<!--
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Tabs-Funktionalität
@@ -676,6 +558,415 @@
         lightModeRadio.addEventListener('change', () => setThemePreference('light'));
         darkModeRadio.addEventListener('change', () => setThemePreference('dark'));
         systemModeRadio.addEventListener('change', () => setThemePreference('system'));
+    });
+</script>
+-->
+<script>
+    // Funktion zum Speichern eines Benutzers (Erstellen oder Aktualisieren)
+    function saveUser(userData, isEdit = false) {
+        console.log('Zu speichernde Benutzerdaten:', userData); // Debug-Ausgabe
+
+        // Validierung der Pflichtfelder
+        if (!userData['first-name'] || !userData['last-name'] || !userData.email) {
+            alert('Bitte füllen Sie alle Pflichtfelder aus (Vorname, Nachname, E-Mail).');
+            return Promise.reject(new Error('Unvollständige Daten'));
+        }
+
+        // Bei neuen Benutzern muss ein Passwort gesetzt werden
+        if (!isEdit && (!userData.password || userData.password.length < 6)) {
+            alert('Bitte geben Sie ein Passwort mit mindestens 6 Zeichen ein.');
+            return Promise.reject(new Error('Ungültiges Passwort'));
+        }
+
+        // Überprüfen, ob Passwörter übereinstimmen
+        if (userData.password && userData.password !== userData['confirm-password']) {
+            alert('Die Passwörter stimmen nicht überein.');
+            return Promise.reject(new Error('Passwörter stimmen nicht überein'));
+        }
+
+        // API-Pfad und Methode basierend auf Bearbeitung oder Neuanlage
+        const url = isEdit ? `/api/users/${userData.id}` : '/api/users';
+        const method = isEdit ? 'PUT' : 'POST';
+
+        // Erstelle das Anfrageobjekt mit allen erforderlichen Feldern
+        const requestData = {
+            firstName: userData['first-name'],
+            lastName: userData['last-name'],
+            email: userData.email,
+            username: userData.username || userData.email, // Falls kein Benutzername angegeben, E-Mail verwenden
+            role: userData.role,
+            status: userData.status
+        };
+
+        // Passwort nur hinzufügen, wenn eines eingegeben wurde
+        if (userData.password && userData.password !== '********') {
+            requestData.password = userData.password;
+        }
+
+        // API-Anfrage senden
+        return fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestData)
+        })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error('Fehler beim Speichern des Benutzers: ' + text);
+                    });
+                }
+                return response.json();
+            });
+    }
+
+    // Funktion zum Laden aller Benutzer für die Tabelle
+    function loadUsers() {
+        return fetch('/api/users')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Fehler beim Laden der Benutzer');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const users = data.users || [];
+                renderUsersTable(users);
+            })
+            .catch(error => {
+                console.error('Fehler:', error);
+                const tableBody = document.querySelector('tbody');
+                if (tableBody) {
+                    tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="px-6 py-4 text-center text-sm text-red-500 dark:text-red-400">
+                            Fehler beim Laden der Benutzer: ${error.message}
+                        </td>
+                    </tr>
+                `;
+                }
+            });
+    }
+
+    // Funktion zum Rendern der Benutzertabelle
+    function renderUsersTable(users) {
+        const tableBody = document.querySelector('tbody');
+        if (!tableBody) return;
+
+        if (users.length === 0) {
+            tableBody.innerHTML = `
+            <tr>
+                <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                    Keine Benutzer gefunden.
+                </td>
+            </tr>
+        `;
+            return;
+        }
+
+        tableBody.innerHTML = users.map(user => {
+            // Rollenklassen und Text ermitteln
+            let roleClass, roleText;
+            switch(user.role) {
+                case 'admin':
+                    roleClass = 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+                    roleText = 'Administrator';
+                    break;
+                case 'manager':
+                    roleClass = 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
+                    roleText = 'Manager';
+                    break;
+                default:
+                    roleClass = 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
+                    roleText = 'Benutzer';
+            }
+
+            // Statusklassen und Text ermitteln
+            let statusClass, statusText;
+            switch(user.status) {
+                case 'active':
+                    statusClass = 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+                    statusText = 'Aktiv';
+                    break;
+                default:
+                    statusClass = 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
+                    statusText = 'Inaktiv';
+            }
+
+            // Formatierung des Anmeldedatums
+            const createdDate = user.createdAt ? new Date(user.createdAt) : new Date();
+            const createdDateText = `Angemeldet seit ${createdDate.toLocaleDateString('de-DE')}`;
+
+            return `
+            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 h-10 w-10">
+                            <img class="h-10 w-10 rounded-full" src="https://images.unsplash.com/photo-${'1472099645785-5658abf4ff4e'}?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="">
+                        </div>
+                        <div class="ml-4">
+                            <div class="text-sm font-medium text-gray-900 dark:text-white">
+                                ${user.firstName} ${user.lastName}
+                            </div>
+                            <div class="text-sm text-gray-500 dark:text-gray-400">
+                                ${createdDateText}
+                            </div>
+                        </div>
+                    </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-900 dark:text-white">${user.email}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${roleClass}">
+                        ${roleText}
+                    </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}">
+                        ${statusText}
+                    </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div class="flex justify-end space-x-2">
+                        <button class="edit-user-btn text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300" data-id="${user.id}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                            </svg>
+                        </button>
+                        <button class="delete-user-btn text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300" data-id="${user.id}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+        }).join('');
+
+        // Event-Listener für Bearbeiten-Buttons hinzufügen
+        document.querySelectorAll('.edit-user-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const userId = this.getAttribute('data-id');
+                openUserModal(true, userId);
+            });
+        });
+
+        // Event-Listener für Löschen-Buttons hinzufügen
+        document.querySelectorAll('.delete-user-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const userId = this.getAttribute('data-id');
+                if (confirm('Sind Sie sicher, dass Sie diesen Benutzer löschen möchten?')) {
+                    deleteUser(userId);
+                }
+            });
+        });
+    }
+
+    // Funktion zum Löschen eines Benutzers
+    function deleteUser(userId) {
+        fetch(`/api/users/${userId}`, {
+            method: 'DELETE'
+        })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error('Fehler beim Löschen des Benutzers: ' + text);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert('Benutzer erfolgreich gelöscht!');
+                loadUsers(); // Tabelle aktualisieren
+            })
+            .catch(error => {
+                console.error('Fehler:', error);
+                alert(error.message);
+            });
+    }
+
+    // Funktion zum Öffnen des Benutzer-Modals
+    function openUserModal(isEdit = false, userId = null) {
+        const modal = document.getElementById('user-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const userForm = document.getElementById('user-form');
+
+        if (!modal || !modalTitle || !userForm) return;
+
+        modal.classList.remove('hidden');
+
+        if (isEdit && userId) {
+            modalTitle.textContent = 'Benutzer bearbeiten';
+
+            // Benutzerdaten von der API laden
+            fetch(`/api/users/${userId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Fehler beim Laden des Benutzers');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const user = data.user;
+
+                    // Formularfelder befüllen
+                    document.getElementById('first-name').value = user.firstName || '';
+                    document.getElementById('last-name').value = user.lastName || '';
+                    document.getElementById('email').value = user.email || '';
+                    document.getElementById('username').value = user.username || '';
+                    document.getElementById('role').value = user.role || 'user';
+                    document.getElementById('status').value = user.status || 'active';
+
+                    // Passwörter mit Platzhaltern füllen
+                    document.getElementById('password').value = '********';
+                    document.getElementById('confirm-password').value = '********';
+
+                    // ID zum Formular hinzufügen
+                    let idInput = userForm.querySelector('input[name="id"]');
+                    if (!idInput) {
+                        idInput = document.createElement('input');
+                        idInput.type = 'hidden';
+                        idInput.name = 'id';
+                        userForm.appendChild(idInput);
+                    }
+                    idInput.value = userId;
+                })
+                .catch(error => {
+                    console.error('Fehler:', error);
+                    closeUserModal();
+                    alert('Fehler beim Laden des Benutzers: ' + error.message);
+                });
+        } else {
+            modalTitle.textContent = 'Benutzer hinzufügen';
+            userForm.reset();
+
+            // Versteckte ID entfernen
+            const idInput = userForm.querySelector('input[name="id"]');
+            if (idInput) {
+                idInput.remove();
+            }
+        }
+    }
+
+    // Funktion zum Schließen des Benutzer-Modals
+    function closeUserModal() {
+        const modal = document.getElementById('user-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    }
+
+    // Hauptfunktionalität beim Laden der Seite hinzufügen
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auf der Einstellungsseite Benutzer laden
+        if (document.getElementById('users-tab')) {
+            loadUsers();
+
+            // Event-Listener für "Benutzer hinzufügen"-Button
+            const addUserBtn = document.getElementById('add-user-btn');
+            if (addUserBtn) {
+                addUserBtn.addEventListener('click', () => openUserModal(false));
+            }
+
+            // Event-Listener für "Schließen"-Button im Modal
+            const closeModalBtn = document.getElementById('close-modal-btn');
+            if (closeModalBtn) {
+                closeModalBtn.addEventListener('click', closeUserModal);
+            }
+
+            // Event-Listener für Klick außerhalb des Modals
+            const userModal = document.getElementById('user-modal');
+            if (userModal) {
+                userModal.addEventListener('click', function(event) {
+                    if (event.target === userModal) {
+                        closeUserModal();
+                    }
+                });
+            }
+
+            // Event-Listener für das Benutzerformular
+            const userForm = document.getElementById('user-form');
+            if (userForm) {
+                userForm.addEventListener('submit', function(event) {
+                    event.preventDefault();
+
+                    // Formulardaten sammeln
+                    const formData = new FormData(userForm);
+                    const userData = {};
+
+                    for (let [key, value] of formData.entries()) {
+                        userData[key] = value;
+                    }
+
+                    // Prüfen, ob es eine Bearbeitung ist (ID vorhanden)
+                    const isEdit = !!userData.id;
+
+                    // Benutzer speichern
+                    saveUser(userData, isEdit)
+                        .then(response => {
+                            console.log('Benutzer erfolgreich gespeichert:', response);
+                            closeUserModal();
+                            loadUsers(); // Benutzertabelle aktualisieren
+                            alert('Benutzer erfolgreich gespeichert!');
+                        })
+                        .catch(error => {
+                            console.error('Fehler:', error);
+                            // Fehlermeldung wird bereits in saveUser angezeigt
+                        });
+                });
+            }
+
+            // Event-Listener für Suchfunktion
+            const searchInput = document.getElementById('search-user');
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    const searchText = this.value.toLowerCase();
+                    const userRows = document.querySelectorAll('tbody tr');
+
+                    userRows.forEach(row => {
+                        const rowText = row.textContent.toLowerCase();
+                        if (rowText.includes(searchText)) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    });
+                });
+            }
+
+            // Event-Listener für Rollenfilter
+            const roleFilter = document.getElementById('role-filter');
+            if (roleFilter) {
+                roleFilter.addEventListener('change', function() {
+                    const selectedRole = this.value;
+                    const userRows = document.querySelectorAll('tbody tr');
+
+                    userRows.forEach(row => {
+                        if (selectedRole === 'all') {
+                            row.style.display = '';
+                            return;
+                        }
+
+                        const roleCell = row.querySelector('td:nth-child(3) span');
+                        const roleText = roleCell.textContent.trim().toLowerCase();
+
+                        let matchesFilter = false;
+                        if (selectedRole === 'admin' && roleText === 'administrator') {
+                            matchesFilter = true;
+                        } else if (selectedRole === 'manager' && roleText === 'manager') {
+                            matchesFilter = true;
+                        } else if (selectedRole === 'user' && roleText === 'benutzer') {
+                            matchesFilter = true;
+                        }
+
+                        row.style.display = matchesFilter ? '' : 'none';
+                    });
+                });
+            }
+        }
     });
 </script>
 </body>

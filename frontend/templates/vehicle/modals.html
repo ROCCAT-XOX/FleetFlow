@@ -425,4 +425,91 @@
         </div>
     </div>
 </div>
+
+<!-- Modal: Zulassung & Versicherung bearbeiten -->
+<div id="registration-modal" class="fixed z-10 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <!-- Hintergrund-Overlay -->
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+
+        <!-- Zentriert den Modal-Inhalt -->
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+        <!-- Modal-Panel -->
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <form id="registration-form">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="w-full">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="registration-modal-title">
+                                Zulassung & Versicherung bearbeiten
+                            </h3>
+
+                            <div class="mt-4">
+                                <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                                    <div class="sm:col-span-3">
+                                        <label for="registration-date" class="block text-sm font-medium text-gray-700">Erstzulassung</label>
+                                        <input type="date" name="registration-date" id="registration-date" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="registration-expiry" class="block text-sm font-medium text-gray-700">Ablaufdatum der Zulassung</label>
+                                        <input type="date" name="registration-expiry" id="registration-expiry" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="next-inspection" class="block text-sm font-medium text-gray-700">Nächste HU/AU</label>
+                                        <input type="date" name="next-inspection" id="next-inspection" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="insurance-company" class="block text-sm font-medium text-gray-700">Versicherungsgesellschaft</label>
+                                        <input type="text" name="insurance-company" id="insurance-company" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="insurance-number" class="block text-sm font-medium text-gray-700">Versicherungsnummer</label>
+                                        <input type="text" name="insurance-number" id="insurance-number" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="insurance-type" class="block text-sm font-medium text-gray-700">Versicherungstyp</label>
+                                        <select id="insurance-type" name="insurance-type" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                            <option value="Haftpflicht">Haftpflicht</option>
+                                            <option value="Teilkasko">Teilkasko</option>
+                                            <option value="Vollkasko">Vollkasko</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="insurance-expiry" class="block text-sm font-medium text-gray-700">Ablaufdatum der Versicherung</label>
+                                        <input type="date" name="insurance-expiry" id="insurance-expiry" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="insurance-cost" class="block text-sm font-medium text-gray-700">Jährliche Kosten</label>
+                                        <div class="mt-1 relative rounded-md shadow-sm">
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <span class="text-gray-500 sm:text-sm">€</span>
+                                            </div>
+                                            <input type="number" name="insurance-cost" id="insurance-cost" step="0.01" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm">
+                        Speichern
+                    </button>
+                    <button type="button" id="close-registration-modal-btn" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        Abbrechen
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 {{ end }}

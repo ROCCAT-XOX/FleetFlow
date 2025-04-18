@@ -15,6 +15,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Nutzungsstatistiken laden
     loadUsageStatistics();
+
+    // Dark Mode für Charts bei Änderung aktualisieren
+    const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    darkModeMediaQuery.addEventListener('change', () => {
+        if (window.fleetActivityChart) {
+            window.fleetActivityChart.destroy();
+        }
+        createActivityChart();
+    });
 });
 
 // Funktion zum Laden der Fahrzeuge
@@ -45,11 +54,14 @@ function renderVehicles(vehicles) {
     container.innerHTML = '';
 
     if (vehicles.length === 0) {
-        container.innerHTML = '<div class="col-span-full p-4 text-center text-gray-500">Keine Fahrzeuge gefunden.</div>';
+        container.innerHTML = '<div class="col-span-full p-4 text-center text-gray-500 dark:text-gray-400">Keine Fahrzeuge gefunden.</div>';
         return;
     }
 
-    vehicles.forEach(vehicle => {
+    // Beschränke auf max. 4 Fahrzeuge für das Dashboard
+    const displayVehicles = vehicles.slice(0, 4);
+
+    displayVehicles.forEach(vehicle => {
         // Status bestimmen
         let statusConfig = getStatusConfig(vehicle.status);
 
@@ -75,7 +87,7 @@ function renderVehicles(vehicles) {
                         </svg>
                         Details
                     </a>
-                    <span class="text-xs text-gray-500 dark:text-gray-400">${vehicle.mileage} km</span>
+                    <span class="text-xs text-gray-500 dark:text-gray-400">${vehicle.mileage || 0} km</span>
                 </div>
             </div>
         `;
@@ -127,29 +139,22 @@ function getStatusConfig(status) {
 
 // Funktion zum Aktualisieren der Fahrzeugstatistiken
 function updateVehicleStats(vehicles) {
-    const totalVehiclesElem = document.getElementById('total-vehicles');
-    const availableVehiclesElem = document.getElementById('available-vehicles');
-    const inUseVehiclesElem = document.getElementById('in-use-vehicles');
-    const maintenanceVehiclesElem = document.getElementById('maintenance-vehicles');
+    // Statistik im Dashboard Header aktualisieren
+    const totalVehicles = vehicles.length;
+    const availableVehicles = vehicles.filter(v => v.status === 'available').length;
+    const inUseVehicles = vehicles.filter(v => v.status === 'inuse').length;
+    const maintenanceVehicles = vehicles.filter(v => v.status === 'maintenance').length;
 
-    if (totalVehiclesElem) {
-        totalVehiclesElem.textContent = vehicles.length;
-    }
+    // Statistik-Elemente im DOM suchen und aktualisieren
+    const totalElement = document.querySelector('[data-stat="total-vehicles"]');
+    const availableElement = document.querySelector('[data-stat="available-vehicles"]');
+    const inUseElement = document.querySelector('[data-stat="in-use-vehicles"]');
+    const maintenanceElement = document.querySelector('[data-stat="maintenance-vehicles"]');
 
-    if (availableVehiclesElem) {
-        const availableCount = vehicles.filter(v => v.status === 'available').length;
-        availableVehiclesElem.textContent = availableCount;
-    }
-
-    if (inUseVehiclesElem) {
-        const inUseCount = vehicles.filter(v => v.status === 'inuse').length;
-        inUseVehiclesElem.textContent = inUseCount;
-    }
-
-    if (maintenanceVehiclesElem) {
-        const maintenanceCount = vehicles.filter(v => v.status === 'maintenance').length;
-        maintenanceVehiclesElem.textContent = maintenanceCount;
-    }
+    if (totalElement) totalElement.textContent = totalVehicles;
+    if (availableElement) availableElement.textContent = availableVehicles;
+    if (inUseElement) inUseElement.textContent = inUseVehicles;
+    if (maintenanceElement) maintenanceElement.textContent = maintenanceVehicles;
 }
 
 // Funktion zum Laden der Fahrer
@@ -179,33 +184,31 @@ function renderDrivers(drivers) {
     container.innerHTML = '';
 
     if (drivers.length === 0) {
-        container.innerHTML = '<div class="p-4 text-center text-gray-500">Keine Fahrer gefunden.</div>';
+        container.innerHTML = '<div class="p-4 text-center text-gray-500 dark:text-gray-400">Keine Fahrer gefunden.</div>';
         return;
     }
 
-    drivers.forEach(driver => {
-        let statusConfig = {
-            ringColor: 'bg-green-500',
-            label: 'Verfügbar'
-        };
+    // Beschränke auf max. 3 Fahrer für das Dashboard
+    const displayDrivers = drivers.slice(0, 3);
 
-        if (driver.status === 'onduty') {
-            statusConfig = {
-                ringColor: 'bg-yellow-500',
-                label: 'Im Dienst'
-            };
-        } else if (driver.status === 'offduty') {
-            statusConfig = {
-                ringColor: 'bg-gray-500',
-                label: 'Außer Dienst'
-            };
-        }
+    displayDrivers.forEach(driver => {
+        // Status-Konfiguration bestimmen
+        let statusConfig = getDriverStatusConfig(driver.status);
+
+        // Profilbild-URL erzeugen
+        const profileImages = [
+            'photo-1472099645785-5658abf4ff4e',
+            'photo-1494790108377-be9c29b29330',
+            'photo-1506794778202-cad84cf45f1d'
+        ];
+        const randomIndex = Math.floor(Math.random() * profileImages.length);
+        const profileImage = profileImages[randomIndex];
 
         const driverElement = document.createElement('div');
         driverElement.className = 'flex items-center p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors';
         driverElement.innerHTML = `
             <div class="flex-shrink-0 mr-3 relative">
-                <img class="h-10 w-10 rounded-full" src="https://images.unsplash.com/photo-${Math.floor(Math.random() * 3) === 0 ? '1472099645785-5658abf4ff4e' : Math.floor(Math.random() * 2) === 0 ? '1494790108377-be9c29b29330' : '1506794778202-cad84cf45f1d'}?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="${driver.firstName} ${driver.lastName}">
+                <img class="h-10 w-10 rounded-full" src="https://images.unsplash.com/${profileImage}?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="${driver.firstName} ${driver.lastName}">
                 <span class="absolute bottom-0 right-0 h-3 w-3 rounded-full ${statusConfig.ringColor} ring-2 ring-white dark:ring-gray-800"></span>
             </div>
             <div class="min-w-0 flex-1">
@@ -213,7 +216,7 @@ function renderDrivers(drivers) {
                 <p class="text-xs text-gray-500 dark:text-gray-400 truncate">${driver.email || ''}</p>
             </div>
             <div>
-                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-${driver.status === 'onduty' ? 'yellow' : driver.status === 'available' ? 'green' : 'gray'}-100 text-${driver.status === 'onduty' ? 'yellow' : driver.status === 'available' ? 'green' : 'gray'}-800 dark:bg-${driver.status === 'onduty' ? 'yellow' : driver.status === 'available' ? 'green' : 'gray'}-900/30 dark:text-${driver.status === 'onduty' ? 'yellow' : driver.status === 'available' ? 'green' : 'gray'}-400">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusConfig.bg} ${statusConfig.text} ${statusConfig.darkBg} ${statusConfig.darkText}">
                     ${statusConfig.label}
                 </span>
             </div>
@@ -222,8 +225,51 @@ function renderDrivers(drivers) {
     });
 }
 
+// Funktion zum Bestimmen der Fahrer-Status-Konfiguration
+function getDriverStatusConfig(status) {
+    switch(status) {
+        case 'available':
+            return {
+                bg: 'bg-green-100',
+                text: 'text-green-800',
+                darkBg: 'dark:bg-green-900/30',
+                darkText: 'dark:text-green-400',
+                ringColor: 'bg-green-500',
+                label: 'Verfügbar'
+            };
+        case 'onduty':
+            return {
+                bg: 'bg-yellow-100',
+                text: 'text-yellow-800',
+                darkBg: 'dark:bg-yellow-900/30',
+                darkText: 'dark:text-yellow-400',
+                ringColor: 'bg-yellow-500',
+                label: 'Im Dienst'
+            };
+        case 'offduty':
+            return {
+                bg: 'bg-gray-100',
+                text: 'text-gray-800',
+                darkBg: 'dark:bg-gray-700',
+                darkText: 'dark:text-gray-300',
+                ringColor: 'bg-gray-500',
+                label: 'Außer Dienst'
+            };
+        default:
+            return {
+                bg: 'bg-gray-100',
+                text: 'text-gray-800',
+                darkBg: 'dark:bg-gray-700',
+                darkText: 'dark:text-gray-300',
+                ringColor: 'bg-gray-500',
+                label: 'Unbekannt'
+            };
+    }
+}
+
 // Funktion zum Laden der Wartungsdaten
 function loadMaintenanceData() {
+    // API für Wartungsdaten abrufen
     fetch('/api/maintenance')
         .then(response => {
             if (!response.ok) {
@@ -236,32 +282,41 @@ function loadMaintenanceData() {
             renderUpcomingMaintenance(maintenanceEntries);
         })
         .catch(error => {
-            console.error('Fehler:', error);
-            // Fehler beim Laden der Wartungsdaten werden ignoriert
+            console.error('Fehler beim Laden der Wartungsdaten:', error);
+            // Hier könnte eine Fehlermeldung angezeigt werden
         });
 }
 
 // Funktion zum Rendern der anstehenden Wartungen
 function renderUpcomingMaintenance(maintenanceEntries) {
-    const container = document.querySelector('.anstehende-wartungen');
+    // Container für anstehende Wartungen im DOM suchen
+    const container = document.querySelector('.anstehende-wartungen ul') || document.querySelector('.anstehende-wartungen');
     if (!container) return;
 
-    // Sortiere nach Datum (aufsteigend)
+    container.innerHTML = '';
+
+    // Aktuelle Zeit für Vergleich der Wartungsdaten
+    const now = new Date();
+
+    // Wartungseinträge filtern und sortieren
     const upcomingMaintenance = maintenanceEntries
-        .filter(entry => new Date(entry.date) > new Date())
+        .filter(entry => {
+            const maintenanceDate = new Date(entry.date);
+            return maintenanceDate > now;
+        })
         .sort((a, b) => new Date(a.date) - new Date(b.date))
         .slice(0, 3); // Nur die nächsten 3 anzeigen
 
     if (upcomingMaintenance.length === 0) {
-        container.innerHTML = '<div class="py-3 text-center text-gray-500">Keine anstehenden Wartungen.</div>';
+        container.innerHTML = '<li class="py-3 text-center text-gray-500 dark:text-gray-400">Keine anstehenden Wartungen.</li>';
         return;
     }
-
-    container.innerHTML = '';
 
     upcomingMaintenance.forEach(entry => {
         const date = new Date(entry.date);
         const formattedDate = date.toLocaleDateString('de-DE');
+        const daysUntil = Math.ceil((date - now) / (1000 * 60 * 60 * 24));
+        const daysText = daysUntil === 1 ? "1 Tag" : `${daysUntil} Tagen`;
 
         const maintenanceItem = document.createElement('li');
         maintenanceItem.className = 'py-3';
@@ -269,7 +324,7 @@ function renderUpcomingMaintenance(maintenanceEntries) {
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm font-medium text-gray-900 dark:text-white">${entry.vehicleName || 'Fahrzeug'}</p>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">${getMaintenanceTypeText(entry.type)}</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">${getMaintenanceTypeText(entry.type)} in ${daysText}</p>
                 </div>
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">
                     ${formattedDate}
@@ -310,39 +365,41 @@ function loadUsageStatistics() {
             renderRecentActivities(usageEntries);
         })
         .catch(error => {
-            console.error('Fehler:', error);
-            // Fehler beim Laden der Nutzungsdaten werden ignoriert
+            console.error('Fehler beim Laden der Nutzungsdaten:', error);
+            // Hier könnte eine Fehlermeldung angezeigt werden
         });
 }
 
 // Funktion zum Rendern der letzten Aktivitäten
 function renderRecentActivities(usageEntries) {
-    const container = document.querySelector('.letzte-aktivitaeten');
+    // Container für die letzten Aktivitäten im DOM suchen
+    const container = document.querySelector('.letzte-aktivitaeten ul') || document.querySelector('.letzte-aktivitaeten');
     if (!container) return;
 
-    // Sortiere nach Datum (absteigend)
+    container.innerHTML = '';
+
+    // Nutzungseinträge nach Startdatum sortieren (neueste zuerst)
     const recentActivities = usageEntries
         .sort((a, b) => new Date(b.startDate) - new Date(a.startDate))
         .slice(0, 3); // Nur die letzten 3 anzeigen
 
     if (recentActivities.length === 0) {
-        container.innerHTML = '<div class="py-3 text-center text-gray-500">Keine Aktivitäten gefunden.</div>';
+        container.innerHTML = '<li class="py-3 text-center text-gray-500 dark:text-gray-400">Keine Aktivitäten gefunden.</li>';
         return;
     }
-
-    container.innerHTML = '';
 
     recentActivities.forEach((entry, index) => {
         const date = new Date(entry.startDate);
         const formattedDate = formatDateRelative(date);
+        const isLast = index === recentActivities.length - 1;
 
         const activityItem = document.createElement('li');
         activityItem.innerHTML = `
             <div class="relative pb-8">
-                ${index < recentActivities.length - 1 ? '<span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200 dark:bg-gray-700" aria-hidden="true"></span>' : ''}
+                ${isLast ? '' : '<span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200 dark:bg-gray-700" aria-hidden="true"></span>'}
                 <div class="relative flex space-x-3">
                     <div>
-                        <span class="h-8 w-8 rounded-full ${entry.status === 'active' ? 'bg-blue-500' : entry.status === 'completed' ? 'bg-green-500' : 'bg-red-500'} flex items-center justify-center ring-8 ring-white dark:ring-gray-800">
+                        <span class="h-8 w-8 rounded-full ${getActivityColor(entry.status)} flex items-center justify-center ring-8 ring-white dark:ring-gray-800">
                             <svg class="h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                 ${getActivityIcon(entry.status)}
                             </svg>
@@ -351,7 +408,7 @@ function renderRecentActivities(usageEntries) {
                     <div class="min-w-0 flex-1">
                         <div>
                             <div class="text-sm text-gray-500 dark:text-gray-400">
-                                ${entry.driverName || 'Fahrer'} hat die Nutzung von ${entry.vehicleName || 'Fahrzeug'} ${getActivityAction(entry.status)}
+                                <a href="#" class="font-medium text-gray-900 dark:text-white">${entry.driverName || 'Fahrer'}</a> hat die Nutzung von <a href="#" class="font-medium text-gray-900 dark:text-white">${entry.vehicleName || 'Fahrzeug'}</a> ${getActivityAction(entry.status)}
                             </div>
                             <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">${formattedDate}</p>
                         </div>
@@ -374,6 +431,20 @@ function formatDateRelative(date) {
         return `Gestern ${date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr`;
     } else {
         return `${date.toLocaleDateString('de-DE')} ${date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr`;
+    }
+}
+
+// Funktion zum Bestimmen der Farbe der Aktivität
+function getActivityColor(status) {
+    switch(status) {
+        case 'active':
+            return 'bg-blue-500';
+        case 'completed':
+            return 'bg-green-500';
+        case 'cancelled':
+            return 'bg-red-500';
+        default:
+            return 'bg-gray-500';
     }
 }
 
@@ -408,7 +479,7 @@ function getActivityAction(status) {
 // Funktion zum Erstellen des Aktivitätsdiagramms
 function createActivityChart() {
     const ctx = document.getElementById('fleetActivityChart');
-    if (!ctx || !window.Chart) return;
+    if (!ctx || typeof Chart === 'undefined') return;
 
     // Beispieldaten der letzten 7 Tage
     const today = new Date();
@@ -418,8 +489,7 @@ function createActivityChart() {
         return date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
     });
 
-    // Zufällige Daten für das Diagramm generieren
-    // In einer echten Anwendung würden diese Daten von der API kommen
+    // Simulierte Daten für das Diagramm
     const kilometersData = Array(7).fill().map(() => Math.floor(Math.random() * 200) + 50);
     const vehiclesData = Array(7).fill().map(() => Math.floor(Math.random() * 5) + 1);
 
@@ -428,6 +498,7 @@ function createActivityChart() {
     const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
     const textColor = isDarkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)';
 
+    // Chart-Konfiguration und Erstellung
     const chart = new Chart(ctx, {
         type: 'line',
         data: {
@@ -516,7 +587,7 @@ function createActivityChart() {
         }
     });
 
-    // Chart-Instanz speichern, um sie später aktualisieren zu können
+    // Chart-Instanz global speichern für spätere Aktualisierungen
     window.fleetActivityChart = chart;
 }
 

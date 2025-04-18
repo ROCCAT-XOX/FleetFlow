@@ -5,6 +5,33 @@
             <h3 class="text-lg leading-6 font-medium text-gray-900">Fahrzeugstatistiken</h3>
         </div>
         <div class="px-4 py-5 sm:p-6">
+            <!-- Kraftstoffverbrauch-Statistiken (NEU) -->
+            <div class="mb-6">
+                <div class="bg-white overflow-hidden shadow rounded-lg border border-gray-200">
+                    <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+                        <h3 class="text-base font-medium text-gray-900">Kraftstoffverbrauch und -kosten</h3>
+                    </div>
+                    <div class="px-4 py-3 sm:px-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <div class="text-sm font-medium text-gray-500">Durchschnittsverbrauch</div>
+                                <div class="mt-1 text-3xl font-semibold text-gray-900" id="stats-avg-consumption">--</div>
+                                <div class="text-sm text-gray-500" id="stats-consumption-unit">L/100km</div>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <div class="text-sm font-medium text-gray-500">Gesamtkosten (Kraftstoff)</div>
+                                <div class="mt-1 text-3xl font-semibold text-gray-900" id="stats-total-fuel-costs">--</div>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <div class="text-sm font-medium text-gray-500">Kosten pro Kilometer</div>
+                                <div class="mt-1 text-3xl font-semibold text-gray-900" id="stats-cost-per-km">--</div>
+                            </div>
+                        </div>
+                        <div class="h-72" id="stats-fuel-costs-chart"></div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Kosten der letzten 12 Monate - Volle Breite -->
             <div class="mb-6">
                 <div class="bg-white overflow-hidden shadow rounded-lg border border-gray-200">
@@ -17,6 +44,7 @@
                 </div>
             </div>
 
+            <!-- Rest des bestehenden Codes bleibt unverändert -->
             <!-- Pie Charts nebeneinander in einer Zeile -->
             <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <!-- Nutzung nach Mitarbeitern -->
