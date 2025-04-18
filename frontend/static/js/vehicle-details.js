@@ -188,6 +188,54 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     /**
+     * Verbesserte Funktion zum Formatieren des Datums für die API
+     */
+    function formatDateForAPI(dateString) {
+        if (!dateString || dateString === '') return null;
+
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) {
+                console.warn('Ungültiges Datum für API:', dateString);
+                return null;
+            }
+            return date.toISOString();
+        } catch (error) {
+            console.error('Fehler beim Formatieren des Datums für API:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Debug Function for every API
+     */
+    // Hilfsfunktion zum Debuggen von API-Anfragen
+    function debugApiRequest(url, method, data) {
+        console.group(`API Request: ${method} ${url}`);
+        console.log('Request Data:', data);
+
+        // Datumsfelder gesondert anzeigen für einfachere Fehlersuche
+        if (data) {
+            const dateFields = {};
+            Object.keys(data).forEach(key => {
+                if (key.includes('Date') || key.includes('date') || key.includes('Expiry') || key.includes('expiry')) {
+                    dateFields[key] = data[key];
+                }
+            });
+
+            if (Object.keys(dateFields).length > 0) {
+                console.log('Date Fields:', dateFields);
+            }
+        }
+
+        console.groupEnd();
+    }
+
+// Diese Funktion vor jedem fetch-Aufruf einbinden, z.B.:
+// debugApiRequest(apiUrl, method, apiData);
+// fetch(apiUrl, { method, ... })
+
+    /**
      * Update the vehicle details display
      */
     function updateVehicleDisplay(vehicle) {
@@ -549,9 +597,17 @@ document.addEventListener('DOMContentLoaded', function() {
     function handleMaintenanceSubmit(event) {
         event.preventDefault();
 
+        // Verhindere doppelte Ausführung
+        if (event.submitting) return;
+        event.submitting = true;
+
         const form = event.target;
         const formData = new FormData(form);
         const maintenanceData = {};
+
+        // Deaktiviere den Submit-Button
+        const submitButton = form.querySelector('button[type="submit"]');
+        if (submitButton) submitButton.disabled = true;
 
         // Convert form data to object
         for (let [key, value] of formData.entries()) {
@@ -586,12 +642,22 @@ document.addEventListener('DOMContentLoaded', function() {
             body: JSON.stringify(apiData)
         })
             .then(response => {
-                if (!response.ok) throw new Error('Error saving maintenance entry');
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error('Fehler beim Speichern: ' + text);
+                    });
+                }
                 return response.json();
             })
             .then(data => {
                 closeMaintenanceModal();
                 loadMaintenanceEntries(); // Refresh maintenance list
+
+                // Update vehicle mileage if necessary
+                if (apiData.mileage > (currentVehicle?.mileage || 0)) {
+                    updateVehicleMileage(apiData.mileage);
+                }
+
                 showNotification(
                     isEdit ? 'Wartungseintrag erfolgreich aktualisiert' : 'Wartungseintrag erfolgreich erstellt',
                     'success'
@@ -600,6 +666,11 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => {
                 console.error('Error:', error);
                 showNotification('Fehler beim Speichern: ' + error.message, 'error');
+            })
+            .finally(() => {
+                // Submit-Button reaktivieren und Flag zurücksetzen
+                if (submitButton) submitButton.disabled = false;
+                event.submitting = false;
             });
     }
 
@@ -819,9 +890,17 @@ document.addEventListener('DOMContentLoaded', function() {
     function handleUsageSubmit(event) {
         event.preventDefault();
 
+        // Verhindere doppelte Ausführung
+        if (event.submitting) return;
+        event.submitting = true;
+
         const form = event.target;
         const formData = new FormData(form);
         const usageData = {};
+
+        // Deaktiviere den Submit-Button
+        const submitButton = form.querySelector('button[type="submit"]');
+        if (submitButton) submitButton.disabled = true;
 
         // Convert form data to object
         for (let [key, value] of formData.entries()) {
@@ -832,25 +911,58 @@ document.addEventListener('DOMContentLoaded', function() {
         const usageId = usageData['usage-id'];
         const isEdit = !!usageId;
 
-        // Combine date and time
+        // Combine date and time - mit verbesserter Fehlerbehebung
         const startDate = combineDateTime(usageData['start-date'], usageData['start-time']);
         const endDate = combineDateTime(usageData['end-date'], usageData['end-time']);
+
+        // Validierung der Eingaben
+        if (!startDate) {
+            showNotification('Bitte geben Sie ein gültiges Startdatum ein', 'error');
+            if (submitButton) submitButton.disabled = false;
+            event.submitting = false;
+            return;
+        }
+
+        if (usageData['end-date'] && !endDate) {
+            showNotification('Bitte geben Sie ein gültiges Enddatum ein', 'error');
+            if (submitButton) submitButton.disabled = false;
+            event.submitting = false;
+            return;
+        }
+
+        // Prüfen, ob Startdatum vor Enddatum liegt
+        if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
+            showNotification('Das Startdatum darf nicht nach dem Enddatum liegen', 'error');
+            if (submitButton) submitButton.disabled = false;
+            event.submitting = false;
+            return;
+        }
 
         // Prepare API request
         const apiUrl = isEdit ? `/api/usage/${usageId}` : '/api/usage';
         const method = isEdit ? 'PUT' : 'POST';
 
-        // Convert to API format
+        // Convert to API format - mit zusätzlichen Validierungen
         const apiData = {
             vehicleId: vehicleId,
-            driverId: usageData.driver,
+            driverId: usageData.driver || null,
             startDate: startDate,
             endDate: endDate || null,
             startMileage: parseInt(usageData['start-mileage']) || 0,
             endMileage: parseInt(usageData['end-mileage']) || 0,
-            project: usageData.project,
-            notes: usageData['usage-notes']
+            project: usageData.project || '',
+            notes: usageData['usage-notes'] || ''
         };
+
+        // Zusätzliche Validierung der Kilometerstände
+        if (apiData.startMileage > 0 && apiData.endMileage > 0 && apiData.endMileage < apiData.startMileage) {
+            showNotification('Der End-Kilometerstand darf nicht kleiner als der Start-Kilometerstand sein', 'error');
+            if (submitButton) submitButton.disabled = false;
+            event.submitting = false;
+            return;
+        }
+
+        console.log('Sending usage data to API:', apiData);
 
         // Send API request
         fetch(apiUrl, {
@@ -861,13 +973,31 @@ document.addEventListener('DOMContentLoaded', function() {
             body: JSON.stringify(apiData)
         })
             .then(response => {
-                if (!response.ok) throw new Error('Fehler beim Speichern der Nutzung');
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        try {
+                            const error = JSON.parse(text);
+                            throw new Error('Fehler beim Speichern der Nutzung: ' + JSON.stringify(error));
+                        } catch (e) {
+                            if (e instanceof SyntaxError) {
+                                throw new Error('Fehler beim Speichern der Nutzung: ' + text);
+                            }
+                            throw e;
+                        }
+                    });
+                }
                 return response.json();
             })
             .then(data => {
                 closeUsageModal();
-                loadUsageHistory(); // Refresh
-                loadVehicleData(); // Refresh vehicle data (for current usage)
+
+                // Aktualisiere Fahrzeugdaten, wenn Nutzungseintrag erfolgreich war
+                loadUsageHistory();
+
+                // Wenn Kilometerstand geändert wurde und höher ist als aktuell
+                if (apiData.endMileage > 0 && apiData.endMileage > (currentVehicle?.mileage || 0)) {
+                    updateVehicleMileage(apiData.endMileage);
+                }
 
                 showNotification(
                     isEdit ? 'Nutzungseintrag erfolgreich aktualisiert' : 'Nutzungseintrag erfolgreich erstellt',
@@ -877,6 +1007,11 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => {
                 console.error('Error:', error);
                 showNotification('Fehler beim Speichern: ' + error.message, 'error');
+            })
+            .finally(() => {
+                // Submit-Button reaktivieren und Flag zurücksetzen
+                if (submitButton) submitButton.disabled = false;
+                event.submitting = false;
             });
     }
 
@@ -967,9 +1102,17 @@ document.addEventListener('DOMContentLoaded', function() {
     function handleCurrentUsageSubmit(event) {
         event.preventDefault();
 
+        // Verhindere doppelte Ausführung
+        if (event.submitting) return;
+        event.submitting = true;
+
         const form = event.target;
         const formData = new FormData(form);
         const usageData = {};
+
+        // Deaktiviere den Submit-Button
+        const submitButton = form.querySelector('button[type="submit"]');
+        if (submitButton) submitButton.disabled = true;
 
         // Convert form data to object
         for (let [key, value] of formData.entries()) {
@@ -1000,26 +1143,8 @@ document.addEventListener('DOMContentLoaded', function() {
             notes: usageData['current-usage-notes']
         };
 
-        // If creating new usage, update vehicle status
-        if (!isEdit) {
-            // Update vehicle status to "in use"
-            fetch(`/api/vehicles/${vehicleId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    ...currentVehicle,
-                    status: 'inuse',
-                    currentDriverId: usageData['current-driver']
-                })
-            }).catch(error => {
-                console.error('Error updating vehicle status:', error);
-            });
-        }
-
-        // Send API request for usage
-        fetch(apiUrl, {
+        // Führe die Nutzungsaktualisierung durch
+        const usagePromise = fetch(apiUrl, {
             method: method,
             headers: {
                 'Content-Type': 'application/json'
@@ -1027,12 +1152,49 @@ document.addEventListener('DOMContentLoaded', function() {
             body: JSON.stringify(apiData)
         })
             .then(response => {
-                if (!response.ok) throw new Error('Fehler beim Speichern der Nutzung');
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error('Fehler beim Speichern der Nutzung: ' + text);
+                    });
+                }
                 return response.json();
+            });
+
+        // Wenn es eine neue Nutzung ist, aktualisiere auch den Fahrzeugstatus
+        let vehiclePromise = Promise.resolve();
+
+        if (!isEdit) {
+            // Tiefe Kopie des Fahrzeugs erstellen
+            const vehicleUpdateData = currentVehicle ? JSON.parse(JSON.stringify(currentVehicle)) : {};
+
+            // Nur die relevanten Felder aktualisieren
+            vehicleUpdateData.status = 'inuse';
+            vehicleUpdateData.currentDriverId = usageData['current-driver'];
+
+            vehiclePromise = fetch(`/api/vehicles/${vehicleId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(vehicleUpdateData)
             })
-            .then(data => {
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => {
+                            throw new Error('Fehler beim Aktualisieren des Fahrzeugstatus: ' + text);
+                        });
+                    }
+                    return response.json();
+                });
+        }
+
+        // Warte auf beide Anfragen
+        Promise.all([usagePromise, vehiclePromise])
+            .then(results => {
                 closeCurrentUsageModal();
-                loadVehicleData(); // Refresh vehicle data and current usage
+
+                // Komplette Fahrzeugdaten neu laden, um Konsistenz zu gewährleisten
+                loadVehicleData();
 
                 showNotification(
                     isEdit ? 'Nutzung erfolgreich aktualisiert' : 'Nutzung erfolgreich gestartet',
@@ -1042,6 +1204,11 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => {
                 console.error('Error:', error);
                 showNotification('Fehler beim Speichern: ' + error.message, 'error');
+            })
+            .finally(() => {
+                // Submit-Button reaktivieren und Flag zurücksetzen
+                if (submitButton) submitButton.disabled = false;
+                event.submitting = false;
             });
     }
 
@@ -1160,82 +1327,63 @@ document.addEventListener('DOMContentLoaded', function() {
     /**
      * Handle the vehicle edit form submission
      */
-    // Verbesserte handleVehicleEditSubmit Funktion
     function handleVehicleEditSubmit(event) {
         event.preventDefault();
 
-        // Verhindere doppelte Ausführung
-        if (event.submitting) return;
-        event.submitting = true;
-
         const form = event.target;
         const formData = new FormData(form);
-        const vehicleData = {};
 
-        // Formulardaten sammeln
-        for (let [key, value] of formData.entries()) {
-            vehicleData[key] = value;
-        }
+        // Extrahiere nur die notwendigen Felder aus dem Formular
+        const licensePlate = formData.get('license_plate') || '';
+        const modelFull = formData.get('model') || '';
+        const year = formData.get('year') || '';
+        const color = formData.get('color') || '';
+        const vehicleId = formData.get('vehicle_id') || '';
+        const vin = formData.get('vin') || '';
+        const fuelType = formData.get('fuel_type') || '';
+        const mileage = formData.get('current_mileage') || '';
+        const notes = formData.get('vehicle_notes') || '';
 
         // Model und Brand aufteilen
-        let brandAndModel = vehicleData.model ? vehicleData.model.trim().split(' ') : ['', ''];
         let brand = '';
         let model = '';
-
-        if (brandAndModel.length >= 2) {
-            brand = brandAndModel[0];
-            model = brandAndModel.slice(1).join(' ');
-        } else {
-            brand = brandAndModel[0] || '';
-            model = '';
+        if (modelFull) {
+            const parts = modelFull.trim().split(' ');
+            if (parts.length > 0) {
+                brand = parts[0];
+                model = parts.slice(1).join(' ');
+            }
         }
 
-        // Deaktiviere den Submit-Button
+        // Deaktiviere den Submit-Button während des Speicherns
         const submitButton = form.querySelector('button[type="submit"]');
         if (submitButton) submitButton.disabled = true;
 
-        // Erstelle eine tiefe Kopie des aktuellen Fahrzeugs
-        const apiData = JSON.parse(JSON.stringify(currentVehicle || {}));
+        // Vorbereitete Daten für den API-Aufruf
+        const basicInfoData = {
+            licensePlate: licensePlate,
+            brand: brand,
+            model: model,
+            year: parseInt(year) || 0,
+            color: color,
+            vehicleId: vehicleId,
+            vin: vin,
+            fuelType: fuelType,
+            mileage: parseInt(mileage) || 0,
+            notes: notes
+        };
 
-        // Aktualisiere nur die Grunddaten
-        apiData.licensePlate = vehicleData.license_plate || apiData.licensePlate || '';
-        apiData.brand = brand || apiData.brand || '';
-        apiData.model = model || apiData.model || '';
-        apiData.year = parseInt(vehicleData.year) || apiData.year || null;
-        apiData.color = vehicleData.color || apiData.color || '';
-        apiData.vehicleId = vehicleData.vehicle_id || apiData.vehicleId || '';
-        apiData.vin = vehicleData.vin || apiData.vin || '';
-        apiData.fuelType = vehicleData.fuel_type || apiData.fuelType || '';
-        apiData.mileage = parseInt(vehicleData.current_mileage) || apiData.mileage || 0;
-        apiData.notes = vehicleData.vehicle_notes || apiData.notes || '';
-
-        // Stelle sicher, dass alle Versicherungsdaten und Datum-Felder explizit beibehalten werden
-        if (currentVehicle) {
-            apiData.insuranceCompany = currentVehicle.insuranceCompany;
-            apiData.insuranceNumber = currentVehicle.insuranceNumber;
-            apiData.insuranceType = currentVehicle.insuranceType;
-            apiData.registrationDate = currentVehicle.registrationDate;
-            apiData.registrationExpiry = currentVehicle.registrationExpiry;
-            apiData.nextInspectionDate = currentVehicle.nextInspectionDate;
-            apiData.insuranceExpiry = currentVehicle.insuranceExpiry;
-            apiData.insuranceCost = currentVehicle.insuranceCost;
-        }
-
-        console.log('Updating vehicle with basic data while preserving insurance data:', apiData);
-
-        // Update vehicle via API
-        fetch(`/api/vehicles/${vehicleId}`, {
+        // Wir verwenden die MongoDB ID für den API-Aufruf
+        fetch(`/api/vehicles/${currentVehicle.id}/basic-info`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(apiData)
+            body: JSON.stringify(basicInfoData)
         })
             .then(response => {
                 if (!response.ok) {
-                    return response.text().then(text => {
-                        throw new Error('Fehler beim Speichern des Fahrzeugs: ' + text);
-                    });
+                    throw new Error('Fehler beim Aktualisieren der Fahrzeugdaten');
                 }
                 return response.json();
             })
@@ -1243,24 +1391,52 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Modal schließen
                 closeVehicleEditModal();
 
-                // Lokale Daten aktualisieren (nur wenn die Antwort gültig ist)
+                // Lokale Daten aktualisieren
                 if (data && data.vehicle) {
                     currentVehicle = data.vehicle;
-                    // Nur die relevante Anzeige aktualisieren
                     updateVehicleDisplay(data.vehicle);
                 }
 
-                // Erfolgsbenachrichtigung
+                // Erfolgsmeldung anzeigen
                 showNotification('Fahrzeug erfolgreich aktualisiert', 'success');
             })
             .catch(error => {
                 console.error('Error:', error);
-                showNotification('Fehler beim Speichern: ' + error.message, 'error');
+
+                // Fallback zum traditionellen Update
+                console.log("Versuche traditionelles Update als Fallback...");
+
+                return fetch(`/api/vehicles/${currentVehicle.id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(basicInfoData)
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error("Auch traditionelles Update fehlgeschlagen");
+                        }
+                        closeVehicleEditModal();
+                        showNotification('Basis-Fahrzeugdaten wurden aktualisiert', 'success');
+
+                        // Fahrzeug neu laden
+                        return fetch(`/api/vehicles/${currentVehicle.id}`);
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data && data.vehicle) {
+                            currentVehicle = data.vehicle;
+                            updateVehicleDisplay(data.vehicle);
+                        }
+                    })
+                    .catch(finalError => {
+                        showNotification('Fehler beim Speichern: ' + finalError.message, 'error');
+                    });
             })
             .finally(() => {
-                // Submit-Button reaktivieren und Flag zurücksetzen
+                // Submit-Button wieder aktivieren
                 if (submitButton) submitButton.disabled = false;
-                event.submitting = false;
             });
     }
 
@@ -1411,74 +1587,128 @@ document.addEventListener('DOMContentLoaded', function() {
      * Update fuel costs statistics
      */
     function updateFuelCostsStatistics(entries) {
-        if (!entries || entries.length === 0) return;
+        if (!entries || entries.length === 0) {
+            // Statistik-Elemente mit Standardwerten füllen
+            const elements = [
+                'avg-consumption', 'stats-avg-consumption',
+                'total-fuel-costs', 'stats-total-fuel-costs',
+                'cost-per-km', 'stats-cost-per-km'
+            ];
 
-        // Elements for statistics
-        const avgConsumptionElement = document.getElementById('avg-consumption');
-        const consumptionUnitElement = document.getElementById('consumption-unit');
-        const totalFuelCostsElement = document.getElementById('total-fuel-costs');
-        const costPerKmElement = document.getElementById('cost-per-km');
+            elements.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) element.textContent = '--';
+            });
 
-        // Sort by date (oldest first for calculations)
-        entries.sort((a, b) => new Date(a.date) - new Date(b.date));
+            return;
+        }
 
-        // Calculate statistics
-        let totalCost = 0;
-        let totalFuel = 0;
-        let totalDistance = 0;
+        // Elemente für Statistik finden (sowohl im Fuel-Costs als auch im Statistics Tab)
+        const avgConsumptionElements = [
+            document.getElementById('avg-consumption'),
+            document.getElementById('stats-avg-consumption')
+        ];
 
-        // Get primary fuel type
-        const fuelTypes = entries.map(entry => entry.fuelType);
+        const consumptionUnitElements = [
+            document.getElementById('consumption-unit'),
+            document.getElementById('stats-consumption-unit')
+        ];
+
+        const totalFuelCostsElements = [
+            document.getElementById('total-fuel-costs'),
+            document.getElementById('stats-total-fuel-costs')
+        ];
+
+        const costPerKmElements = [
+            document.getElementById('cost-per-km'),
+            document.getElementById('stats-cost-per-km')
+        ];
+
+        // Kopie des Array erstellen, um das Original nicht zu verändern
+        const entriesCopy = JSON.parse(JSON.stringify(entries));
+
+        // Sortiere nach Datum (ältestes zuerst für Berechnungen)
+        entriesCopy.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        // Finde den primären Kraftstofftyp
+        const fuelTypes = entriesCopy.map(entry => entry.fuelType);
         const primaryFuelType = getMostFrequent(fuelTypes) || 'Diesel';
 
-        // Filter entries by primary fuel type
-        const filteredEntries = entries.filter(entry => entry.fuelType === primaryFuelType);
+        // Filtere Einträge nach primärem Kraftstofftyp
+        const filteredEntries = entriesCopy.filter(entry => entry.fuelType === primaryFuelType);
 
-        // Calculate consumption only if at least 2 entries for accurate mileage difference
+        // Berechnungen nur durchführen, wenn mindestens 2 Einträge vorhanden sind
         if (filteredEntries.length > 1) {
-            // Get first and last entry by mileage
-            const firstEntry = filteredEntries.reduce((min, entry) =>
-                entry.mileage < min.mileage ? entry : min, filteredEntries[0]);
-            const lastEntry = filteredEntries.reduce((max, entry) =>
-                entry.mileage > max.mileage ? entry : max, filteredEntries[0]);
+            // Sortiere nach Kilometerstand
+            filteredEntries.sort((a, b) => a.mileage - b.mileage);
 
-            totalDistance = lastEntry.mileage - firstEntry.mileage;
+            // Ersten und letzten Eintrag nach Kilometerstand nehmen
+            const firstEntry = filteredEntries[0];
+            const lastEntry = filteredEntries[filteredEntries.length - 1];
 
-            // Only count fuel between these mileage points
+            // Berechne Distanz
+            const totalDistance = lastEntry.mileage - firstEntry.mileage;
+
+            if (totalDistance <= 0) {
+                // Keine gültige Distanz für Berechnung
+                updateStatElements('--');
+                return;
+            }
+
+            // Kraftstoff und Kosten zwischen diesen Punkten berechnen
+            let totalFuel = 0;
+            let totalCost = 0;
+
             filteredEntries.forEach(entry => {
                 if (entry.mileage > firstEntry.mileage && entry.mileage <= lastEntry.mileage) {
-                    totalFuel += entry.amount || 0;
-                    totalCost += entry.totalCost || 0;
+                    totalFuel += parseFloat(entry.amount) || 0;
+                    totalCost += parseFloat(entry.totalCost) || 0;
                 }
             });
 
-            // Calculate consumption per 100km
-            const consumptionPer100km = totalDistance > 0 ? (totalFuel * 100) / totalDistance : 0;
+            // Berechne Verbrauch pro 100km
+            const consumptionPer100km = (totalFuel * 100) / totalDistance;
 
-            // Calculate cost per km
-            const costPerKm = totalDistance > 0 ? totalCost / totalDistance : 0;
+            // Berechne Kosten pro km
+            const costPerKm = totalCost / totalDistance;
 
-            // Update UI
-            if (avgConsumptionElement) {
-                avgConsumptionElement.textContent = formatNumber(consumptionPer100km, 1);
-            }
+            // Update UI Elemente
+            const unitText = primaryFuelType === 'Elektro' ? 'kWh/100km' : 'L/100km';
 
-            if (consumptionUnitElement) {
-                consumptionUnitElement.textContent = primaryFuelType === 'Elektro' ? 'kWh/100km' : 'L/100km';
-            }
+            // Update alle gefundenen Elemente
+            avgConsumptionElements.forEach(element => {
+                if (element) element.textContent = formatNumber(consumptionPer100km, 1);
+            });
 
-            if (totalFuelCostsElement) {
-                totalFuelCostsElement.textContent = formatCurrency(totalCost);
-            }
+            consumptionUnitElements.forEach(element => {
+                if (element) element.textContent = unitText;
+            });
 
-            if (costPerKmElement) {
-                costPerKmElement.textContent = formatCurrency(costPerKm, 3) + '/km';
-            }
+            totalFuelCostsElements.forEach(element => {
+                if (element) element.textContent = formatCurrency(totalCost);
+            });
+
+            costPerKmElements.forEach(element => {
+                if (element) element.textContent = formatCurrency(costPerKm, 3) + '/km';
+            });
         } else {
-            // Not enough data
-            if (avgConsumptionElement) avgConsumptionElement.textContent = '--';
-            if (totalFuelCostsElement) totalFuelCostsElement.textContent = '--';
-            if (costPerKmElement) costPerKmElement.textContent = '--';
+            // Nicht genügend Daten
+            updateStatElements('--');
+        }
+
+        // Hilfsfunktion zum Aktualisieren aller Statistik-Elemente
+        function updateStatElements(value) {
+            avgConsumptionElements.forEach(element => {
+                if (element) element.textContent = value;
+            });
+
+            totalFuelCostsElements.forEach(element => {
+                if (element) element.textContent = value;
+            });
+
+            costPerKmElements.forEach(element => {
+                if (element) element.textContent = value;
+            });
         }
     }
 
@@ -1948,72 +2178,95 @@ document.addEventListener('DOMContentLoaded', function() {
     function handleRegistrationSubmit(event) {
         event.preventDefault();
 
+        // Verhindere doppelte Ausführung
+        if (event.submitting) return;
+        event.submitting = true;
+
         const form = event.target;
         const formData = new FormData(form);
         const registrationData = {};
+
+        // Deaktiviere den Submit-Button
+        const submitButton = form.querySelector('button[type="submit"]');
+        if (submitButton) submitButton.disabled = true;
 
         // Collect form data
         for (let [key, value] of formData.entries()) {
             registrationData[key] = value;
         }
 
-        const vehicleId = registrationData['vehicle-id'];
+        const vehicleId = registrationData['vehicle-id'] || currentVehicle?.id;
         if (!vehicleId) {
             showNotification('Fahrzeug-ID fehlt. Bitte die Seite neu laden.', 'error');
+            if (submitButton) submitButton.disabled = false;
+            event.submitting = false;
             return;
         }
 
-        // Get current vehicle data to retain existing state
-        fetch(`/api/vehicles/${vehicleId}`)
-            .then(response => response.json())
-            .then(data => {
-                const vehicle = data.vehicle;
+        // Tiefe Kopie erstellen, um Originaldaten nicht zu verändern
+        const updateData = currentVehicle ? JSON.parse(JSON.stringify(currentVehicle)) : {};
 
-                // Merge data
-                const updateData = {
-                    registrationDate: registrationData['registration-date'] || null,
-                    registrationExpiry: registrationData['registration-expiry'] || null,
-                    nextInspectionDate: registrationData['next-inspection'] || null,
-                    insuranceCompany: registrationData['insurance-company'] || '',
-                    insuranceNumber: registrationData['insurance-number'] || '',
-                    insuranceType: registrationData['insurance-type'] || 'Haftpflicht',
-                    insuranceExpiry: registrationData['insurance-expiry'] || null,
-                    insuranceCost: parseFloat(registrationData['insurance-cost']) || 0
-                };
+        // Daten für Update vorbereiten - mit korrekter Datumsformatierung
+        const formattedData = {
+            registrationDate: formatDateForAPI(registrationData['registration-date']),
+            registrationExpiry: formatDateForAPI(registrationData['registration-expiry']),
+            nextInspectionDate: formatDateForAPI(registrationData['next-inspection']),
+            insuranceCompany: registrationData['insurance-company'] || updateData.insuranceCompany || '',
+            insuranceNumber: registrationData['insurance-number'] || updateData.insuranceNumber || '',
+            insuranceType: registrationData['insurance-type'] || updateData.insuranceType || 'Haftpflicht',
+            insuranceExpiry: formatDateForAPI(registrationData['insurance-expiry']),
+            insuranceCost: parseFloat(registrationData['insurance-cost']) || updateData.insuranceCost || 0
+        };
 
-                // Update vehicle
-                return fetch(`/api/vehicles/${vehicleId}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        ...vehicle,
-                        ...updateData
-                    })
-                });
-            })
+        // Aktualisierte Daten ins Objekt übernehmen
+        Object.assign(updateData, formattedData);
+
+        console.log('Sending registration data to API:', updateData);
+
+        // Update vehicle
+        fetch(`/api/vehicles/${vehicleId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(updateData)
+        })
             .then(response => {
                 if (!response.ok) {
                     return response.text().then(text => {
-                        throw new Error(text);
+                        try {
+                            const error = JSON.parse(text);
+                            throw new Error('Fehler beim Speichern: ' + JSON.stringify(error));
+                        } catch (e) {
+                            if (e instanceof SyntaxError) {
+                                throw new Error('Fehler beim Speichern: ' + text);
+                            }
+                            throw e;
+                        }
                     });
                 }
                 return response.json();
             })
             .then(data => {
                 closeRegistrationModal();
-                showNotification('Zulassungs- und Versicherungsdaten erfolgreich aktualisiert', 'success');
 
                 // Update current vehicle data
-                currentVehicle = data.vehicle;
+                if (data && data.vehicle) {
+                    currentVehicle = data.vehicle;
+                    // Update display
+                    updateRegistrationDisplay(data.vehicle);
+                }
 
-                // Update display
-                updateRegistrationDisplay(data.vehicle);
+                showNotification('Zulassungs- und Versicherungsdaten erfolgreich aktualisiert', 'success');
             })
             .catch(error => {
                 console.error('Error saving data:', error);
                 showNotification('Fehler beim Speichern: ' + error.message, 'error');
+            })
+            .finally(() => {
+                // Submit-Button reaktivieren und Flag zurücksetzen
+                if (submitButton) submitButton.disabled = false;
+                event.submitting = false;
             });
     }
 
@@ -2025,15 +2278,41 @@ document.addEventListener('DOMContentLoaded', function() {
     function combineDateTime(dateStr, timeStr) {
         if (!dateStr) return null;
 
-        const date = new Date(dateStr);
+        try {
+            // Neues Date-Objekt mit dem angegebenen Datum erstellen
+            const date = new Date(dateStr);
 
-        if (timeStr) {
-            const [hours, minutes] = timeStr.split(':');
-            date.setHours(parseInt(hours) || 0);
-            date.setMinutes(parseInt(minutes) || 0);
+            // Überprüfen, ob Datum gültig ist
+            if (isNaN(date.getTime())) {
+                console.warn('Ungültiges Datum:', dateStr);
+                return null;
+            }
+
+            // Falls Zeit angegeben, diese zum Datum hinzufügen
+            if (timeStr) {
+                const [hours, minutes] = timeStr.split(':').map(num => parseInt(num, 10));
+
+                // Überprüfen, ob Zeit gültig ist
+                if (!isNaN(hours) && !isNaN(minutes)) {
+                    date.setHours(hours);
+                    date.setMinutes(minutes);
+                    date.setSeconds(0);
+                    date.setMilliseconds(0);
+                }
+            } else {
+                // Standardzeit setzen (00:00:00)
+                date.setHours(0);
+                date.setMinutes(0);
+                date.setSeconds(0);
+                date.setMilliseconds(0);
+            }
+
+            // ISO-String zurückgeben
+            return date.toISOString();
+        } catch (error) {
+            console.error('Fehler beim Kombinieren von Datum und Zeit:', error);
+            return null;
         }
-
-        return date.toISOString();
     }
 
     /**
