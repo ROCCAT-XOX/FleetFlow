@@ -1160,43 +1160,68 @@ document.addEventListener('DOMContentLoaded', function() {
     /**
      * Handle the vehicle edit form submission
      */
+    // Verbesserte handleVehicleEditSubmit Funktion
     function handleVehicleEditSubmit(event) {
         event.preventDefault();
+
+        // Verhindere doppelte Ausführung
+        if (event.submitting) return;
+        event.submitting = true;
 
         const form = event.target;
         const formData = new FormData(form);
         const vehicleData = {};
 
-        // Convert form data to object
+        // Formulardaten sammeln
         for (let [key, value] of formData.entries()) {
             vehicleData[key] = value;
         }
 
-        // Prepare vehicle data for API
-        const modelParts = vehicleData.model.split(' ');
-        const brand = modelParts.shift(); // First part is brand
-        const model = modelParts.join(' '); // Rest is model
+        // Model und Brand aufteilen
+        let brandAndModel = vehicleData.model ? vehicleData.model.trim().split(' ') : ['', ''];
+        let brand = '';
+        let model = '';
 
-        // API data structure
-        const apiData = {
-            ...currentVehicle, // Keep existing data
-            licensePlate: vehicleData.license_plate,
-            brand: brand,
-            model: model,
-            year: parseInt(vehicleData.year) || 0,
-            color: vehicleData.color,
-            vehicleId: vehicleData.vehicle_id,
-            vin: vehicleData.vin,
-            fuelType: vehicleData.fuel_type,
-            mileage: parseInt(vehicleData.current_mileage) || 0,
-            registrationDate: vehicleData.registration_date,
-            nextInspectionDate: vehicleData.next_inspection,
-            insuranceCompany: vehicleData.insurance,
-            insuranceNumber: vehicleData.insurance_number,
-            insuranceType: vehicleData.insurance_type,
-            insuranceCost: parseFloat(vehicleData.insurance_cost) || 0,
-            notes: vehicleData.vehicle_notes
-        };
+        if (brandAndModel.length >= 2) {
+            brand = brandAndModel[0];
+            model = brandAndModel.slice(1).join(' ');
+        } else {
+            brand = brandAndModel[0] || '';
+            model = '';
+        }
+
+        // Deaktiviere den Submit-Button
+        const submitButton = form.querySelector('button[type="submit"]');
+        if (submitButton) submitButton.disabled = true;
+
+        // Erstelle eine tiefe Kopie des aktuellen Fahrzeugs
+        const apiData = JSON.parse(JSON.stringify(currentVehicle || {}));
+
+        // Aktualisiere nur die Grunddaten
+        apiData.licensePlate = vehicleData.license_plate || apiData.licensePlate || '';
+        apiData.brand = brand || apiData.brand || '';
+        apiData.model = model || apiData.model || '';
+        apiData.year = parseInt(vehicleData.year) || apiData.year || null;
+        apiData.color = vehicleData.color || apiData.color || '';
+        apiData.vehicleId = vehicleData.vehicle_id || apiData.vehicleId || '';
+        apiData.vin = vehicleData.vin || apiData.vin || '';
+        apiData.fuelType = vehicleData.fuel_type || apiData.fuelType || '';
+        apiData.mileage = parseInt(vehicleData.current_mileage) || apiData.mileage || 0;
+        apiData.notes = vehicleData.vehicle_notes || apiData.notes || '';
+
+        // Stelle sicher, dass alle Versicherungsdaten und Datum-Felder explizit beibehalten werden
+        if (currentVehicle) {
+            apiData.insuranceCompany = currentVehicle.insuranceCompany;
+            apiData.insuranceNumber = currentVehicle.insuranceNumber;
+            apiData.insuranceType = currentVehicle.insuranceType;
+            apiData.registrationDate = currentVehicle.registrationDate;
+            apiData.registrationExpiry = currentVehicle.registrationExpiry;
+            apiData.nextInspectionDate = currentVehicle.nextInspectionDate;
+            apiData.insuranceExpiry = currentVehicle.insuranceExpiry;
+            apiData.insuranceCost = currentVehicle.insuranceCost;
+        }
+
+        console.log('Updating vehicle with basic data while preserving insurance data:', apiData);
 
         // Update vehicle via API
         fetch(`/api/vehicles/${vehicleId}`, {
@@ -1207,17 +1232,35 @@ document.addEventListener('DOMContentLoaded', function() {
             body: JSON.stringify(apiData)
         })
             .then(response => {
-                if (!response.ok) throw new Error('Fehler beim Speichern des Fahrzeugs');
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error('Fehler beim Speichern des Fahrzeugs: ' + text);
+                    });
+                }
                 return response.json();
             })
             .then(data => {
+                // Modal schließen
                 closeVehicleEditModal();
-                loadVehicleData(); // Refresh vehicle data
+
+                // Lokale Daten aktualisieren (nur wenn die Antwort gültig ist)
+                if (data && data.vehicle) {
+                    currentVehicle = data.vehicle;
+                    // Nur die relevante Anzeige aktualisieren
+                    updateVehicleDisplay(data.vehicle);
+                }
+
+                // Erfolgsbenachrichtigung
                 showNotification('Fahrzeug erfolgreich aktualisiert', 'success');
             })
             .catch(error => {
                 console.error('Error:', error);
                 showNotification('Fehler beim Speichern: ' + error.message, 'error');
+            })
+            .finally(() => {
+                // Submit-Button reaktivieren und Flag zurücksetzen
+                if (submitButton) submitButton.disabled = false;
+                event.submitting = false;
             });
     }
 
