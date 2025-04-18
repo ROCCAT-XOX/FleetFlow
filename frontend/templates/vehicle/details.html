@@ -112,11 +112,50 @@
 <!-- Modals -->
 {{ template "vehicle/modals" . }}
 
+<!-- Externe Bibliotheken -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-<script src="/static/js/vehicle-details.js"></script>
-<script src="/static/js/vehicle-statistics.js"></script>
 
+<!-- Eigene JavaScript Module -->
+<script type="module">
+    // Importiere die Datenlader-Funktionen
+    import * as DataLoader from '/static/js/vehicle-data-loader.js';
+
+    // Importiere die Anzeige-Aktualisierungsfunktionen
+    import * as DisplayUpdater from '/static/js/vehicle-display-updater.js';
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialisiere die Tabs
+        DisplayUpdater.initializeTabs();
+
+        // Lade Fahrzeugdaten
+        DataLoader.loadVehicleData(function(vehicle) {
+            // Aktualisiere die UI mit den Fahrzeugdaten
+            DisplayUpdater.updateHeaderInfo(vehicle);
+            DisplayUpdater.updateVehicleDisplay(vehicle);
+
+            // Initialisiere den Zulassungs-Tab
+            DisplayUpdater.initRegistrationTab(vehicle);
+
+            // Wenn ein Fahrer zugewiesen ist, lade seine Daten
+            if (vehicle.currentDriverId && vehicle.currentDriverId !== '000000000000000000000000') {
+                DataLoader.loadCurrentDriverData(vehicle.currentDriverId,
+                    DisplayUpdater.updateCurrentUsageDisplay);
+            } else {
+                DisplayUpdater.updateCurrentUsageDisplay(null);
+            }
+
+            // Lade weitere Daten
+            DataLoader.loadMaintenanceEntries(DisplayUpdater.updateMaintenanceTable);
+            DataLoader.loadUsageHistory(DisplayUpdater.updateUsageTable);
+            DataLoader.loadFuelCostsData(function(fuelCosts) {
+                DisplayUpdater.updateFuelCostsTable(fuelCosts);
+                DisplayUpdater.updateFuelCostsStatistics(fuelCosts);
+                DisplayUpdater.createFuelCostChart(fuelCosts);
+            });
+        });
+    });
+</script>
 </body>
 </html>
 {{ end }}

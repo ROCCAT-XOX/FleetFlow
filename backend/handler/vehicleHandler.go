@@ -306,6 +306,65 @@ func (h *VehicleHandler) UpdateVehicle(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"vehicle": vehicle})
 }
 
+// UpdateBasicInfo behandelt die Anfrage, nur die Grunddaten eines Fahrzeugs zu aktualisieren
+func (h *VehicleHandler) UpdateBasicInfo(c *gin.Context) {
+	id := c.Param("id")
+
+	// Fahrzeug aus der Datenbank abrufen
+	vehicle, err := h.vehicleRepo.FindByID(id)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Fahrzeug nicht gefunden"})
+		return
+	}
+
+	var req struct {
+		LicensePlate string         `json:"licensePlate"`
+		Brand        string         `json:"brand"`
+		Model        string         `json:"model"`
+		Year         int            `json:"year"`
+		Color        string         `json:"color"`
+		VehicleID    string         `json:"vehicleId"`
+		VIN          string         `json:"vin"`
+		FuelType     model.FuelType `json:"fuelType"`
+		Mileage      int            `json:"mileage"`
+		Notes        string         `json:"notes"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Prüfen, ob ein anderes Fahrzeug mit dem gleichen Kennzeichen existiert
+	if req.LicensePlate != vehicle.LicensePlate {
+		existingVehicle, _ := h.vehicleRepo.FindByLicensePlate(req.LicensePlate)
+		if existingVehicle != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Ein anderes Fahrzeug mit diesem Kennzeichen existiert bereits"})
+			return
+		}
+	}
+
+	// NUR die Grunddaten aktualisieren, keine Datums- oder Versicherungsfelder
+	vehicle.LicensePlate = req.LicensePlate
+	vehicle.Brand = req.Brand
+	vehicle.Model = req.Model
+	vehicle.Year = req.Year
+	vehicle.Color = req.Color
+	vehicle.VehicleID = req.VehicleID
+	vehicle.VIN = req.VIN
+	vehicle.FuelType = req.FuelType
+	vehicle.Mileage = req.Mileage
+	//vehicle.Notes = req.Notes
+
+	// Fahrzeug in der Datenbank aktualisieren
+	if err := h.vehicleRepo.Update(vehicle); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Fehler beim Aktualisieren des Fahrzeugs"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"vehicle": vehicle})
+}
+
 // DeleteVehicle behandelt die Anfrage, ein Fahrzeug zu löschen
 func (h *VehicleHandler) DeleteVehicle(c *gin.Context) {
 	id := c.Param("id")
