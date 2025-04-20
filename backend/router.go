@@ -64,7 +64,7 @@ func setupAuthorizedRoutes(group *gin.RouterGroup) {
 
 	group.GET("/dashboard", func(c *gin.Context) {
 		user, _ := c.Get("user")
-		c.HTML(http.StatusOK, "home.html", gin.H{
+		c.HTML(http.StatusOK, "dashboard.html", gin.H{
 			"year": currentYear,
 			"user": user.(*model.User).FirstName + " " + user.(*model.User).LastName,
 		})
@@ -211,6 +211,33 @@ func setupAuthorizedRoutes(group *gin.RouterGroup) {
 			"year":  currentYear,
 		})
 	})
+
+	// Neue Routen für Aktivitäten
+	group.GET("/activities", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "activities.html", gin.H{
+			"title": "Aktivitätsübersicht",
+			"user":  c.MustGet("user"),
+			"year":  currentYear,
+		})
+	})
+
+	// Fahrzeugaktivitäten
+	group.GET("/vehicle/:id/activities", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "vehicle-activities.html", gin.H{
+			"title": "Fahrzeugaktivitäten",
+			"user":  c.MustGet("user"),
+			"year":  currentYear,
+		})
+	})
+
+	// Fahreraktivitäten
+	group.GET("/driver/:id/activities", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "driver-activities.html", gin.H{
+			"title": "Fahreraktivitäten",
+			"user":  c.MustGet("user"),
+			"year":  currentYear,
+		})
+	})
 }
 
 // setupAPIRoutes konfiguriert die API-Routen
@@ -223,6 +250,7 @@ func setupAPIRoutes(api *gin.RouterGroup) {
 	usageHandler := handler.NewVehicleUsageHandler()
 	projectHandler := handler.NewProjectHandler()
 	fuelCostHandler := handler.NewFuelCostHandler()
+	activityHandler := handler.NewActivityHandler() // Neu hinzugefügt
 
 	// Benutzer-API
 	users := api.Group("/users")
@@ -297,5 +325,13 @@ func setupAPIRoutes(api *gin.RouterGroup) {
 		fuelCosts.POST("", fuelCostHandler.CreateFuelCost)
 		fuelCosts.PUT("/:id", fuelCostHandler.UpdateFuelCost)
 		fuelCosts.DELETE("/:id", fuelCostHandler.DeleteFuelCost)
+	}
+
+	// Aktivitäts-API (neu)
+	activities := api.Group("/activities")
+	{
+		activities.GET("", activityHandler.GetActivities)
+		activities.GET("/vehicle/:vehicleId", activityHandler.GetVehicleActivities)
+		activities.GET("/driver/:driverId", activityHandler.GetDriverActivities)
 	}
 }

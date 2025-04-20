@@ -1,8 +1,10 @@
+// backend/handler/vehicleHandler.go
 package handler
 
 import (
 	"FleetDrive/backend/model"
 	"FleetDrive/backend/repository"
+	"FleetDrive/backend/service"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -10,20 +12,6 @@ import (
 	"net/http"
 	"time"
 )
-
-// VehicleHandler repräsentiert den Handler für Fahrzeug-Operationen
-type VehicleHandler struct {
-	vehicleRepo *repository.VehicleRepository
-	driverRepo  *repository.DriverRepository
-}
-
-// NewVehicleHandler erstellt einen neuen VehicleHandler
-func NewVehicleHandler() *VehicleHandler {
-	return &VehicleHandler{
-		vehicleRepo: repository.NewVehicleRepository(),
-		driverRepo:  repository.NewDriverRepository(),
-	}
-}
 
 // CreateVehicleRequest repräsentiert die Anfrage zum Erstellen eines Fahrzeugs
 type CreateVehicleRequest struct {
@@ -44,6 +32,22 @@ type CreateVehicleRequest struct {
 	InsuranceExpiry    string              `json:"insuranceExpiry"` // Neues Feld
 	NextInspectionDate string              `json:"nextInspectionDate"`
 	Status             model.VehicleStatus `json:"status"`
+}
+
+// VehicleHandler repräsentiert den Handler für Fahrzeug-Operationen
+type VehicleHandler struct {
+	vehicleRepo     *repository.VehicleRepository
+	driverRepo      *repository.DriverRepository
+	activityService *service.ActivityService
+}
+
+// NewVehicleHandler erstellt einen neuen VehicleHandler
+func NewVehicleHandler() *VehicleHandler {
+	return &VehicleHandler{
+		vehicleRepo:     repository.NewVehicleRepository(),
+		driverRepo:      repository.NewDriverRepository(),
+		activityService: service.NewActivityService(),
+	}
 }
 
 // GetVehicles behandelt die Anfrage, alle Fahrzeuge abzurufen
@@ -137,16 +141,33 @@ func (h *VehicleHandler) CreateVehicle(c *gin.Context) {
 		year := time.Now().Year()
 		randomPart := rand.Intn(90000) + 10000 // 5-stellige Zufallszahl
 		vehicleID = fmt.Sprintf("FD-%d-%05d", year, randomPart)
-
 	}
 
 	// Datum parsen, wenn vorhanden
-	var registrationDate, nextInspectionDate time.Time
+	var registrationDate, registrationExpiry, insuranceExpiry, nextInspectionDate time.Time
 	if req.RegistrationDate != "" {
 		var err error
 		registrationDate, err = time.Parse("2006-01-02", req.RegistrationDate)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Ungültiges Zulassungsdatum"})
+			return
+		}
+	}
+
+	if req.RegistrationExpiry != "" {
+		var err error
+		registrationExpiry, err = time.Parse("2006-01-02", req.RegistrationExpiry)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Ungültiges Ablaufdatum der Zulassung"})
+			return
+		}
+	}
+
+	if req.InsuranceExpiry != "" {
+		var err error
+		insuranceExpiry, err = time.Parse("2006-01-02", req.InsuranceExpiry)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Ungültiges Ablaufdatum der Versicherung"})
 			return
 		}
 	}
@@ -158,6 +179,12 @@ func (h *VehicleHandler) CreateVehicle(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Ungültiges HU/AU-Datum"})
 			return
 		}
+	}
+
+	// Status standardmäßig auf verfügbar setzen, wenn nicht angegeben
+	status := req.Status
+	if status == "" {
+		status = model.VehicleStatusAvailable
 	}
 
 	// Neues Fahrzeug erstellen
@@ -172,17 +199,43 @@ func (h *VehicleHandler) CreateVehicle(c *gin.Context) {
 		FuelType:           req.FuelType,
 		Mileage:            req.Mileage,
 		RegistrationDate:   registrationDate,
+		RegistrationExpiry: registrationExpiry,
 		InsuranceCompany:   req.InsuranceCompany,
 		InsuranceNumber:    req.InsuranceNumber,
 		InsuranceType:      req.InsuranceType,
+		InsuranceExpiry:    insuranceExpiry,
 		NextInspectionDate: nextInspectionDate,
-		Status:             req.Status,
+		Status:             status,
 	}
 
 	// Fahrzeug in der Datenbank speichern
 	if err := h.vehicleRepo.Create(vehicle); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Fehler beim Erstellen des Fahrzeugs"})
 		return
+	}
+
+	// Aktivität protokollieren mit dem ActivityService
+	userId, exists := c.Get("userId")
+	if exists {
+		userID, err := service.GetUserIDFromContext(userId)
+		if err == nil {
+			details := map[string]interface{}{
+				"brand":        vehicle.Brand,
+				"model":        vehicle.Model,
+				"licensePlate": vehicle.LicensePlate,
+				"year":         vehicle.Year,
+				"vehicleId":    vehicleID,
+			}
+			description := "Fahrzeug erstellt: " + vehicle.Brand + " " + vehicle.Model + " (" + vehicle.LicensePlate + ")"
+
+			h.activityService.LogVehicleActivity(
+				model.ActivityTypeVehicleCreated,
+				userID,
+				vehicle.ID,
+				description,
+				details,
+			)
+		}
 	}
 
 	c.JSON(http.StatusCreated, gin.H{"vehicle": vehicle})
@@ -214,35 +267,27 @@ func (h *VehicleHandler) UpdateVehicle(c *gin.Context) {
 		}
 	}
 
-	// Daten aktualisieren, aber nur wenn Werte vorhanden sind
-	if req.LicensePlate != "" {
-		vehicle.LicensePlate = req.LicensePlate
-	}
-	if req.Brand != "" {
-		vehicle.Brand = req.Brand
-	}
-	if req.Model != "" {
-		vehicle.Model = req.Model
-	}
-	if req.Year > 0 {
-		vehicle.Year = req.Year
-	}
-	if req.Color != "" {
-		vehicle.Color = req.Color
-	}
+	// Alte Werte speichern für die Aktivitätsprotokollierung
+	oldBrand := vehicle.Brand
+	oldModel := vehicle.Model
+	oldLicensePlate := vehicle.LicensePlate
+	oldColor := vehicle.Color
+	oldStatus := vehicle.Status
+	oldMileage := vehicle.Mileage
 
-	if req.VIN != "" {
-		vehicle.VIN = req.VIN
-	}
-	if req.FuelType != "" {
-		vehicle.FuelType = req.FuelType
-	}
-	if req.Mileage > 0 {
-		vehicle.Mileage = req.Mileage
-	}
-	if req.Status != "" {
-		vehicle.Status = req.Status
-	}
+	// Daten aktualisieren
+	vehicle.LicensePlate = req.LicensePlate
+	vehicle.Brand = req.Brand
+	vehicle.Model = req.Model
+	vehicle.Year = req.Year
+	vehicle.Color = req.Color
+	vehicle.VIN = req.VIN
+	vehicle.FuelType = req.FuelType
+	vehicle.Mileage = req.Mileage
+	vehicle.InsuranceCompany = req.InsuranceCompany
+	vehicle.InsuranceNumber = req.InsuranceNumber
+	vehicle.InsuranceType = req.InsuranceType
+	vehicle.Status = req.Status
 
 	// Datum parsen, wenn vorhanden
 	if req.RegistrationDate != "" {
@@ -283,24 +328,36 @@ func (h *VehicleHandler) UpdateVehicle(c *gin.Context) {
 		vehicle.NextInspectionDate = nextInspectionDate
 	}
 
-	// Fahrzeug aktualisieren
-	vehicle.LicensePlate = req.LicensePlate
-	vehicle.Brand = req.Brand
-	vehicle.Model = req.Model
-	vehicle.Year = req.Year
-	vehicle.Color = req.Color
-	vehicle.VIN = req.VIN
-	vehicle.FuelType = req.FuelType
-	vehicle.Mileage = req.Mileage
-	vehicle.InsuranceCompany = req.InsuranceCompany
-	vehicle.InsuranceNumber = req.InsuranceNumber
-	vehicle.InsuranceType = req.InsuranceType
-	vehicle.Status = req.Status
-
 	// Fahrzeug in der Datenbank aktualisieren
 	if err := h.vehicleRepo.Update(vehicle); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Fehler beim Aktualisieren des Fahrzeugs"})
 		return
+	}
+
+	// Aktivität protokollieren mit dem ActivityService
+	userId, exists := c.Get("userId")
+	if exists {
+		userID, err := service.GetUserIDFromContext(userId)
+		if err == nil {
+			// Nutze die Hilfsfunktion zum Extrahieren von Änderungen
+			changes := make(map[string]interface{})
+			service.ExtractChanges(changes, "brand", oldBrand, vehicle.Brand)
+			service.ExtractChanges(changes, "model", oldModel, vehicle.Model)
+			service.ExtractChanges(changes, "licensePlate", oldLicensePlate, vehicle.LicensePlate)
+			service.ExtractChanges(changes, "color", oldColor, vehicle.Color)
+			service.ExtractChanges(changes, "status", oldStatus, vehicle.Status)
+			service.ExtractChanges(changes, "mileage", oldMileage, vehicle.Mileage)
+
+			description := "Fahrzeug aktualisiert: " + vehicle.Brand + " " + vehicle.Model + " (" + vehicle.LicensePlate + ")"
+
+			h.activityService.LogVehicleActivity(
+				model.ActivityTypeVehicleUpdated,
+				userID,
+				vehicle.ID,
+				description,
+				changes,
+			)
+		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{"vehicle": vehicle})
@@ -344,6 +401,14 @@ func (h *VehicleHandler) UpdateBasicInfo(c *gin.Context) {
 		}
 	}
 
+	// Alte Werte speichern für die Aktivitätsprotokollierung
+	oldLicensePlate := vehicle.LicensePlate
+	oldBrand := vehicle.Brand
+	oldModel := vehicle.Model
+	oldColor := vehicle.Color
+	oldMileage := vehicle.Mileage
+	oldVIN := vehicle.VIN
+
 	// NUR die Grunddaten aktualisieren, keine Datums- oder Versicherungsfelder
 	vehicle.LicensePlate = req.LicensePlate
 	vehicle.Brand = req.Brand
@@ -360,6 +425,32 @@ func (h *VehicleHandler) UpdateBasicInfo(c *gin.Context) {
 	if err := h.vehicleRepo.Update(vehicle); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Fehler beim Aktualisieren des Fahrzeugs"})
 		return
+	}
+
+	// Aktivität protokollieren mit dem ActivityService
+	userId, exists := c.Get("userId")
+	if exists {
+		userID, err := service.GetUserIDFromContext(userId)
+		if err == nil {
+			// Nutze die Hilfsfunktion zum Extrahieren von Änderungen
+			changes := make(map[string]interface{})
+			service.ExtractChanges(changes, "licensePlate", oldLicensePlate, vehicle.LicensePlate)
+			service.ExtractChanges(changes, "brand", oldBrand, vehicle.Brand)
+			service.ExtractChanges(changes, "model", oldModel, vehicle.Model)
+			service.ExtractChanges(changes, "color", oldColor, vehicle.Color)
+			service.ExtractChanges(changes, "mileage", oldMileage, vehicle.Mileage)
+			service.ExtractChanges(changes, "vin", oldVIN, vehicle.VIN)
+
+			description := "Grunddaten aktualisiert: " + vehicle.Brand + " " + vehicle.Model + " (" + vehicle.LicensePlate + ")"
+
+			h.activityService.LogVehicleActivity(
+				model.ActivityTypeVehicleUpdated,
+				userID,
+				vehicle.ID,
+				description,
+				changes,
+			)
+		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{"vehicle": vehicle})
@@ -385,10 +476,36 @@ func (h *VehicleHandler) DeleteVehicle(c *gin.Context) {
 		}
 	}
 
+	// Kopieren der Fahrzeugdaten vor dem Löschen für die Aktivitätsprotokollierung
+	deletedVehicleInfo := map[string]interface{}{
+		"vehicleId":    id,
+		"brand":        vehicle.Brand,
+		"model":        vehicle.Model,
+		"licensePlate": vehicle.LicensePlate,
+		"year":         vehicle.Year,
+	}
+
 	// Fahrzeug aus der Datenbank löschen
 	if err := h.vehicleRepo.Delete(id); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Fehler beim Löschen des Fahrzeugs"})
 		return
+	}
+
+	// Aktivität protokollieren mit dem ActivityService
+	userId, exists := c.Get("userId")
+	if exists {
+		userID, err := service.GetUserIDFromContext(userId)
+		if err == nil {
+			description := "Fahrzeug gelöscht: " + vehicle.Brand + " " + vehicle.Model + " (" + vehicle.LicensePlate + ")"
+
+			h.activityService.LogVehicleActivity(
+				model.ActivityTypeVehicleDeleted,
+				userID,
+				primitive.ObjectID{}, // Leere ID, da das Fahrzeug gelöscht wurde
+				description,
+				deletedVehicleInfo,
+			)
+		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Fahrzeug erfolgreich gelöscht"})
