@@ -56,6 +56,7 @@ func setupPublicRoutes(router *gin.Engine) {
 	router.GET("/", func(c *gin.Context) {
 		c.Redirect(http.StatusFound, "/dashboard")
 	})
+
 }
 
 // setupAuthorizedRoutes konfiguriert die geschützten Seitenrouten

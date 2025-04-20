@@ -9,7 +9,7 @@ import VehicleRegistration from './vehicle-registration.js';
 import VehicleStatistics from './vehicle-statistics.js';
 import VehicleUsageHistory from './vehicle-usage-history.js';
 
-export default class VehicleDetails {
+class VehicleDetails {
     constructor() {
         this.vehicleId = this.getVehicleIdFromUrl();
         this.modules = {};
