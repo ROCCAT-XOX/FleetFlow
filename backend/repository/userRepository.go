@@ -181,8 +181,8 @@ func (r *UserRepository) CreateAdminUserIfNotExists() error {
 		LastName:  "User",
 		Email:     "admin@fleetdrive.com",
 		Password:  "admin",
-		Role:      model.RoleAdmin,
-		Status:    model.StatusActive,
+		Role:      model.RoleAdmin,    // Jetzt kann direkt der Typ verwendet werden
+		Status:    model.StatusActive, // Jetzt kann direkt der Typ verwendet werden
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}

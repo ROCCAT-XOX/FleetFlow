@@ -44,8 +44,7 @@ type LoginResponse struct {
 	Token     string           `json:"token"`
 }
 
-// Login verarbeitet die Login-Anfrage
-// Login verarbeitet die Login-Anfrage
+// backend/handler/authHandler.go - Die relevante korrigierte Funktion
 func (h *AuthHandler) Login(c *gin.Context) {
 	email := c.PostForm("email")
 	password := c.PostForm("password")
@@ -89,7 +88,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	// Überprüfen, ob der Benutzer aktiv ist
+	// Überprüfen, ob der Benutzer aktiv ist - Hier ist die Korrektur
 	if user.Status != model.StatusActive {
 		c.HTML(http.StatusOK, "login.html", gin.H{
 			"error": "Ihr Konto ist inaktiv",
@@ -98,7 +97,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	// JWT-Token generieren
+	// JWT-Token generieren - Role muss zu string konvertiert werden
 	token, err := utils.GenerateJWT(user.ID.Hex(), string(user.Role))
 	if err != nil {
 		c.HTML(http.StatusOK, "login.html", gin.H{

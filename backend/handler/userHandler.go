@@ -27,8 +27,8 @@ type CreateUserRequest struct {
 	LastName  string           `json:"lastName" binding:"required"`
 	Email     string           `json:"email" binding:"required,email"`
 	Password  string           `json:"password" binding:"required,min=6"`
-	Role      model.UserRole   `json:"role"`
-	Status    model.UserStatus `json:"status"`
+	Role      model.UserRole   `json:"role"`   // Geändert von string zu model.UserRole
+	Status    model.UserStatus `json:"status"` // Geändert von string zu model.UserStatus
 }
 
 // GetUsers behandelt die Anfrage, alle Benutzer abzurufen
@@ -112,8 +112,8 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 		LastName:  req.LastName,
 		Email:     req.Email,
 		Password:  req.Password,
-		Role:      role,
-		Status:    status,
+		Role:      role,   // Direkt verwenden, da es bereits den richtigen Typ hat
+		Status:    status, // Direkt verwenden, da es bereits den richtigen Typ hat
 	}
 
 	// Benutzer in der Datenbank speichern
@@ -142,8 +142,8 @@ type UpdateUserRequest struct {
 	LastName  string           `json:"lastName"`
 	Email     string           `json:"email"`
 	Password  string           `json:"password"`
-	Role      model.UserRole   `json:"role"`
-	Status    model.UserStatus `json:"status"`
+	Role      model.UserRole   `json:"role"`   // Geändert von string zu model.UserRole
+	Status    model.UserStatus `json:"status"` // Geändert von string zu model.UserStatus
 }
 
 // UpdateUser behandelt die Anfrage, einen Benutzer zu aktualisieren
@@ -185,10 +185,10 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 		// Passwort wird während der Update-Operation gehasht
 	}
 	if req.Role != "" {
-		user.Role = req.Role
+		user.Role = req.Role // Direkt zuweisen, da Role jetzt den richtigen Typ hat
 	}
 	if req.Status != "" {
-		user.Status = req.Status
+		user.Status = req.Status // Direkt zuweisen, da Status jetzt den richtigen Typ hat
 	}
 
 	// Benutzer in der Datenbank aktualisieren
