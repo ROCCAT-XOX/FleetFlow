@@ -1,6 +1,4 @@
-// backend/handlers/dashboard.go
-
-package handlers
+package handler
 
 import (
 	"net/http"
