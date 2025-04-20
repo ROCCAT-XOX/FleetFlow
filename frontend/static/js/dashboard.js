@@ -1,0 +1,437 @@
+// frontend/static/js/dashboard.js
+
+// Initialize dashboard functions when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Initialisiere Dashboard...');
+
+    // Load dashboard data
+    loadDashboardStats();
+    loadVehiclesOverview();
+    loadDriversOverview();
+    loadUpcomingMaintenance();
+    loadRecentActivities();
+    initializeFleetActivityChart();
+
+    // Setup filter event listener
+    const fleetViewFilter = document.getElementById('fleet-view-filter');
+    if (fleetViewFilter) {
+        fleetViewFilter.addEventListener('change', (e) => {
+            filterVehicles(e.target.value);
+        });
+    }
+});
+
+// Function to load dashboard statistics
+async function loadDashboardStats() {
+    try {
+        const response = await fetch('/api/dashboard/stats');
+        if (!response.ok) throw new Error('Fehler beim Laden der Statistiken');
+
+        const data = await response.json();
+
+        // Update statistics display
+        document.querySelector('[data-stat="total-vehicles"]').textContent = data.totalVehicles || 0;
+        document.querySelector('[data-stat="available-vehicles"]').textContent = data.availableVehicles || 0;
+        document.querySelector('[data-stat="maintenance-vehicles"]').textContent = data.maintenanceVehicles || 0;
+        document.querySelector('[data-stat="in-use-vehicles"]').textContent = data.inUseVehicles || 0;
+    } catch (error) {
+        console.error('Fehler:', error);
+    }
+}
+
+// Function to load vehicles overview
+async function loadVehiclesOverview() {
+    try {
+        const response = await fetch('/api/vehicles?limit=6');
+        if (!response.ok) throw new Error('Fehler beim Laden der Fahrzeuge');
+
+        const data = await response.json();
+        renderVehiclesOverview(data.vehicles || []);
+    } catch (error) {
+        console.error('Fehler:', error);
+        showVehiclesError();
+    }
+}
+
+// Function to render vehicles in overview
+function renderVehiclesOverview(vehicles) {
+    const container = document.getElementById('vehicles-container');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    if (vehicles.length === 0) {
+        container.innerHTML = '<div class="col-span-full text-center text-gray-500">Keine Fahrzeuge verfügbar</div>';
+        return;
+    }
+
+    vehicles.forEach(vehicle => {
+        const statusClass = getStatusClass(vehicle.status);
+        const statusText = getStatusText(vehicle.status);
+
+        const vehicleCard = document.createElement('div');
+        vehicleCard.className = 'bg-white p-4 rounded-lg border border-gray-200 hover:shadow-md transition-shadow';
+        vehicleCard.innerHTML = `
+            <div class="flex items-center justify-between mb-2">
+                <h4 class="font-medium text-gray-900">${vehicle.brand} ${vehicle.model}</h4>
+                <span class="px-2 py-1 text-xs font-medium rounded-full ${statusClass}">
+                    ${statusText}
+                </span>
+            </div>
+            <p class="text-sm text-gray-500 mb-1">Kennzeichen: ${vehicle.licensePlate}</p>
+            <p class="text-sm text-gray-500 mb-2">Kilometerstand: ${vehicle.mileage} km</p>
+            <a href="/vehicle-details/${vehicle.id}" class="text-sm text-blue-600 hover:text-blue-800">Details anzeigen →</a>
+        `;
+
+        container.appendChild(vehicleCard);
+    });
+}
+
+// Function to load drivers overview
+async function loadDriversOverview() {
+    try {
+        const response = await fetch('/api/drivers?limit=5');
+        if (!response.ok) throw new Error('Fehler beim Laden der Fahrer');
+
+        const data = await response.json();
+        renderDriversOverview(data.drivers || []);
+    } catch (error) {
+        console.error('Fehler:', error);
+        showDriversError();
+    }
+}
+
+// Function to render drivers in overview
+function renderDriversOverview(drivers) {
+    const container = document.getElementById('drivers-container');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    if (drivers.length === 0) {
+        container.innerHTML = '<div class="text-center text-gray-500">Keine Fahrer verfügbar</div>';
+        return;
+    }
+
+    drivers.forEach(driver => {
+        const statusClass = getDriverStatusClass(driver.status);
+        const statusText = getDriverStatusText(driver.status);
+
+        const driverCard = document.createElement('div');
+        driverCard.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-lg';
+        driverCard.innerHTML = `
+            <div>
+                <h5 class="font-medium text-gray-900">${driver.firstName} ${driver.lastName}</h5>
+                <p class="text-xs text-gray-500">${driver.assignedVehicleId ? 'Fahrzeug zugewiesen' : 'Kein Fahrzeug zugewiesen'}</p>
+            </div>
+            <span class="px-2 py-1 text-xs font-medium rounded-full ${statusClass}">
+                ${statusText}
+            </span>
+        `;
+
+        container.appendChild(driverCard);
+    });
+}
+
+// Function to load upcoming maintenance
+async function loadUpcomingMaintenance() {
+    try {
+        const response = await fetch('/api/maintenance/upcoming?limit=5');
+        if (!response.ok) throw new Error('Fehler beim Laden der Wartungen');
+
+        const data = await response.json();
+        renderUpcomingMaintenance(data.maintenance || []);
+    } catch (error) {
+        console.error('Fehler:', error);
+        showMaintenanceError();
+    }
+}
+
+// Function to render upcoming maintenance
+function renderUpcomingMaintenance(maintenanceItems) {
+    const container = document.querySelector('.anstehende-wartungen');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    if (maintenanceItems.length === 0) {
+        container.innerHTML = '<li class="py-3 text-center text-gray-500">Keine anstehenden Wartungen</li>';
+        return;
+    }
+
+    maintenanceItems.forEach(item => {
+        const maintenanceItem = document.createElement('li');
+        maintenanceItem.className = 'py-3 flex justify-between items-center';
+        maintenanceItem.innerHTML = `
+            <div>
+                <p class="text-sm font-medium text-gray-900">${item.vehicleName || item.vehicleId}</p>
+                <p class="text-xs text-gray-500">${getMaintenanceTypeText(item.type)}</p>
+            </div>
+            <span class="text-sm text-gray-500">${formatDate(item.nextDueDate)}</span>
+        `;
+
+        container.appendChild(maintenanceItem);
+    });
+}
+
+// Function to load recent activities
+async function loadRecentActivities() {
+    try {
+        const response = await fetch('/api/activities/recent?limit=5');
+        if (!response.ok) throw new Error('Fehler beim Laden der Aktivitäten');
+
+        const data = await response.json();
+        renderRecentActivities(data.activities || []);
+    } catch (error) {
+        console.error('Fehler:', error);
+        showActivitiesError();
+    }
+}
+
+// Function to render recent activities
+function renderRecentActivities(activities) {
+    const container = document.querySelector('.letzte-aktivitaeten');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    if (activities.length === 0) {
+        container.innerHTML = '<li class="py-3 text-center text-gray-500">Keine Aktivitäten vorhanden</li>';
+        return;
+    }
+
+    activities.forEach(activity => {
+        const activityItem = document.createElement('li');
+        activityItem.className = 'relative pb-8';
+        activityItem.innerHTML = `
+            <span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true"></span>
+            <div class="relative flex space-x-3">
+                <div>
+                    <span class="h-8 w-8 rounded-full bg-${getActivityColor(activity.type)}-100 flex items-center justify-center ring-8 ring-white">
+                        ${getActivityIcon(activity.type)}
+                    </span>
+                </div>
+                <div class="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
+                    <div>
+                        <p class="text-sm text-gray-500">${activity.description}</p>
+                    </div>
+                    <div class="whitespace-nowrap text-right text-sm text-gray-500">
+                        <time datetime="${activity.timestamp}">${formatTimeAgo(activity.timestamp)}</time>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        container.appendChild(activityItem);
+    });
+}
+
+// Initialize fleet activity chart
+function initializeFleetActivityChart() {
+    const ctx = document.getElementById('fleetActivityChart');
+    if (!ctx) return;
+
+    // Create a chart instance
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'],
+            datasets: [{
+                label: 'Fahrzeuge in Nutzung',
+                data: [12, 19, 15, 17, 14, 8, 5],
+                borderColor: 'rgb(79, 70, 229)',
+                tension: 0.3
+            }, {
+                label: 'In Wartung',
+                data: [2, 1, 3, 2, 1, 0, 1],
+                borderColor: 'rgb(234, 179, 8)',
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+// Helper functions
+function getStatusClass(status) {
+    switch (status) {
+        case 'available':
+            return 'bg-green-100 text-green-800';
+        case 'inuse':
+            return 'bg-red-100 text-red-800';
+        case 'maintenance':
+            return 'bg-yellow-100 text-yellow-800';
+        default:
+            return 'bg-gray-100 text-gray-800';
+    }
+}
+
+function getStatusText(status) {
+    switch (status) {
+        case 'available':
+            return 'Verfügbar';
+        case 'inuse':
+            return 'In Benutzung';
+        case 'maintenance':
+            return 'In Wartung';
+        default:
+            return status;
+    }
+}
+
+function getDriverStatusClass(status) {
+    switch (status) {
+        case 'available':
+            return 'bg-green-100 text-green-800';
+        case 'onduty':
+            return 'bg-blue-100 text-blue-800';
+        case 'offduty':
+            return 'bg-gray-100 text-gray-800';
+        default:
+            return 'bg-gray-100 text-gray-800';
+    }
+}
+
+function getDriverStatusText(status) {
+    switch (status) {
+        case 'available':
+            return 'Verfügbar';
+        case 'onduty':
+            return 'Im Dienst';
+        case 'offduty':
+            return 'Außer Dienst';
+        default:
+            return status;
+    }
+}
+
+function getMaintenanceTypeText(type) {
+    switch (type) {
+        case 'inspection':
+            return 'Inspektion';
+        case 'oil-change':
+            return 'Ölwechsel';
+        case 'tire-change':
+            return 'Reifenwechsel';
+        case 'repair':
+            return 'Reparatur';
+        default:
+            return 'Sonstiges';
+    }
+}
+
+function getActivityColor(type) {
+    switch (type) {
+        case 'booking':
+            return 'green';
+        case 'maintenance':
+            return 'yellow';
+        case 'alert':
+            return 'red';
+        default:
+            return 'blue';
+    }
+}
+
+function getActivityIcon(type) {
+    switch (type) {
+        case 'booking':
+            return '<svg class="h-5 w-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>';
+        case 'maintenance':
+            return '<svg class="h-5 w-5 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>';
+        default:
+            return '<svg class="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
+    }
+}
+
+function formatDate(dateString) {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('de-DE');
+}
+
+function formatTimeAgo(timestamp) {
+    // Simple implementation
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diff = now - date;
+
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (days > 0) return `vor ${days} Tag${days > 1 ? 'en' : ''}`;
+    if (hours > 0) return `vor ${hours} Stunde${hours > 1 ? 'n' : ''}`;
+    if (minutes > 0) return `vor ${minutes} Minute${minutes > 1 ? 'n' : ''}`;
+    return 'gerade eben';
+}
+
+function filterVehicles(status) {
+    const cards = document.querySelectorAll('#vehicles-container > div');
+
+    cards.forEach(card => {
+        if (status === 'all') {
+            card.style.display = '';
+            return;
+        }
+
+        const statusElement = card.querySelector('.rounded-full');
+        if (!statusElement) return;
+
+        const vehicleStatus = statusElement.textContent.trim().toLowerCase();
+
+        let matchesFilter = false;
+
+        if (status === 'available' && vehicleStatus.includes('verfügbar')) {
+            matchesFilter = true;
+        } else if (status === 'inuse' && vehicleStatus.includes('in benutzung')) {
+            matchesFilter = true;
+        } else if (status === 'maintenance' && vehicleStatus.includes('in wartung')) {
+            matchesFilter = true;
+        }
+
+        card.style.display = matchesFilter ? '' : 'none';
+    });
+}
+
+// Error display functions
+function showVehiclesError() {
+    const container = document.getElementById('vehicles-container');
+    if (container) {
+        container.innerHTML = '<div class="col-span-full text-center text-red-500">Fehler beim Laden der Fahrzeuge</div>';
+    }
+}
+
+function showDriversError() {
+    const container = document.getElementById('drivers-container');
+    if (container) {
+        container.innerHTML = '<div class="text-center text-red-500">Fehler beim Laden der Fahrer</div>';
+    }
+}
+
+function showMaintenanceError() {
+    const container = document.querySelector('.anstehende-wartungen');
+    if (container) {
+        container.innerHTML = '<li class="py-3 text-center text-red-500">Fehler beim Laden der Wartungen</li>';
+    }
+}
+
+function showActivitiesError() {
+    const container = document.querySelector('.letzte-aktivitaeten');
+    if (container) {
+        container.innerHTML = '<li class="py-3 text-center text-red-500">Fehler beim Laden der Aktivitäten</li>';
+    }
+}

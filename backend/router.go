@@ -266,7 +266,7 @@ func setupAPIRoutes(api *gin.RouterGroup) {
 	fuelCostHandler := handler.NewFuelCostHandler()
 	activityHandler := handler.NewActivityHandler()
 	profileHandler := handler.NewProfileHandler() // Neu hinzugefügt
-
+	dashboardHandler := handler.NewDashboardHandler()
 	// Benutzer-API
 	users := api.Group("/users")
 	{
@@ -320,6 +320,7 @@ func setupAPIRoutes(api *gin.RouterGroup) {
 		maintenance.POST("", maintenanceHandler.CreateMaintenanceEntry)
 		maintenance.PUT("/:id", maintenanceHandler.UpdateMaintenanceEntry)
 		maintenance.DELETE("/:id", maintenanceHandler.DeleteMaintenanceEntry)
+		maintenance.GET("/upcoming", dashboardHandler.GetUpcomingMaintenance)
 	}
 
 	// Fahrzeugnutzungs-API
@@ -361,6 +362,12 @@ func setupAPIRoutes(api *gin.RouterGroup) {
 		activities.GET("", activityHandler.GetActivities)
 		activities.GET("/vehicle/:vehicleId", activityHandler.GetVehicleActivities)
 		activities.GET("/driver/:driverId", activityHandler.GetDriverActivities)
+		activities.GET("/recent", dashboardHandler.GetRecentActivities)
+	}
+
+	dashboard := api.Group("/dashboard")
+	{
+		dashboard.GET("/stats", dashboardHandler.GetDashboardStats)
 	}
 
 }
