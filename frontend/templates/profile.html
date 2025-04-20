@@ -359,14 +359,19 @@
                 }
 
                 // API-Aufruf zum Aktualisieren des Profils
-                fetch('/api/profile', {
+                fetch('/profile', {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify(profileData)
                 })
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(err => { throw new Error(err.error || 'Fehler beim Aktualisieren des Profils'); });
+                        }
+                        return response.json();
+                    })
                     .then(data => {
                         closeProfileModal();
                         // Aktualisieren der Anzeige
@@ -374,14 +379,14 @@
                         document.getElementById('profile-lastname').textContent = data.lastName || '';
                         document.getElementById('profile-email').textContent = data.email || '';
                         document.getElementById('profile-phone').textContent = data.phone || 'Nicht angegeben';
-                        document.getElementById('profile-department').textContent = profileData.department || 'Nicht angegeben';
-                        document.getElementById('profile-position').textContent = profileData.position || 'Nicht angegeben';
+                        document.getElementById('profile-department').textContent = data.department || 'Nicht angegeben';
+                        document.getElementById('profile-position').textContent = data.position || 'Nicht angegeben';
 
                         alert('Profil erfolgreich aktualisiert!');
                     })
                     .catch(error => {
                         console.error('Fehler:', error);
-                        alert('Fehler beim Aktualisieren des Profils.');
+                        alert('Fehler beim Aktualisieren des Profils: ' + error.message);
                     });
             });
         }
@@ -402,7 +407,7 @@
                 }
 
                 // API-Aufruf zum Ändern des Passworts
-                fetch('/api/profile/password', {
+                fetch('/profile/password', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -414,7 +419,7 @@
                 })
                     .then(response => {
                         if (!response.ok) {
-                            throw new Error('Passwortänderung fehlgeschlagen');
+                            return response.json().then(err => { throw new Error(err.error || 'Passwortänderung fehlgeschlagen'); });
                         }
                         return response.json();
                     })
@@ -424,59 +429,76 @@
                     })
                     .catch(error => {
                         console.error('Fehler:', error);
-                        alert('Fehler beim Ändern des Passworts. Bitte überprüfen Sie Ihr aktuelles Passwort.');
+                        alert('Fehler beim Ändern des Passworts: ' + error.message);
                     });
             });
         }
 
         // Laden der aktiven Buchungen
         function loadActiveBookings() {
-            fetch('/api/bookings/my-active')
-                .then(response => response.json())
+            fetch('/profile/bookings/my-active')
+                .then(response => {
+                    if (!response.ok) {
+                        if (response.status === 404) {
+                            // 404 ist in diesem Fall okay, es gibt einfach keine aktiven Buchungen
+                            return { bookings: [] };
+                        }
+                        throw new Error('Fehler beim Laden der Buchungen');
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     const tableBody = document.getElementById('active-bookings-table-body');
                     if (!tableBody) return;
 
                     if (!data.bookings || data.bookings.length === 0) {
                         tableBody.innerHTML = `
-                        <tr>
-                            <td colspan="5" class="py-4 text-center text-gray-500">Keine aktiven Buchungen vorhanden</td>
-                        </tr>
-                    `;
+                            <tr>
+                                <td colspan="5" class="py-4 text-center text-gray-500">Keine aktiven Buchungen vorhanden</td>
+                            </tr>
+                        `;
                         return;
                     }
 
                     tableBody.innerHTML = data.bookings.map(booking => `
-                    <tr>
-                        <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
-                            ${booking.vehicleName}
-                        </td>
-                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                            ${new Date(booking.startDate).toLocaleDateString('de-DE')}
-                        </td>
-                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                            ${new Date(booking.endDate).toLocaleDateString('de-DE')}
-                        </td>
-                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                            <span class="inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${getStatusClass(booking.status)}">
-                                ${getStatusText(booking.status)}
-                            </span>
-                        </td>
-                        <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
-                            <a href="/bookings/${booking.id}" class="text-indigo-600 hover:text-indigo-900">Details</a>
-                        </td>
-                    </tr>
-                `).join('');
+                        <tr>
+                            <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
+                                ${booking.vehicleName}
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                ${new Date(booking.startDate).toLocaleDateString('de-DE')}
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                ${booking.endDate ? new Date(booking.endDate).toLocaleDateString('de-DE') : '-'}
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                <span class="inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${getStatusClass(booking.status)}">
+                                    ${getStatusText(booking.status)}
+                                </span>
+                            </td>
+                            <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
+                                <a href="/vehicle-details/${booking.id}" class="text-indigo-600 hover:text-indigo-900">Details</a>
+                            </td>
+                        </tr>
+                    `).join('');
                 })
                 .catch(error => {
                     console.error('Fehler beim Laden der Buchungen:', error);
+                    const tableBody = document.getElementById('active-bookings-table-body');
+                    if (tableBody) {
+                        tableBody.innerHTML = `
+                            <tr>
+                                <td colspan="5" class="py-4 text-center text-red-500">Fehler beim Laden der Buchungen</td>
+                            </tr>
+                        `;
+                    }
                 });
         }
 
         // Hilfsfunktionen für Status
         function getStatusClass(status) {
             switch (status) {
-                case 'confirmed': return 'bg-green-100 text-green-800';
+                case 'active': return 'bg-green-100 text-green-800';
                 case 'pending': return 'bg-yellow-100 text-yellow-800';
                 case 'completed': return 'bg-gray-100 text-gray-800';
                 case 'cancelled': return 'bg-red-100 text-red-800';
@@ -486,7 +508,7 @@
 
         function getStatusText(status) {
             switch (status) {
-                case 'confirmed': return 'Bestätigt';
+                case 'active': return 'Aktiv';
                 case 'pending': return 'Ausstehend';
                 case 'completed': return 'Abgeschlossen';
                 case 'cancelled': return 'Storniert';
@@ -505,14 +527,19 @@
                     maintenanceAlerts: document.getElementById('maintenance-alerts').checked
                 };
 
-                fetch('/api/profile/notification-settings', {
+                fetch('/profile/notification-settings', {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify(settings)
                 })
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Fehler beim Speichern der Benachrichtigungseinstellungen');
+                        }
+                        return response.json();
+                    })
                     .then(data => {
                         alert('Benachrichtigungseinstellungen gespeichert!');
                     })

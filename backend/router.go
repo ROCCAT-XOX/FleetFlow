@@ -281,6 +281,12 @@ func setupAPIRoutes(api *gin.RouterGroup) {
 	{
 		profile.PUT("", profileHandler.UpdateProfile)
 		profile.POST("/password", profileHandler.ChangePassword)
+		profile.GET("/bookings/my-active", profileHandler.GetMyActiveBookings)
+		profile.GET("/profile/notification-settings", profileHandler.GetNotificationSettings)
+		profile.PUT("/profile/notification-settings", profileHandler.UpdateNotificationSettings)
+		profile.PUT("/profile", profileHandler.UpdateProfile)
+		profile.POST("/profile/password", profileHandler.ChangePassword)
+		profile.GET("/profile/stats", profileHandler.GetProfileStats)
 	}
 
 	// Fahrzeug-API
@@ -355,4 +361,5 @@ func setupAPIRoutes(api *gin.RouterGroup) {
 		activities.GET("/vehicle/:vehicleId", activityHandler.GetVehicleActivities)
 		activities.GET("/driver/:driverId", activityHandler.GetDriverActivities)
 	}
+
 }
