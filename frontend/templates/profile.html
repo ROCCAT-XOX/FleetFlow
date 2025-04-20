@@ -359,7 +359,7 @@
                 }
 
                 // API-Aufruf zum Aktualisieren des Profils
-                fetch('/profile', {
+                fetch('/api/profile', {  // Korrigiert: /api/profile
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -407,7 +407,7 @@
                 }
 
                 // API-Aufruf zum Ändern des Passworts
-                fetch('/profile/password', {
+                fetch('/api/profile/password', {  // Korrigiert: /api/profile/password
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -436,7 +436,7 @@
 
         // Laden der aktiven Buchungen
         function loadActiveBookings() {
-            fetch('/profile/bookings/my-active')
+            fetch('/api/profile/bookings/my-active')  // Ist bereits korrekt
                 .then(response => {
                     if (!response.ok) {
                         if (response.status === 404) {
@@ -527,7 +527,7 @@
                     maintenanceAlerts: document.getElementById('maintenance-alerts').checked
                 };
 
-                fetch('/profile/notification-settings', {
+                fetch('/api/profile/notification-settings', {  // Korrigiert: /api/profile/notification-settings
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
