@@ -5,25 +5,24 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
-
+	"FleetDrive/backend/model"
 	"FleetDrive/backend/repository"
+	"github.com/gin-gonic/gin"
 )
 
 type DashboardHandler struct {
 	vehicleRepo     *repository.VehicleRepository
 	driverRepo      *repository.DriverRepository
 	maintenanceRepo *repository.MaintenanceRepository
-	usageRepo       *repository.UsageRepository
+	usageRepo       *repository.VehicleUsageRepository
 }
 
-func NewDashboardHandler(db *gorm.DB) *DashboardHandler {
+func NewDashboardHandler() *DashboardHandler {
 	return &DashboardHandler{
-		vehicleRepo:     repository.NewVehicleRepository(db),
-		driverRepo:      repository.NewDriverRepository(db),
-		maintenanceRepo: repository.NewMaintenanceRepository(db),
-		usageRepo:       repository.NewUsageRepository(db),
+		vehicleRepo:     repository.NewVehicleRepository(),
+		driverRepo:      repository.NewDriverRepository(),
+		maintenanceRepo: repository.NewMaintenanceRepository(),
+		usageRepo:       repository.NewVehicleUsageRepository(),
 	}
 }
 
@@ -36,31 +35,26 @@ func (h *DashboardHandler) GetDashboardStats(c *gin.Context) {
 		InUseVehicles       int64 `json:"inUseVehicles"`
 	}{}
 
-	// Get total vehicles count
-	var err error
-	stats.TotalVehicles, err = h.vehicleRepo.Count()
+	// Get all vehicles
+	vehicles, err := h.vehicleRepo.FindAll()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Fehler beim Abrufen der Statistiken"})
 		return
 	}
 
-	// Get count by status
-	stats.AvailableVehicles, err = h.vehicleRepo.CountByStatus("available")
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Fehler beim Abrufen der Statistiken"})
-		return
-	}
+	// Count total vehicles
+	stats.TotalVehicles = int64(len(vehicles))
 
-	stats.MaintenanceVehicles, err = h.vehicleRepo.CountByStatus("maintenance")
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Fehler beim Abrufen der Statistiken"})
-		return
-	}
-
-	stats.InUseVehicles, err = h.vehicleRepo.CountByStatus("inuse")
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Fehler beim Abrufen der Statistiken"})
-		return
+	// Count by status
+	for _, vehicle := range vehicles {
+		switch vehicle.Status {
+		case model.VehicleStatusAvailable:
+			stats.AvailableVehicles++
+		case model.VehicleStatusMaintenance:
+			stats.MaintenanceVehicles++
+		case model.VehicleStatusInUse:
+			stats.InUseVehicles++
+		}
 	}
 
 	c.JSON(http.StatusOK, stats)
@@ -76,10 +70,15 @@ func (h *DashboardHandler) GetVehiclesOverview(c *gin.Context) {
 		}
 	}
 
-	vehicles, err := h.vehicleRepo.FindAllWithLimit(limit)
+	vehicles, err := h.vehicleRepo.FindAll()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Fehler beim Abrufen der Fahrzeuge"})
 		return
+	}
+
+	// Limit to requested number
+	if len(vehicles) > limit {
+		vehicles = vehicles[:limit]
 	}
 
 	c.JSON(http.StatusOK, gin.H{"vehicles": vehicles})
@@ -95,10 +94,15 @@ func (h *DashboardHandler) GetDriversOverview(c *gin.Context) {
 		}
 	}
 
-	drivers, err := h.driverRepo.FindAllWithLimit(limit)
+	drivers, err := h.driverRepo.FindAll()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Fehler beim Abrufen der Fahrer"})
 		return
+	}
+
+	// Limit to requested number
+	if len(drivers) > limit {
+		drivers = drivers[:limit]
 	}
 
 	c.JSON(http.StatusOK, gin.H{"drivers": drivers})
@@ -114,13 +118,44 @@ func (h *DashboardHandler) GetUpcomingMaintenance(c *gin.Context) {
 		}
 	}
 
-	// Get current date plus 30 days
-	endDate := time.Now().AddDate(0, 0, 30)
-
-	upcomingMaintenance, err := h.maintenanceRepo.FindUpcomingWithLimit(endDate, limit)
+	// Get all vehicles
+	vehicles, err := h.vehicleRepo.FindAll()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Fehler beim Abrufen der Wartungen"})
 		return
+	}
+
+	// Create a list of upcoming maintenance based on next inspection dates
+	now := time.Now()
+	var upcomingMaintenance []map[string]interface{}
+
+	for _, vehicle := range vehicles {
+		if !vehicle.NextInspectionDate.IsZero() && vehicle.NextInspectionDate.After(now) {
+			maintenance := map[string]interface{}{
+				"vehicleId":    vehicle.ID.Hex(),
+				"vehicleName":  vehicle.Brand + " " + vehicle.Model,
+				"licensePlate": vehicle.LicensePlate,
+				"nextDueDate":  vehicle.NextInspectionDate,
+				"type":         "inspection",
+			}
+			upcomingMaintenance = append(upcomingMaintenance, maintenance)
+		}
+	}
+
+	// Sort by date (simple bubble sort since we expect a small number of items)
+	for i := 0; i < len(upcomingMaintenance)-1; i++ {
+		for j := 0; j < len(upcomingMaintenance)-i-1; j++ {
+			date1 := upcomingMaintenance[j]["nextDueDate"].(time.Time)
+			date2 := upcomingMaintenance[j+1]["nextDueDate"].(time.Time)
+			if date1.After(date2) {
+				upcomingMaintenance[j], upcomingMaintenance[j+1] = upcomingMaintenance[j+1], upcomingMaintenance[j]
+			}
+		}
+	}
+
+	// Limit to requested number
+	if len(upcomingMaintenance) > limit {
+		upcomingMaintenance = upcomingMaintenance[:limit]
 	}
 
 	c.JSON(http.StatusOK, gin.H{"maintenance": upcomingMaintenance})
@@ -136,55 +171,72 @@ func (h *DashboardHandler) GetRecentActivities(c *gin.Context) {
 		}
 	}
 
-	// This would typically come from an activity log table
-	// For now, we'll create a simple combined list from usage and maintenance records
+	// For now, we'll create a simple list of recent activities
+	// In a real application, this would come from an activity log table
 	var activities []map[string]interface{}
 
-	// Get recent usage entries
-	recentUsage, err := h.usageRepo.FindRecentWithLimit(limit)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Fehler beim Abrufen der Aktivitäten"})
-		return
-	}
+	// Get recent vehicle usages
+	recentUsage, err := h.usageRepo.FindAll()
+	if err == nil {
+		for _, usage := range recentUsage {
+			if len(activities) >= limit {
+				break
+			}
 
-	// Convert to activity format
-	for _, usage := range recentUsage {
-		activity := map[string]interface{}{
-			"id":          usage.ID,
-			"type":        "booking",
-			"description": "Fahrzeug in Nutzung genommen",
-			"vehicleId":   usage.VehicleID,
-			"vehicleName": usage.VehicleName,
-			"driverId":    usage.DriverID,
-			"driverName":  usage.DriverName,
-			"timestamp":   usage.StartDate,
+			// Try to get vehicle name
+			vehicleName := "Unbekanntes Fahrzeug"
+			vehicle, err := h.vehicleRepo.FindByID(usage.VehicleID.Hex())
+			if err == nil {
+				vehicleName = vehicle.Brand + " " + vehicle.Model
+			}
+
+			// Try to get driver name
+			driverName := "Unbekannter Fahrer"
+			driver, err := h.driverRepo.FindByID(usage.DriverID.Hex())
+			if err == nil {
+				driverName = driver.FirstName + " " + driver.LastName
+			}
+
+			activity := map[string]interface{}{
+				"id":          usage.ID.Hex(),
+				"type":        "booking",
+				"description": driverName + " hat " + vehicleName + " gebucht",
+				"vehicleId":   usage.VehicleID.Hex(),
+				"vehicleName": vehicleName,
+				"driverId":    usage.DriverID.Hex(),
+				"driverName":  driverName,
+				"timestamp":   usage.StartDate,
+			}
+			activities = append(activities, activity)
 		}
-		activities = append(activities, activity)
 	}
 
 	// Get recent maintenance entries
-	recentMaintenance, err := h.maintenanceRepo.FindRecentWithLimit(limit)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Fehler beim Abrufen der Aktivitäten"})
-		return
-	}
+	recentMaintenance, err := h.maintenanceRepo.FindAll()
+	if err == nil {
+		for _, maintenance := range recentMaintenance {
+			if len(activities) >= limit {
+				break
+			}
 
-	// Convert to activity format
-	for _, maintenance := range recentMaintenance {
-		activity := map[string]interface{}{
-			"id":          maintenance.ID,
-			"type":        "maintenance",
-			"description": "Wartung durchgeführt",
-			"vehicleId":   maintenance.VehicleID,
-			"vehicleName": maintenance.VehicleName,
-			"timestamp":   maintenance.Date,
+			// Try to get vehicle name
+			vehicleName := "Unbekanntes Fahrzeug"
+			vehicle, err := h.vehicleRepo.FindByID(maintenance.VehicleID.Hex())
+			if err == nil {
+				vehicleName = vehicle.Brand + " " + vehicle.Model
+			}
+
+			activity := map[string]interface{}{
+				"id":          maintenance.ID.Hex(),
+				"type":        "maintenance",
+				"description": "Wartung durchgeführt für " + vehicleName,
+				"vehicleId":   maintenance.VehicleID.Hex(),
+				"vehicleName": vehicleName,
+				"timestamp":   maintenance.Date,
+			}
+			activities = append(activities, activity)
 		}
-		activities = append(activities, activity)
 	}
-
-	// Sort activities by timestamp (newest first)
-	// In a real implementation, you would sort in the database query
-	// This is a simplified approach for demonstration
 
 	// Limit to requested number
 	if len(activities) > limit {
