@@ -27,16 +27,18 @@ const (
 
 // User repräsentiert einen Benutzer im System
 type User struct {
-	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	FirstName string             `bson:"firstName" json:"firstName"`
-	LastName  string             `bson:"lastName" json:"lastName"`
-	Username  string             `bson:"username" json:"username"` // Benutzername hinzugefügt
-	Email     string             `bson:"email" json:"email"`
-	Password  string             `bson:"password" json:"-"` // "-" verhindert, dass das Passwort in JSON-Antworten erscheint
-	Role      UserRole           `bson:"role" json:"role"`
-	Status    UserStatus         `bson:"status" json:"status"`
-	CreatedAt time.Time          `bson:"createdAt" json:"createdAt"`
-	UpdatedAt time.Time          `bson:"updatedAt" json:"updatedAt"`
+	ID         primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
+	FirstName  string             `bson:"firstName" json:"firstName"`
+	LastName   string             `bson:"lastName" json:"lastName"`
+	Email      string             `bson:"email" json:"email"`
+	Phone      string             `bson:"phone,omitempty" json:"phone,omitempty"`
+	Department string             `bson:"department,omitempty" json:"department,omitempty"`
+	Position   string             `bson:"position,omitempty" json:"position,omitempty"`
+	Role       string             `bson:"role" json:"role"`
+	Status     string             `bson:"status" json:"status"`
+	Password   string             `bson:"password" json:"-"`
+	CreatedAt  time.Time          `bson:"createdAt" json:"createdAt"`
+	UpdatedAt  time.Time          `bson:"updatedAt" json:"updatedAt"`
 }
 
 // HashPassword verschlüsselt das Passwort mit bcrypt
@@ -53,4 +55,14 @@ func (u *User) HashPassword() error {
 func (u *User) CheckPassword(password string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
 	return err == nil
+}
+
+// SetPassword hasht und setzt das Passwort für den Benutzer
+func (u *User) SetPassword(password string) error {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	u.Password = string(hashedPassword)
+	return nil
 }

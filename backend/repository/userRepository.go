@@ -3,6 +3,7 @@ package repository
 
 import (
 	"context"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"time"
 
 	"FleetDrive/backend/db"
@@ -108,18 +109,40 @@ func (r *UserRepository) FindAll() ([]*model.User, error) {
 }
 
 // Update aktualisiert einen Benutzer
+// Update aktualisiert einen bestehenden Benutzer in der Datenbank
 func (r *UserRepository) Update(user *model.User) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
+	// Setze UpdatedAt auf die aktuelle Zeit
 	user.UpdatedAt = time.Now()
 
-	_, err := r.collection.UpdateOne(
-		ctx,
-		bson.M{"_id": user.ID},
-		bson.M{"$set": user},
-	)
-	return err
+	// Explizit spezifizierte Felder für mehr Kontrolle
+	updateData := bson.M{
+		"$set": bson.M{
+			"firstName": user.FirstName,
+			"lastName":  user.LastName,
+			"email":     user.Email,
+			"password":  user.Password,
+			"role":      user.Role,
+			"status":    user.Status,
+			"updatedAt": user.UpdatedAt,
+			// Fügen Sie hier weitere Felder hinzu, die aktualisiert werden sollen
+			// Dies verhindert, dass unbeabsichtigt Felder überschrieben werden
+		},
+	}
+
+	result, err := r.collection.UpdateOne(ctx, bson.M{"_id": user.ID}, updateData)
+	if err != nil {
+		return err
+	}
+
+	// Prüfen, ob ein Dokument gefunden wurde
+	if result.MatchedCount == 0 {
+		return mongo.ErrNoDocuments
+	}
+
+	return nil
 }
 
 // Delete löscht einen Benutzer
@@ -185,4 +208,70 @@ func (r *UserRepository) FindByUsername(username string) (*model.User, error) {
 	}
 
 	return &user, nil
+}
+
+// GetAll gibt alle Benutzer aus der Datenbank zurück
+func (r *UserRepository) GetAll() ([]*model.User, error) {
+	return r.GetUsersWithFilter(bson.M{})
+}
+
+// GetUsersWithFilter gibt Benutzer basierend auf einem Filter zurück
+func (r *UserRepository) GetUsersWithFilter(filter bson.M) ([]*model.User, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	var users []*model.User
+
+	// Optionen für Sortierung und Felder
+	opts := options.Find().SetSort(bson.D{{"lastName", 1}, {"firstName", 1}})
+
+	cursor, err := r.collection.Find(ctx, filter, opts)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	for cursor.Next(ctx) {
+		var user model.User
+		if err := cursor.Decode(&user); err != nil {
+			return nil, err
+		}
+		users = append(users, &user)
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
+// GetUserByEmail findet einen Benutzer anhand seiner E-Mail-Adresse
+func (r *UserRepository) GetUserByEmail(email string) (*model.User, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	var user model.User
+	err := r.collection.FindOne(ctx, bson.M{"email": email}).Decode(&user)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, nil // Kein Benutzer gefunden, aber kein Fehler
+		}
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+// Count gibt die Anzahl der Benutzer in der Datenbank zurück
+func (r *UserRepository) Count() (int64, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	count, err := r.collection.CountDocuments(ctx, bson.M{})
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }

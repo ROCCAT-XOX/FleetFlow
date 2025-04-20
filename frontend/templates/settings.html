@@ -1,253 +1,244 @@
 {{ template "head" .}}
-<body class="bg-gray-50 dark:bg-gray-900 min-h-screen flex flex-col">
-<!-- Navigation -->
+<body class="bg-gray-50">
 {{ template "navigation" .}}
 
-<!-- Main Content -->
-<main class="container mx-auto px-4 py-6 flex-grow">
-    <div class="max-w-7xl mx-auto">
-        <!-- Breadcrumb und Titel -->
-        <div class="mb-6">
-            <nav class="flex" aria-label="Breadcrumb">
-                <ol class="inline-flex items-center space-x-1 md:space-x-3">
-                    <li class="inline-flex items-center">
-                        <a href="/dashboard" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white">
-                            <svg class="w-3 h-3 mr-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="m19.707 9.293-2-2-7-7a1 1 0 0 0-1.414 0l-7 7-2 2a1 1 0 0 0 1.414 1.414L2 10.414V18a2 2 0 0 0 2 2h3a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h3a2 2 0 0 0 2-2v-7.586l.293.293a1 1 0 0 0 1.414-1.414Z"/>
-                            </svg>
-                            Dashboard
-                        </a>
-                    </li>
-                    <li aria-current="page">
-                        <div class="flex items-center">
-                            <svg class="w-3 h-3 text-gray-400 mx-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
-                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
-                            </svg>
-                            <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2 dark:text-gray-400">Einstellungen</span>
-                        </div>
-                    </li>
-                </ol>
-            </nav>
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white mt-4">Einstellungen</h1>
+<!-- Hauptinhalt -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="md:flex md:items-center md:justify-between mb-6">
+        <div class="flex-1 min-w-0">
+            <h1 class="text-2xl font-bold text-gray-900">Einstellungen</h1>
+            <p class="mt-1 text-sm text-gray-500">Verwalten Sie die Systemeinstellungen und Konfigurationen</p>
         </div>
+    </div>
 
-        <!-- Tabs -->
-        <div class="mb-6 border-b border-gray-200 dark:border-gray-700">
-            <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="settings-tabs" role="tablist">
-                <li class="mr-2" role="presentation">
-                    <button class="inline-block p-4 border-b-2 border-blue-600 rounded-t-lg active dark:text-blue-500 dark:border-blue-500" id="users-tab" data-tabs-target="#users" type="button" role="tab" aria-controls="users" aria-selected="true">Benutzerverwaltung</button>
-                </li>
-            </ul>
-        </div>
+    <!-- Tab Navigation -->
+    <div class="mb-6 border-b border-gray-200">
+        <nav class="flex space-x-8" aria-label="Tabs">
+            <button class="tab-btn border-indigo-500 text-indigo-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="general">
+                Allgemein
+            </button>
+            <button class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="notifications">
+                Benachrichtigungen
+            </button>
+            <button class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="appearance">
+                Erscheinungsbild
+            </button>
+            {{ if eq .userRole "admin" }}
+            <button class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="users">
+                Benutzerverwaltung
+            </button>
+            {{ end }}
+        </nav>
+    </div>
 
-        <!-- Tab-Inhalte -->
-        <div id="settings-tabs-content">
-            <!-- Benutzerverwaltung Tab -->
-            <div class="block" id="users" role="tabpanel" aria-labelledby="users-tab">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Benutzerverwaltung</h2>
-                    <button id="add-user-btn" type="button" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                        <svg class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                        </svg>
-                        Benutzer hinzufügen
-                    </button>
-                </div>
-
-                <!-- Filter und Suche -->
-                <div class="bg-white dark:bg-gray-800 p-4 rounded-md shadow-sm mb-6">
-                    <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
-                        <div class="flex-1">
-                            <label for="search-user" class="sr-only">Suche</label>
-                            <div class="relative rounded-md shadow-sm">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                    </svg>
-                                </div>
-                                <input type="text" name="search-user" id="search-user" class="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-12 sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Benutzer suchen...">
-                            </div>
+    <!-- Tab-Inhalte -->
+    <div id="settings-tabs-content">
+        <!-- Allgemeine Einstellungen -->
+        <div id="general" class="settings-tab-content">
+            <div class="bg-white shadow sm:rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">Allgemeine Einstellungen</h3>
+                    <div class="mt-2 max-w-xl text-sm text-gray-500">
+                        <p>Passen Sie grundlegende Einstellungen des Systems an.</p>
+                    </div>
+                    <form class="mt-5 space-y-6">
+                        <div>
+                            <label for="company-name" class="block text-sm font-medium text-gray-700">Unternehmensname</label>
+                            <input type="text" name="company-name" id="company-name" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" value="FleetFlow GmbH">
                         </div>
-                        <div class="sm:w-1/4">
-                            <select id="role-filter" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                                <option value="all">Alle Rollen</option>
-                                <option value="admin">Administrator</option>
-                                <option value="manager">Manager</option>
-                                <option value="user">Benutzer</option>
+                        <div>
+                            <label for="company-address" class="block text-sm font-medium text-gray-700">Adresse</label>
+                            <textarea id="company-address" name="company-address" rows="3" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">Musterstraße 123
+80333 München</textarea>
+                        </div>
+                        <div>
+                            <label for="timezone" class="block text-sm font-medium text-gray-700">Zeitzone</label>
+                            <select id="timezone" name="timezone" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                <option value="Europe/Berlin" selected>Europa/Berlin (CET/CEST)</option>
+                                <option value="Europe/London">Europa/London (GMT/BST)</option>
+                                <option value="America/New_York">Amerika/New York (EST/EDT)</option>
                             </select>
                         </div>
+                        <div>
+                            <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                Speichern
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Benachrichtigungseinstellungen -->
+        <div id="notifications" class="settings-tab-content hidden">
+            <div class="bg-white shadow sm:rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">Benachrichtigungseinstellungen</h3>
+                    <div class="mt-2 max-w-xl text-sm text-gray-500">
+                        <p>Legen Sie fest, welche Benachrichtigungen Sie erhalten möchten.</p>
+                    </div>
+                    <form class="mt-5 space-y-6">
+                        <fieldset>
+                            <legend class="text-sm font-medium text-gray-700">E-Mail-Benachrichtigungen</legend>
+                            <div class="mt-4 space-y-4">
+                                <div class="flex items-start">
+                                    <div class="flex items-center h-5">
+                                        <input id="email-bookings" name="email-bookings" type="checkbox" checked class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                                    </div>
+                                    <div class="ml-3 text-sm">
+                                        <label for="email-bookings" class="font-medium text-gray-700">Buchungsbenachrichtigungen</label>
+                                        <p class="text-gray-500">Erhalten Sie eine Benachrichtigung bei neuen Fahrzeugbuchungen.</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start">
+                                    <div class="flex items-center h-5">
+                                        <input id="email-maintenance" name="email-maintenance" type="checkbox" checked class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                                    </div>
+                                    <div class="ml-3 text-sm">
+                                        <label for="email-maintenance" class="font-medium text-gray-700">Wartungsbenachrichtigungen</label>
+                                        <p class="text-gray-500">Erhalten Sie eine Benachrichtigung bei anstehenden Wartungen.</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start">
+                                    <div class="flex items-center h-5">
+                                        <input id="email-reports" name="email-reports" type="checkbox" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                                    </div>
+                                    <div class="ml-3 text-sm">
+                                        <label for="email-reports" class="font-medium text-gray-700">Berichtsbenachrichtigungen</label>
+                                        <p class="text-gray-500">Erhalten Sie wöchentliche und monatliche Berichte per E-Mail.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+                        <fieldset>
+                            <legend class="text-sm font-medium text-gray-700">System-Benachrichtigungen</legend>
+                            <div class="mt-4 space-y-4">
+                                <div class="flex items-start">
+                                    <div class="flex items-center h-5">
+                                        <input id="system-alerts" name="system-alerts" type="checkbox" checked class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                                    </div>
+                                    <div class="ml-3 text-sm">
+                                        <label for="system-alerts" class="font-medium text-gray-700">Systemwarnungen</label>
+                                        <p class="text-gray-500">Erhalten Sie Benachrichtigungen über wichtige Systemereignisse.</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start">
+                                    <div class="flex items-center h-5">
+                                        <input id="driver-alerts" name="driver-alerts" type="checkbox" checked class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                                    </div>
+                                    <div class="ml-3 text-sm">
+                                        <label for="driver-alerts" class="font-medium text-gray-700">Fahrerbenachrichtigungen</label>
+                                        <p class="text-gray-500">Erhalten Sie Benachrichtigungen über Führerscheinablauf und Schulungen.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+                        <div>
+                            <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                Speichern
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Erscheinungsbild-Einstellungen -->
+        <div id="appearance" class="settings-tab-content hidden">
+            <div class="bg-white shadow sm:rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">Erscheinungsbild</h3>
+                    <div class="mt-2 max-w-xl text-sm text-gray-500">
+                        <p>Passen Sie das Erscheinungsbild der Benutzeroberfläche an.</p>
+                    </div>
+                    <form class="mt-5 space-y-6">
+                        <fieldset>
+                            <legend class="text-sm font-medium text-gray-700">Farbschema</legend>
+                            <div class="mt-4 space-y-4">
+                                <div class="flex items-center">
+                                    <input id="theme-light" name="theme" type="radio" checked class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300">
+                                    <label for="theme-light" class="ml-3 block text-sm font-medium text-gray-700">
+                                        Helles Design
+                                    </label>
+                                </div>
+                                <div class="flex items-center">
+                                    <input id="theme-dark" name="theme" type="radio" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300">
+                                    <label for="theme-dark" class="ml-3 block text-sm font-medium text-gray-700">
+                                        Dunkles Design
+                                    </label>
+                                </div>
+                                <div class="flex items-center">
+                                    <input id="theme-system" name="theme" type="radio" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300">
+                                    <label for="theme-system" class="ml-3 block text-sm font-medium text-gray-700">
+                                        Systemeinstellung
+                                    </label>
+                                </div>
+                            </div>
+                        </fieldset>
+                        <div>
+                            <label for="language" class="block text-sm font-medium text-gray-700">Sprache</label>
+                            <select id="language" name="language" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                <option selected>Deutsch</option>
+                                <option>English</option>
+                                <option>Français</option>
+                                <option>Español</option>
+                            </select>
+                        </div>
+                        <div>
+                            <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                Speichern
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Benutzerverwaltung -->
+        {{ if eq .userRole "admin" }}
+        <div id="users" class="settings-tab-content hidden">
+            <div class="bg-white shadow sm:rounded-lg mb-6">
+                <div class="px-4 py-5 sm:p-6">
+                    <div class="sm:flex sm:items-center sm:justify-between">
+                        <div>
+                            <h3 class="text-lg leading-6 font-medium text-gray-900">Benutzerverwaltung</h3>
+                            <p class="mt-1 text-sm text-gray-500">Fügen Sie Benutzer hinzu oder bearbeiten Sie bestehende Benutzerkonten.</p>
+                        </div>
+                        <button type="button" id="add-user-btn" class="mt-3 sm:mt-0 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            <svg class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                            Benutzer hinzufügen
+                        </button>
                     </div>
                 </div>
 
                 <!-- Benutzerliste -->
-                <div class="bg-white dark:bg-gray-800 shadow rounded-md overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                        <thead class="bg-gray-50 dark:bg-gray-700">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
                         <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                Benutzer
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                E-Mail
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                Rolle
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                Status
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                Aktionen
-                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">E-Mail</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rolle</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Aktionen</th>
                         </tr>
                         </thead>
-                        <tbody class="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
-                        <!-- Benutzer 1 -->
-                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="flex items-center">
-                                    <div class="flex-shrink-0 h-10 w-10">
-                                        <img class="h-10 w-10 rounded-full" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="">
-                                    </div>
-                                    <div class="ml-4">
-                                        <div class="text-sm font-medium text-gray-900 dark:text-white">
-                                            Max Mustermann
-                                        </div>
-                                        <div class="text-sm text-gray-500 dark:text-gray-400">
-                                            Angemeldet seit 01.01.2023
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900 dark:text-white">max.mustermann@fleetdrive.com</div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                                        Administrator
-                                    </span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                                        Aktiv
-                                    </span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <div class="flex justify-end space-x-2">
-                                    <button class="edit-user-btn text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300" data-id="1">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                                        </svg>
-                                    </button>
-                                    <button class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                                        </svg>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        <!-- Benutzer 2 -->
-                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="flex items-center">
-                                    <div class="flex-shrink-0 h-10 w-10">
-                                        <img class="h-10 w-10 rounded-full" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="">
-                                    </div>
-                                    <div class="ml-4">
-                                        <div class="text-sm font-medium text-gray-900 dark:text-white">
-                                            Erika Musterfrau
-                                        </div>
-                                        <div class="text-sm text-gray-500 dark:text-gray-400">
-                                            Angemeldet seit 15.02.2023
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900 dark:text-white">erika.musterfrau@fleetdrive.com</div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
-                                        Manager
-                                    </span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                                        Aktiv
-                                    </span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <div class="flex justify-end space-x-2">
-                                    <button class="edit-user-btn text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300" data-id="2">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                                        </svg>
-                                    </button>
-                                    <button class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                                        </svg>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        <!-- Benutzer 3 -->
-                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="flex items-center">
-                                    <div class="flex-shrink-0 h-10 w-10">
-                                        <img class="h-10 w-10 rounded-full" src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="">
-                                    </div>
-                                    <div class="ml-4">
-                                        <div class="text-sm font-medium text-gray-900 dark:text-white">
-                                            John Doe
-                                        </div>
-                                        <div class="text-sm text-gray-500 dark:text-gray-400">
-                                            Angemeldet seit 10.03.2023
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900 dark:text-white">john.doe@fleetdrive.com</div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
-                                        Benutzer
-                                    </span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
-                                        Inaktiv
-                                    </span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <div class="flex justify-end space-x-2">
-                                    <button class="edit-user-btn text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300" data-id="3">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                                        </svg>
-                                    </button>
-                                    <button class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                                        </svg>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
+                        <tbody id="users-table-body" class="bg-white divide-y divide-gray-200">
+                        <!-- Platzhalter für dynamische Daten -->
                         </tbody>
                     </table>
                 </div>
-
             </div>
         </div>
+        {{ end }}
     </div>
-</main>
+</div>
 
-<!-- Modal: Benutzer hinzufügen/bearbeiten -->
-<div id="user-modal" class="fixed z-10 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+<!-- Benutzer-Modals -->
+<!-- Modal: Benutzer hinzufügen -->
+<div id="addUserModal" class="fixed z-10 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
     <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         <!-- Hintergrund-Overlay -->
         <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
@@ -256,50 +247,40 @@
         <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
         <!-- Modal-Panel -->
-        <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-            <form id="user-form">
-                <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <form id="addUserForm">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                     <div class="sm:flex sm:items-start">
                         <div class="w-full">
-                            <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white" id="modal-title">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900">
                                 Benutzer hinzufügen
                             </h3>
 
                             <div class="mt-4">
                                 <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                                     <div class="sm:col-span-3">
-                                        <label for="first-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Vorname</label>
-                                        <input type="text" name="first-name" id="first-name" class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                        <label for="firstName" class="block text-sm font-medium text-gray-700">Vorname</label>
+                                        <input type="text" name="firstName" id="firstName" required class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
                                     </div>
 
                                     <div class="sm:col-span-3">
-                                        <label for="last-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nachname</label>
-                                        <input type="text" name="last-name" id="last-name" class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                        <label for="lastName" class="block text-sm font-medium text-gray-700">Nachname</label>
+                                        <input type="text" name="lastName" id="lastName" required class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
                                     </div>
 
                                     <div class="sm:col-span-6">
-                                        <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">E-Mail</label>
-                                        <input type="email" name="email" id="email" class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                        <label for="email" class="block text-sm font-medium text-gray-700">E-Mail</label>
+                                        <input type="email" name="email" id="email" required class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
                                     </div>
 
                                     <div class="sm:col-span-6">
-                                        <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Benutzername</label>
-                                        <input type="text" name="username" id="username" class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                                    </div>
-
-                                    <div class="sm:col-span-6">
-                                        <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Passwort</label>
-                                        <input type="password" name="password" id="password" class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                                    </div>
-
-                                    <div class="sm:col-span-6">
-                                        <label for="confirm-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Passwort bestätigen</label>
-                                        <input type="password" name="confirm-password" id="confirm-password" class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                        <label for="password" class="block text-sm font-medium text-gray-700">Passwort</label>
+                                        <input type="password" name="password" id="password" required class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
                                     </div>
 
                                     <div class="sm:col-span-3">
-                                        <label for="role" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Rolle</label>
-                                        <select id="role" name="role" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                        <label for="role" class="block text-sm font-medium text-gray-700">Rolle</label>
+                                        <select id="role" name="role" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
                                             <option value="user">Benutzer</option>
                                             <option value="manager">Manager</option>
                                             <option value="admin">Administrator</option>
@@ -307,8 +288,8 @@
                                     </div>
 
                                     <div class="sm:col-span-3">
-                                        <label for="status" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
-                                        <select id="status" name="status" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                        <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
+                                        <select id="status" name="status" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
                                             <option value="active">Aktiv</option>
                                             <option value="inactive">Inaktiv</option>
                                         </select>
@@ -318,11 +299,11 @@
                         </div>
                     </div>
                 </div>
-                <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                    <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
-                        Speichern
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm">
+                        Hinzufügen
                     </button>
-                    <button type="button" id="close-modal-btn" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600">
+                    <button type="button" onclick="closeModal('addUserModal')" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
                         Abbrechen
                     </button>
                 </div>
@@ -331,299 +312,126 @@
     </div>
 </div>
 
-<!-- Footer -->
-<footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-4 mt-6">
-    <div class="container mx-auto px-4 text-center text-gray-500 dark:text-gray-400 text-sm">
-        &copy; {{.year}} FleetDrive. Alle Rechte vorbehalten.
+<!-- Modal: Benutzer bearbeiten -->
+<div id="editUserModal" class="fixed z-10 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <!-- Hintergrund-Overlay -->
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+
+        <!-- Zentriert den Modal-Inhalt -->
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+        <!-- Modal-Panel -->
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <form id="editUserForm">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="w-full">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900">
+                                Benutzer bearbeiten
+                            </h3>
+
+                            <div class="mt-4">
+                                <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                                    <div class="sm:col-span-3">
+                                        <label for="edit-firstName" class="block text-sm font-medium text-gray-700">Vorname</label>
+                                        <input type="text" name="firstName" id="edit-firstName" required class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="edit-lastName" class="block text-sm font-medium text-gray-700">Nachname</label>
+                                        <input type="text" name="lastName" id="edit-lastName" required class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+
+                                    <div class="sm:col-span-6">
+                                        <label for="edit-email" class="block text-sm font-medium text-gray-700">E-Mail</label>
+                                        <input type="email" name="email" id="edit-email" required class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+
+                                    <div class="sm:col-span-6">
+                                        <label for="edit-password" class="block text-sm font-medium text-gray-700">Neues Passwort (leer lassen, wenn unverändert)</label>
+                                        <input type="password" name="password" id="edit-password" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="edit-role" class="block text-sm font-medium text-gray-700">Rolle</label>
+                                        <select id="edit-role" name="role" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                            <option value="user">Benutzer</option>
+                                            <option value="manager">Manager</option>
+                                            <option value="admin">Administrator</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="edit-status" class="block text-sm font-medium text-gray-700">Status</label>
+                                        <select id="edit-status" name="status" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                            <option value="active">Aktiv</option>
+                                            <option value="inactive">Inaktiv</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm">
+                        Speichern
+                    </button>
+                    <button type="button" onclick="closeModal('editUserModal')" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        Abbrechen
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
-</footer>
-<!--
+</div>
+
 <script>
+    // Tab-Funktionalität
     document.addEventListener('DOMContentLoaded', function() {
-        // Tabs-Funktionalität
-        const tabButtons = document.querySelectorAll('[role="tab"]');
-        const tabContents = document.querySelectorAll('[role="tabpanel"]');
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.settings-tab-content');
 
         tabButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const targetId = button.getAttribute('data-tabs-target');
-                const target = document.querySelector(targetId);
+            button.addEventListener('click', function() {
+                const tabId = this.getAttribute('data-tab');
+
+                // Alle Tabs deaktivieren
+                tabButtons.forEach(btn => {
+                    btn.classList.remove('border-indigo-500', 'text-indigo-600');
+                    btn.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+                });
 
                 // Alle Tab-Inhalte verstecken
                 tabContents.forEach(content => {
                     content.classList.add('hidden');
                 });
 
-                // Alle Tab-Buttons zurücksetzen
-                tabButtons.forEach(btn => {
-                    btn.classList.remove('border-blue-600', 'dark:text-blue-500', 'dark:border-blue-500');
-                    btn.classList.add('border-transparent', 'hover:text-gray-600', 'hover:border-gray-300');
-                    btn.setAttribute('aria-selected', 'false');
-                });
+                // Aktuellen Tab aktivieren
+                this.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+                this.classList.add('border-indigo-500', 'text-indigo-600');
 
-                // Ausgewählten Tab anzeigen und Button aktivieren
-                target.classList.remove('hidden');
-                button.classList.remove('border-transparent', 'hover:text-gray-600', 'hover:border-gray-300');
-                button.classList.add('border-blue-600', 'dark:text-blue-500', 'dark:border-blue-500');
-                button.setAttribute('aria-selected', 'true');
+                // Aktuellen Tab-Inhalt anzeigen
+                document.getElementById(tabId).classList.remove('hidden');
+
+                // Wenn Benutzer-Tab aktiviert wird, lade die Benutzer
+                if (tabId === 'users') {
+                    loadUsers();
+                }
             });
         });
 
-        // Modal-Elemente
-        const modal = document.getElementById('user-modal');
+        // Add User Button Event Listener
         const addUserBtn = document.getElementById('add-user-btn');
-        const closeModalBtn = document.getElementById('close-modal-btn');
-        const userForm = document.getElementById('user-form');
-        const editButtons = document.querySelectorAll('.edit-user-btn');
-        const modalTitle = document.getElementById('modal-title');
-
-        // Modal-Funktionen
-        function openModal(isEdit = false, userId = null) {
-            modal.classList.remove('hidden');
-            if (isEdit) {
-                modalTitle.textContent = 'Benutzer bearbeiten';
-
-                // In einer echten Anwendung würden hier die Benutzerdaten geladen werden
-                console.log(`Benutzer mit ID ${userId} bearbeiten`);
-
-                // Beispiel für das Vorausfüllen von Daten
-                if (userId === '1') {
-                    document.getElementById('first-name').value = 'Max';
-                    document.getElementById('last-name').value = 'Mustermann';
-                    document.getElementById('email').value = 'max.mustermann@fleetdrive.com';
-                    document.getElementById('username').value = 'maxm';
-                    document.getElementById('role').value = 'admin';
-                    document.getElementById('status').value = 'active';
-
-                    // Passwortfelder für Bearbeitung ausblenden oder optional machen
-                    document.getElementById('password').value = '********';
-                    document.getElementById('confirm-password').value = '********';
-                } else if (userId === '2') {
-                    document.getElementById('first-name').value = 'Erika';
-                    document.getElementById('last-name').value = 'Musterfrau';
-                    document.getElementById('email').value = 'erika.musterfrau@fleetdrive.com';
-                    document.getElementById('username').value = 'erikam';
-                    document.getElementById('role').value = 'manager';
-                    document.getElementById('status').value = 'active';
-                    document.getElementById('password').value = '********';
-                    document.getElementById('confirm-password').value = '********';
-                } else if (userId === '3') {
-                    document.getElementById('first-name').value = 'John';
-                    document.getElementById('last-name').value = 'Doe';
-                    document.getElementById('email').value = 'john.doe@fleetdrive.com';
-                    document.getElementById('username').value = 'johnd';
-                    document.getElementById('role').value = 'user';
-                    document.getElementById('status').value = 'inactive';
-                    document.getElementById('password').value = '********';
-                    document.getElementById('confirm-password').value = '********';
-                }
-            } else {
-                modalTitle.textContent = 'Benutzer hinzufügen';
-                userForm.reset();
-            }
+        if (addUserBtn) {
+            addUserBtn.addEventListener('click', () => openModal('addUserModal'));
         }
-
-        function closeModal() {
-            modal.classList.add('hidden');
-            userForm.reset();
-        }
-
-        // Event-Listener
-        addUserBtn.addEventListener('click', () => openModal(false));
-        closeModalBtn.addEventListener('click', closeModal);
-
-        // Schließen des Modals, wenn außerhalb geklickt wird
-        modal.addEventListener('click', function(event) {
-            if (event.target === modal) {
-                closeModal();
-            }
-        });
-
-        // Event-Listener für Bearbeiten-Buttons
-        editButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const userId = this.dataset.id;
-                openModal(true, userId);
-            });
-        });
-
-        // Formular-Absenden
-        userForm.addEventListener('submit', function(event) {
-            event.preventDefault();
-
-            // Hier würden die Formulardaten verarbeitet und an die API gesendet werden
-            const formData = new FormData(userForm);
-            const userData = {};
-
-            for (let [key, value] of formData.entries()) {
-                userData[key] = value;
-            }
-
-            console.log('Benutzerdaten speichern:', userData);
-
-            // Validierung der Passwörter
-            if (userData.password !== userData['confirm-password']) {
-                alert('Die Passwörter stimmen nicht überein!');
-                return;
-            }
-
-            // Erfolgsmeldung (in einer echten Anwendung würde hier auf die API-Antwort gewartet werden)
-            alert('Benutzer erfolgreich gespeichert!');
-            closeModal();
-        });
-
-        // Suchfunktion
-        const searchInput = document.getElementById('search-user');
-        searchInput.addEventListener('input', function() {
-            const searchText = this.value.toLowerCase();
-            const userRows = document.querySelectorAll('tbody tr');
-
-            userRows.forEach(row => {
-                const rowText = row.textContent.toLowerCase();
-                if (rowText.includes(searchText)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        });
-
-        // Rollenfilter
-        const roleFilter = document.getElementById('role-filter');
-        roleFilter.addEventListener('change', function() {
-            const selectedRole = this.value;
-            const userRows = document.querySelectorAll('tbody tr');
-
-            userRows.forEach(row => {
-                if (selectedRole === 'all') {
-                    row.style.display = '';
-                    return;
-                }
-
-                const roleCell = row.querySelector('td:nth-child(3) span');
-                const roleText = roleCell.textContent.trim().toLowerCase();
-
-                let matchesFilter = false;
-
-                if (selectedRole === 'admin' && roleText === 'administrator') {
-                    matchesFilter = true;
-                } else if (selectedRole === 'manager' && roleText === 'manager') {
-                    matchesFilter = true;
-                } else if (selectedRole === 'user' && roleText === 'benutzer') {
-                    matchesFilter = true;
-                }
-
-                row.style.display = matchesFilter ? '' : 'none';
-            });
-        });
-
-        // Dark/Light Mode Toggle
-        const lightModeRadio = document.getElementById('light-mode');
-        const darkModeRadio = document.getElementById('dark-mode');
-        const systemModeRadio = document.getElementById('system-mode');
-
-        function setThemePreference(mode) {
-            if (mode === 'dark') {
-                document.documentElement.classList.add('dark');
-                localStorage.setItem('color-theme', 'dark');
-                darkModeRadio.checked = true;
-            } else if (mode === 'light') {
-                document.documentElement.classList.remove('dark');
-                localStorage.setItem('color-theme', 'light');
-                lightModeRadio.checked = true;
-            } else {
-                localStorage.removeItem('color-theme');
-                systemModeRadio.checked = true;
-
-                // System-Einstellung verwenden
-                if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                    document.documentElement.classList.add('dark');
-                } else {
-                    document.documentElement.classList.remove('dark');
-                }
-            }
-        }
-
-        // Aktuelle Einstellung überprüfen und entsprechend setzen
-        const currentTheme = localStorage.getItem('color-theme');
-        if (currentTheme === 'dark') {
-            darkModeRadio.checked = true;
-        } else if (currentTheme === 'light') {
-            lightModeRadio.checked = true;
-        } else {
-            systemModeRadio.checked = true;
-        }
-
-        // Event Listener für die Radioschalter
-        lightModeRadio.addEventListener('change', () => setThemePreference('light'));
-        darkModeRadio.addEventListener('change', () => setThemePreference('dark'));
-        systemModeRadio.addEventListener('change', () => setThemePreference('system'));
     });
-</script>
--->
-<script>
-    // Funktion zum Speichern eines Benutzers (Erstellen oder Aktualisieren)
-    function saveUser(userData, isEdit = false) {
-        console.log('Zu speichernde Benutzerdaten:', userData); // Debug-Ausgabe
 
-        // Validierung der Pflichtfelder
-        if (!userData['first-name'] || !userData['last-name'] || !userData.email) {
-            alert('Bitte füllen Sie alle Pflichtfelder aus (Vorname, Nachname, E-Mail).');
-            return Promise.reject(new Error('Unvollständige Daten'));
-        }
-
-        // Bei neuen Benutzern muss ein Passwort gesetzt werden
-        if (!isEdit && (!userData.password || userData.password.length < 6)) {
-            alert('Bitte geben Sie ein Passwort mit mindestens 6 Zeichen ein.');
-            return Promise.reject(new Error('Ungültiges Passwort'));
-        }
-
-        // Überprüfen, ob Passwörter übereinstimmen
-        if (userData.password && userData.password !== userData['confirm-password']) {
-            alert('Die Passwörter stimmen nicht überein.');
-            return Promise.reject(new Error('Passwörter stimmen nicht überein'));
-        }
-
-        // API-Pfad und Methode basierend auf Bearbeitung oder Neuanlage
-        const url = isEdit ? `/api/users/${userData.id}` : '/api/users';
-        const method = isEdit ? 'PUT' : 'POST';
-
-        // Erstelle das Anfrageobjekt mit allen erforderlichen Feldern
-        const requestData = {
-            firstName: userData['first-name'],
-            lastName: userData['last-name'],
-            email: userData.email,
-            username: userData.username || userData.email, // Falls kein Benutzername angegeben, E-Mail verwenden
-            role: userData.role,
-            status: userData.status
-        };
-
-        // Passwort nur hinzufügen, wenn eines eingegeben wurde
-        if (userData.password && userData.password !== '********') {
-            requestData.password = userData.password;
-        }
-
-        // API-Anfrage senden
-        return fetch(url, {
-            method: method,
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(requestData)
-        })
-            .then(response => {
-                if (!response.ok) {
-                    return response.text().then(text => {
-                        throw new Error('Fehler beim Speichern des Benutzers: ' + text);
-                    });
-                }
-                return response.json();
-            });
-    }
-
-    // Funktion zum Laden aller Benutzer für die Tabelle
+    // Benutzer laden
     function loadUsers() {
-        return fetch('/api/users')
+        fetch('/api/users')
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Fehler beim Laden der Benutzer');
@@ -632,15 +440,15 @@
             })
             .then(data => {
                 const users = data.users || [];
-                renderUsersTable(users);
+                renderUsers(users);
             })
             .catch(error => {
                 console.error('Fehler:', error);
-                const tableBody = document.querySelector('tbody');
+                const tableBody = document.getElementById('users-table-body');
                 if (tableBody) {
                     tableBody.innerHTML = `
                     <tr>
-                        <td colspan="5" class="px-6 py-4 text-center text-sm text-red-500 dark:text-red-400">
+                        <td colspan="5" class="px-6 py-4 text-center text-sm text-red-500">
                             Fehler beim Laden der Benutzer: ${error.message}
                         </td>
                     </tr>
@@ -649,16 +457,16 @@
             });
     }
 
-    // Funktion zum Rendern der Benutzertabelle
-    function renderUsersTable(users) {
-        const tableBody = document.querySelector('tbody');
+    // Benutzer in Tabelle rendern
+    function renderUsers(users) {
+        const tableBody = document.getElementById('users-table-body');
         if (!tableBody) return;
 
         if (users.length === 0) {
             tableBody.innerHTML = `
             <tr>
-                <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
-                    Keine Benutzer gefunden.
+                <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
+                    Keine Benutzer gefunden
                 </td>
             </tr>
         `;
@@ -666,308 +474,211 @@
         }
 
         tableBody.innerHTML = users.map(user => {
-            // Rollenklassen und Text ermitteln
-            let roleClass, roleText;
-            switch(user.role) {
-                case 'admin':
-                    roleClass = 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
-                    roleText = 'Administrator';
-                    break;
-                case 'manager':
-                    roleClass = 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
-                    roleText = 'Manager';
-                    break;
-                default:
-                    roleClass = 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
-                    roleText = 'Benutzer';
-            }
-
-            // Statusklassen und Text ermitteln
-            let statusClass, statusText;
-            switch(user.status) {
-                case 'active':
-                    statusClass = 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-                    statusText = 'Aktiv';
-                    break;
-                default:
-                    statusClass = 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
-                    statusText = 'Inaktiv';
-            }
-
-            // Formatierung des Anmeldedatums
-            const createdDate = user.createdAt ? new Date(user.createdAt) : new Date();
-            const createdDateText = `Angemeldet seit ${createdDate.toLocaleDateString('de-DE')}`;
+            const roleClass = getRoleClass(user.role);
+            const statusClass = getStatusClass(user.status);
 
             return `
-            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+            <tr>
                 <td class="px-6 py-4 whitespace-nowrap">
                     <div class="flex items-center">
-                        <div class="flex-shrink-0 h-10 w-10">
-                            <img class="h-10 w-10 rounded-full" src="https://images.unsplash.com/photo-${'1472099645785-5658abf4ff4e'}?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="">
+                        <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                            <span class="text-indigo-600 font-medium text-sm">
+                                ${(user.firstName || user.username || 'U')[0].toUpperCase()}
+                            </span>
                         </div>
                         <div class="ml-4">
-                            <div class="text-sm font-medium text-gray-900 dark:text-white">
-                                ${user.firstName} ${user.lastName}
+                            <div class="text-sm font-medium text-gray-900">
+                                ${user.firstName || ''} ${user.lastName || ''}
                             </div>
-                            <div class="text-sm text-gray-500 dark:text-gray-400">
-                                ${createdDateText}
+                            <div class="text-sm text-gray-500">
+                                ${user.username || ''}
                             </div>
                         </div>
                     </div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm text-gray-900 dark:text-white">${user.email}</div>
+                    <div class="text-sm text-gray-900">${user.email || ''}</div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${roleClass}">
-                        ${roleText}
+                        ${getRoleText(user.role)}
                     </span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}">
-                        ${statusText}
+                        ${getStatusText(user.status)}
                     </span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div class="flex justify-end space-x-2">
-                        <button class="edit-user-btn text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300" data-id="${user.id}">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                            </svg>
-                        </button>
-                        <button class="delete-user-btn text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300" data-id="${user.id}">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                            </svg>
-                        </button>
-                    </div>
+                    <button onclick="openEditUserModal('${user.id}', '${user.firstName || ''}', '${user.lastName || ''}', '${user.email || ''}', '${user.role}', '${user.status}')" class="text-indigo-600 hover:text-indigo-900 mr-3">
+                        Bearbeiten
+                    </button>
+                    <button onclick="confirmDeleteUser('${user.id}', '${user.firstName || user.username}')" class="text-red-600 hover:text-red-900">
+                        Löschen
+                    </button>
                 </td>
             </tr>
         `;
         }).join('');
-
-        // Event-Listener für Bearbeiten-Buttons hinzufügen
-        document.querySelectorAll('.edit-user-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const userId = this.getAttribute('data-id');
-                openUserModal(true, userId);
-            });
-        });
-
-        // Event-Listener für Löschen-Buttons hinzufügen
-        document.querySelectorAll('.delete-user-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const userId = this.getAttribute('data-id');
-                if (confirm('Sind Sie sicher, dass Sie diesen Benutzer löschen möchten?')) {
-                    deleteUser(userId);
-                }
-            });
-        });
     }
 
-    // Funktion zum Löschen eines Benutzers
-    function deleteUser(userId) {
-        fetch(`/api/users/${userId}`, {
-            method: 'DELETE'
+    // Hilfsfunktionen für Klassen und Text
+    function getRoleClass(role) {
+        switch (role) {
+            case 'admin':
+                return 'bg-purple-100 text-purple-800';
+            case 'manager':
+                return 'bg-blue-100 text-blue-800';
+            default:
+                return 'bg-green-100 text-green-800';
+        }
+    }
+
+    function getStatusClass(status) {
+        return status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+    }
+
+    function getRoleText(role) {
+        switch (role) {
+            case 'admin':
+                return 'Administrator';
+            case 'manager':
+                return 'Manager';
+            default:
+                return 'Benutzer';
+        }
+    }
+
+    function getStatusText(status) {
+        return status === 'active' ? 'Aktiv' : 'Inaktiv';
+    }
+
+    // Modal-Funktionen
+    function openModal(modalId) {
+        document.getElementById(modalId).classList.remove('hidden');
+    }
+
+    function closeModal(modalId) {
+        document.getElementById(modalId).classList.add('hidden');
+    }
+
+    // Benutzer bearbeiten
+    function openEditUserModal(id, firstName, lastName, email, role, status) {
+        // Formular vorausfüllen
+        document.getElementById('edit-firstName').value = firstName;
+        document.getElementById('edit-lastName').value = lastName;
+        document.getElementById('edit-email').value = email;
+        document.getElementById('edit-role').value = role;
+        document.getElementById('edit-status').value = status;
+
+        // ID speichern (z.B. in einem data-Attribut)
+        const form = document.getElementById('editUserForm');
+        form.setAttribute('data-user-id', id);
+
+        openModal('editUserModal');
+    }
+
+    // Benutzer löschen bestätigen
+    function confirmDeleteUser(id, name) {
+        if (confirm(`Möchten Sie den Benutzer "${name}" wirklich löschen?`)) {
+            deleteUser(id);
+        }
+    }
+
+    // API-Aufrufe
+    function deleteUser(id) {
+        fetch(`/api/users/${id}`, {
+            method: 'DELETE',
         })
             .then(response => {
                 if (!response.ok) {
-                    return response.text().then(text => {
-                        throw new Error('Fehler beim Löschen des Benutzers: ' + text);
-                    });
+                    throw new Error('Fehler beim Löschen des Benutzers');
                 }
                 return response.json();
             })
             .then(data => {
                 alert('Benutzer erfolgreich gelöscht!');
-                loadUsers(); // Tabelle aktualisieren
+                loadUsers(); // Benutzer neu laden
             })
             .catch(error => {
                 console.error('Fehler:', error);
-                alert(error.message);
+                alert('Fehler beim Löschen des Benutzers');
             });
     }
 
-    // Funktion zum Öffnen des Benutzer-Modals
-    function openUserModal(isEdit = false, userId = null) {
-        const modal = document.getElementById('user-modal');
-        const modalTitle = document.getElementById('modal-title');
-        const userForm = document.getElementById('user-form');
+    // Formular-Handling
+    document.getElementById('addUserForm').addEventListener('submit', function(event) {
+        event.preventDefault();
 
-        if (!modal || !modalTitle || !userForm) return;
+        const formData = new FormData(this);
+        const userData = {};
 
-        modal.classList.remove('hidden');
-
-        if (isEdit && userId) {
-            modalTitle.textContent = 'Benutzer bearbeiten';
-
-            // Benutzerdaten von der API laden
-            fetch(`/api/users/${userId}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Fehler beim Laden des Benutzers');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    const user = data.user;
-
-                    // Formularfelder befüllen
-                    document.getElementById('first-name').value = user.firstName || '';
-                    document.getElementById('last-name').value = user.lastName || '';
-                    document.getElementById('email').value = user.email || '';
-                    document.getElementById('username').value = user.username || '';
-                    document.getElementById('role').value = user.role || 'user';
-                    document.getElementById('status').value = user.status || 'active';
-
-                    // Passwörter mit Platzhaltern füllen
-                    document.getElementById('password').value = '********';
-                    document.getElementById('confirm-password').value = '********';
-
-                    // ID zum Formular hinzufügen
-                    let idInput = userForm.querySelector('input[name="id"]');
-                    if (!idInput) {
-                        idInput = document.createElement('input');
-                        idInput.type = 'hidden';
-                        idInput.name = 'id';
-                        userForm.appendChild(idInput);
-                    }
-                    idInput.value = userId;
-                })
-                .catch(error => {
-                    console.error('Fehler:', error);
-                    closeUserModal();
-                    alert('Fehler beim Laden des Benutzers: ' + error.message);
-                });
-        } else {
-            modalTitle.textContent = 'Benutzer hinzufügen';
-            userForm.reset();
-
-            // Versteckte ID entfernen
-            const idInput = userForm.querySelector('input[name="id"]');
-            if (idInput) {
-                idInput.remove();
-            }
+        for (let [key, value] of formData.entries()) {
+            userData[key] = value;
         }
-    }
 
-    // Funktion zum Schließen des Benutzer-Modals
-    function closeUserModal() {
-        const modal = document.getElementById('user-modal');
-        if (modal) {
-            modal.classList.add('hidden');
+        // API-Aufruf zum Hinzufügen des Benutzers
+        fetch('/api/users', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(userData)
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Fehler beim Hinzufügen des Benutzers');
+                }
+                return response.json();
+            })
+            .then(data => {
+                closeModal('addUserModal');
+                alert('Benutzer erfolgreich hinzugefügt!');
+                loadUsers(); // Benutzer neu laden
+            })
+            .catch(error => {
+                console.error('Fehler:', error);
+                alert('Fehler beim Hinzufügen des Benutzers');
+            });
+    });
+
+    document.getElementById('editUserForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        const userId = this.getAttribute('data-user-id');
+        const formData = new FormData(this);
+        const userData = {};
+
+        for (let [key, value] of formData.entries()) {
+            userData[key] = value;
         }
-    }
 
-    // Hauptfunktionalität beim Laden der Seite hinzufügen
-    document.addEventListener('DOMContentLoaded', function() {
-        // Auf der Einstellungsseite Benutzer laden
-        if (document.getElementById('users-tab')) {
-            loadUsers();
-
-            // Event-Listener für "Benutzer hinzufügen"-Button
-            const addUserBtn = document.getElementById('add-user-btn');
-            if (addUserBtn) {
-                addUserBtn.addEventListener('click', () => openUserModal(false));
-            }
-
-            // Event-Listener für "Schließen"-Button im Modal
-            const closeModalBtn = document.getElementById('close-modal-btn');
-            if (closeModalBtn) {
-                closeModalBtn.addEventListener('click', closeUserModal);
-            }
-
-            // Event-Listener für Klick außerhalb des Modals
-            const userModal = document.getElementById('user-modal');
-            if (userModal) {
-                userModal.addEventListener('click', function(event) {
-                    if (event.target === userModal) {
-                        closeUserModal();
-                    }
-                });
-            }
-
-            // Event-Listener für das Benutzerformular
-            const userForm = document.getElementById('user-form');
-            if (userForm) {
-                userForm.addEventListener('submit', function(event) {
-                    event.preventDefault();
-
-                    // Formulardaten sammeln
-                    const formData = new FormData(userForm);
-                    const userData = {};
-
-                    for (let [key, value] of formData.entries()) {
-                        userData[key] = value;
-                    }
-
-                    // Prüfen, ob es eine Bearbeitung ist (ID vorhanden)
-                    const isEdit = !!userData.id;
-
-                    // Benutzer speichern
-                    saveUser(userData, isEdit)
-                        .then(response => {
-                            console.log('Benutzer erfolgreich gespeichert:', response);
-                            closeUserModal();
-                            loadUsers(); // Benutzertabelle aktualisieren
-                            alert('Benutzer erfolgreich gespeichert!');
-                        })
-                        .catch(error => {
-                            console.error('Fehler:', error);
-                            // Fehlermeldung wird bereits in saveUser angezeigt
-                        });
-                });
-            }
-
-            // Event-Listener für Suchfunktion
-            const searchInput = document.getElementById('search-user');
-            if (searchInput) {
-                searchInput.addEventListener('input', function() {
-                    const searchText = this.value.toLowerCase();
-                    const userRows = document.querySelectorAll('tbody tr');
-
-                    userRows.forEach(row => {
-                        const rowText = row.textContent.toLowerCase();
-                        if (rowText.includes(searchText)) {
-                            row.style.display = '';
-                        } else {
-                            row.style.display = 'none';
-                        }
-                    });
-                });
-            }
-
-            // Event-Listener für Rollenfilter
-            const roleFilter = document.getElementById('role-filter');
-            if (roleFilter) {
-                roleFilter.addEventListener('change', function() {
-                    const selectedRole = this.value;
-                    const userRows = document.querySelectorAll('tbody tr');
-
-                    userRows.forEach(row => {
-                        if (selectedRole === 'all') {
-                            row.style.display = '';
-                            return;
-                        }
-
-                        const roleCell = row.querySelector('td:nth-child(3) span');
-                        const roleText = roleCell.textContent.trim().toLowerCase();
-
-                        let matchesFilter = false;
-                        if (selectedRole === 'admin' && roleText === 'administrator') {
-                            matchesFilter = true;
-                        } else if (selectedRole === 'manager' && roleText === 'manager') {
-                            matchesFilter = true;
-                        } else if (selectedRole === 'user' && roleText === 'benutzer') {
-                            matchesFilter = true;
-                        }
-
-                        row.style.display = matchesFilter ? '' : 'none';
-                    });
-                });
-            }
-        }
+        // API-Aufruf zum Aktualisieren des Benutzers
+        fetch(`/api/users/${userId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(userData)
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Fehler beim Aktualisieren des Benutzers');
+                }
+                return response.json();
+            })
+            .then(data => {
+                closeModal('editUserModal');
+                alert('Benutzer erfolgreich aktualisiert!');
+                loadUsers(); // Benutzer neu laden
+            })
+            .catch(error => {
+                console.error('Fehler:', error);
+                alert('Fehler beim Aktualisieren des Benutzers');
+            });
     });
 </script>
+
+{{ template "footer" .}}
 </body>
 </html>

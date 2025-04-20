@@ -71,10 +71,23 @@ func setupAuthorizedRoutes(group *gin.RouterGroup) {
 	})
 
 	group.GET("/settings", func(c *gin.Context) {
+		user, _ := c.Get("user")
 		c.HTML(http.StatusOK, "settings.html", gin.H{
-			"title": "Einstellungen",
-			"user":  c.MustGet("user"),
-			"year":  currentYear,
+			"title":    "Einstellungen",
+			"user":     user.(*model.User).FirstName + " " + user.(*model.User).LastName,
+			"userRole": user.(*model.User).Role,
+			"year":     currentYear,
+		})
+	})
+
+	// Profile route
+	group.GET("/profile", func(c *gin.Context) {
+		user, _ := c.Get("user")
+		c.HTML(http.StatusOK, "profile.html", gin.H{
+			"title":   "Mein Profil",
+			"user":    user.(*model.User).FirstName + " " + user.(*model.User).LastName,
+			"profile": user.(*model.User),
+			"year":    currentYear,
 		})
 	})
 
@@ -250,7 +263,8 @@ func setupAPIRoutes(api *gin.RouterGroup) {
 	usageHandler := handler.NewVehicleUsageHandler()
 	projectHandler := handler.NewProjectHandler()
 	fuelCostHandler := handler.NewFuelCostHandler()
-	activityHandler := handler.NewActivityHandler() // Neu hinzugefügt
+	activityHandler := handler.NewActivityHandler()
+	profileHandler := handler.NewProfileHandler() // Neu hinzugefügt
 
 	// Benutzer-API
 	users := api.Group("/users")
@@ -262,6 +276,13 @@ func setupAPIRoutes(api *gin.RouterGroup) {
 		users.DELETE("/:id", middleware.AdminMiddleware(), userHandler.DeleteUser)
 	}
 
+	// Profile-API (neu)
+	profile := api.Group("/profile")
+	{
+		profile.PUT("", profileHandler.UpdateProfile)
+		profile.POST("/password", profileHandler.ChangePassword)
+	}
+
 	// Fahrzeug-API
 	vehicles := api.Group("/vehicles")
 	{
@@ -269,7 +290,7 @@ func setupAPIRoutes(api *gin.RouterGroup) {
 		vehicles.GET("/:id", vehicleHandler.GetVehicle)
 		vehicles.POST("", vehicleHandler.CreateVehicle)
 		vehicles.PUT("/:id", vehicleHandler.UpdateVehicle)
-		vehicles.PUT("/:id/basic-info", vehicleHandler.UpdateBasicInfo) // Neue Route
+		vehicles.PUT("/:id/basic-info", vehicleHandler.UpdateBasicInfo)
 		vehicles.DELETE("/:id", middleware.AdminMiddleware(), vehicleHandler.DeleteVehicle)
 	}
 
@@ -327,7 +348,7 @@ func setupAPIRoutes(api *gin.RouterGroup) {
 		fuelCosts.DELETE("/:id", fuelCostHandler.DeleteFuelCost)
 	}
 
-	// Aktivitäts-API (neu)
+	// Aktivitäts-API
 	activities := api.Group("/activities")
 	{
 		activities.GET("", activityHandler.GetActivities)
