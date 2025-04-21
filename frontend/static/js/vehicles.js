@@ -1,5 +1,5 @@
 // frontend/static/js/vehicles.js
-
+import { carManufacturers } from './car-manufacturers.js';
 // Funktion zum Speichern eines Fahrzeugs (Erstellen oder Aktualisieren)
 function saveVehicle(vehicleData, isEdit = false) {
     console.log('Zu speichernde Fahrzeugdaten:', vehicleData);
@@ -7,9 +7,15 @@ function saveVehicle(vehicleData, isEdit = false) {
     const url = isEdit ? `/api/vehicles/${vehicleData.id}` : '/api/vehicles';
     const method = isEdit ? 'PUT' : 'POST';
 
+    // Sicherstellen, dass brand korrekt gesetzt ist
+    const brand = vehicleData.vehicle_brand || vehicleData.brand;
+    if (!brand) {
+        throw new Error('Marke muss ausgewählt werden');
+    }
+
     const requestData = {
         licensePlate: vehicleData.license || vehicleData.licensePlate || '',
-        brand: vehicleData.brand || '',
+        brand: brand,  // Verwendet die korrigierte Marke
         model: vehicleData.model || '',
         year: parseInt(vehicleData.year || 0),
         color: vehicleData.color || '',
@@ -62,6 +68,23 @@ function saveVehicle(vehicleData, isEdit = false) {
                 }
             });
         });
+}
+
+// Funktion zum Initialisieren des Marken-Dropdowns
+function initializeBrandDropdown() {
+    const brandSelect = document.getElementById('vehicle_brand');
+    if (brandSelect) {
+        brandSelect.innerHTML = '<option value="">Marke auswählen</option>';
+
+        carManufacturers.forEach(manufacturer => {
+            const option = document.createElement('option');
+            option.value = manufacturer.name;
+            option.textContent = manufacturer.name;
+            brandSelect.appendChild(option);
+        });
+    } else {
+        console.error('Brand Select Element nicht gefunden!');
+    }
 }
 
 // Funktion zum Löschen eines Fahrzeugs
@@ -327,6 +350,9 @@ function openVehicleModal(isEdit = false, vehicleId = null) {
 
     modal.classList.remove('hidden');
 
+    // Marken-Dropdown initialisieren
+    initializeBrandDropdown();
+
     document.querySelectorAll('.tab-btn').forEach(button => {
         if (button.dataset.tab === 'vehicle-data') {
             button.click();
@@ -346,22 +372,33 @@ function openVehicleModal(isEdit = false, vehicleId = null) {
                     throw new Error('Fahrzeugdaten nicht gefunden');
                 }
 
-                document.getElementById('brand').value = vehicle.brand || '';
-                document.getElementById('model').value = vehicle.model || '';
-                document.getElementById('year').value = vehicle.year || '';
-                document.getElementById('license').value = vehicle.licensePlate || '';
-                document.getElementById('color').value = vehicle.color || '';
-                document.getElementById('vin').value = vehicle.vin || '';
-                document.getElementById('fuel-type').value = vehicle.fuelType || '';
-                document.getElementById('mileage').value = vehicle.mileage || 0;
-                document.getElementById('registration-date').value = formatDateForInput(vehicle.registrationDate);
-                document.getElementById('registration-expiry').value = formatDateForInput(vehicle.registrationExpiry);
-                document.getElementById('insurance-company').value = vehicle.insuranceCompany || '';
-                document.getElementById('insurance-policy').value = vehicle.insuranceNumber || '';
-                document.getElementById('insurance-type').value = vehicle.insuranceType || '';
-                document.getElementById('insurance-expiry').value = formatDateForInput(vehicle.insuranceExpiry);
-                document.getElementById('next-inspection').value = formatDateForInput(vehicle.nextInspectionDate);
-                document.getElementById('status').value = vehicle.status || 'available';
+                // Prüfe, ob alle Elements existieren, bevor Werte gesetzt werden
+                const setElementValue = (id, value) => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.value = value || '';
+                    } else {
+                        console.warn(`Element mit ID "${id}" nicht gefunden`);
+                    }
+                };
+
+                // Fahrzeugdaten in Formular eintragen
+                setElementValue('vehicle_brand', vehicle.brand);
+                setElementValue('model', vehicle.model);
+                setElementValue('year', vehicle.year);
+                setElementValue('license', vehicle.licensePlate);
+                setElementValue('color', vehicle.color);
+                setElementValue('vin', vehicle.vin);
+                setElementValue('fuel-type', vehicle.fuelType);
+                setElementValue('mileage', vehicle.mileage);
+                setElementValue('registration-date', formatDateForInput(vehicle.registrationDate));
+                setElementValue('registration-expiry', formatDateForInput(vehicle.registrationExpiry));
+                setElementValue('insurance-company', vehicle.insuranceCompany);
+                setElementValue('insurance-policy', vehicle.insuranceNumber);
+                setElementValue('insurance-type', vehicle.insuranceType);
+                setElementValue('insurance-expiry', formatDateForInput(vehicle.insuranceExpiry));
+                setElementValue('next-inspection', formatDateForInput(vehicle.nextInspectionDate));
+                setElementValue('status', vehicle.status);
 
                 const currentDriverId = vehicle.currentDriverId ? vehicle.currentDriverId.toString() : '';
                 console.log('Zugewiesener Fahrer ID:', currentDriverId);
@@ -549,6 +586,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Rest des Codes bleibt gleich...
     const searchInput = document.getElementById('search');
     if (searchInput) {
         searchInput.addEventListener('input', function() {
