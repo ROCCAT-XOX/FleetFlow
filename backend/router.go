@@ -94,18 +94,20 @@ func setupAuthorizedRoutes(group *gin.RouterGroup) {
 
 	// Fahrzeugübersicht
 	group.GET("/vehicles", func(c *gin.Context) {
+		user, _ := c.Get("user")
 		c.HTML(http.StatusOK, "vehicles.html", gin.H{
 			"title": "Fahrzeugübersicht",
-			"user":  c.MustGet("user"),
+			"user":  user.(*model.User).FirstName + " " + user.(*model.User).LastName,
 			"year":  currentYear,
 		})
 	})
 
 	// Neues Fahrzeug hinzufügen - Formular
 	group.GET("/vehicles/new", func(c *gin.Context) {
+		user, _ := c.Get("user")
 		c.HTML(http.StatusOK, "vehicle-form.html", gin.H{
 			"title": "Neues Fahrzeug hinzufügen",
-			"user":  c.MustGet("user"),
+			"user":  user.(*model.User).FirstName + " " + user.(*model.User).LastName,
 			"year":  currentYear,
 			"isNew": true,
 		})
@@ -113,9 +115,10 @@ func setupAuthorizedRoutes(group *gin.RouterGroup) {
 
 	// Fahrzeug bearbeiten - Formular
 	group.GET("/vehicles/edit/:id", func(c *gin.Context) {
+		user, _ := c.Get("user")
 		c.HTML(http.StatusOK, "vehicle-form.html", gin.H{
 			"title": "Fahrzeug bearbeiten",
-			"user":  c.MustGet("user"),
+			"user":  user.(*model.User).FirstName + " " + user.(*model.User).LastName,
 			"year":  currentYear,
 			"isNew": false,
 		})
@@ -123,27 +126,30 @@ func setupAuthorizedRoutes(group *gin.RouterGroup) {
 
 	// Fahrzeugdetails anzeigen
 	group.GET("/vehicle-details/:id", func(c *gin.Context) {
+		user, _ := c.Get("user")
 		c.HTML(http.StatusOK, "vehicle/details.html", gin.H{
 			"title": "Fahrzeugdetails",
-			"user":  c.MustGet("user"),
+			"user":  user.(*model.User).FirstName + " " + user.(*model.User).LastName,
 			"year":  currentYear,
 		})
 	})
 
 	// Fahrerübersicht
 	group.GET("/drivers", func(c *gin.Context) {
+		user, _ := c.Get("user")
 		c.HTML(http.StatusOK, "drivers.html", gin.H{
 			"title": "Fahrerübersicht",
-			"user":  c.MustGet("user"),
+			"user":  user.(*model.User).FirstName + " " + user.(*model.User).LastName,
 			"year":  currentYear,
 		})
 	})
 
 	// Neuen Fahrer hinzufügen - Formular
 	group.GET("/drivers/new", func(c *gin.Context) {
+		user, _ := c.Get("user")
 		c.HTML(http.StatusOK, "driver-form.html", gin.H{
 			"title": "Neuen Fahrer hinzufügen",
-			"user":  c.MustGet("user"),
+			"user":  user.(*model.User).FirstName + " " + user.(*model.User).LastName,
 			"year":  currentYear,
 			"isNew": true,
 		})
@@ -151,9 +157,10 @@ func setupAuthorizedRoutes(group *gin.RouterGroup) {
 
 	// Fahrer bearbeiten - Formular
 	group.GET("/drivers/edit/:id", func(c *gin.Context) {
+		user, _ := c.Get("user")
 		c.HTML(http.StatusOK, "driver-form.html", gin.H{
 			"title": "Fahrer bearbeiten",
-			"user":  c.MustGet("user"),
+			"user":  user.(*model.User).FirstName + " " + user.(*model.User).LastName,
 			"year":  currentYear,
 			"isNew": false,
 		})
@@ -161,9 +168,10 @@ func setupAuthorizedRoutes(group *gin.RouterGroup) {
 
 	// Neue Fahrzeugzuweisung - Formular
 	group.GET("/assignments/new", func(c *gin.Context) {
+		user, _ := c.Get("user")
 		c.HTML(http.StatusOK, "assignment-form.html", gin.H{
 			"title": "Neue Fahrzeugzuweisung",
-			"user":  c.MustGet("user"),
+			"user":  user.(*model.User).FirstName + " " + user.(*model.User).LastName,
 			"year":  currentYear,
 			"isNew": true,
 		})
@@ -171,9 +179,10 @@ func setupAuthorizedRoutes(group *gin.RouterGroup) {
 
 	// Fahrzeugzuweisung bearbeiten - Formular
 	group.GET("/assignments/edit/:id", func(c *gin.Context) {
+		user, _ := c.Get("user")
 		c.HTML(http.StatusOK, "assignment-form.html", gin.H{
 			"title": "Fahrzeugzuweisung bearbeiten",
-			"user":  c.MustGet("user"),
+			"user":  user.(*model.User).FirstName + " " + user.(*model.User).LastName,
 			"year":  currentYear,
 			"isNew": false,
 		})
@@ -181,9 +190,10 @@ func setupAuthorizedRoutes(group *gin.RouterGroup) {
 
 	// Neue Inspektion/Service hinzufügen - Formular
 	group.GET("/service/new", func(c *gin.Context) {
+		user, _ := c.Get("user")
 		c.HTML(http.StatusOK, "service-form.html", gin.H{
 			"title": "Neue Inspektion erfassen",
-			"user":  c.MustGet("user"),
+			"user":  user.(*model.User).FirstName + " " + user.(*model.User).LastName,
 			"year":  currentYear,
 			"isNew": true,
 		})
@@ -191,9 +201,10 @@ func setupAuthorizedRoutes(group *gin.RouterGroup) {
 
 	// Inspektion/Service bearbeiten - Formular
 	group.GET("/service/edit/:id", func(c *gin.Context) {
+		user, _ := c.Get("user")
 		c.HTML(http.StatusOK, "service-form.html", gin.H{
 			"title": "Inspektion bearbeiten",
-			"user":  c.MustGet("user"),
+			"user":  user.(*model.User).FirstName + " " + user.(*model.User).LastName,
 			"year":  currentYear,
 			"isNew": false,
 		})
@@ -201,54 +212,60 @@ func setupAuthorizedRoutes(group *gin.RouterGroup) {
 
 	// Projektübersicht
 	group.GET("/projects", func(c *gin.Context) {
+		user, _ := c.Get("user")
 		c.HTML(http.StatusOK, "projects.html", gin.H{
 			"title": "Projektübersicht",
-			"user":  c.MustGet("user"),
+			"user":  user.(*model.User).FirstName + " " + user.(*model.User).LastName,
 			"year":  currentYear,
 		})
 	})
 
 	// Tankkosten
 	group.GET("/fuel-costs", func(c *gin.Context) {
+		user, _ := c.Get("user")
 		c.HTML(http.StatusOK, "fuel-costs.html", gin.H{
 			"title": "Tankkosten",
-			"user":  c.MustGet("user"),
+			"user":  user.(*model.User).FirstName + " " + user.(*model.User).LastName,
 			"year":  currentYear,
 		})
 	})
 
 	// Fahrzeug Tankkosten
 	group.GET("/vehicle/:id/fuel-costs", func(c *gin.Context) {
+		user, _ := c.Get("user")
 		c.HTML(http.StatusOK, "vehicle-fuel-costs.html", gin.H{
 			"title": "Fahrzeug Tankkosten",
-			"user":  c.MustGet("user"),
+			"user":  user.(*model.User).FirstName + " " + user.(*model.User).LastName,
 			"year":  currentYear,
 		})
 	})
 
 	// Neue Routen für Aktivitäten
 	group.GET("/activities", func(c *gin.Context) {
+		user, _ := c.Get("user")
 		c.HTML(http.StatusOK, "activities.html", gin.H{
 			"title": "Aktivitätsübersicht",
-			"user":  c.MustGet("user"),
+			"user":  user.(*model.User).FirstName + " " + user.(*model.User).LastName,
 			"year":  currentYear,
 		})
 	})
 
 	// Fahrzeugaktivitäten
 	group.GET("/vehicle/:id/activities", func(c *gin.Context) {
+		user, _ := c.Get("user")
 		c.HTML(http.StatusOK, "vehicle-activities.html", gin.H{
 			"title": "Fahrzeugaktivitäten",
-			"user":  c.MustGet("user"),
+			"user":  user.(*model.User).FirstName + " " + user.(*model.User).LastName,
 			"year":  currentYear,
 		})
 	})
 
 	// Fahreraktivitäten
 	group.GET("/driver/:id/activities", func(c *gin.Context) {
+		user, _ := c.Get("user")
 		c.HTML(http.StatusOK, "driver-activities.html", gin.H{
 			"title": "Fahreraktivitäten",
-			"user":  c.MustGet("user"),
+			"user":  user.(*model.User).FirstName + " " + user.(*model.User).LastName,
 			"year":  currentYear,
 		})
 	})
