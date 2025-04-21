@@ -1,5 +1,5 @@
 // frontend/static/js/vehicle-details.js
-
+/*
 import VehicleBasicInfo from './vehicle-basic-info.js';
 import VehicleCurrentUsage from './vehicle-current-usage.js';
 import VehicleFuelCosts from './vehicle-fuel-costs.js';
@@ -8,6 +8,8 @@ import VehicleModals from './vehicle-modals.js';
 import VehicleRegistration from './vehicle-registration.js';
 import VehicleStatistics from './vehicle-statistics.js';
 import VehicleUsageHistory from './vehicle-usage-history.js';
+
+ */
 
 class VehicleDetails {
     constructor() {
