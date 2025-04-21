@@ -1,5 +1,6 @@
 // frontend/static/js/vehicle-details.js
-/*
+
+
 import VehicleBasicInfo from './vehicle-basic-info.js';
 import VehicleCurrentUsage from './vehicle-current-usage.js';
 import VehicleFuelCosts from './vehicle-fuel-costs.js';
@@ -9,7 +10,7 @@ import VehicleRegistration from './vehicle-registration.js';
 import VehicleStatistics from './vehicle-statistics.js';
 import VehicleUsageHistory from './vehicle-usage-history.js';
 
- */
+// frontend/static/js/vehicle-details.js
 
 class VehicleDetails {
     constructor() {
@@ -26,18 +27,43 @@ class VehicleDetails {
     }
 
     initializeModules() {
-        // Initialize all vehicle modules
-        this.modules.basicInfo = new VehicleBasicInfo(this.vehicleId);
-        this.modules.currentUsage = new VehicleCurrentUsage(this.vehicleId);
-        this.modules.fuelCosts = new VehicleFuelCosts(this.vehicleId);
-        this.modules.maintenance = new VehicleMaintenance(this.vehicleId);
-        this.modules.modals = new VehicleModals(this.vehicleId);
-        this.modules.registration = new VehicleRegistration(this.vehicleId);
-        this.modules.statistics = new VehicleStatistics(this.vehicleId);
-        this.modules.usageHistory = new VehicleUsageHistory(this.vehicleId);
+        // Prüfen, ob die Module existieren, bevor wir versuchen, sie zu initialisieren
+        if (typeof VehicleBasicInfo !== 'undefined') {
+            this.modules.basicInfo = new VehicleBasicInfo(this.vehicleId);
+        }
 
-        // Load initial data
-        this.modules.basicInfo.loadVehicleBasicInfo();
+        if (typeof VehicleCurrentUsage !== 'undefined') {
+            this.modules.currentUsage = new VehicleCurrentUsage(this.vehicleId);
+        }
+
+        if (typeof VehicleFuelCosts !== 'undefined') {
+            this.modules.fuelCosts = new VehicleFuelCosts(this.vehicleId);
+        }
+
+        if (typeof VehicleMaintenance !== 'undefined') {
+            this.modules.maintenance = new VehicleMaintenance(this.vehicleId);
+        }
+
+        if (typeof VehicleModals !== 'undefined') {
+            this.modules.modals = new VehicleModals(this.vehicleId);
+        }
+
+        if (typeof VehicleRegistration !== 'undefined') {
+            this.modules.registration = new VehicleRegistration(this.vehicleId);
+        }
+
+        if (typeof VehicleStatistics !== 'undefined') {
+            this.modules.statistics = new VehicleStatistics(this.vehicleId);
+        }
+
+        if (typeof VehicleUsageHistory !== 'undefined') {
+            this.modules.usageHistory = new VehicleUsageHistory(this.vehicleId);
+        }
+
+        // Nur laden, wenn das Modul existiert
+        if (this.modules.basicInfo && typeof this.modules.basicInfo.loadVehicleBasicInfo === 'function') {
+            this.modules.basicInfo.loadVehicleBasicInfo();
+        }
     }
 
     initializeTabs() {
@@ -91,25 +117,39 @@ class VehicleDetails {
     loadTabData(tabId) {
         switch (tabId) {
             case 'basic-info':
-                this.modules.basicInfo.loadVehicleBasicInfo();
+                if (this.modules.basicInfo && typeof this.modules.basicInfo.loadVehicleBasicInfo === 'function') {
+                    this.modules.basicInfo.loadVehicleBasicInfo();
+                }
                 break;
             case 'current-usage':
-                this.modules.currentUsage.loadCurrentUsage();
+                if (this.modules.currentUsage && typeof this.modules.currentUsage.loadCurrentUsage === 'function') {
+                    this.modules.currentUsage.loadCurrentUsage();
+                }
                 break;
             case 'usage-history':
-                this.modules.usageHistory.loadUsageHistory();
+                if (this.modules.usageHistory && typeof this.modules.usageHistory.loadUsageHistory === 'function') {
+                    this.modules.usageHistory.loadUsageHistory();
+                }
                 break;
             case 'maintenance':
-                this.modules.maintenance.loadMaintenanceEntries();
+                if (this.modules.maintenance && typeof this.modules.maintenance.loadMaintenanceEntries === 'function') {
+                    this.modules.maintenance.loadMaintenanceEntries();
+                }
                 break;
             case 'fuel-costs':
-                this.modules.fuelCosts.loadFuelCosts();
+                if (this.modules.fuelCosts && typeof this.modules.fuelCosts.loadFuelCosts === 'function') {
+                    this.modules.fuelCosts.loadFuelCosts();
+                }
                 break;
             case 'registration-insurance':
-                this.modules.registration.loadRegistrationInsurance();
+                if (this.modules.registration && typeof this.modules.registration.loadRegistrationInsurance === 'function') {
+                    this.modules.registration.loadRegistrationInsurance();
+                }
                 break;
             case 'statistics':
-                this.modules.statistics.loadStatistics();
+                if (this.modules.statistics && typeof this.modules.statistics.loadStatistics === 'function') {
+                    this.modules.statistics.loadStatistics();
+                }
                 break;
         }
     }
@@ -163,6 +203,8 @@ class VehicleDetails {
         }
     }
 }
+
+
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
