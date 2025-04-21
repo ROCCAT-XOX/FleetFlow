@@ -157,3 +157,20 @@ func (r *VehicleRepository) FindByStatus(status model.VehicleStatus) ([]*model.V
 
 	return vehicles, nil
 }
+
+// CountByStatusAndDate zählt Fahrzeuge mit einem bestimmten Status an einem bestimmten Datum
+func (r *VehicleRepository) CountByStatusAndDate(status model.VehicleStatus, date time.Time) (int64, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// Wir suchen nach Fahrzeugen, die am angegebenen Datum den angegebenen Status hatten
+	// Dies ist eine Annäherung, da wir keine Historie des Status speichern
+	count, err := r.collection.CountDocuments(ctx, bson.M{
+		"status": status,
+		"updatedAt": bson.M{
+			"$lte": date,
+		},
+	})
+
+	return count, err
+}

@@ -385,6 +385,8 @@ func setupAPIRoutes(api *gin.RouterGroup) {
 	dashboard := api.Group("/dashboard")
 	{
 		dashboard.GET("/stats", dashboardHandler.GetDashboardStats)
+		dashboard.GET("/vehicle-usage-stats", dashboardHandler.GetVehicleUsageStats)
+		dashboard.GET("/fuel-costs-by-vehicle", dashboardHandler.GetFuelCostsByVehicle)
 	}
 
 }

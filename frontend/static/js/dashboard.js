@@ -10,7 +10,9 @@ document.addEventListener('DOMContentLoaded', function() {
     loadDriversOverview();
     loadUpcomingMaintenance();
     loadRecentActivities();
+    // Initialisiere Charts
     initializeFleetActivityChart();
+    initializeFuelCostsChart();
 
     // Setup filter event listener
     const fleetViewFilter = document.getElementById('fleet-view-filter');
@@ -227,42 +229,292 @@ function renderRecentActivities(activities) {
 }
 
 // Initialize fleet activity chart
-function initializeFleetActivityChart() {
+// Funktion zum Initialisieren des Flottenaktivitäts-Charts mit echten Daten
+async function initializeFleetActivityChart() {
     const ctx = document.getElementById('fleetActivityChart');
     if (!ctx) return;
 
-    // Create a chart instance
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'],
-            datasets: [{
-                label: 'Fahrzeuge in Nutzung',
-                data: [12, 19, 15, 17, 14, 8, 5],
-                borderColor: 'rgb(79, 70, 229)',
-                tension: 0.3
-            }, {
-                label: 'In Wartung',
-                data: [2, 1, 3, 2, 1, 0, 1],
-                borderColor: 'rgb(234, 179, 8)',
-                tension: 0.3
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom'
-                }
+    try {
+        // Daten für die letzten 7 Tage laden
+        const response = await fetch('/api/dashboard/vehicle-usage-stats');
+        if (!response.ok) throw new Error('Fehler beim Laden der Flottenaktivitätsdaten');
+
+        const data = await response.json();
+        const usageData = data.usageData || [];
+
+        // Daten für das Chart vorbereiten
+        const labels = usageData.map(item => item.day);
+        const inUseData = usageData.map(item => item.inUseCount);
+        const maintenanceData = usageData.map(item => item.maintenanceCount);
+
+        // Chart erstellen
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Fahrzeuge in Nutzung',
+                    data: inUseData,
+                    borderColor: 'rgb(79, 70, 229)',
+                    backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                    tension: 0.3,
+                    fill: true
+                }, {
+                    label: 'In Wartung',
+                    data: maintenanceData,
+                    borderColor: 'rgb(234, 179, 8)',
+                    backgroundColor: 'rgba(234, 179, 8, 0.1)',
+                    tension: 0.3,
+                    fill: true
+                }]
             },
-            scales: {
-                y: {
-                    beginAtZero: true
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Anzahl Fahrzeuge'
+                        },
+                        ticks: {
+                            precision: 0
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Tag'
+                        }
+                    }
                 }
             }
+        });
+    } catch (error) {
+        console.error('Fehler beim Laden der Flottenaktivitäts-Daten:', error);
+
+        // Fallback mit Beispieldaten
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'],
+                datasets: [{
+                    label: 'Fahrzeuge in Nutzung',
+                    data: [12, 19, 15, 17, 14, 8, 5],
+                    borderColor: 'rgb(79, 70, 229)',
+                    backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                    tension: 0.3,
+                    fill: true
+                }, {
+                    label: 'In Wartung',
+                    data: [2, 1, 3, 2, 1, 0, 1],
+                    borderColor: 'rgb(234, 179, 8)',
+                    backgroundColor: 'rgba(234, 179, 8, 0.1)',
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+}
+
+// Funktion zum Initialisieren des Kraftstoffkosten-Charts
+async function initializeFuelCostsChart() {
+    const ctx = document.getElementById('fuelCostsChart');
+    if (!ctx) return;
+
+    try {
+        // Daten für die letzten 12 Monate laden
+        const response = await fetch('/api/dashboard/fuel-costs-by-vehicle');
+        if (!response.ok) throw new Error('Fehler beim Laden der Kraftstoffkostendaten');
+
+        const data = await response.json();
+        const fuelCostsData = data.fuelCostsData || [];
+
+        // Daten für das Chart vorbereiten
+        const labels = fuelCostsData.map(item => item.month);
+
+        // Fahrzeuge und ihre Daten extrahieren
+        const vehicles = [];
+        const datasets = [];
+
+        if (fuelCostsData.length > 0 && fuelCostsData[0].vehicleCosts) {
+            // Fahrzeug-IDs aus dem ersten Monat extrahieren
+            const firstMonthData = fuelCostsData[0].vehicleCosts;
+            Object.keys(firstMonthData).forEach(vehicleId => {
+                if (firstMonthData[vehicleId].name) {
+                    vehicles.push({
+                        id: vehicleId,
+                        name: firstMonthData[vehicleId].name
+                    });
+                }
+            });
+
+            // Zufällige Farben für jedes Fahrzeug generieren
+            const colors = [
+                'rgba(54, 162, 235, 0.8)',
+                'rgba(255, 99, 132, 0.8)',
+                'rgba(75, 192, 192, 0.8)',
+                'rgba(255, 159, 64, 0.8)',
+                'rgba(153, 102, 255, 0.8)',
+                'rgba(255, 205, 86, 0.8)',
+                'rgba(201, 203, 207, 0.8)',
+                'rgba(255, 99, 71, 0.8)',
+                'rgba(46, 139, 87, 0.8)',
+                'rgba(106, 90, 205, 0.8)'
+            ];
+
+            // Datasets für jedes Fahrzeug erstellen
+            vehicles.forEach((vehicle, index) => {
+                const vehicleData = fuelCostsData.map(month => {
+                    if (month.vehicleCosts && month.vehicleCosts[vehicle.id]) {
+                        return month.vehicleCosts[vehicle.id].cost || 0;
+                    }
+                    return 0;
+                });
+
+                datasets.push({
+                    label: vehicle.name,
+                    data: vehicleData,
+                    backgroundColor: colors[index % colors.length],
+                    stack: 'Stack 0'
+                });
+            });
         }
-    });
+
+        // Chart erstellen
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + new Intl.NumberFormat('de-DE', {
+                                    style: 'currency',
+                                    currency: 'EUR'
+                                }).format(context.raw);
+                            },
+                            footer: function(tooltipItems) {
+                                let sum = 0;
+                                tooltipItems.forEach(item => {
+                                    sum += item.raw;
+                                });
+                                return 'Gesamt: ' + new Intl.NumberFormat('de-DE', {
+                                    style: 'currency',
+                                    currency: 'EUR'
+                                }).format(sum);
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Monat'
+                        }
+                    },
+                    y: {
+                        stacked: true,
+                        title: {
+                            display: true,
+                            text: 'Kosten (EUR)'
+                        }
+                    }
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Fehler beim Laden der Kraftstoffkosten-Daten:', error);
+
+        // Fallback mit Beispieldaten
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'],
+                datasets: [
+                    {
+                        label: 'BMW 530e',
+                        data: [250, 280, 260, 240, 270, 290, 310, 280, 260, 240, 230, 250],
+                        backgroundColor: 'rgba(54, 162, 235, 0.8)',
+                        stack: 'Stack 0'
+                    },
+                    {
+                        label: 'VW Passat',
+                        data: [150, 170, 160, 140, 150, 180, 200, 170, 160, 140, 130, 150],
+                        backgroundColor: 'rgba(255, 99, 132, 0.8)',
+                        stack: 'Stack 0'
+                    },
+                    {
+                        label: 'Audi e-tron',
+                        data: [80, 90, 85, 75, 85, 95, 100, 90, 85, 75, 70, 80],
+                        backgroundColor: 'rgba(75, 192, 192, 0.8)',
+                        stack: 'Stack 0'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Monat'
+                        }
+                    },
+                    y: {
+                        stacked: true,
+                        title: {
+                            display: true,
+                            text: 'Kosten (EUR)'
+                        }
+                    }
+                }
+            }
+        });
+    }
 }
 
 // Helper functions

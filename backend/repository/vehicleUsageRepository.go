@@ -216,3 +216,32 @@ func (r *VehicleUsageRepository) Delete(id string) error {
 	_, err = r.collection.DeleteOne(ctx, bson.M{"_id": objID})
 	return err
 }
+
+// CountActiveUsagesByDateRange zählt aktive Fahrzeugnutzungen in einem Zeitraum
+func (r *VehicleUsageRepository) CountActiveUsagesByDateRange(startDate, endDate time.Time) (int64, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// Zähle Fahrzeugnutzungen, die im angegebenen Zeitraum aktiv waren
+	count, err := r.collection.CountDocuments(ctx, bson.M{
+		"$or": []bson.M{
+			{
+				// Nutzungen, die im Zeitraum begonnen haben
+				"startDate": bson.M{
+					"$gte": startDate,
+					"$lt":  endDate,
+				},
+			},
+			{
+				// Nutzungen, die vor dem Zeitraum begonnen haben und noch aktiv sind
+				"startDate": bson.M{"$lt": startDate},
+				"$or": []bson.M{
+					{"endDate": bson.M{"$gte": startDate}},
+					{"status": model.UsageStatusActive},
+				},
+			},
+		},
+	})
+
+	return count, err
+}

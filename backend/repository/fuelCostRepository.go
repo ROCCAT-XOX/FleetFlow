@@ -156,3 +156,37 @@ func (r *FuelCostRepository) Delete(id string) error {
 	_, err = r.collection.DeleteOne(ctx, bson.M{"_id": objID})
 	return err
 }
+
+// FindByDateRange findet alle Tankkosteneinträge in einem bestimmten Zeitraum
+func (r *FuelCostRepository) FindByDateRange(startDate, endDate time.Time) ([]*model.FuelCost, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	var fuelCosts []*model.FuelCost
+
+	cursor, err := r.collection.Find(ctx, bson.M{
+		"date": bson.M{
+			"$gte": startDate,
+			"$lte": endDate,
+		},
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	for cursor.Next(ctx) {
+		var fuelCost model.FuelCost
+		if err := cursor.Decode(&fuelCost); err != nil {
+			return nil, err
+		}
+		fuelCosts = append(fuelCosts, &fuelCost)
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+
+	return fuelCosts, nil
+}
