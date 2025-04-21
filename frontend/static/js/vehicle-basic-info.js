@@ -1,5 +1,7 @@
 // frontend/static/js/vehicle-basic-info.js
 
+import { getManufacturerLogo } from './car-manufacturers.js';
+
 export default class VehicleBasicInfo {
     constructor(vehicleId) {
         this.vehicleId = vehicleId;
@@ -11,7 +13,8 @@ export default class VehicleBasicInfo {
             vehicleIdDisplay: document.getElementById('vehicle-id-display'),
             vinDisplay: document.getElementById('vin-display'),
             fuelTypeDisplay: document.getElementById('fuel-type-display'),
-            mileageDisplay: document.getElementById('mileage-display')
+            mileageDisplay: document.getElementById('mileage-display'),
+            brandLogo: document.getElementById('brand-logo')
         };
         this.initializeEventListeners();
     }
@@ -40,6 +43,14 @@ export default class VehicleBasicInfo {
             this.elements.vinDisplay.textContent = vehicle.vin || '-';
             this.elements.fuelTypeDisplay.textContent = vehicle.fuelType || '-';
             this.elements.mileageDisplay.textContent = vehicle.mileage ? `${vehicle.mileage} km` : '-';
+
+            // Update brand logo
+            if (this.elements.brandLogo && vehicle.brand) {
+                const logoUrl = getManufacturerLogo(vehicle.brand);
+                this.elements.brandLogo.src = logoUrl;
+                this.elements.brandLogo.alt = `${vehicle.brand} Logo`;
+                this.elements.brandLogo.classList.remove('hidden');
+            }
         } catch (error) {
             console.error('Fehler beim Laden der Basisdaten:', error);
             this.showError('Fehler beim Laden der Fahrzeugdaten');
@@ -55,7 +66,9 @@ export default class VehicleBasicInfo {
     showError(message) {
         // Display error message
         Object.values(this.elements).forEach(element => {
-            if (element) element.textContent = message;
+            if (element && element.textContent !== undefined) {
+                element.textContent = message;
+            }
         });
     }
 }

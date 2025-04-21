@@ -1,5 +1,7 @@
 // frontend/static/js/vehicle-modals.js
 
+import { carManufacturers } from './car-manufacturers.js';
+
 export default class VehicleModals {
     constructor(vehicleId) {
         this.vehicleId = vehicleId;
@@ -66,6 +68,22 @@ export default class VehicleModals {
         }
     }
 
+    initializeManufacturerDropdown() {
+        const brandSelect = document.getElementById('vehicle_brand');
+        if (brandSelect) {
+            // Clear existing options
+            brandSelect.innerHTML = '<option value="">Marke auswählen</option>';
+
+            // Add manufacturers from the list
+            carManufacturers.forEach(manufacturer => {
+                const option = document.createElement('option');
+                option.value = manufacturer.name;
+                option.textContent = manufacturer.name;
+                brandSelect.appendChild(option);
+            });
+        }
+    }
+
     async openEditVehicleModal(vehicleId) {
         const modal = document.getElementById('edit-vehicle-modal');
         if (!modal) return;
@@ -77,8 +95,12 @@ export default class VehicleModals {
             const data = await response.json();
             const vehicle = data.vehicle;
 
+            // Initialize manufacturer dropdown
+            this.initializeManufacturerDropdown();
+
             // Fill form fields
             document.getElementById('license_plate').value = vehicle.licensePlate || '';
+            document.getElementById('vehicle_brand').value = vehicle.brand || '';
             document.getElementById('model').value = vehicle.model || '';
             document.getElementById('year').value = vehicle.year || '';
             document.getElementById('color').value = vehicle.color || '';
@@ -101,6 +123,7 @@ export default class VehicleModals {
 
         const vehicleData = {
             licensePlate: formData.get('license_plate'),
+            brand: formData.get('vehicle_brand'),
             model: formData.get('model'),
             year: parseInt(formData.get('year')),
             color: formData.get('color'),

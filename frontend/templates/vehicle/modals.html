@@ -208,32 +208,39 @@
                                 <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                                     <div class="sm:col-span-3">
                                         <label for="license_plate" class="block text-sm font-medium text-gray-700">Kennzeichen</label>
-                                        <input type="text" name="license_plate" id="license_plate" value="M-CD 5678" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                        <input type="text" name="license_plate" id="license_plate" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
                                     </div>
 
                                     <div class="sm:col-span-3">
-                                        <label for="model" class="block text-sm font-medium text-gray-700">Marke & Modell</label>
-                                        <input type="text" name="model" id="model" value="BMW 530e" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                        <label for="vehicle_brand" class="block text-sm font-medium text-gray-700">Marke</label>
+                                        <select id="vehicle_brand" name="vehicle_brand" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                            <option value="">Marke auswählen</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="model" class="block text-sm font-medium text-gray-700">Modell</label>
+                                        <input type="text" name="model" id="model" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
                                     </div>
 
                                     <div class="sm:col-span-3">
                                         <label for="year" class="block text-sm font-medium text-gray-700">Baujahr</label>
-                                        <input type="number" name="year" id="year" value="2023" min="1900" max="2099" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                        <input type="number" name="year" id="year" min="1900" max="2099" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
                                     </div>
 
                                     <div class="sm:col-span-3">
                                         <label for="color" class="block text-sm font-medium text-gray-700">Farbe</label>
-                                        <input type="text" name="color" id="color" value="Schwarz" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                        <input type="text" name="color" id="color" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
                                     </div>
 
                                     <div class="sm:col-span-3">
                                         <label for="vehicle_id" class="block text-sm font-medium text-gray-700">Fahrzeug-ID</label>
-                                        <input type="text" name="vehicle_id" id="vehicle_id" value="FD-2023-01254" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 bg-gray-100 rounded-md" readonly>
+                                        <input type="text" name="vehicle_id" id="vehicle_id" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 bg-gray-100 rounded-md" readonly>
                                     </div>
 
                                     <div class="sm:col-span-3">
                                         <label for="vin" class="block text-sm font-medium text-gray-700">VIN</label>
-                                        <input type="text" name="vin" id="vin" value="WBAJL51070G830415" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                        <input type="text" name="vin" id="vin" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
                                     </div>
 
                                     <div class="sm:col-span-3">
@@ -242,7 +249,7 @@
                                             <option value="Benzin">Benzin</option>
                                             <option value="Diesel">Diesel</option>
                                             <option value="Elektro">Elektro</option>
-                                            <option value="Hybrid (Benzin/Elektro)" selected>Hybrid (Benzin/Elektro)</option>
+                                            <option value="Hybrid (Benzin/Elektro)">Hybrid (Benzin/Elektro)</option>
                                             <option value="Hybrid (Diesel/Elektro)">Hybrid (Diesel/Elektro)</option>
                                             <option value="Wasserstoff">Wasserstoff</option>
                                         </select>
@@ -251,7 +258,7 @@
                                     <div class="sm:col-span-3">
                                         <label for="current_mileage" class="block text-sm font-medium text-gray-700">Aktueller Kilometerstand</label>
                                         <div class="mt-1 relative rounded-md shadow-sm">
-                                            <input type="number" name="current_mileage" id="current_mileage" value="18452" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pr-12 sm:text-sm border-gray-300 rounded-md">
+                                            <input type="number" name="current_mileage" id="current_mileage" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pr-12 sm:text-sm border-gray-300 rounded-md">
                                             <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                                                 <span class="text-gray-500 sm:text-sm">km</span>
                                             </div>
