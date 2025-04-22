@@ -1,5 +1,3 @@
-// frontend/static/js/vehicle-usage-history.js
-
 export default class VehicleUsageHistory {
     constructor(vehicleId) {
         this.vehicleId = vehicleId;
@@ -10,6 +8,12 @@ export default class VehicleUsageHistory {
         const addButton = document.getElementById('add-usage-btn');
         if (addButton) {
             addButton.addEventListener('click', () => this.openAddModal());
+        }
+
+        // Formular-Eventlistener für Nutzungseinträge
+        const usageForm = document.getElementById('usage-form');
+        if (usageForm) {
+            usageForm.addEventListener('submit', (e) => this.handleUsageFormSubmit(e));
         }
     }
 
@@ -64,7 +68,6 @@ export default class VehicleUsageHistory {
             </tr>
         `).join('');
 
-        // Add event listeners to edit and delete buttons
         this.attachRowEventListeners();
     }
 
@@ -108,12 +111,19 @@ export default class VehicleUsageHistory {
 
         // Reset form
         const form = document.getElementById('usage-form');
-        form.reset();
+        if (form) form.reset();
 
         // Set current date and time as default
         const now = new Date();
-        document.getElementById('start-date').value = now.toISOString().split('T')[0];
-        document.getElementById('start-time').value = now.toTimeString().slice(0, 5);
+        const dateField = document.getElementById('start-date');
+        const timeField = document.getElementById('start-time');
+
+        if (dateField) dateField.value = now.toISOString().split('T')[0];
+        if (timeField) timeField.value = now.toTimeString().slice(0, 5);
+
+        // Remove any existing hidden ID field
+        const existingIdField = document.getElementById('usage-id');
+        if (existingIdField) existingIdField.remove();
 
         // Load drivers for dropdown
         this.loadDriversForUsageForm();
@@ -167,6 +177,76 @@ export default class VehicleUsageHistory {
         } catch (error) {
             console.error('Fehler:', error);
             alert('Fehler beim Laden des Nutzungseintrags');
+        }
+    }
+    // Event-Listener für das Formular hinzufügen
+
+    // Event-Listener für das Formular hinzufügen
+
+    if (usageForm) {
+        usageForm.addEventListener('submit', (e) => this.handleUsageFormSubmit(e));
+    }
+
+    // Methode zur Verarbeitung des Nutzungsformulars
+    async handleUsageFormSubmit(event) {
+        event.preventDefault();
+        const form = event.target;
+        const formData = new FormData(form);
+        const usageId = formData.get('usage-id');
+        const isEdit = !!usageId;
+
+        // Datum und Uhrzeit korrekt kombinieren
+        const startDate = formData.get('start-date');
+        const startTime = formData.get('start-time');
+        // Kombiniere Datum und Zeit zu einem ISO-Zeitstempel
+        const startDateTime = startDate && startTime ? `${startDate}T${startTime}:00` : null;
+
+        let endDateTime = null;
+        const endDate = formData.get('end-date');
+        const endTime = formData.get('end-time');
+        if (endDate && endTime) {
+            endDateTime = `${endDate}T${endTime}:00`;
+        }
+
+        // Erstelle das Datenobjekt
+        const usageData = {
+            vehicleId: this.vehicleId,
+            driverId: formData.get('driver') || null,
+            startTime: startDateTime, // Wichtig: StartTime muss als ISO-String übergeben werden
+            endTime: endDateTime,
+            startMileage: formData.get('start-mileage') ? parseInt(formData.get('start-mileage')) : null,
+            endMileage: formData.get('end-mileage') ? parseInt(formData.get('end-mileage')) : null,
+            purpose: formData.get('project') || null,
+            notes: formData.get('usage-notes') || null
+        };
+
+        console.log('Nutzungsdaten zum Senden:', usageData);
+
+        try {
+            const url = isEdit ? `/api/usage/${usageId}` : '/api/usage';
+            const method = isEdit ? 'PUT' : 'POST';
+
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(usageData)
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Fehler beim Speichern der Nutzung: ${errorText}`);
+            }
+
+            // Schließe das Modal und lade die Tabelle neu
+            const modal = document.getElementById('usage-modal');
+            if (modal) modal.classList.add('hidden');
+            this.loadUsageHistory();
+            alert(isEdit ? 'Nutzung erfolgreich aktualisiert' : 'Nutzung erfolgreich hinzugefügt');
+        } catch (error) {
+            console.error('Fehler:', error);
+            alert(error.message);
         }
     }
 

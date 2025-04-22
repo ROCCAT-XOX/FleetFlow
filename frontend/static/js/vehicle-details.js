@@ -1,6 +1,3 @@
-// frontend/static/js/vehicle-details.js
-
-
 import VehicleBasicInfo from './vehicle-basic-info.js';
 import VehicleCurrentUsage from './vehicle-current-usage.js';
 import VehicleFuelCosts from './vehicle-fuel-costs.js';
@@ -10,12 +7,7 @@ import VehicleRegistration from './vehicle-registration.js';
 import VehicleStatistics from './vehicle-statistics.js';
 import VehicleUsageHistory from './vehicle-usage-history.js';
 
-
-
-// frontend/static/js/vehicle-details.js
-
 class VehicleDetails {
-
     constructor() {
         this.vehicleId = this.getVehicleIdFromUrl();
         this.modules = {};
@@ -207,9 +199,37 @@ class VehicleDetails {
     }
 }
 
-
-
+// Initialize when DOM is ready
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
+    // Globale Hilfsfunktionen für Datums- und Zeitkonvertierung
+    window.FleetDriveUtils = {
+        // Formatiert ein Datum für HTML-Input-Felder
+        formatDateForInput: function(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            return date.toISOString().split('T')[0];
+        },
+
+        // Kombiniert Datum und Zeit zu einem ISO-Zeitstempel
+        combineDateTimeToISO: function(dateString, timeString) {
+            if (!dateString || !timeString) return null;
+            return `${dateString}T${timeString}:00`;
+        },
+
+        // Formatiert ein Datum/Zeit für die Anzeige
+        formatDateTime: function(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleString('de-DE', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+    };
+
     window.vehicleDetails = new VehicleDetails();
 });
