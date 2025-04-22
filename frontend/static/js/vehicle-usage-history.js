@@ -195,74 +195,30 @@ export default class VehicleUsageHistory {
         const usageId = formData.get('usage-id');
         const isEdit = !!usageId;
 
-        // Datum und Uhrzeit im richtigen Format für die API zusammenstellen
-        let startDateStr = '';
-        let endDateStr = '';
-
-        if (formData.get('start-date')) {
-            // Stellt sicher, dass das Datum im Format JJJJ-MM-TT ist
-            const startDateParts = formData.get('start-date').split('-');
-            if (startDateParts.length === 3) {
-                const year = startDateParts[0].padStart(4, '0');
-                const month = startDateParts[1].padStart(2, '0');
-                const day = startDateParts[2].padStart(2, '0');
-
-                // Zeit hinzufügen
-                let timeStr = '00:00:00';
-                if (formData.get('start-time')) {
-                    const timeParts = formData.get('start-time').split(':');
-                    if (timeParts.length >= 2) {
-                        const hours = timeParts[0].padStart(2, '0');
-                        const minutes = timeParts[1].padStart(2, '0');
-                        timeStr = `${hours}:${minutes}:00`;
-                    }
-                }
-
-                startDateStr = `${year}-${month}-${day}T${timeStr}`;
-            }
-        }
-
-        if (formData.get('end-date')) {
-            // Stellt sicher, dass das Datum im Format JJJJ-MM-TT ist
-            const endDateParts = formData.get('end-date').split('-');
-            if (endDateParts.length === 3) {
-                const year = endDateParts[0].padStart(4, '0');
-                const month = endDateParts[1].padStart(2, '0');
-                const day = endDateParts[2].padStart(2, '0');
-
-                // Zeit hinzufügen
-                let timeStr = '00:00:00';
-                if (formData.get('end-time')) {
-                    const timeParts = formData.get('end-time').split(':');
-                    if (timeParts.length >= 2) {
-                        const hours = timeParts[0].padStart(2, '0');
-                        const minutes = timeParts[1].padStart(2, '0');
-                        timeStr = `${hours}:${minutes}:00`;
-                    }
-                }
-
-                endDateStr = `${year}-${month}-${day}T${timeStr}`;
-            }
-        }
+        // Datum und Uhrzeit extrahieren
+        const startDate = formData.get('start-date') || '';
+        const startTime = formData.get('start-time') || '';
+        const endDate = formData.get('end-date') || '';
+        const endTime = formData.get('end-time') || '';
 
         // Validierung
-        if (!startDateStr) {
-            alert('Bitte geben Sie ein gültiges Startdatum ein');
+        if (!startDate || !startTime) {
+            alert('Bitte geben Sie ein gültiges Startdatum und eine Startzeit ein');
             return;
         }
 
-        // Erstelle das Datenobjekt mit beiden Feldnamenvarianten für Kompatibilität
+        // Erstelle das Datenobjekt gemäß API-Anforderungen
         const usageData = {
             vehicleId: this.vehicleId,
-            driverId: formData.get('driver') || null,
-            startDate: startDateStr,
-            endDate: endDateStr || null,
-            startTime: startDateStr,  // Beide Feldnamen für die API
-            endTime: endDateStr || null,
-            startMileage: formData.get('start-mileage') ? parseInt(formData.get('start-mileage')) : null,
-            endMileage: formData.get('end-mileage') ? parseInt(formData.get('end-mileage')) : null,
-            purpose: formData.get('project') || null,
-            notes: formData.get('usage-notes') || null
+            driverId: formData.get('driver') || '',
+            startDate: startDate,
+            startTime: startTime,
+            endDate: endDate || '',
+            endTime: endTime || '',
+            startMileage: formData.get('start-mileage') ? parseInt(formData.get('start-mileage')) : 0,
+            endMileage: formData.get('end-mileage') ? parseInt(formData.get('end-mileage')) : 0,
+            purpose: formData.get('project') || '',
+            notes: formData.get('usage-notes') || ''
         };
 
         console.log('Nutzungsdaten zum Senden:', usageData);

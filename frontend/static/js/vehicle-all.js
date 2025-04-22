@@ -911,58 +911,24 @@ document.addEventListener('DOMContentLoaded', function() {
         const usageId = usageData['usage-id'];
         const isEdit = !!usageId;
 
-        // Combine date and time - mit verbesserter Fehlerbehebung
-        const startDate = combineDateTime(usageData['start-date'], usageData['start-time']);
-        const endDate = combineDateTime(usageData['end-date'], usageData['end-time']);
-
-        // Validierung der Eingaben
-        if (!startDate) {
-            showNotification('Bitte geben Sie ein gültiges Startdatum ein', 'error');
-            if (submitButton) submitButton.disabled = false;
-            event.submitting = false;
-            return;
-        }
-
-        if (usageData['end-date'] && !endDate) {
-            showNotification('Bitte geben Sie ein gültiges Enddatum ein', 'error');
-            if (submitButton) submitButton.disabled = false;
-            event.submitting = false;
-            return;
-        }
-
-        // Prüfen, ob Startdatum vor Enddatum liegt
-        if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
-            showNotification('Das Startdatum darf nicht nach dem Enddatum liegen', 'error');
-            if (submitButton) submitButton.disabled = false;
-            event.submitting = false;
-            return;
-        }
-
         // Prepare API request
         const apiUrl = isEdit ? `/api/usage/${usageId}` : '/api/usage';
         const method = isEdit ? 'PUT' : 'POST';
 
-        // Convert to API format - mit zusätzlichen Validierungen
+        // Convert to API format - mit den richtigen Feldnamen
         const apiData = {
             vehicleId: vehicleId,
-            driverId: usageData.driver || null,
-            startDate: startDate,
-            endDate: endDate || null,
+            driverId: usageData.driver || '',
+            startDate: usageData['start-date'] || '',
+            startTime: usageData['start-time'] || '',
+            endDate: usageData['end-date'] || '',
+            endTime: usageData['end-time'] || '',
             startMileage: parseInt(usageData['start-mileage']) || 0,
             endMileage: parseInt(usageData['end-mileage']) || 0,
             project: usageData.project || '',
+            purpose: usageData.project || '', // Use project as purpose too
             notes: usageData['usage-notes'] || ''
         };
-
-        // Zusätzliche Validierung der Kilometerstände
-        if (apiData.startMileage > 0 && apiData.endMileage > 0 && apiData.endMileage < apiData.startMileage) {
-            showNotification('Der End-Kilometerstand darf nicht kleiner als der Start-Kilometerstand sein', 'error');
-            if (submitButton) submitButton.disabled = false;
-            event.submitting = false;
-            return;
-        }
-
-        console.log('Sending usage data to API:', apiData);
 
         // Send API request
         fetch(apiUrl, {
