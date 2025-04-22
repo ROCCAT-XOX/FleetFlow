@@ -1,23 +1,98 @@
 export default class VehicleUsageHistory {
     constructor(vehicleId) {
         this.vehicleId = vehicleId;
-        this.initializeEventListeners();
+
+        // Deaktiviere frühere Instanzen
+        if (window._vehicleUsageHistory) {
+            window._vehicleUsageHistory.deactivate();
+        }
+        window._vehicleUsageHistory = this;
+
+        this.active = true;
+        this.isSubmitting = false;
+
+        // Initialisierung mit verzögerung um sicherzustellen, dass DOM bereit ist
+        setTimeout(() => {
+            if (this.active) {
+                this.initializeEventListeners();
+            }
+        }, 100);
+    }
+
+    deactivate() {
+        console.log("Deaktiviere frühere VehicleUsageHistory-Instanz");
+        this.active = false;
+        this.removeAllEventListeners();
+    }
+
+    removeAllEventListeners() {
+        // Entferne alle bekannten Event-Listener
+        const addButton = document.getElementById('add-usage-btn');
+        if (addButton) {
+            const newButton = addButton.cloneNode(true);
+            addButton.parentNode.replaceChild(newButton, addButton);
+        }
+
+        const usageForm = document.getElementById('usage-form');
+        if (usageForm) {
+            // Klonen und ersetzen des Formulars, um alle Event-Listener zu entfernen
+            const newForm = usageForm.cloneNode(true);
+            usageForm.parentNode.replaceChild(newForm, usageForm);
+        }
     }
 
     initializeEventListeners() {
+        console.log("Initialisiere VehicleUsageHistory Event-Listener");
+
+        // Entferne zuerst alle existierenden Event-Listener durch Klonen
+        this.removeAllEventListeners();
+
         const addButton = document.getElementById('add-usage-btn');
         if (addButton) {
-            addButton.addEventListener('click', () => this.openAddModal());
+            addButton.addEventListener('click', () => {
+                if (this.active) this.openAddModal();
+            });
         }
 
-        // Formular-Eventlistener für Nutzungseinträge
+        // Überschreibe das Formular-Submit-Verhalten direkt
         const usageForm = document.getElementById('usage-form');
         if (usageForm) {
-            usageForm.addEventListener('submit', (e) => this.handleUsageFormSubmit(e));
+            // Entferne den Standard-Submit-Handler
+            usageForm.onsubmit = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+
+                if (this.active && !this.isSubmitting) {
+                    console.log("Formular-Submission erkannt, rufe Handler auf");
+                    this.handleFormSubmission(usageForm);
+                } else {
+                    console.log("Formular-Submission blockiert: " +
+                        (this.active ? "Bereits in Bearbeitung" : "Instanz inaktiv"));
+                }
+
+                return false; // Verhindere Standard-Submit
+            };
+
+            // Überschreibe auch jegliche Formular-Buttons
+            const submitButtons = usageForm.querySelectorAll('button[type="submit"]');
+            submitButtons.forEach(button => {
+                button.onclick = (e) => {
+                    e.preventDefault();
+
+                    if (this.active && !this.isSubmitting) {
+                        console.log("Submit-Button geklickt, rufe Handler auf");
+                        this.handleFormSubmission(usageForm);
+                    }
+
+                    return false;
+                };
+            });
         }
     }
 
     async loadUsageHistory() {
+        if (!this.active) return;
+
         try {
             const response = await fetch(`/api/usage/vehicle/${this.vehicleId}`);
             if (!response.ok) throw new Error('Fehler beim Laden der Nutzungshistorie');
@@ -32,7 +107,7 @@ export default class VehicleUsageHistory {
 
     renderUsageTable(usageEntries) {
         const tableBody = document.getElementById('usage-table-body');
-        if (!tableBody) return;
+        if (!tableBody || !this.active) return;
 
         if (usageEntries.length === 0) {
             tableBody.innerHTML = `
@@ -58,38 +133,52 @@ export default class VehicleUsageHistory {
                     ${this.formatMileageRange(entry.startMileage, entry.endMileage)}
                 </td>
                 <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                    <button class="edit-usage-btn text-indigo-600 hover:text-indigo-900 mr-3" data-id="${entry.id}">
+                    <button type="button" class="edit-usage-btn text-indigo-600 hover:text-indigo-900 mr-3" data-id="${entry.id}">
                         Bearbeiten
                     </button>
-                    <button class="delete-usage-btn text-red-600 hover:text-red-900" data-id="${entry.id}">
+                    <button type="button" class="delete-usage-btn text-red-600 hover:text-red-900" data-id="${entry.id}">
                         Löschen
                     </button>
                 </td>
             </tr>
         `).join('');
 
-        this.attachRowEventListeners();
+        if (this.active) {
+            this.attachRowEventListeners();
+        }
     }
 
     attachRowEventListeners() {
+        if (!this.active) return;
+
         document.querySelectorAll('.edit-usage-btn').forEach(button => {
-            button.addEventListener('click', (e) => {
-                const usageId = e.target.dataset.id;
-                this.openEditModal(usageId);
-            });
+            button.onclick = (e) => {
+                e.preventDefault();
+                if (this.active) {
+                    const usageId = button.dataset.id;
+                    this.openEditModal(usageId);
+                }
+                return false;
+            };
         });
 
         document.querySelectorAll('.delete-usage-btn').forEach(button => {
-            button.addEventListener('click', (e) => {
-                const usageId = e.target.dataset.id;
-                if (confirm('Möchten Sie diesen Nutzungseintrag wirklich löschen?')) {
-                    this.deleteUsage(usageId);
+            button.onclick = (e) => {
+                e.preventDefault();
+                if (this.active) {
+                    const usageId = button.dataset.id;
+                    if (confirm('Möchten Sie diesen Nutzungseintrag wirklich löschen?')) {
+                        this.deleteUsage(usageId);
+                    }
                 }
-            });
+                return false;
+            };
         });
     }
 
     async deleteUsage(usageId) {
+        if (!this.active) return;
+
         try {
             const response = await fetch(`/api/usage/${usageId}`, {
                 method: 'DELETE'
@@ -97,7 +186,7 @@ export default class VehicleUsageHistory {
 
             if (!response.ok) throw new Error('Fehler beim Löschen des Nutzungseintrags');
 
-            this.loadUsageHistory(); // Reload the table
+            this.loadUsageHistory();
             alert('Nutzungseintrag erfolgreich gelöscht');
         } catch (error) {
             console.error('Fehler:', error);
@@ -106,12 +195,20 @@ export default class VehicleUsageHistory {
     }
 
     openAddModal() {
+        if (!this.active) return;
+
         const modal = document.getElementById('usage-modal');
         if (!modal) return;
 
         // Reset form
         const form = document.getElementById('usage-form');
-        if (form) form.reset();
+        if (form) {
+            form.reset();
+
+            // Entferne alle versteckten ID-Felder
+            const hiddenFields = form.querySelectorAll('input[type="hidden"]');
+            hiddenFields.forEach(field => field.remove());
+        }
 
         // Set current date and time as default
         const now = new Date();
@@ -121,10 +218,6 @@ export default class VehicleUsageHistory {
         if (dateField) dateField.value = now.toISOString().split('T')[0];
         if (timeField) timeField.value = now.toTimeString().slice(0, 5);
 
-        // Remove any existing hidden ID field
-        const existingIdField = document.getElementById('usage-id');
-        if (existingIdField) existingIdField.remove();
-
         // Load drivers for dropdown
         this.loadDriversForUsageForm();
 
@@ -132,6 +225,8 @@ export default class VehicleUsageHistory {
     }
 
     async openEditModal(usageId) {
+        if (!this.active) return;
+
         const modal = document.getElementById('usage-modal');
         if (!modal) return;
 
@@ -145,33 +240,56 @@ export default class VehicleUsageHistory {
             // Load drivers for dropdown
             await this.loadDriversForUsageForm();
 
+            const form = document.getElementById('usage-form');
+            if (form) {
+                form.reset();
+
+                // Entferne alle versteckten ID-Felder
+                const hiddenFields = form.querySelectorAll('input[type="hidden"]');
+                hiddenFields.forEach(field => field.remove());
+            }
+
             // Fill form fields
-            const startDateTime = new Date(usage.startDate);
-            document.getElementById('start-date').value = startDateTime.toISOString().split('T')[0];
-            document.getElementById('start-time').value = startDateTime.toTimeString().slice(0, 5);
+            if (usage.startDate) {
+                const startDateTime = new Date(usage.startDate);
+                const dateField = document.getElementById('start-date');
+                const timeField = document.getElementById('start-time');
+
+                if (dateField) dateField.value = startDateTime.toISOString().split('T')[0];
+                if (timeField) timeField.value = startDateTime.toTimeString().slice(0, 5);
+            }
 
             if (usage.endDate) {
                 const endDateTime = new Date(usage.endDate);
-                document.getElementById('end-date').value = endDateTime.toISOString().split('T')[0];
-                document.getElementById('end-time').value = endDateTime.toTimeString().slice(0, 5);
+                const dateField = document.getElementById('end-date');
+                const timeField = document.getElementById('end-time');
+
+                if (dateField) dateField.value = endDateTime.toISOString().split('T')[0];
+                if (timeField) timeField.value = endDateTime.toTimeString().slice(0, 5);
             }
 
-            document.getElementById('driver').value = usage.driverId || '';
-            document.getElementById('project').value = usage.purpose || usage.project || '';
-            document.getElementById('start-mileage').value = usage.startMileage || '';
-            document.getElementById('end-mileage').value = usage.endMileage || '';
-            document.getElementById('usage-notes').value = usage.notes || '';
+            const driverField = document.getElementById('driver');
+            if (driverField && usage.driverId) driverField.value = usage.driverId;
+
+            const projectField = document.getElementById('project');
+            if (projectField) projectField.value = usage.purpose || usage.project || '';
+
+            const startMileageField = document.getElementById('start-mileage');
+            if (startMileageField) startMileageField.value = usage.startMileage || '';
+
+            const endMileageField = document.getElementById('end-mileage');
+            if (endMileageField) endMileageField.value = usage.endMileage || '';
+
+            const notesField = document.getElementById('usage-notes');
+            if (notesField) notesField.value = usage.notes || '';
 
             // Add usage ID to form for editing
-            let idInput = document.getElementById('usage-id');
-            if (!idInput) {
-                idInput = document.createElement('input');
-                idInput.type = 'hidden';
-                idInput.id = 'usage-id';
-                idInput.name = 'usage-id';
-                document.getElementById('usage-form').appendChild(idInput);
-            }
+            const idInput = document.createElement('input');
+            idInput.type = 'hidden';
+            idInput.id = 'usage-id';
+            idInput.name = 'usage-id';
             idInput.value = usageId;
+            document.getElementById('usage-form').appendChild(idInput);
 
             modal.classList.remove('hidden');
         } catch (error) {
@@ -179,51 +297,40 @@ export default class VehicleUsageHistory {
             alert('Fehler beim Laden des Nutzungseintrags');
         }
     }
-    // Event-Listener für das Formular hinzufügen
 
-    // Event-Listener für das Formular hinzufügen
-
-    if (usageForm) {
-        usageForm.addEventListener('submit', (e) => this.handleUsageFormSubmit(e));
-    }
-
-    // Methode zur Verarbeitung des Nutzungsformulars
-    async handleUsageFormSubmit(event) {
-        event.preventDefault();
-        const form = event.target;
-        const formData = new FormData(form);
-        const usageId = formData.get('usage-id');
-        const isEdit = !!usageId;
-
-        // Datum und Uhrzeit extrahieren
-        const startDate = formData.get('start-date') || '';
-        const startTime = formData.get('start-time') || '';
-        const endDate = formData.get('end-date') || '';
-        const endTime = formData.get('end-time') || '';
-
-        // Validierung
-        if (!startDate || !startTime) {
-            alert('Bitte geben Sie ein gültiges Startdatum und eine Startzeit ein');
+    // Die neue Hauptmethode zur Formularverarbeitung
+    async handleFormSubmission(form) {
+        if (!this.active || this.isSubmitting) {
+            console.log("Formular-Submission blockiert: " +
+                (this.active ? "Bereits in Bearbeitung" : "Instanz inaktiv"));
             return;
         }
 
-        // Erstelle das Datenobjekt gemäß API-Anforderungen
-        const usageData = {
-            vehicleId: this.vehicleId,
-            driverId: formData.get('driver') || '',
-            startDate: startDate,
-            startTime: startTime,
-            endDate: endDate || '',
-            endTime: endTime || '',
-            startMileage: formData.get('start-mileage') ? parseInt(formData.get('start-mileage')) : 0,
-            endMileage: formData.get('end-mileage') ? parseInt(formData.get('end-mileage')) : 0,
-            purpose: formData.get('project') || '',
-            notes: formData.get('usage-notes') || ''
-        };
-
-        console.log('Nutzungsdaten zum Senden:', usageData);
+        console.log("Verarbeite Formular-Submission");
+        this.isSubmitting = true;
 
         try {
+            const formData = new FormData(form);
+            const usageId = formData.get('usage-id');
+            const isEdit = !!usageId;
+
+            // Erstelle Daten im Format, das der Server erwartet
+            const usageData = {
+                vehicleId: this.vehicleId,
+                driverId: formData.get('driver') || '',
+                startDate: formData.get('start-date') || '',
+                startTime: formData.get('start-time') || '00:00',
+                endDate: formData.get('end-date') || '',
+                endTime: formData.get('end-time') || '00:00',
+                startMileage: parseInt(formData.get('start-mileage') || '0'),
+                endMileage: parseInt(formData.get('end-mileage') || '0'),
+                purpose: formData.get('project') || '',
+                notes: formData.get('usage-notes') || '',
+                status: formData.get('end-date') ? 'completed' : 'active'
+            };
+
+            console.log('Sende Nutzungsdaten an API:', usageData);
+
             const url = isEdit ? `/api/usage/${usageId}` : '/api/usage';
             const method = isEdit ? 'PUT' : 'POST';
 
@@ -240,18 +347,29 @@ export default class VehicleUsageHistory {
                 throw new Error(`Fehler beim Speichern der Nutzung: ${errorText}`);
             }
 
-            // Schließe das Modal und lade die Tabelle neu
+            // Schließe das Modal
             const modal = document.getElementById('usage-modal');
             if (modal) modal.classList.add('hidden');
-            this.loadUsageHistory();
+
+            // Warte bevor Tabelle aktualisiert wird
+            setTimeout(() => {
+                if (this.active) {
+                    this.loadUsageHistory();
+                }
+            }, 500);
+
             alert(isEdit ? 'Nutzung erfolgreich aktualisiert' : 'Nutzung erfolgreich hinzugefügt');
         } catch (error) {
-            console.error('Fehler:', error);
+            console.error('Fehler bei der Formularverarbeitung:', error);
             alert(error.message);
+        } finally {
+            this.isSubmitting = false;
         }
     }
 
     async loadDriversForUsageForm() {
+        if (!this.active) return;
+
         try {
             const response = await fetch('/api/drivers');
             if (!response.ok) throw new Error('Fehler beim Laden der Fahrer');
@@ -301,7 +419,7 @@ export default class VehicleUsageHistory {
 
     showError(message) {
         const tableBody = document.getElementById('usage-table-body');
-        if (!tableBody) return;
+        if (!tableBody || !this.active) return;
 
         tableBody.innerHTML = `
             <tr>

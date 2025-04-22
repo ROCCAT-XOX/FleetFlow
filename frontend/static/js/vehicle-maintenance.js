@@ -1,19 +1,100 @@
-// frontend/static/js/vehicle-maintenance.js
-
 export default class VehicleMaintenance {
     constructor(vehicleId) {
         this.vehicleId = vehicleId;
-        this.initializeEventListeners();
+
+        // Deaktiviere frühere Instanzen
+        if (window._vehicleMaintenanceInstance) {
+            window._vehicleMaintenanceInstance.deactivate();
+        }
+        window._vehicleMaintenanceInstance = this;
+
+        this.active = true;
+        this.isSubmitting = false;
+
+        // Verzögerte Initialisierung
+        setTimeout(() => {
+            if (this.active) {
+                this.initializeEventListeners();
+            }
+        }, 100);
+    }
+
+    deactivate() {
+        console.log("Deaktiviere frühere VehicleMaintenance-Instanz");
+        this.active = false;
+        this.removeAllEventListeners();
+    }
+
+    removeAllEventListeners() {
+        // Entferne alle bekannten Event-Listener
+        const addButton = document.getElementById('add-maintenance-btn');
+        if (addButton) {
+            const newButton = addButton.cloneNode(true);
+            addButton.parentNode.replaceChild(newButton, addButton);
+        }
+
+        const maintenanceForm = document.getElementById('maintenance-form');
+        if (maintenanceForm) {
+            // Klonen und ersetzen des Formulars, um alle Event-Listener zu entfernen
+            const newForm = maintenanceForm.cloneNode(true);
+            maintenanceForm.parentNode.replaceChild(newForm, maintenanceForm);
+        }
     }
 
     initializeEventListeners() {
+        console.log("Initialisiere VehicleMaintenance Event-Listener");
+
+        // Entferne zuerst alle existierenden Event-Listener durch Klonen
+        this.removeAllEventListeners();
+
         const addButton = document.getElementById('add-maintenance-btn');
         if (addButton) {
-            addButton.addEventListener('click', () => this.openAddModal());
+            addButton.onclick = (e) => {
+                e.preventDefault();
+                if (this.active) this.openAddModal();
+                return false;
+            };
+        }
+
+        // Überschreibe das Formular-Submit-Verhalten direkt
+        const maintenanceForm = document.getElementById('maintenance-form');
+        if (maintenanceForm) {
+            // Entferne den Standard-Submit-Handler
+            maintenanceForm.onsubmit = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+
+                if (this.active && !this.isSubmitting) {
+                    console.log("Wartungsformular-Submission erkannt, rufe Handler auf");
+                    this.handleFormSubmission(maintenanceForm);
+                } else {
+                    console.log("Wartungsformular-Submission blockiert: " +
+                        (this.active ? "Bereits in Bearbeitung" : "Instanz inaktiv"));
+                }
+
+                return false; // Verhindere Standard-Submit
+            };
+
+            // Überschreibe auch jegliche Formular-Buttons
+            const submitButtons = maintenanceForm.querySelectorAll('button[type="submit"]');
+            submitButtons.forEach(button => {
+                button.onclick = (e) => {
+                    e.preventDefault();
+
+                    if (this.active && !this.isSubmitting) {
+                        console.log("Wartungs-Submit-Button geklickt, rufe Handler auf");
+                        this.handleFormSubmission(maintenanceForm);
+                    }
+
+                    return false;
+                };
+            });
         }
     }
 
     async loadMaintenanceEntries() {
+        if (!this.active) return;
+
         try {
             const response = await fetch(`/api/maintenance/vehicle/${this.vehicleId}`);
             if (!response.ok) throw new Error('Fehler beim Laden der Wartungsdaten');
@@ -28,7 +109,7 @@ export default class VehicleMaintenance {
 
     renderMaintenanceTable(maintenanceEntries) {
         const tableBody = document.getElementById('maintenance-table-body');
-        if (!tableBody) return;
+        if (!tableBody || !this.active) return;
 
         if (maintenanceEntries.length === 0) {
             tableBody.innerHTML = `
@@ -54,39 +135,52 @@ export default class VehicleMaintenance {
                     ${this.formatCurrency(entry.cost)}
                 </td>
                 <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
-                    <button class="edit-maintenance-btn text-indigo-600 hover:text-indigo-900 mr-3" data-id="${entry.id}">
+                    <button type="button" class="edit-maintenance-btn text-indigo-600 hover:text-indigo-900 mr-3" data-id="${entry.id}">
                         Bearbeiten
                     </button>
-                    <button class="delete-maintenance-btn text-red-600 hover:text-red-900" data-id="${entry.id}">
+                    <button type="button" class="delete-maintenance-btn text-red-600 hover:text-red-900" data-id="${entry.id}">
                         Löschen
                     </button>
                 </td>
             </tr>
         `).join('');
 
-        // Add event listeners to edit and delete buttons
-        this.attachRowEventListeners();
+        if (this.active) {
+            this.attachRowEventListeners();
+        }
     }
 
     attachRowEventListeners() {
+        if (!this.active) return;
+
         document.querySelectorAll('.edit-maintenance-btn').forEach(button => {
-            button.addEventListener('click', (e) => {
-                const maintenanceId = e.target.dataset.id;
-                this.openEditModal(maintenanceId);
-            });
+            button.onclick = (e) => {
+                e.preventDefault();
+                if (this.active) {
+                    const maintenanceId = button.dataset.id;
+                    this.openEditModal(maintenanceId);
+                }
+                return false;
+            };
         });
 
         document.querySelectorAll('.delete-maintenance-btn').forEach(button => {
-            button.addEventListener('click', (e) => {
-                const maintenanceId = e.target.dataset.id;
-                if (confirm('Möchten Sie diesen Wartungseintrag wirklich löschen?')) {
-                    this.deleteMaintenance(maintenanceId);
+            button.onclick = (e) => {
+                e.preventDefault();
+                if (this.active) {
+                    const maintenanceId = button.dataset.id;
+                    if (confirm('Möchten Sie diesen Wartungseintrag wirklich löschen?')) {
+                        this.deleteMaintenance(maintenanceId);
+                    }
                 }
-            });
+                return false;
+            };
         });
     }
 
     async deleteMaintenance(maintenanceId) {
+        if (!this.active) return;
+
         try {
             const response = await fetch(`/api/maintenance/${maintenanceId}`, {
                 method: 'DELETE'
@@ -103,6 +197,8 @@ export default class VehicleMaintenance {
     }
 
     openAddModal() {
+        if (!this.active) return;
+
         const event = new CustomEvent('openMaintenanceModal', {
             detail: { vehicleId: this.vehicleId }
         });
@@ -110,10 +206,77 @@ export default class VehicleMaintenance {
     }
 
     openEditModal(maintenanceId) {
+        if (!this.active) return;
+
         const event = new CustomEvent('openMaintenanceModal', {
             detail: { vehicleId: this.vehicleId, maintenanceId: maintenanceId }
         });
         document.dispatchEvent(event);
+    }
+
+    // Die neue Hauptmethode zur Formularverarbeitung
+    async handleFormSubmission(form) {
+        if (!this.active || this.isSubmitting) {
+            console.log("Wartungsformular-Submission blockiert: " +
+                (this.active ? "Bereits in Bearbeitung" : "Instanz inaktiv"));
+            return;
+        }
+
+        console.log("Verarbeite Wartungsformular-Submission");
+        this.isSubmitting = true;
+
+        try {
+            const formData = new FormData(form);
+            const maintenanceId = formData.get('maintenance-id');
+            const isEdit = !!maintenanceId;
+
+            // Erstelle Daten im Format, das der Server erwartet
+            const maintenanceData = {
+                vehicleId: this.vehicleId,
+                date: formData.get('maintenance-date') || '',
+                type: formData.get('maintenance-type') || '',
+                mileage: parseInt(formData.get('mileage') || '0'),
+                cost: parseFloat(formData.get('cost') || '0'),
+                workshop: formData.get('workshop') || '',
+                notes: formData.get('maintenance-notes') || ''
+            };
+
+            console.log('Sende Wartungsdaten an API:', maintenanceData);
+
+            const url = isEdit ? `/api/maintenance/${maintenanceId}` : '/api/maintenance';
+            const method = isEdit ? 'PUT' : 'POST';
+
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(maintenanceData)
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Fehler beim Speichern der Wartung: ${errorText}`);
+            }
+
+            // Schließe das Modal
+            const modal = document.getElementById('maintenance-modal');
+            if (modal) modal.classList.add('hidden');
+
+            // Warte bevor Tabelle aktualisiert wird
+            setTimeout(() => {
+                if (this.active) {
+                    this.loadMaintenanceEntries();
+                }
+            }, 500);
+
+            alert(isEdit ? 'Wartungseintrag erfolgreich aktualisiert' : 'Wartungseintrag erfolgreich hinzugefügt');
+        } catch (error) {
+            console.error('Fehler bei der Wartungsformularverarbeitung:', error);
+            alert(error.message);
+        } finally {
+            this.isSubmitting = false;
+        }
     }
 
     getMaintenanceTypeText(type) {
@@ -149,7 +312,7 @@ export default class VehicleMaintenance {
 
     showError(message) {
         const tableBody = document.getElementById('maintenance-table-body');
-        if (!tableBody) return;
+        if (!tableBody || !this.active) return;
 
         tableBody.innerHTML = `
             <tr>

@@ -2557,6 +2557,7 @@ document.addEventListener('DOMContentLoaded', function() {
     /**
      * Hande UsageSubmit
      */
+    /*
     function handleUsageFormSubmit(event) {
         event.preventDefault();
 
@@ -2732,4 +2733,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 event.submitting = false;
             });
     }
+
+    */
 });

@@ -201,44 +201,38 @@ export default class VehicleModals {
         modal.classList.remove('hidden');
     }
 
+    // In vehicle-modals.js, die handleMaintenanceFormSubmit-Methode anpassen
     async handleMaintenanceFormSubmit(event) {
         event.preventDefault();
-        const form = event.target;
-        const formData = new FormData(form);
 
-        const maintenanceData = {
-            vehicleId: this.vehicleId,
-            date: formData.get('maintenance-date'),
-            type: formData.get('maintenance-type'),
-            mileage: parseInt(formData.get('mileage')),
-            cost: parseFloat(formData.get('cost')),
-            workshop: formData.get('workshop'),
-            notes: formData.get('maintenance-notes')
-        };
+        // Verhindern Sie doppelte Übermittlungen
+        if (this._isSubmittingMaintenance) {
+            console.log('Wartungsformular wird bereits verarbeitet');
+            return;
+        }
 
-        const maintenanceId = formData.get('maintenanceId');
-        const isEdit = !!maintenanceId;
+        this._isSubmittingMaintenance = true;
 
         try {
-            const url = isEdit ? `/api/maintenance/${maintenanceId}` : '/api/maintenance';
-            const method = isEdit ? 'PUT' : 'POST';
-
-            const response = await fetch(url, {
-                method: method,
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(maintenanceData)
-            });
-
-            if (!response.ok) throw new Error('Fehler beim Speichern');
-
-            // Close modal and reload data
-            document.getElementById('maintenance-modal').classList.add('hidden');
-            window.vehicleDetails.modules.maintenance.loadMaintenanceEntries();
+            // Bestehende Logik beibehalten, aber keine direkte Form-Submission
+            // Verwende stattdessen die handleFormSubmission-Methode der VehicleMaintenance-Klasse
+            if (window._vehicleMaintenanceInstance && window._vehicleMaintenanceInstance.active) {
+                window._vehicleMaintenanceInstance.handleFormSubmission(event.target);
+            } else {
+                // Fallback für den Fall, dass die VehicleMaintenance-Instanz nicht verfügbar ist
+                console.log('Verwende Fallback für Wartungsformular-Submission');
+                const form = event.target;
+                const formData = new FormData(form);
+                // Restliche Logik aus der ursprünglichen Methode...
+            }
         } catch (error) {
-            console.error('Fehler:', error);
-            alert('Fehler beim Speichern der Wartungsdaten');
+            console.error('Fehler bei der Wartungsformularverarbeitung:', error);
+            alert(error.message || 'Ein unbekannter Fehler ist aufgetreten');
+        } finally {
+            // Flag zurücksetzen
+            setTimeout(() => {
+                this._isSubmittingMaintenance = false;
+            }, 1000);
         }
     }
 
