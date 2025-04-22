@@ -1123,25 +1123,84 @@ document.addEventListener('DOMContentLoaded', function() {
         const usageId = usageData['usage-id'];
         const isEdit = !!usageId;
 
-        // Combine date and time
-        const startDate = combineDateTime(usageData['current-start-date'], usageData['current-start-time']);
-        const endDate = combineDateTime(usageData['current-end-date'], usageData['current-end-time']);
+        // Formatiere Datum und Zeit direkt im richtigen Format für API
+        let startDateStr = '';
+        let endDateStr = '';
+
+        if (usageData['current-start-date']) {
+            // Stellt sicher, dass das Datum im Format JJJJ-MM-TT ist
+            const startDateParts = usageData['current-start-date'].split('-');
+            if (startDateParts.length === 3) {
+                const year = startDateParts[0].padStart(4, '0');
+                const month = startDateParts[1].padStart(2, '0');
+                const day = startDateParts[2].padStart(2, '0');
+
+                // Zeit hinzufügen
+                let timeStr = '00:00:00';
+                if (usageData['current-start-time']) {
+                    const timeParts = usageData['current-start-time'].split(':');
+                    if (timeParts.length >= 2) {
+                        const hours = timeParts[0].padStart(2, '0');
+                        const minutes = timeParts[1].padStart(2, '0');
+                        timeStr = `${hours}:${minutes}:00`;
+                    }
+                }
+
+                startDateStr = `${year}-${month}-${day}T${timeStr}`;
+            }
+        }
+
+        if (usageData['current-end-date']) {
+            // Stellt sicher, dass das Datum im Format JJJJ-MM-TT ist
+            const endDateParts = usageData['current-end-date'].split('-');
+            if (endDateParts.length === 3) {
+                const year = endDateParts[0].padStart(4, '0');
+                const month = endDateParts[1].padStart(2, '0');
+                const day = endDateParts[2].padStart(2, '0');
+
+                // Zeit hinzufügen
+                let timeStr = '00:00:00';
+                if (usageData['current-end-time']) {
+                    const timeParts = usageData['current-end-time'].split(':');
+                    if (timeParts.length >= 2) {
+                        const hours = timeParts[0].padStart(2, '0');
+                        const minutes = timeParts[1].padStart(2, '0');
+                        timeStr = `${hours}:${minutes}:00`;
+                    }
+                }
+
+                endDateStr = `${year}-${month}-${day}T${timeStr}`;
+            }
+        }
+
+        // Validierung der Eingaben
+        if (!startDateStr) {
+            showNotification('Bitte geben Sie ein gültiges Startdatum ein', 'error');
+            if (submitButton) submitButton.disabled = false;
+            event.submitting = false;
+            return;
+        }
 
         // Prepare API request
         const apiUrl = isEdit ? `/api/usage/${usageId}` : '/api/usage';
         const method = isEdit ? 'PUT' : 'POST';
 
-        // Convert to API format
+        // Convert to API format - Beide Feldnamen für API senden
         const apiData = {
             vehicleId: vehicleId,
             driverId: usageData['current-driver'],
-            startDate: startDate,
-            endDate: endDate || null,
+            startDate: startDateStr,
+            endDate: endDateStr || null,
+            startTime: startDateStr,  // Explizit beide Feldnamen senden
+            endTime: endDateStr || null,
             department: usageData['current-department'],
             status: usageData['usage-status'] || 'active',
             project: usageData['current-project'],
             notes: usageData['current-usage-notes']
         };
+
+        // Debug-Informationen
+        console.log('Aktuelle Nutzungsdaten zum Senden:', apiData);
 
         // Führe die Nutzungsaktualisierung durch
         const usagePromise = fetch(apiUrl, {
@@ -1154,7 +1213,15 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => {
                 if (!response.ok) {
                     return response.text().then(text => {
-                        throw new Error('Fehler beim Speichern der Nutzung: ' + text);
+                        try {
+                            const error = JSON.parse(text);
+                            throw new Error('Fehler beim Speichern der Nutzung: ' + JSON.stringify(error));
+                        } catch (e) {
+                            if (e instanceof SyntaxError) {
+                                throw new Error('Fehler beim Speichern der Nutzung: ' + text);
+                            }
+                            throw e;
+                        }
                     });
                 }
                 return response.json();
@@ -2273,42 +2340,52 @@ document.addEventListener('DOMContentLoaded', function() {
     // ===== UTILITY FUNCTIONS =====
 
     /**
-     * Combine date and time into ISO string
+     * Combine date and time into ISO string without timezone conversion
      */
     function combineDateTime(dateStr, timeStr) {
         if (!dateStr) return null;
 
         try {
-            // Neues Date-Objekt mit dem angegebenen Datum erstellen
-            const date = new Date(dateStr);
+            // Formatiere das Datum direkt ohne Date-Objekt zu verwenden (verhindert Zeitzonen-Probleme)
+            let isoString = '';
 
-            // Überprüfen, ob Datum gültig ist
-            if (isNaN(date.getTime())) {
-                console.warn('Ungültiges Datum:', dateStr);
-                return null;
+            // Datum normalisieren
+            if (dateStr) {
+                // Stellt sicher, dass wir ein Format JJJJ-MM-TT haben
+                const dateParts = dateStr.split('-');
+                if (dateParts.length === 3) {
+                    const year = dateParts[0].padStart(4, '0');
+                    const month = dateParts[1].padStart(2, '0');
+                    const day = dateParts[2].padStart(2, '0');
+                    isoString = `${year}-${month}-${day}`;
+                } else {
+                    console.warn('Ungültiges Datumsformat:', dateStr);
+                    return null;
+                }
             }
 
-            // Falls Zeit angegeben, diese zum Datum hinzufügen
+            // Zeit hinzufügen
             if (timeStr) {
-                const [hours, minutes] = timeStr.split(':').map(num => parseInt(num, 10));
-
-                // Überprüfen, ob Zeit gültig ist
-                if (!isNaN(hours) && !isNaN(minutes)) {
-                    date.setHours(hours);
-                    date.setMinutes(minutes);
-                    date.setSeconds(0);
-                    date.setMilliseconds(0);
+                const timeParts = timeStr.split(':');
+                if (timeParts.length >= 2) {
+                    const hours = timeParts[0].padStart(2, '0');
+                    const minutes = timeParts[1].padStart(2, '0');
+                    const seconds = timeParts.length > 2 ? timeParts[2].padStart(2, '0') : '00';
+                    isoString += `T${hours}:${minutes}:${seconds}`;
+                } else {
+                    // Falls keine Zeit angegeben ist, Standardzeit verwenden
+                    isoString += 'T00:00:00';
                 }
             } else {
-                // Standardzeit setzen (00:00:00)
-                date.setHours(0);
-                date.setMinutes(0);
-                date.setSeconds(0);
-                date.setMilliseconds(0);
+                // Falls keine Zeit angegeben ist, Standardzeit verwenden
+                isoString += 'T00:00:00';
             }
 
-            // ISO-String zurückgeben
-            return date.toISOString();
+            // Optional: Ohne Zeitzone senden (anscheinend erwartet vom Backend)
+            return isoString;
+
+            // Oder mit Z für UTC falls nötig
+            // return isoString + 'Z';
         } catch (error) {
             console.error('Fehler beim Kombinieren von Datum und Zeit:', error);
             return null;
@@ -2509,5 +2586,184 @@ document.addEventListener('DOMContentLoaded', function() {
                 notification.remove();
             });
         }, 5000);
+    }
+
+    /**
+     * Hande UsageSubmit
+     */
+    function handleUsageFormSubmit(event) {
+        event.preventDefault();
+
+        // Verhindere doppelte Ausführung
+        if (event.submitting) return;
+        event.submitting = true;
+
+        const form = event.target;
+        const formData = new FormData(form);
+        const usageData = {};
+
+        // Deaktiviere den Submit-Button
+        const submitButton = form.querySelector('button[type="submit"]');
+        if (submitButton) submitButton.disabled = true;
+
+        // Convert form data to object
+        for (let [key, value] of formData.entries()) {
+            usageData[key] = value;
+        }
+
+        // Check if it's an edit
+        const usageId = usageData['usage-id'];
+        const isEdit = !!usageId;
+
+        // Formatiere Datum und Zeit richtig für API
+        let startDateStr = '';
+        let endDateStr = '';
+
+        if (usageData['start-date']) {
+            // Stellt sicher, dass das Datum im Format JJJJ-MM-TT ist
+            const startDateParts = usageData['start-date'].split('-');
+            if (startDateParts.length === 3) {
+                const year = startDateParts[0].padStart(4, '0');
+                const month = startDateParts[1].padStart(2, '0');
+                const day = startDateParts[2].padStart(2, '0');
+
+                // Zeit hinzufügen
+                let timeStr = '00:00:00';
+                if (usageData['start-time']) {
+                    const timeParts = usageData['start-time'].split(':');
+                    if (timeParts.length >= 2) {
+                        const hours = timeParts[0].padStart(2, '0');
+                        const minutes = timeParts[1].padStart(2, '0');
+                        timeStr = `${hours}:${minutes}:00`;
+                    }
+                }
+
+                startDateStr = `${year}-${month}-${day}T${timeStr}`;
+            }
+        }
+
+        if (usageData['end-date']) {
+            // Stellt sicher, dass das Datum im Format JJJJ-MM-TT ist
+            const endDateParts = usageData['end-date'].split('-');
+            if (endDateParts.length === 3) {
+                const year = endDateParts[0].padStart(4, '0');
+                const month = endDateParts[1].padStart(2, '0');
+                const day = endDateParts[2].padStart(2, '0');
+
+                // Zeit hinzufügen
+                let timeStr = '00:00:00';
+                if (usageData['end-time']) {
+                    const timeParts = usageData['end-time'].split(':');
+                    if (timeParts.length >= 2) {
+                        const hours = timeParts[0].padStart(2, '0');
+                        const minutes = timeParts[1].padStart(2, '0');
+                        timeStr = `${hours}:${minutes}:00`;
+                    }
+                }
+
+                endDateStr = `${year}-${month}-${day}T${timeStr}`;
+            }
+        }
+
+        // Validierung der Eingaben
+        if (!startDateStr) {
+            showNotification('Bitte geben Sie ein gültiges Startdatum ein', 'error');
+            if (submitButton) submitButton.disabled = false;
+            event.submitting = false;
+            return;
+        }
+
+        if (usageData['end-date'] && !endDateStr) {
+            showNotification('Bitte geben Sie ein gültiges Enddatum ein', 'error');
+            if (submitButton) submitButton.disabled = false;
+            event.submitting = false;
+            return;
+        }
+
+        // Prüfen, ob Startdatum vor Enddatum liegt
+        if (startDateStr && endDateStr && new Date(startDateStr) > new Date(endDateStr)) {
+            showNotification('Das Startdatum darf nicht nach dem Enddatum liegen', 'error');
+            if (submitButton) submitButton.disabled = false;
+            event.submitting = false;
+            return;
+        }
+
+        // Prepare API request
+        const apiUrl = isEdit ? `/api/usage/${usageId}` : '/api/usage';
+        const method = isEdit ? 'PUT' : 'POST';
+
+        // Convert to API format - mit zusätzlichen Validierungen
+        const apiData = {
+            vehicleId: vehicleId,
+            driverId: usageData.driver || null,
+            startDate: startDateStr,
+            endDate: endDateStr || null,
+            startTime: startDateStr,  // Beide Felder senden, um Backend-Anforderungen zu erfüllen
+            endTime: endDateStr || null,
+            startMileage: parseInt(usageData['start-mileage']) || 0,
+            endMileage: parseInt(usageData['end-mileage']) || 0,
+            project: usageData.project || '',
+            notes: usageData['usage-notes'] || ''
+        };
+
+        // Zusätzliche Validierung der Kilometerstände
+        if (apiData.startMileage > 0 && apiData.endMileage > 0 && apiData.endMileage < apiData.startMileage) {
+            showNotification('Der End-Kilometerstand darf nicht kleiner als der Start-Kilometerstand sein', 'error');
+            if (submitButton) submitButton.disabled = false;
+            event.submitting = false;
+            return;
+        }
+
+        console.log('Sending usage data to API:', apiData);
+
+        // Send API request
+        fetch(apiUrl, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(apiData)
+        })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        try {
+                            const error = JSON.parse(text);
+                            throw new Error('Fehler beim Speichern der Nutzung: ' + JSON.stringify(error));
+                        } catch (e) {
+                            if (e instanceof SyntaxError) {
+                                throw new Error('Fehler beim Speichern der Nutzung: ' + text);
+                            }
+                            throw e;
+                        }
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                closeUsageModal();
+
+                // Aktualisiere Fahrzeugdaten, wenn Nutzungseintrag erfolgreich war
+                loadUsageHistory();
+
+                // Wenn Kilometerstand geändert wurde und höher ist als aktuell
+                if (apiData.endMileage > 0 && apiData.endMileage > (currentVehicle?.mileage || 0)) {
+                    updateVehicleMileage(apiData.endMileage);
+                }
+
+                showNotification(
+                    isEdit ? 'Nutzungseintrag erfolgreich aktualisiert' : 'Nutzungseintrag erfolgreich erstellt',
+                    'success'
+                );
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Fehler beim Speichern: ' + error.message, 'error');
+            })
+            .finally(() => {
+                // Submit-Button reaktivieren und Flag zurücksetzen
+                if (submitButton) submitButton.disabled = false;
+                event.submitting = false;
+            });
     }
 });

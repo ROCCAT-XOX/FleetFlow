@@ -195,25 +195,70 @@ export default class VehicleUsageHistory {
         const usageId = formData.get('usage-id');
         const isEdit = !!usageId;
 
-        // Datum und Uhrzeit korrekt kombinieren
-        const startDate = formData.get('start-date');
-        const startTime = formData.get('start-time');
-        // Kombiniere Datum und Zeit zu einem ISO-Zeitstempel
-        const startDateTime = startDate && startTime ? `${startDate}T${startTime}:00` : null;
+        // Datum und Uhrzeit im richtigen Format für die API zusammenstellen
+        let startDateStr = '';
+        let endDateStr = '';
 
-        let endDateTime = null;
-        const endDate = formData.get('end-date');
-        const endTime = formData.get('end-time');
-        if (endDate && endTime) {
-            endDateTime = `${endDate}T${endTime}:00`;
+        if (formData.get('start-date')) {
+            // Stellt sicher, dass das Datum im Format JJJJ-MM-TT ist
+            const startDateParts = formData.get('start-date').split('-');
+            if (startDateParts.length === 3) {
+                const year = startDateParts[0].padStart(4, '0');
+                const month = startDateParts[1].padStart(2, '0');
+                const day = startDateParts[2].padStart(2, '0');
+
+                // Zeit hinzufügen
+                let timeStr = '00:00:00';
+                if (formData.get('start-time')) {
+                    const timeParts = formData.get('start-time').split(':');
+                    if (timeParts.length >= 2) {
+                        const hours = timeParts[0].padStart(2, '0');
+                        const minutes = timeParts[1].padStart(2, '0');
+                        timeStr = `${hours}:${minutes}:00`;
+                    }
+                }
+
+                startDateStr = `${year}-${month}-${day}T${timeStr}`;
+            }
         }
 
-        // Erstelle das Datenobjekt
+        if (formData.get('end-date')) {
+            // Stellt sicher, dass das Datum im Format JJJJ-MM-TT ist
+            const endDateParts = formData.get('end-date').split('-');
+            if (endDateParts.length === 3) {
+                const year = endDateParts[0].padStart(4, '0');
+                const month = endDateParts[1].padStart(2, '0');
+                const day = endDateParts[2].padStart(2, '0');
+
+                // Zeit hinzufügen
+                let timeStr = '00:00:00';
+                if (formData.get('end-time')) {
+                    const timeParts = formData.get('end-time').split(':');
+                    if (timeParts.length >= 2) {
+                        const hours = timeParts[0].padStart(2, '0');
+                        const minutes = timeParts[1].padStart(2, '0');
+                        timeStr = `${hours}:${minutes}:00`;
+                    }
+                }
+
+                endDateStr = `${year}-${month}-${day}T${timeStr}`;
+            }
+        }
+
+        // Validierung
+        if (!startDateStr) {
+            alert('Bitte geben Sie ein gültiges Startdatum ein');
+            return;
+        }
+
+        // Erstelle das Datenobjekt mit beiden Feldnamenvarianten für Kompatibilität
         const usageData = {
             vehicleId: this.vehicleId,
             driverId: formData.get('driver') || null,
-            startTime: startDateTime, // Wichtig: StartTime muss als ISO-String übergeben werden
-            endTime: endDateTime,
+            startDate: startDateStr,
+            endDate: endDateStr || null,
+            startTime: startDateStr,  // Beide Feldnamen für die API
+            endTime: endDateStr || null,
             startMileage: formData.get('start-mileage') ? parseInt(formData.get('start-mileage')) : null,
             endMileage: formData.get('end-mileage') ? parseInt(formData.get('end-mileage')) : null,
             purpose: formData.get('project') || null,
