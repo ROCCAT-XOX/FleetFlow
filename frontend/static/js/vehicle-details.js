@@ -13,6 +13,7 @@ import VehicleUsageHistory from './vehicle-usage-history.js';
 // frontend/static/js/vehicle-details.js
 
 class VehicleDetails {
+
     constructor() {
         this.vehicleId = this.getVehicleIdFromUrl();
         this.modules = {};

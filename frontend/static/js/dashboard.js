@@ -228,56 +228,132 @@ function renderRecentActivities(activities) {
     });
 }
 
-// Initialize fleet activity chart
-// Funktion zum Initialisieren des Flottenaktivitäts-Charts mit echten Daten
+// Überarbeitete Funktion mit verbesserter Fehlerbehandlung und Logging
+// Korrigierte Funktion mit datenkorrektur
 async function initializeFleetActivityChart() {
     const ctx = document.getElementById('fleetActivityChart');
     if (!ctx) return;
 
     try {
-        // Daten für die letzten 7 Tage laden
+        // Zuerst die Gesamtzahl der Fahrzeuge laden
+        const statsResponse = await fetch('/api/dashboard/stats');
+        if (!statsResponse.ok) throw new Error('Fehler beim Laden der Fahrzeugstatistiken');
+
+        const statsData = await statsResponse.json();
+        const totalVehicles = statsData.totalVehicles || 0;
+
+        console.log("Gesamtanzahl der Fahrzeuge:", totalVehicles);
+
+        // Dann die Nutzungsdaten für die letzten 7 Tage laden
         const response = await fetch('/api/dashboard/vehicle-usage-stats');
         if (!response.ok) throw new Error('Fehler beim Laden der Flottenaktivitätsdaten');
 
         const data = await response.json();
         const usageData = data.usageData || [];
 
-        // Daten für das Chart vorbereiten
-        const labels = usageData.map(item => item.day);
-        const inUseData = usageData.map(item => item.inUseCount);
-        const maintenanceData = usageData.map(item => item.maintenanceCount);
+        // Daten für das Chart vorbereiten und nach Datum sortieren
+        usageData.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-        // Chart erstellen
+        // Formatiere die Labels für die Anzeige
+        const labels = usageData.map(item => {
+            const date = new Date(item.date);
+            return date.toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit' });
+        });
+
+        // KORREKTUR: Daten anpassen, um Überzählung zu vermeiden
+        const correctedData = usageData.map(day => {
+            // Originaldaten sichern
+            const inUse = day.inUseCount || 0;
+            const maintenance = day.maintenanceCount || 0;
+
+            // Überprüfen auf Überzählung
+            const total = inUse + maintenance;
+            let correctedInUse = inUse;
+            let correctedMaintenance = maintenance;
+
+            // Wenn die Summe größer als die Gesamtzahl ist, proportional reduzieren
+            if (total > totalVehicles) {
+                const reductionFactor = totalVehicles / total;
+                correctedInUse = Math.floor(inUse * reductionFactor);
+                correctedMaintenance = totalVehicles - correctedInUse;
+            }
+
+            return {
+                original: { inUse, maintenance },
+                corrected: { inUse: correctedInUse, maintenance: correctedMaintenance }
+            };
+        });
+
+        // Log der Korrekturen
+        correctedData.forEach((day, i) => {
+            console.log(`Tag ${i+1} - Original: InUse=${day.original.inUse}, Maintenance=${day.original.maintenance}, Total=${day.original.inUse + day.original.maintenance}`);
+            console.log(`Tag ${i+1} - Korrigiert: InUse=${day.corrected.inUse}, Maintenance=${day.corrected.maintenance}, Total=${day.corrected.inUse + day.corrected.maintenance}`);
+        });
+
+        // Korrigierte Daten für das Chart
+        const inUseData = correctedData.map(day => day.corrected.inUse);
+        const maintenanceData = correctedData.map(day => day.corrected.maintenance);
+        const availableData = correctedData.map(day =>
+            totalVehicles - day.corrected.inUse - day.corrected.maintenance
+        );
+
+        // Chart erstellen mit korrigierten Daten
         new Chart(ctx, {
             type: 'line',
             data: {
                 labels: labels,
-                datasets: [{
-                    label: 'Fahrzeuge in Nutzung',
-                    data: inUseData,
-                    borderColor: 'rgb(79, 70, 229)',
-                    backgroundColor: 'rgba(79, 70, 229, 0.1)',
-                    tension: 0.3,
-                    fill: true
-                }, {
-                    label: 'In Wartung',
-                    data: maintenanceData,
-                    borderColor: 'rgb(234, 179, 8)',
-                    backgroundColor: 'rgba(234, 179, 8, 0.1)',
-                    tension: 0.3,
-                    fill: true
-                }]
+                datasets: [
+                    {
+                        label: 'Verfügbar',
+                        data: availableData,
+                        borderColor: 'rgb(34, 197, 94)', // Grün
+                        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                        tension: 0.3,
+                        fill: true,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    },
+                    {
+                        label: 'In Benutzung',
+                        data: inUseData,
+                        borderColor: 'rgb(79, 70, 229)', // Blau/Indigo
+                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                        tension: 0.3,
+                        fill: true,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    },
+                    {
+                        label: 'In Wartung',
+                        data: maintenanceData,
+                        borderColor: 'rgb(234, 179, 8)', // Gelb
+                        backgroundColor: 'rgba(234, 179, 8, 0.1)',
+                        tension: 0.3,
+                        fill: true,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }
+                ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        position: 'bottom'
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 12,
+                            padding: 15
+                        }
                     },
                     tooltip: {
                         mode: 'index',
-                        intersect: false
+                        intersect: false,
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + context.raw + ' Fahrzeuge';
+                            }
+                        }
                     }
                 },
                 scales: {
@@ -288,8 +364,11 @@ async function initializeFleetActivityChart() {
                             text: 'Anzahl Fahrzeuge'
                         },
                         ticks: {
-                            precision: 0
-                        }
+                            precision: 0,
+                            stepSize: 1,
+                            max: totalVehicles
+                        },
+                        suggestedMax: totalVehicles
                     },
                     x: {
                         title: {
@@ -302,47 +381,12 @@ async function initializeFleetActivityChart() {
         });
     } catch (error) {
         console.error('Fehler beim Laden der Flottenaktivitäts-Daten:', error);
-
-        // Fallback mit Beispieldaten
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'],
-                datasets: [{
-                    label: 'Fahrzeuge in Nutzung',
-                    data: [12, 19, 15, 17, 14, 8, 5],
-                    borderColor: 'rgb(79, 70, 229)',
-                    backgroundColor: 'rgba(79, 70, 229, 0.1)',
-                    tension: 0.3,
-                    fill: true
-                }, {
-                    label: 'In Wartung',
-                    data: [2, 1, 3, 2, 1, 0, 1],
-                    borderColor: 'rgb(234, 179, 8)',
-                    backgroundColor: 'rgba(234, 179, 8, 0.1)',
-                    tension: 0.3,
-                    fill: true
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
+        ctx.parentNode.innerHTML = '<div class="text-center text-red-500 py-4">Fehler beim Laden der Daten: ' + error.message + '</div>';
     }
 }
 
 // Funktion zum Initialisieren des Kraftstoffkosten-Charts
+// Verbesserte Funktion zum Initialisieren des Kraftstoffkosten-Charts
 async function initializeFuelCostsChart() {
     const ctx = document.getElementById('fuelCostsChart');
     if (!ctx) return;
@@ -362,19 +406,21 @@ async function initializeFuelCostsChart() {
         const vehicles = [];
         const datasets = [];
 
-        if (fuelCostsData.length > 0 && fuelCostsData[0].vehicleCosts) {
-            // Fahrzeug-IDs aus dem ersten Monat extrahieren
-            const firstMonthData = fuelCostsData[0].vehicleCosts;
-            Object.keys(firstMonthData).forEach(vehicleId => {
-                if (firstMonthData[vehicleId].name) {
-                    vehicles.push({
-                        id: vehicleId,
-                        name: firstMonthData[vehicleId].name
+        // Prüfen, ob Daten vorhanden sind und die erwartete Struktur haben
+        console.log("Erhaltene Fuel Cost Daten:", fuelCostsData);
+
+        if (fuelCostsData.length > 0) {
+            // Alle Fahrzeug-IDs aus allen Monaten sammeln
+            const allVehicleIds = new Set();
+            fuelCostsData.forEach(month => {
+                if (month.vehicleCosts) {
+                    Object.keys(month.vehicleCosts).forEach(vehicleId => {
+                        allVehicleIds.add(vehicleId);
                     });
                 }
             });
 
-            // Zufällige Farben für jedes Fahrzeug generieren
+            // Farben für Fahrzeuge generieren
             const colors = [
                 'rgba(54, 162, 235, 0.8)',
                 'rgba(255, 99, 132, 0.8)',
@@ -389,24 +435,47 @@ async function initializeFuelCostsChart() {
             ];
 
             // Datasets für jedes Fahrzeug erstellen
-            vehicles.forEach((vehicle, index) => {
+            let colorIndex = 0;
+            allVehicleIds.forEach(vehicleId => {
+                // Fahrzeugnamen aus irgendeinem Monat extrahieren, wo es vorhanden ist
+                let vehicleName = `Fahrzeug ${vehicleId.substring(0, 5)}`;
+                for (const month of fuelCostsData) {
+                    if (month.vehicleCosts && month.vehicleCosts[vehicleId] && month.vehicleCosts[vehicleId].name) {
+                        vehicleName = month.vehicleCosts[vehicleId].name;
+                        break;
+                    }
+                }
+
                 const vehicleData = fuelCostsData.map(month => {
-                    if (month.vehicleCosts && month.vehicleCosts[vehicle.id]) {
-                        return month.vehicleCosts[vehicle.id].cost || 0;
+                    if (month.vehicleCosts && month.vehicleCosts[vehicleId]) {
+                        return month.vehicleCosts[vehicleId].cost || 0;
                     }
                     return 0;
                 });
 
-                datasets.push({
-                    label: vehicle.name,
-                    data: vehicleData,
-                    backgroundColor: colors[index % colors.length],
-                    stack: 'Stack 0'
-                });
+                // Nur Fahrzeuge hinzufügen, die tatsächliche Kosten haben
+                if (vehicleData.some(cost => cost > 0)) {
+                    datasets.push({
+                        label: vehicleName,
+                        data: vehicleData,
+                        backgroundColor: colors[colorIndex % colors.length],
+                        stack: 'Stack 0'
+                    });
+                    colorIndex++;
+                }
             });
         }
 
-        // Chart erstellen
+        // Chart erstellen mit den gesammelten Daten
+        console.log("Chart Daten:", { labels, datasets });
+
+        // Chart nur erstellen, wenn tatsächlich Daten vorhanden sind
+        if (datasets.length === 0) {
+            // Fallback bei leeren Daten
+            ctx.parentNode.innerHTML = '<div class="text-center text-gray-500 py-4">Keine Tankkosten-Daten verfügbar</div>';
+            return;
+        }
+
         new Chart(ctx, {
             type: 'bar',
             data: {
@@ -418,7 +487,11 @@ async function initializeFuelCostsChart() {
                 maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        position: 'bottom'
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 12,
+                            padding: 10
+                        }
                     },
                     tooltip: {
                         mode: 'index',
@@ -455,6 +528,11 @@ async function initializeFuelCostsChart() {
                         title: {
                             display: true,
                             text: 'Kosten (EUR)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return value + ' €';
+                            }
                         }
                     }
                 }
@@ -462,58 +540,7 @@ async function initializeFuelCostsChart() {
         });
     } catch (error) {
         console.error('Fehler beim Laden der Kraftstoffkosten-Daten:', error);
-
-        // Fallback mit Beispieldaten
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'],
-                datasets: [
-                    {
-                        label: 'BMW 530e',
-                        data: [250, 280, 260, 240, 270, 290, 310, 280, 260, 240, 230, 250],
-                        backgroundColor: 'rgba(54, 162, 235, 0.8)',
-                        stack: 'Stack 0'
-                    },
-                    {
-                        label: 'VW Passat',
-                        data: [150, 170, 160, 140, 150, 180, 200, 170, 160, 140, 130, 150],
-                        backgroundColor: 'rgba(255, 99, 132, 0.8)',
-                        stack: 'Stack 0'
-                    },
-                    {
-                        label: 'Audi e-tron',
-                        data: [80, 90, 85, 75, 85, 95, 100, 90, 85, 75, 70, 80],
-                        backgroundColor: 'rgba(75, 192, 192, 0.8)',
-                        stack: 'Stack 0'
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
-                    }
-                },
-                scales: {
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Monat'
-                        }
-                    },
-                    y: {
-                        stacked: true,
-                        title: {
-                            display: true,
-                            text: 'Kosten (EUR)'
-                        }
-                    }
-                }
-            }
-        });
+        ctx.parentNode.innerHTML = '<div class="text-center text-red-500 py-4">Fehler beim Laden der Daten</div>';
     }
 }
 
