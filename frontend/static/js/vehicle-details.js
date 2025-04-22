@@ -10,6 +10,8 @@ import VehicleRegistration from './vehicle-registration.js';
 import VehicleStatistics from './vehicle-statistics.js';
 import VehicleUsageHistory from './vehicle-usage-history.js';
 
+
+
 // frontend/static/js/vehicle-details.js
 
 class VehicleDetails {
