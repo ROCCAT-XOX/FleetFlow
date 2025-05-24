@@ -3,6 +3,7 @@ package main
 import (
 	"FleetDrive/backend/db"
 	"FleetDrive/backend/repository"
+	"FleetDrive/backend/utils"
 	"html/template"
 	"log"
 	"net/http"
@@ -70,12 +71,10 @@ func setupRouter() *gin.Engine {
 	router.Static("/static", "./frontend/static")
 	router.Static("/assets", "./frontend/assets")
 
-	// Load HTML templates - update to include subdirectories
-	// Alternative 2: Manuelles Laden von Templates
-	// Load HTML templates - update to include subdirectories
-	templ := template.Must(template.ParseGlob("frontend/templates/*.html"))
+	// Load HTML templates with helper functions
+	templ := template.Must(template.New("").Funcs(utils.TemplateHelpers()).ParseGlob("frontend/templates/*.html"))
 	template.Must(templ.ParseGlob("frontend/templates/components/*.html"))
-	template.Must(templ.ParseGlob("frontend/templates/vehicle/*.html")) // Wichtig: Subdirectory einbeziehen
+	template.Must(templ.ParseGlob("frontend/templates/vehicle/*.html"))
 	router.SetHTMLTemplate(templ)
 
 	// Import routes from router.go

@@ -1,192 +1,496 @@
-{{ template "head" .}}
-<body class="bg-gray-50 dark:bg-gray-900 min-h-screen flex flex-col">
-<!-- Navigation -->
-{{ template "navigation" .}}
+{{ template "head" . }}
+<body class="h-full bg-gray-50">
+<!-- Navigation einfügen -->
+{{ template "navigation" . }}
 
-<!-- Main Content -->
-<main class="container mx-auto px-4 py-6 flex-grow">
-    <!-- Dashboard Header mit Statistiken -->
-    <div class="grid grid-cols-1 gap-6 mb-6 lg:grid-cols-4">
-        <div class="flex items-center p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md border-l-4 border-blue-500">
-            <div class="flex-shrink-0 mr-4 text-blue-500">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v12a2 2 0 01-2 2z" />
-                    <path d="M12 14v3M8 14v3M16 14v3M4 8h16"/>
-                </svg>
-            </div>
-            <div>
-                <span class="block text-2xl font-bold dark:text-white" data-stat="total-vehicles">0</span>
-                <span class="block text-gray-500 dark:text-gray-300">Gesamtfahrzeuge</span>
-            </div>
-        </div>
-        <div class="flex items-center p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md border-l-4 border-green-500">
-            <div class="flex-shrink-0 mr-4 text-green-500">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M9 17H5a2 2 0 0 0-2 2 2 2 0 0 0 2 2h2a2 2 0 0 0 2-2zm0 0V9a2 2 0 0 1 2-2h2m4 10h4a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2zm0 0V9a2 2 0 0 0-2-2h-2m5 0a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm-9 0a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/>
-                </svg>
-            </div>
-            <div>
-                <span class="block text-2xl font-bold dark:text-white" data-stat="available-vehicles">0</span>
-                <span class="block text-gray-500 dark:text-gray-300">Verfügbare Fahrzeuge</span>
-            </div>
-        </div>
-        <div class="flex items-center p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md border-l-4 border-yellow-500">
-            <div class="flex-shrink-0 mr-4 text-yellow-500">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10" />
-                    <path d="M12 6v6l4 2" />
-                </svg>
-            </div>
-            <div>
-                <span class="block text-2xl font-bold dark:text-white" data-stat="maintenance-vehicles">0</span>
-                <span class="block text-gray-500 dark:text-gray-300">In Wartung</span>
-            </div>
-        </div>
-        <div class="flex items-center p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md border-l-4 border-red-500">
-            <div class="flex-shrink-0 mr-4 text-red-500">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-            </div>
-            <div>
-                <span class="block text-2xl font-bold dark:text-white" data-stat="in-use-vehicles">0</span>
-                <span class="block text-gray-500 dark:text-gray-300">In Benutzung</span>
-            </div>
-        </div>
-    </div>
+<!-- Hauptinhalt -->
+<main class="py-10">
+    <div class="px-4 sm:px-6 lg:px-8">
+        {{if eq .userRole "user"}}
+        <!-- Eingeschränktes Dashboard für einfache Benutzer -->
+        <div class="bg-white shadow rounded-lg p-6 mb-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Willkommen, {{.user}}!</h2>
+            <p class="text-gray-600 mb-4">
+                Dies ist dein persönliches Dashboard. Hier findest du Informationen zu deinen Fahrzeugbuchungen und Aktivitäten.
+            </p>
 
-    <!-- Hauptbereich mit Karten -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Linke Spalte -->
-        <div class="lg:col-span-2 space-y-6">
-            <!-- Flottenübersicht-Karte -->
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
-                <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-                    <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Flottenübersicht</h3>
-                    <div class="flex space-x-2">
-                        <div class="relative">
-                            <select id="fleet-view-filter" class="text-sm border-gray-300 rounded-md pr-8 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                                <option value="all">Alle</option>
-                                <option value="available">Verfügbar</option>
-                                <option value="inuse">In Benutzung</option>
-                                <option value="maintenance">In Wartung</option>
-                            </select>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h3 class="text-md font-medium text-gray-800 mb-2">Dein Profil</h3>
+                    <p class="text-sm text-gray-600 mb-4">Verwalte deine persönlichen Informationen und Passwort.</p>
+                    <a href="/profile" class="text-blue-600 hover:text-blue-800 text-sm font-medium">Zum Profil →</a>
+                </div>
+
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h3 class="text-md font-medium text-gray-800 mb-2">Letzte Aktivitäten</h3>
+                    <div class="space-y-2">
+                        {{range .recentActivities}}
+                        <div class="text-sm">
+                            <span class="text-gray-500">{{.Time}}:</span>
+                            <span class="text-gray-800">{{.Message | safeHTML}}</span>
                         </div>
-                        <a href="/vehicles" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">Alle anzeigen</a>
-                    </div>
-                </div>
-                <div class="p-4">
-                    <!-- Vehicle Status Section -->
-                    <div id="vehicles-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
-                        <!-- Fahrzeuge werden hier dynamisch eingefügt -->
-                        <div class="bg-gray-100 dark:bg-gray-700 rounded-lg animate-pulse h-24"></div>
-                        <div class="bg-gray-100 dark:bg-gray-700 rounded-lg animate-pulse h-24"></div>
-                        <div class="bg-gray-100 dark:bg-gray-700 rounded-lg animate-pulse h-24"></div>
-                        <div class="bg-gray-100 dark:bg-gray-700 rounded-lg animate-pulse h-24"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Kraftstoffkosten-Karte -->
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
-                <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-                    <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Kraftstoffkosten (letzte 12 Monate)</h3>
-                </div>
-                <div class="p-4">
-                    <div class="relative h-64">
-                        <canvas id="fuelCostsChart"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Aktivitätsdiagramm-Karte -->
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
-                <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-                    <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Flottenaktivität</h3>
-                </div>
-                <div class="p-4">
-                    <div class="relative h-64">
-                        <canvas id="fleetActivityChart"></canvas>
+                        {{else}}
+                        <p class="text-sm text-gray-500">Keine kürzlichen Aktivitäten.</p>
+                        {{end}}
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Rechte Spalte -->
-        <div class="space-y-6">
-            <!-- Fahrerstatus-Karte -->
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
-                <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-                    <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Fahrerstatus</h3>
-                    <a href="/drivers" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">Alle anzeigen</a>
+        {{else}}
+        <!-- Dashboard Header mit Statistiken -->
+        <div class="grid grid-cols-1 gap-6 mb-6 lg:grid-cols-4">
+            <!-- Fahrzeuge gesamt -->
+            <div class="flex items-center p-4 bg-white rounded-lg shadow-md">
+                <div class="flex-shrink-0 mr-4">
+                    <div class="p-3 rounded-full bg-blue-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+                        </svg>
+                    </div>
                 </div>
-                <div class="p-4">
-                    <!-- Driver Status -->
-                    <div id="drivers-container" class="space-y-3">
-                        <!-- Fahrer werden hier dynamisch eingefügt -->
-                        <div class="bg-gray-100 dark:bg-gray-700 rounded-lg animate-pulse h-16"></div>
-                        <div class="bg-gray-100 dark:bg-gray-700 rounded-lg animate-pulse h-16"></div>
-                        <div class="bg-gray-100 dark:bg-gray-700 rounded-lg animate-pulse h-16"></div>
+                <div>
+                    <span class="block text-2xl font-bold text-black">{{.totalVehicles}}</span>
+                    <span class="block text-gray-500">Fahrzeuge gesamt</span>
+                </div>
+            </div>
+
+            <!-- Verfügbare Fahrzeuge -->
+            <div class="flex items-center p-4 bg-white rounded-lg shadow-md">
+                <div class="flex-shrink-0 mr-4">
+                    <div class="p-3 rounded-full bg-green-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                </div>
+                <div>
+                    <span class="block text-2xl font-bold text-black">{{.availableVehicles}}</span>
+                    <span class="block text-gray-500">Verfügbar</span>
+                </div>
+            </div>
+
+            <!-- In Nutzung -->
+            <div class="flex items-center p-4 bg-white rounded-lg shadow-md">
+                <div class="flex-shrink-0 mr-4">
+                    <div class="p-3 rounded-full bg-yellow-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                </div>
+                <div>
+                    <span class="block text-2xl font-bold text-black">{{.inUseVehicles}}</span>
+                    <span class="block text-gray-500">In Nutzung</span>
+                </div>
+            </div>
+
+            <!-- In Wartung -->
+            <div class="flex items-center p-4 bg-white rounded-lg shadow-md">
+                <div class="flex-shrink-0 mr-4">
+                    <div class="p-3 rounded-full bg-red-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                        </svg>
+                    </div>
+                </div>
+                <div>
+                    <span class="block text-2xl font-bold text-black">{{.maintenanceVehicles}}</span>
+                    <span class="block text-gray-500">In Wartung</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hauptbereich mit Karten -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Linke Spalte -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Fahrzeugübersicht-Karte -->
+                <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                    <div class="flex items-center justify-between p-4 border-b border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-800">Fahrzeugübersicht</h3>
+                        <div class="flex space-x-2">
+                            <div class="relative">
+                                <select id="vehicle-filter" class="text-sm border-gray-300 rounded-md pr-8 focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="all">Alle</option>
+                                    <option value="available">Verfügbar</option>
+                                    <option value="inuse">In Nutzung</option>
+                                    <option value="maintenance">In Wartung</option>
+                                </select>
+                            </div>
+                            <a href="/vehicles" class="text-sm text-blue-600 hover:underline">Alle anzeigen</a>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <!-- Vehicle Grid Section -->
+                        <div id="vehicles-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
+                            {{range .recentVehicles}}
+                            <div class="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                                <div class="p-4">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <h4 class="text-sm font-medium text-gray-900">{{.Brand}} {{.Model}}</h4>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                    {{if eq .Status "available"}}bg-green-100 text-green-800
+                                        {{else if eq .Status "inuse"}}bg-yellow-100 text-yellow-800
+                                        {{else if eq .Status "maintenance"}}bg-red-100 text-red-800
+                                        {{else}}bg-gray-100 text-gray-800{{end}}">
+                                        {{if eq .Status "available"}}Verfügbar
+                                        {{else if eq .Status "inuse"}}In Nutzung
+                                        {{else if eq .Status "maintenance"}}In Wartung
+                                        {{else}}{{.Status}}{{end}}
+                                        </span>
+                                    </div>
+                                    <p class="text-sm text-gray-500">{{.LicensePlate}}</p>
+                                    <p class="text-xs text-gray-400 mt-1">{{.Mileage}} km</p>
+                                    <a href="/vehicle-details/{{.ID}}" class="inline-flex items-center text-xs font-medium text-blue-600 hover:text-blue-800 mt-2">
+                                        Details anzeigen →
+                                    </a>
+                                </div>
+                            </div>
+                            {{else}}
+                            <div class="col-span-2 p-4 text-center text-gray-500">
+                                Keine Fahrzeuge gefunden
+                            </div>
+                            {{end}}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Flottenaktivität-Diagramm -->
+                <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                    <div class="p-4 border-b border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-800">Flottenaktivität (letzte 7 Tage)</h3>
+                    </div>
+                    <div class="p-4">
+                        <div class="relative h-64">
+                            <canvas id="fleetActivityChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Neue Charts -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Kraftstoffkosten nach Fahrzeug -->
+                    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                        <div class="p-4 border-b border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-800">Kraftstoffkosten nach Fahrzeug</h3>
+                        </div>
+                        <div class="p-4">
+                            <div class="relative h-72">
+                                <canvas id="fuelCostsByVehicleChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fahrzeugauslastung -->
+                    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                        <div class="p-4 border-b border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-800">Fahrzeugauslastung</h3>
+                        </div>
+                        <div class="p-4">
+                            <div class="relative h-72">
+                                <canvas id="vehicleUtilizationChart"></canvas>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Anstehende Wartungen-Karte -->
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
-                <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-                    <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Anstehende Wartungen</h3>
-                </div>
-                <div class="p-4">
-                    <ul class="anstehende-wartungen divide-y divide-gray-200 dark:divide-gray-700">
-                        <!-- Wartungseinträge werden hier dynamisch eingefügt -->
-                        <li class="py-3 bg-gray-100 dark:bg-gray-700 rounded-lg animate-pulse h-16"></li>
-                        <li class="py-3 bg-gray-100 dark:bg-gray-700 rounded-lg animate-pulse h-16"></li>
-                        <li class="py-3 bg-gray-100 dark:bg-gray-700 rounded-lg animate-pulse h-16"></li>
-                    </ul>
-                </div>
-            </div>
-
-            <!-- Letzte Aktivitäten-Karte -->
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
-                <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-                    <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Letzte Aktivitäten</h3>
-                </div>
-                <div class="p-4">
-                    <div class="flow-root">
-                        <ul class="letzte-aktivitaeten -mb-8">
-                            <!-- Aktivitäten werden hier dynamisch eingefügt -->
-                            <li class="py-3 bg-gray-100 dark:bg-gray-700 rounded-lg animate-pulse h-20"></li>
-                            <li class="py-3 bg-gray-100 dark:bg-gray-700 rounded-lg animate-pulse h-20"></li>
-                            <li class="py-3 bg-gray-100 dark:bg-gray-700 rounded-lg animate-pulse h-20"></li>
+            <!-- Rechte Spalte -->
+            <div class="space-y-6">
+                <!-- Fahrerübersicht -->
+                <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                    <div class="flex items-center justify-between p-4 border-b border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-800">Fahrerübersicht</h3>
+                        <a href="/drivers" class="text-sm text-blue-600 hover:underline">Alle anzeigen</a>
+                    </div>
+                    <div class="p-4">
+                        <ul class="divide-y divide-gray-200">
+                            {{range .recentDrivers}}
+                            <li class="py-3">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-800 text-sm font-medium mr-3">
+                                            {{ getInitials (printf "%s %s" .FirstName .LastName) }}
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-900">{{.FirstName}} {{.LastName}}</p>
+                                            <p class="text-sm text-gray-500">
+                                                {{if eq .Status "available"}}Verfügbar
+                                                {{else if eq .Status "onduty"}}Im Dienst
+                                                {{else if eq .Status "offduty"}}Außer Dienst
+                                                {{else}}{{.Status}}{{end}}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                  {{if eq .Status "available"}}bg-green-100 text-green-800
+                                    {{else if eq .Status "onduty"}}bg-yellow-100 text-yellow-800
+                                    {{else if eq .Status "offduty"}}bg-gray-100 text-gray-800
+                                    {{else}}bg-gray-100 text-gray-800{{end}}">
+                                    {{if eq .Status "available"}}●
+                                    {{else if eq .Status "onduty"}}●
+                                    {{else if eq .Status "offduty"}}●
+                                    {{else}}●{{end}}
+                                    </span>
+                                </div>
+                            </li>
+                            {{else}}
+                            <li class="py-3 text-center text-gray-500">
+                                Keine Fahrer gefunden
+                            </li>
+                            {{end}}
                         </ul>
                     </div>
                 </div>
+
+                <!-- Anstehende Wartungen -->
+                <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                    <div class="flex items-center justify-between p-4 border-b border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-800">Anstehende Wartungen</h3>
+                        <a href="/maintenance" class="text-sm text-blue-600 hover:underline">Alle anzeigen</a>
+                    </div>
+                    <div class="p-4">
+                        <ul class="divide-y divide-gray-200">
+                            {{range .upcomingMaintenance}}
+                            <li class="py-3">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900">{{.vehicleName}}</p>
+                                        <p class="text-sm text-gray-500">{{.licensePlate}}</p>
+                                    </div>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                  {{.nextDueDate | formatDate}}
+                </span>
+                                </div>
+                            </li>
+                            {{else}}
+                            <li class="py-3 text-center text-gray-500">
+                                Keine anstehenden Wartungen
+                            </li>
+                            {{end}}
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Letzte Aktivitäten -->
+                <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                    <div class="flex items-center justify-between p-4 border-b border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-800">Letzte Aktivitäten</h3>
+                    </div>
+                    <div class="p-4">
+                        <div class="flow-root">
+                            <ul class="-mb-8">
+                                {{range .recentActivities}}
+                                <li>
+                                    <div class="relative pb-8">
+                                        {{if not .IsLast}}
+                                        <span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true"></span>
+                                        {{end}}
+                                        <div class="relative flex space-x-3">
+                                            <div>
+                      <span class="h-8 w-8 rounded-full {{.IconBgClass}} flex items-center justify-center ring-8 ring-white">
+                        {{.IconSVG | safeHTML}}
+                      </span>
+                                            </div>
+                                            <div class="min-w-0 flex-1">
+                                                <div>
+                                                    <div class="text-sm text-gray-500">
+                                                        {{.Message | safeHTML}}
+                                                    </div>
+                                                    <p class="mt-0.5 text-sm text-gray-500">{{.Time}}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+                                {{else}}
+                                <li class="text-center text-gray-500 py-2">
+                                    Keine Aktivitäten gefunden
+                                </li>
+                                {{end}}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
+        {{end}}
 </main>
 
 <!-- Footer -->
-<footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-4 mt-6">
-    <div class="container mx-auto px-4 text-center text-gray-500 dark:text-gray-400 text-sm">
-        &copy; {{.year}} FleetDrive. Alle Rechte vorbehalten.
-    </div>
-</footer>
+{{ template "footer" . }}
 
-<!-- Load Chart.js for charts -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
-<!-- Theme Toggle Script (Dark/Light Mode) -->
 <script>
-    // Check for saved theme preference or use system preference
-    if (localStorage.getItem('color-theme') === 'dark' ||
-        (!localStorage.getItem('color-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        document.documentElement.classList.add('dark');
-    } else {
-        document.documentElement.classList.remove('dark');
-    }
-</script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Farbpalette definieren
+        const chartColors = [
+            '#2563EB', // Blau
+            '#10B981', // Grün
+            '#F59E0B', // Gelb
+            '#EF4444', // Rot
+            '#8B5CF6'  // Violett
+        ];
 
-<!-- Füge das dashboard.js Script ein -->
-<script src="/static/js/dashboard.js"></script>
+        // Flottenaktivität-Diagramm
+        const fleetCtx = document.getElementById('fleetActivityChart').getContext('2d');
+        const fleetActivityChart = new Chart(fleetCtx, {
+            type: 'line',
+            data: {
+                labels: {{.fleetActivityLabels}},
+        datasets: [
+            {
+                label: 'Fahrzeuge in Nutzung',
+                data: {{.fleetActivityInUse}},
+        borderColor: chartColors[0],
+            backgroundColor: `${chartColors[0]}20`,
+            fill: true,
+            tension: 0.4
+    },
+        {
+            label: 'Fahrzeuge in Wartung',
+                data: {{.fleetActivityMaintenance}},
+            borderColor: chartColors[3],
+                backgroundColor: `${chartColors[3]}20`,
+            fill: true,
+            tension: 0.4,
+            borderDash: [5, 5]
+        }
+    ]
+    },
+        options: {
+            responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                tooltip: {
+                    mode: 'index',
+                        intersect: false
+                },
+                legend: {
+                    position: 'top',
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        display: false
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                        ticks: {
+                        stepSize: 1,
+                            precision: 0
+                    }
+                }
+            }
+        }
+    });
+
+        // Kraftstoffkosten nach Fahrzeug
+        const fuelCtx = document.getElementById('fuelCostsByVehicleChart').getContext('2d');
+        const fuelLabels = {{.fuelCostVehicleLabels}};
+        const fuelColors = fuelLabels.map((_, index) => chartColors[index % chartColors.length]);
+
+        const fuelCostsChart = new Chart(fuelCtx, {
+            type: 'bar',
+            data: {
+                labels: fuelLabels,
+                datasets: [{
+                    label: 'Kraftstoffkosten (€)',
+                    data: {{.fuelCostVehicleData}},
+            backgroundColor: fuelColors,
+            borderColor: fuelColors,
+            borderWidth: 1,
+            borderRadius: {
+                topLeft: 8,
+                topRight: 8,
+                bottomLeft: 0,
+                bottomRight: 0
+            },
+            borderSkipped: 'bottom'
+        }]
+    },
+        options: {
+            responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                y: {
+                    beginAtZero: true,
+                        ticks: {
+                        callback: function(value, index, values) {
+                            return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(value);
+                        }
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed.y !== null) {
+                                label += new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(context.parsed.y);
+                            }
+                            return label;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+        // Fahrzeugauslastung
+        const utilizationCtx = document.getElementById('vehicleUtilizationChart').getContext('2d');
+        const utilizationChart = new Chart(utilizationCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Verfügbar', 'In Nutzung', 'In Wartung'],
+                datasets: [{
+                    data: {{.vehicleUtilizationData}},
+            backgroundColor: [chartColors[1], chartColors[2], chartColors[3]],
+            hoverOffset: 4
+        }]
+    },
+        options: {
+            responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                legend: {
+                    position: 'bottom',
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed !== null) {
+                                label += context.parsed;
+                                label += ' Fahrzeuge';
+                            }
+                            return label;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+        // Filter für Fahrzeugübersicht
+        const vehicleFilter = document.getElementById('vehicle-filter');
+        if (vehicleFilter) {
+            vehicleFilter.addEventListener('change', function() {
+                // Hier würde in einer echten Anwendung ein AJAX-Call erfolgen
+                console.log('Filter geändert zu:', this.value);
+            });
+        }
+    });
+</script>
 </body>
 </html>
