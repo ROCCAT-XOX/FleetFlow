@@ -4,164 +4,71 @@
 <!-- Navbar würde hier stehen -->
 {{ template "navigation" .}}
 <!-- Hauptinhalt -->
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div class="md:flex md:items-center md:justify-between mb-6">
-        <div class="flex-1 min-w-0">
-            <h1 class="text-2xl font-bold text-gray-900">Fahrer</h1>
-        </div>
-        <div class="mt-4 md:mt-0">
-            <button id="add-driver-btn" type="button" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                <svg class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                Fahrer hinzufügen
-            </button>
-        </div>
-    </div>
-
-    <!-- Filter und Suche -->
-    <div class="bg-white p-4 rounded-md shadow-sm mb-6">
-        <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
-            <div class="flex-1">
-                <label for="search" class="sr-only">Suche</label>
-                <div class="relative rounded-md shadow-sm">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                    </div>
-                    <input type="text" name="search" id="search-driver" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 pr-12 sm:text-sm border-gray-300 rounded-md" placeholder="Fahrer suchen...">
-                </div>
+<div class="flex-1 xl:px-8">
+    <div class="mx-auto max-w-full px-4 sm:px-6 lg:px-8 py-8">
+        <div class="md:flex md:items-center md:justify-between mb-6">
+            <div class="flex-1 min-w-0">
+                <h1 class="text-2xl font-bold text-gray-900">Fahrer</h1>
             </div>
-            <div class="sm:w-1/4">
-                <select id="status-filter" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                    <option value="all">Alle Status</option>
-                    <option value="available">Verfügbar</option>
-                    <option value="onduty">Im Dienst</option>
-                    <option value="offduty">Außer Dienst</option>
-                </select>
+            <div class="mt-4 md:mt-0">
+                <button id="add-driver-btn" type="button" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <svg class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    Fahrer hinzufügen
+                </button>
             </div>
         </div>
-    </div>
 
-    <!-- Fahrer-Liste -->
-    <div class="bg-white shadow rounded-md">
-        <ul role="list" class="divide-y divide-gray-100">
-            <!-- Fahrer 1 -->
-            <li class="flex justify-between gap-x-6 py-5 px-5 hover:bg-gray-50 transition-colors duration-150">
-                <div class="flex min-w-0 gap-x-4">
-                    <img class="size-12 flex-none rounded-full bg-gray-50" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="">
-                    <div class="min-w-0 flex-auto">
-                        <p class="text-sm font-semibold text-gray-900">Max Mustermann</p>
-                        <p class="mt-1 truncate text-xs text-gray-500">max.mustermann@fleetdrive.com</p>
-                        <div class="mt-1 flex items-center gap-x-1.5">
-                            <div class="flex-none rounded-full bg-emerald-500/20 p-1">
-                                <div class="size-1.5 rounded-full bg-emerald-500"></div>
-                            </div>
-                            <p class="text-xs text-gray-500">Verfügbar</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="hidden sm:flex sm:flex-col sm:items-end">
-                    <div class="flex space-x-2">
-              <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
-                B
-              </span>
-                        <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
-                BE
-              </span>
-                    </div>
-                    <p class="mt-1 text-xs text-gray-500">Aktuelles Fahrzeug: <span class="font-medium">BMW 530e</span></p>
-                    <div class="mt-2">
-                        <button type="button" class="edit-driver-btn inline-flex items-center px-2 py-1 text-xs font-medium text-indigo-700 hover:text-indigo-900" data-id="1">
-                            <svg class="mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+        <!-- Filter und Suche -->
+        <div class="bg-white p-4 rounded-md shadow-sm mb-6">
+            <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
+                <div class="flex-1">
+                    <label for="search" class="sr-only">Suche</label>
+                    <div class="relative rounded-md shadow-sm">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                             </svg>
-                            Bearbeiten
-                        </button>
+                        </div>
+                        <input type="text" name="search" id="search-driver" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 pr-12 sm:text-sm border-gray-300 rounded-md" placeholder="Fahrer suchen...">
                     </div>
                 </div>
-            </li>
+                <div class="sm:w-64">
+                    <select id="status-filter" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                        <option value="all">Alle Status</option>
+                        <option value="available">Verfügbar</option>
+                        <option value="onduty">Im Dienst</option>
+                        <option value="offduty">Außer Dienst</option>
+                    </select>
+                </div>
+            </div>
+        </div>
 
-            <!-- Fahrer 2 -->
-            <li class="flex justify-between gap-x-6 py-5 px-5 hover:bg-gray-50 transition-colors duration-150">
-                <div class="flex min-w-0 gap-x-4">
-                    <img class="size-12 flex-none rounded-full bg-gray-50" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="">
-                    <div class="min-w-0 flex-auto">
-                        <p class="text-sm font-semibold text-gray-900">Erika Musterfrau</p>
-                        <p class="mt-1 truncate text-xs text-gray-500">erika.musterfrau@fleetdrive.com</p>
-                        <div class="mt-1 flex items-center gap-x-1.5">
-                            <div class="flex-none rounded-full bg-yellow-500/20 p-1">
-                                <div class="size-1.5 rounded-full bg-yellow-500"></div>
+        <!-- Fahrer-Grid für breitere Darstellung -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div id="drivers-grid" class="col-span-full">
+                <!-- Fahrer-Liste -->
+                <div class="bg-white shadow overflow-hidden sm:rounded-md">
+                    <ul role="list" class="divide-y divide-gray-200" id="drivers-list">
+                        <!-- Wird dynamisch durch JavaScript gefüllt -->
+                        <li class="py-8 text-center text-gray-500">
+                            <div class="flex justify-center items-center">
+                                <svg class="animate-spin h-8 w-8 mr-3 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <p class="text-lg">Fahrer werden geladen...</p>
                             </div>
-                            <p class="text-xs text-gray-500">Im Dienst</p>
-                        </div>
-                    </div>
+                        </li>
+                    </ul>
                 </div>
-                <div class="hidden sm:flex sm:flex-col sm:items-end">
-                    <div class="flex space-x-2">
-              <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
-                B
-              </span>
-                        <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
-                C1
-              </span>
-                        <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
-                CE
-              </span>
-                    </div>
-                    <p class="mt-1 text-xs text-gray-500">Aktuelles Fahrzeug: <span class="font-medium">Audi e-tron</span></p>
-                    <div class="mt-2">
-                        <button type="button" class="edit-driver-btn inline-flex items-center px-2 py-1 text-xs font-medium text-indigo-700 hover:text-indigo-900" data-id="2">
-                            <svg class="mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                            Bearbeiten
-                        </button>
-                    </div>
-                </div>
-            </li>
-
-            <!-- Fahrer 3 -->
-            <li class="flex justify-between gap-x-6 py-5 px-5 hover:bg-gray-50 transition-colors duration-150">
-                <div class="flex min-w-0 gap-x-4">
-                    <img class="size-12 flex-none rounded-full bg-gray-50" src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="">
-                    <div class="min-w-0 flex-auto">
-                        <p class="text-sm font-semibold text-gray-900">John Doe</p>
-                        <p class="mt-1 truncate text-xs text-gray-500">john.doe@fleetdrive.com</p>
-                        <div class="mt-1 flex items-center gap-x-1.5">
-                            <div class="flex-none rounded-full bg-gray-500/20 p-1">
-                                <div class="size-1.5 rounded-full bg-gray-500"></div>
-                            </div>
-                            <p class="text-xs text-gray-500">Außer Dienst</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="hidden sm:flex sm:flex-col sm:items-end">
-                    <div class="flex space-x-2">
-              <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
-                B
-              </span>
-                        <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
-                D1
-              </span>
-                    </div>
-                    <p class="mt-1 text-xs text-gray-500">Aktuelles Fahrzeug: <span class="font-medium">Keines</span></p>
-                    <div class="mt-2">
-                        <button type="button" class="edit-driver-btn inline-flex items-center px-2 py-1 text-xs font-medium text-indigo-700 hover:text-indigo-900" data-id="3">
-                            <svg class="mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                            Bearbeiten
-                        </button>
-                    </div>
-                </div>
-            </li>
-        </ul>
+            </div>
+        </div>
     </div>
 </div>
 
-<!-- Modal: Fahrer hinzufügen/bearbeiten -->
+<!-- Modal: Fahrer hinzufügen/bearbeiten (bleibt unverändert) -->
 <div id="driver-modal" class="fixed z-10 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
     <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         <!-- Hintergrund-Overlay -->
@@ -215,9 +122,6 @@
                                         <label for="assigned-vehicle" class="block text-sm font-medium text-gray-700">Zugewiesenes Fahrzeug</label>
                                         <select id="assigned-vehicle" name="assigned-vehicle" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
                                             <option value="">Kein Fahrzeug zugewiesen</option>
-                                            <option value="1">VW Passat (M-AB 1234)</option>
-                                            <option value="2">BMW 530e (M-CD 5678)</option>
-                                            <option value="3">Audi e-tron (M-EF 9012)</option>
                                         </select>
                                     </div>
 
@@ -302,23 +206,19 @@
 <script>
     // Funktion zum Speichern eines Fahrers (Erstellen oder Aktualisieren)
     function saveDriver(driverData, isEdit = false) {
-        console.log('Zu speichernde Fahrerdaten:', driverData); // Debug-Ausgabe
+        console.log('Zu speichernde Fahrerdaten:', driverData);
 
-        // API-Pfad und Methode basierend auf Bearbeitung oder Neuanlage
         const url = isEdit ? `/api/drivers/${driverData.id}` : '/api/drivers';
         const method = isEdit ? 'PUT' : 'POST';
 
-        // Lizenzklassen sammeln
         const licenseClasses = [];
         for (const key in driverData) {
             if (key.startsWith('license-') && driverData[key] === 'on') {
-                // Extrahiere die Lizenzklasse aus dem Feldnamen (z.B. 'license-b' -> 'B')
                 const licenseClass = key.replace('license-', '').toUpperCase();
                 licenseClasses.push(licenseClass);
             }
         }
 
-        // API-Anfrage senden
         return fetch(url, {
             method: method,
             headers: {
@@ -368,33 +268,29 @@
                 return response.json();
             })
             .then(data => {
-                // Sicherstellen, dass das drivers-Array existiert
                 const drivers = data.drivers || [];
                 renderDrivers(drivers);
             })
             .catch(error => {
                 console.error('Fehler:', error);
-                // Fehlermeldung anzeigen
-                const container = document.querySelector('ul[role="list"]');
+                const container = document.getElementById('drivers-list');
                 if (container) {
                     container.innerHTML = `
-                    <div class="w-full p-4 bg-red-50 text-red-700 rounded-lg">
-                        <p>Fehler beim Laden der Fahrer: ${error.message}</p>
-                    </div>
-                `;
+                        <li class="w-full p-4 bg-red-50 text-red-700 rounded-lg">
+                            <p>Fehler beim Laden der Fahrer: ${error.message}</p>
+                        </li>
+                    `;
                 }
             });
     }
 
     // Funktion zum Rendern der Fahrer in der Übersicht
     function renderDrivers(drivers) {
-        // Sicherstellung, dass drivers ein Array ist
         if (!drivers || !Array.isArray(drivers)) {
             drivers = [];
         }
 
-        // Finden des Containers für die Fahrerliste
-        const container = document.querySelector('ul[role="list"]');
+        const container = document.getElementById('drivers-list');
         if (!container) {
             console.error('Container für Fahrer nicht gefunden');
             return;
@@ -404,16 +300,16 @@
 
         if (drivers.length === 0) {
             container.innerHTML = `
-            <li class="py-4 text-center text-gray-500">
-                <p>Keine Fahrer gefunden.</p>
-            </li>
-        `;
+                <li class="py-8 text-center text-gray-500">
+                    <p class="text-lg">Keine Fahrer gefunden.</p>
+                    <p class="mt-2 text-sm">Klicken Sie auf "Fahrer hinzufügen", um einen neuen Fahrer anzulegen.</p>
+                </li>
+            `;
             return;
         }
 
         drivers.forEach(driver => {
-            // Status-Klassen und Text ermitteln
-            let statusClass, statusDotClass, statusText;
+            let statusDotClass, statusBgClass, statusText;
 
             switch (driver.status) {
                 case 'available':
@@ -437,45 +333,56 @@
                     statusText = driver.status || 'Unbekannt';
             }
 
-            // Führerscheinklassen anzeigen
             const licenseClassElements = (driver.licenseClasses || []).map(licenseClass => `
-            <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
-                ${licenseClass}
-            </span>
-        `).join('');
+                <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                    ${licenseClass}
+                </span>
+            `).join('');
 
-            // Fahrer-Eintrag erstellen
             const listItem = document.createElement('li');
-            listItem.className = 'flex justify-between gap-x-6 py-5 px-5 hover:bg-gray-50 transition-colors duration-150';
+            listItem.className = 'px-4 py-5 sm:px-6 hover:bg-gray-50 transition-colors duration-150';
             listItem.innerHTML = `
-            <div class="flex min-w-0 gap-x-4">
-                <img class="size-12 flex-none rounded-full bg-gray-50" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="">
-                <div class="min-w-0 flex-auto">
-                    <p class="text-sm font-semibold text-gray-900">${driver.firstName} ${driver.lastName}</p>
-                    <p class="mt-1 truncate text-xs text-gray-500">${driver.email}</p>
-                    <div class="mt-1 flex items-center gap-x-1.5">
-                        <div class="flex-none rounded-full ${statusBgClass} p-1">
-                            <div class="size-1.5 rounded-full ${statusDotClass}"></div>
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center min-w-0">
+                        <img class="h-12 w-12 flex-none rounded-full bg-gray-50" src="https://ui-avatars.com/api/?name=${encodeURIComponent(driver.firstName + ' ' + driver.lastName)}&background=random" alt="">
+                        <div class="ml-4 min-w-0">
+                            <div class="flex items-center">
+                                <p class="text-sm font-semibold text-gray-900 truncate">${driver.firstName} ${driver.lastName}</p>
+                                <div class="ml-2 flex items-center gap-x-1.5">
+                                    <div class="flex-none rounded-full ${statusBgClass} p-1">
+                                        <div class="h-1.5 w-1.5 rounded-full ${statusDotClass}"></div>
+                                    </div>
+                                    <p class="text-xs text-gray-500">${statusText}</p>
+                                </div>
+                            </div>
+                            <div class="mt-1 flex items-center gap-x-4 text-xs text-gray-500">
+                                <p>${driver.email}</p>
+                                ${driver.phone ? `<p>• ${driver.phone}</p>` : ''}
+                            </div>
                         </div>
-                        <p class="text-xs text-gray-500">${statusText}</p>
+                    </div>
+                    <div class="flex items-center gap-x-6">
+                        <div class="hidden sm:flex sm:flex-col sm:items-end">
+                            <div class="flex flex-wrap gap-2 justify-end">
+                                ${licenseClassElements || '<span class="text-xs text-gray-400">Keine Führerscheinklassen</span>'}
+                            </div>
+                            <p class="mt-1 text-xs text-gray-500">Fahrzeug: <span class="font-medium">${driver.vehicleName || 'Keines'}</span></p>
+                        </div>
+                        <div class="flex items-center gap-x-2">
+                            <button type="button" class="edit-driver-btn p-1 text-gray-400 hover:text-gray-500" data-id="${driver.id}">
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                            </button>
+                            <button type="button" class="delete-driver-btn p-1 text-gray-400 hover:text-red-500" data-id="${driver.id}">
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="hidden sm:flex sm:flex-col sm:items-end">
-                <div class="flex space-x-2">
-                    ${licenseClassElements || '<span class="text-xs text-gray-400">Keine Führerscheinklassen</span>'}
-                </div>
-                <p class="mt-1 text-xs text-gray-500">Aktuelles Fahrzeug: <span class="font-medium">${driver.vehicleName || 'Keines'}</span></p>
-                <div class="mt-2">
-                    <button type="button" class="edit-driver-btn inline-flex items-center px-2 py-1 text-xs font-medium text-indigo-700 hover:text-indigo-900" data-id="${driver.id}">
-                        <svg class="mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                        Bearbeiten
-                    </button>
-                </div>
-            </div>
-        `;
+            `;
 
             container.appendChild(listItem);
         });
@@ -485,6 +392,24 @@
             button.addEventListener('click', function() {
                 const driverId = this.dataset.id;
                 openDriverModal(true, driverId);
+            });
+        });
+
+        // Event-Listener für die Löschen-Buttons hinzufügen
+        document.querySelectorAll('.delete-driver-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const driverId = this.dataset.id;
+                if (confirm('Möchten Sie diesen Fahrer wirklich löschen?')) {
+                    deleteDriver(driverId)
+                        .then(() => {
+                            loadDrivers();
+                            alert('Fahrer erfolgreich gelöscht!');
+                        })
+                        .catch(error => {
+                            console.error('Fehler:', error);
+                            alert('Fehler beim Löschen des Fahrers: ' + error.message);
+                        });
+                }
             });
         });
     }
@@ -503,7 +428,6 @@
                 const selectElement = document.getElementById('assigned-vehicle');
 
                 if (selectElement) {
-                    // Bestehende Optionen beibehalten (erste Option "Kein Fahrzeug")
                     const firstOption = selectElement.querySelector('option:first-child');
                     selectElement.innerHTML = '';
 
@@ -516,7 +440,6 @@
                         selectElement.appendChild(noVehicleOption);
                     }
 
-                    // Verfügbare Fahrzeuge hinzufügen
                     vehicles.forEach(vehicle => {
                         const option = document.createElement('option');
                         option.value = vehicle.id;
@@ -530,7 +453,7 @@
             });
     }
 
-    // Funktion zum Öffnen des Fahrer-Modals mit vorausgefüllten Daten bei Bearbeitung
+    // Funktion zum Öffnen des Fahrer-Modals
     function openDriverModal(isEdit = false, driverId = null) {
         const modal = document.getElementById('driver-modal');
         const modalTitle = document.getElementById('modal-title');
@@ -542,25 +465,21 @@
         }
 
         modal.classList.remove('hidden');
-
-        // Verfügbare Fahrzeuge für die Zuweisung laden
         loadVehiclesForDriverAssignment();
 
         if (isEdit && driverId) {
             modalTitle.textContent = 'Fahrer bearbeiten';
 
-            // Fahrerdaten von der API laden
             fetch(`/api/drivers/${driverId}`)
                 .then(response => response.json())
                 .then(data => {
                     const driver = data.driver;
-                    console.log('Geladene Fahrerdaten:', driver); // Debug-Ausgabe
+                    console.log('Geladene Fahrerdaten:', driver);
 
                     if (!driver) {
                         throw new Error('Fahrerdaten nicht gefunden');
                     }
 
-                    // Formularfelder befüllen
                     if (document.getElementById('first-name')) {
                         document.getElementById('first-name').value = driver.firstName || '';
                     }
@@ -577,16 +496,12 @@
                         document.getElementById('status').value = driver.status || 'available';
                     }
 
-                    // Fahrzeugzuweisung
                     if (document.getElementById('assigned-vehicle') && driver.assignedVehicleId) {
-                        // Wenn das Element noch nicht im Select ist, warten wir auf das Laden der Fahrzeuge
                         const assignedVehicleSelect = document.getElementById('assigned-vehicle');
                         const setVehicleValue = () => {
                             if (assignedVehicleSelect.querySelector(`option[value="${driver.assignedVehicleId}"]`)) {
                                 assignedVehicleSelect.value = driver.assignedVehicleId;
                             } else {
-                                // Fahrzeug ist möglicherweise nicht verfügbar, aber dem Fahrer zugewiesen
-                                // Option für dieses spezifische Fahrzeug hinzufügen
                                 fetch(`/api/vehicles/${driver.assignedVehicleId}`)
                                     .then(resp => resp.json())
                                     .then(vehicleData => {
@@ -603,21 +518,17 @@
                             }
                         };
 
-                        // Prüfen, ob die Fahrzeuge bereits geladen sind
                         if (assignedVehicleSelect.options.length > 1) {
                             setVehicleValue();
                         } else {
-                            // Warten und dann versuchen
                             setTimeout(setVehicleValue, 500);
                         }
                     }
 
-                    // Führerscheinklassen zurücksetzen
                     document.querySelectorAll('input[type="checkbox"][name^="license-"]').forEach(checkbox => {
                         checkbox.checked = false;
                     });
 
-                    // Führerscheinklassen setzen
                     (driver.licenseClasses || []).forEach(licenseClass => {
                         const checkbox = document.getElementById(`license-${licenseClass.toLowerCase()}`);
                         if (checkbox) {
@@ -625,12 +536,10 @@
                         }
                     });
 
-                    // Anmerkungen
                     if (document.getElementById('notes')) {
                         document.getElementById('notes').value = driver.notes || '';
                     }
 
-                    // ID zum Formular hinzufügen
                     let idInput = driverForm.querySelector('input[name="id"]');
                     if (!idInput) {
                         idInput = document.createElement('input');
@@ -649,7 +558,6 @@
             modalTitle.textContent = 'Fahrer hinzufügen';
             driverForm.reset();
 
-            // Entferne versteckte ID-Felder, falls vorhanden
             const existingIdInput = driverForm.querySelector('input[name="id"]');
             if (existingIdInput) {
                 existingIdInput.remove();
@@ -665,7 +573,7 @@
         }
     }
 
-    // Event-Listener hinzufügen, wenn das DOM geladen ist
+    // Event-Listener hinzufügen
     document.addEventListener('DOMContentLoaded', function() {
         console.log('DOM geladen, initialisiere Fahrerfunktionen...');
 
@@ -676,16 +584,12 @@
         const addDriverBtn = document.getElementById('add-driver-btn');
         if (addDriverBtn) {
             addDriverBtn.addEventListener('click', () => openDriverModal(false));
-        } else {
-            console.warn('Button "Fahrer hinzufügen" nicht gefunden');
         }
 
         // Event-Listener für "Schließen"-Button im Modal
         const closeModalBtn = document.getElementById('close-modal-btn');
         if (closeModalBtn) {
             closeModalBtn.addEventListener('click', closeDriverModal);
-        } else {
-            console.warn('Button "Schließen" nicht gefunden');
         }
 
         // Event-Listener für Klick außerhalb des Modals
@@ -696,8 +600,6 @@
                     closeDriverModal();
                 }
             });
-        } else {
-            console.warn('Fahrer-Modal nicht gefunden');
         }
 
         // Event-Listener für das Fahrer-Formular
@@ -706,7 +608,6 @@
             driverForm.addEventListener('submit', function(event) {
                 event.preventDefault();
 
-                // Formulardaten sammeln
                 const formData = new FormData(driverForm);
                 const driverData = {};
 
@@ -714,15 +615,13 @@
                     driverData[key] = value;
                 }
 
-                // Prüfen, ob es eine Bearbeitung ist (ID vorhanden)
                 const isEdit = !!driverData.id;
 
-                // Fahrer speichern
                 saveDriver(driverData, isEdit)
                     .then(response => {
                         console.log('Fahrer erfolgreich gespeichert:', response);
                         closeDriverModal();
-                        loadDrivers(); // Liste aktualisieren
+                        loadDrivers();
                         alert('Fahrer erfolgreich gespeichert!');
                     })
                     .catch(error => {
@@ -730,8 +629,6 @@
                         alert(`Fehler beim Speichern des Fahrers: ${error.message}`);
                     });
             });
-        } else {
-            console.warn('Fahrer-Formular nicht gefunden');
         }
 
         // Event-Listener für Suchfunktion
@@ -739,7 +636,7 @@
         if (searchInput) {
             searchInput.addEventListener('input', function() {
                 const searchText = this.value.toLowerCase();
-                const driverItems = document.querySelectorAll('ul > li');
+                const driverItems = document.querySelectorAll('#drivers-list > li');
 
                 driverItems.forEach(item => {
                     if (item.textContent.toLowerCase().includes(searchText)) {
@@ -756,7 +653,7 @@
         if (statusFilter) {
             statusFilter.addEventListener('change', function() {
                 const selectedStatus = this.value;
-                const driverItems = document.querySelectorAll('ul > li');
+                const driverItems = document.querySelectorAll('#drivers-list > li');
 
                 driverItems.forEach(item => {
                     if (selectedStatus === 'all') {
@@ -784,3 +681,5 @@
         console.log('Initialisierung der Fahrerfunktionen abgeschlossen.');
     });
 </script>
+</body>
+</html>
