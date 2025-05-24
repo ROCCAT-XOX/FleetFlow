@@ -39,14 +39,12 @@ type CreateUsageRequest struct {
 	StartMileage int               `json:"startMileage" binding:"required"`
 	EndMileage   int               `json:"endMileage"`
 	Department   string            `json:"department"`
-	Project      string            `json:"project"`
 	Purpose      string            `json:"purpose"`
 	Status       model.UsageStatus `json:"status"`
 	Notes        string            `json:"notes"`
 }
 
 // GetUsageEntries behandelt die Anfrage, alle Nutzungseinträge abzurufen
-// backend/handler/vehicleUsageHandler.go (Fortsetzung)
 func (h *VehicleUsageHandler) GetUsageEntries(c *gin.Context) {
 	entries, err := h.usageRepo.FindAll()
 	if err != nil {
@@ -261,7 +259,6 @@ func (h *VehicleUsageHandler) CreateUsageEntry(c *gin.Context) {
 		StartMileage: req.StartMileage,
 		EndMileage:   req.EndMileage,
 		Department:   req.Department,
-		Project:      req.Project,
 		Purpose:      req.Purpose,
 		Status:       req.Status,
 		Notes:        req.Notes,
@@ -393,7 +390,6 @@ func (h *VehicleUsageHandler) UpdateUsageEntry(c *gin.Context) {
 	entry.StartMileage = req.StartMileage
 	entry.EndMileage = req.EndMileage
 	entry.Department = req.Department
-	entry.Project = req.Project
 	entry.Purpose = req.Purpose
 	entry.Status = req.Status
 	entry.Notes = req.Notes

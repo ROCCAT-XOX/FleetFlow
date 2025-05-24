@@ -27,7 +27,6 @@ type VehicleUsage struct {
 	StartMileage int                `bson:"startMileage" json:"startMileage"`
 	EndMileage   int                `bson:"endMileage,omitempty" json:"endMileage"`
 	Department   string             `bson:"department" json:"department"`
-	Project      string             `bson:"project" json:"project"`
 	Purpose      string             `bson:"purpose" json:"purpose"`
 	Status       UsageStatus        `bson:"status" json:"status"`
 	Notes        string             `bson:"notes" json:"notes"`

@@ -210,16 +210,6 @@ func setupAuthorizedRoutes(group *gin.RouterGroup) {
 		})
 	})
 
-	// Projektübersicht
-	group.GET("/projects", func(c *gin.Context) {
-		user, _ := c.Get("user")
-		c.HTML(http.StatusOK, "projects.html", gin.H{
-			"title": "Projektübersicht",
-			"user":  user.(*model.User).FirstName + " " + user.(*model.User).LastName,
-			"year":  currentYear,
-		})
-	})
-
 	// Tankkosten
 	group.GET("/fuel-costs", func(c *gin.Context) {
 		user, _ := c.Get("user")
@@ -279,11 +269,11 @@ func setupAPIRoutes(api *gin.RouterGroup) {
 	driverHandler := handler.NewDriverHandler()
 	maintenanceHandler := handler.NewMaintenanceHandler()
 	usageHandler := handler.NewVehicleUsageHandler()
-	projectHandler := handler.NewProjectHandler()
 	fuelCostHandler := handler.NewFuelCostHandler()
 	activityHandler := handler.NewActivityHandler()
-	profileHandler := handler.NewProfileHandler() // Neu hinzugefügt
+	profileHandler := handler.NewProfileHandler()
 	dashboardHandler := handler.NewDashboardHandler()
+
 	// Benutzer-API
 	users := api.Group("/users")
 	{
@@ -294,7 +284,7 @@ func setupAPIRoutes(api *gin.RouterGroup) {
 		users.DELETE("/:id", middleware.AdminMiddleware(), userHandler.DeleteUser)
 	}
 
-	// Profile-API (neu)
+	// Profile-API
 	profile := api.Group("/profile")
 	{
 		profile.PUT("", profileHandler.UpdateProfile)
@@ -352,16 +342,6 @@ func setupAPIRoutes(api *gin.RouterGroup) {
 		usage.DELETE("/:id", usageHandler.DeleteUsageEntry)
 	}
 
-	// Projekt-API
-	projects := api.Group("/projects")
-	{
-		projects.GET("", projectHandler.GetProjects)
-		projects.GET("/:id", projectHandler.GetProject)
-		projects.POST("", projectHandler.CreateProject)
-		projects.PUT("/:id", projectHandler.UpdateProject)
-		projects.DELETE("/:id", middleware.AdminMiddleware(), projectHandler.DeleteProject)
-	}
-
 	// Tankkosten-API
 	fuelCosts := api.Group("/fuelcosts")
 	{
@@ -388,5 +368,4 @@ func setupAPIRoutes(api *gin.RouterGroup) {
 		dashboard.GET("/vehicle-usage-stats", dashboardHandler.GetVehicleUsageStats)
 		dashboard.GET("/fuel-costs-by-vehicle", dashboardHandler.GetFuelCostsByVehicle)
 	}
-
 }
