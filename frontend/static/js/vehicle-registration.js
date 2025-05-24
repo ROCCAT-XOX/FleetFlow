@@ -11,6 +11,15 @@ export default class VehicleRegistration {
         if (editButton) {
             editButton.addEventListener('click', () => this.openEditModal());
         }
+
+        // Close modal button
+        const closeButton = document.getElementById('close-registration-modal-btn');
+        if (closeButton) {
+            closeButton.addEventListener('click', () => {
+                const modal = document.getElementById('registration-modal');
+                if (modal) modal.classList.add('hidden');
+            });
+        }
     }
 
     async loadRegistrationInsurance() {
@@ -20,6 +29,9 @@ export default class VehicleRegistration {
 
             const data = await response.json();
             const vehicle = data.vehicle;
+
+            // Store the current vehicle data
+            this.currentVehicle = vehicle;
 
             // Update display elements
             this.updateDisplayElements(vehicle);
@@ -101,11 +113,12 @@ export default class VehicleRegistration {
 
     async loadVehicleDataForModal() {
         try {
-            const response = await fetch(`/api/vehicles/${this.vehicleId}`);
-            if (!response.ok) throw new Error('Fehler beim Laden der Fahrzeugdaten');
+            // Ensure current vehicle data is loaded
+            if (!this.currentVehicle) {
+                await this.loadRegistrationInsurance();
+            }
 
-            const data = await response.json();
-            const vehicle = data.vehicle;
+            const vehicle = this.currentVehicle;
 
             // Fill form fields
             document.getElementById('registration-date').value = this.formatDateForInput(vehicle.registrationDate);
@@ -117,12 +130,12 @@ export default class VehicleRegistration {
             document.getElementById('insurance-expiry').value = this.formatDateForInput(vehicle.insuranceExpiry);
             document.getElementById('insurance-cost').value = vehicle.insuranceCost || '';
 
-            // Add form submit handler
+            // Set up form submission handler
             const form = document.getElementById('registration-form');
             if (form) {
-                form.onsubmit = async (e) => {
+                form.onsubmit = (e) => {
                     e.preventDefault();
-                    await this.handleFormSubmit(form);
+                    this.handleFormSubmit();
                 };
             }
         } catch (error) {
@@ -131,39 +144,87 @@ export default class VehicleRegistration {
         }
     }
 
-    async handleFormSubmit(form) {
-        const formData = new FormData(form);
+    handleFormSubmit() {
+        // Get form data
+        const form = document.getElementById('registration-form');
+        if (!form) return;
 
-        const registrationData = {
-            registrationDate: formData.get('registration-date'),
-            registrationExpiry: formData.get('registration-expiry'),
-            nextInspectionDate: formData.get('next-inspection'),
-            insuranceCompany: formData.get('insurance-company'),
-            insuranceNumber: formData.get('insurance-number'),
-            insuranceType: formData.get('insurance-type'),
-            insuranceExpiry: formData.get('insurance-expiry'),
-            insuranceCost: parseFloat(formData.get('insurance-cost') || 0)
+        // Disable the submit button
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn) submitBtn.disabled = true;
+
+        // Get the values directly from the form elements
+        const regDate = document.getElementById('registration-date').value;
+        const regExpiry = document.getElementById('registration-expiry').value;
+        const nextInsp = document.getElementById('next-inspection').value;
+        const insCompany = document.getElementById('insurance-company').value;
+        const insNumber = document.getElementById('insurance-number').value;
+        const insType = document.getElementById('insurance-type').value;
+        const insExpiry = document.getElementById('insurance-expiry').value;
+        const insCost = document.getElementById('insurance-cost').value;
+
+        // Create a request object using current vehicle data as base
+        const requestData = {
+            licensePlate: this.currentVehicle.licensePlate,
+            brand: this.currentVehicle.brand,
+            model: this.currentVehicle.model,
+            year: this.currentVehicle.year,
+            color: this.currentVehicle.color,
+            vehicleId: this.currentVehicle.vehicleId,
+            vin: this.currentVehicle.vin,
+            fuelType: this.currentVehicle.fuelType,
+            mileage: this.currentVehicle.mileage,
+            status: this.currentVehicle.status,
+            currentDriverID: this.currentVehicle.currentDriverID,
+
+            // Registration and insurance fields - send raw strings without processing
+            registrationDate: regDate,
+            registrationExpiry: regExpiry,
+            nextInspectionDate: nextInsp,
+            insuranceCompany: insCompany,
+            insuranceNumber: insNumber,
+            insuranceType: insType,
+            insuranceExpiry: insExpiry,
+            insuranceCost: parseFloat(insCost) || 0
         };
 
-        try {
-            const response = await fetch(`/api/vehicles/${this.vehicleId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(registrationData)
+        console.log('Sending to API:', requestData);
+
+        // Send API request
+        fetch(`/api/vehicles/${this.vehicleId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestData)
+        })
+            .then(response => {
+                // Parse the response
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(text);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Success:', data);
+
+                // Close modal and reload data
+                const modal = document.getElementById('registration-modal');
+                if (modal) modal.classList.add('hidden');
+
+                // Update the display
+                this.loadRegistrationInsurance();
+
+                alert('Daten erfolgreich gespeichert');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert(`Fehler beim Speichern: ${error.message}`);
+            })
+            .finally(() => {
+                // Re-enable submit button
+                if (submitBtn) submitBtn.disabled = false;
             });
-
-            if (!response.ok) throw new Error('Fehler beim Speichern');
-
-            // Close modal and reload data
-            document.getElementById('registration-modal').classList.add('hidden');
-            this.loadRegistrationInsurance();
-            alert('Daten erfolgreich gespeichert');
-        } catch (error) {
-            console.error('Fehler:', error);
-            alert('Fehler beim Speichern der Daten');
-        }
     }
 
     formatDate(dateString) {
@@ -174,8 +235,19 @@ export default class VehicleRegistration {
 
     formatDateForInput(dateString) {
         if (!dateString) return '';
-        const date = new Date(dateString);
-        return date.toISOString().split('T')[0];
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return '';
+
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+
+            return `${year}-${month}-${day}`;
+        } catch (error) {
+            console.error('Error formatting date for input:', error);
+            return '';
+        }
     }
 
     formatCurrency(amount) {

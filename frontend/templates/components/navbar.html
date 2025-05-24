@@ -1,224 +1,413 @@
 {{ define "navigation" }}
 
-<nav class="bg-white shadow-sm">
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div class="flex h-16 justify-between">
-            <div class="flex">
-                <div class="flex shrink-0 items-center">
-                    <h1 class="text-xl font-semibold text-blue-600">FleetFlow</h1>
-                </div>
-                <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
-                    <!-- Current: "border-indigo-500 text-gray-900", Default: "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700" -->
-                    <a href="/dashboard" class="inline-flex items-center border-b-2 border-indigo-500 px-1 pt-1 text-sm font-medium text-gray-900">Dashboard</a>
-                    <a href="/vehicles" class="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700">Fahrzeuge</a>
-                    <a href="/drivers" class="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700">Fahrer</a>
-                    <a href="/projects" class="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700">Projekte</a>
-                    <!--<a href="/reports" class="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700">Berichte</a>-->
+<!-- Stil für die Schriftart auf der gesamten Seite -->
+<style>
+    .container {
+        width: 100%;
+        max-width: 100%;
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    @media (min-width: 640px) {
+        .container {
+            padding-left: 1.5rem;
+            padding-right: 1.5rem;
+        }
+    }
+
+    @media (min-width: 1024px) {
+        .container {
+            padding-left: 2rem;
+            padding-right: 2rem;
+        }
+    }
+
+    body.sidebar-collapsed .sidebar-nav-link {
+        justify-content: center !important;
+    }
+
+    /* Normale Anzeige der Sidebar-Links */
+    .sidebar-nav-link {
+        transition: justify-content 0.3s ease;
+    }
+
+    /* Stellen Sie sicher, dass die Tab-Funktionalität weiterhin funktioniert */
+    body.sidebar-collapsed .tab-btn.active,
+    body.sidebar-collapsed .tab-btn:hover {
+        justify-content: center !important;
+    }
+</style>
+
+<!-- Gesamtcontainer -->
+<div class="flex h-full">
+    <!-- Seitliche Navigation für Desktop -->
+    <div id="sidebar" class="hidden lg:fixed lg:inset-y-0 lg:flex lg:flex-col sidebar-transition" style="width: 16rem;">
+        <div class="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-gradient-to-br from-blue-50/80 via-blue-50/80 to-indigo-50/80 px-6 pb-4">
+            <!-- Logo -->
+            <div class="flex h-16 shrink-0 items-center justify-center pt-4">
+                <div class="flex items-center">
+                    <!-- Logo für ausgefahrene Sidebar -->
+                    <img id="sidebar-logo-full" src="/static/images/FleetFlow-Logoschrift.svg" alt="FleetFlow" class="h-8">
+                    <!-- Logo für eingeklappte Sidebar -->
+                    <img id="sidebar-logo-icon" src="/static/images/FleetFlow-Logo-Symbol.svg" alt="FleetFlow" class="h-8 hidden">
                 </div>
             </div>
-            <div class="hidden sm:ml-6 sm:flex sm:items-center">
-                <button type="button" class="relative rounded-full bg-white p-1 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                    <span class="absolute -inset-1.5"></span>
-                    <span class="sr-only">Benachrichtigungen anzeigen</span>
-                    <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
-                    </svg>
-                </button>
 
-                <!-- Profile dropdown -->
-                <div class="relative ml-3">
-                    <div>
-                        <button type="button" class="relative flex rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" id="user-menu-button" aria-expanded="false" aria-haspopup="true">
-                            <span class="absolute -inset-1.5"></span>
-                            <span class="sr-only">Benutzermenü öffnen</span>
-                            <img class="size-8 rounded-full" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="">
-                        </button>
-                    </div>
+            <!-- Hauptnavigation -->
+            <nav class="flex flex-1 flex-col">
+                <ul role="list" class="flex flex-1 flex-col gap-y-7">
+                    <li>
+                        <ul role="list" class="-mx-2 space-y-1">
+                            <!-- Dashboard -->
+                            <li class="sidebar-item relative">
+                                <a href="/dashboard" class="group flex items-center gap-x-3 rounded-md p-2 text-sm font-semibold {{ if eq .active "dashboard" }}bg-blue-600/20 text-blue-700{{ else }}text-gray-700 hover:bg-blue-600/10 hover:text-blue-700{{ end }}">
+                                <svg class="h-6 w-6 shrink-0 {{ if eq .active "dashboard" }}text-blue-700{{ else }}text-gray-500 group-hover:text-blue-700{{ end }}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                                </svg>
+                                <span class="menu-text">Dashboard</span>
+                                </a>
+                            </li>
 
-                    <!--
-                      Dropdown menu, show/hide based on menu state.
+                            <!-- Fahrzeuge -->
+                            <li class="sidebar-item relative">
+                                <a href="/vehicles" class="group flex items-center gap-x-3 rounded-md p-2 text-sm font-semibold {{ if eq .active "vehicles" }}bg-blue-600/20 text-blue-700{{ else }}text-gray-700 hover:bg-blue-600/10 hover:text-blue-700{{ end }}">
+                                <svg class="h-6 w-6 shrink-0 {{ if eq .active "vehicles" }}text-blue-700{{ else }}text-gray-500 group-hover:text-blue-700{{ end }}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
+                                </svg>
+                                <span class="menu-text">Fahrzeuge</span>
+                                </a>
+                            </li>
 
-                      Entering: "transition ease-out duration-200"
-                        From: "transform opacity-0 scale-95"
-                        To: "transform opacity-100 scale-100"
-                      Leaving: "transition ease-in duration-75"
-                        From: "transform opacity-100 scale-100"
-                        To: "transform opacity-0 scale-95"
-                    -->
-                    <div id="user-menu-dropdown" class="hidden absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button" tabindex="-1">
-                        <div class="block px-4 py-2 text-sm text-gray-700 border-b border-gray-100">
-                            Eingeloggt als: <strong>{{.user}}</strong>
+                            <!-- Fahrer -->
+                            <li class="sidebar-item relative">
+                                <a href="/drivers" class="group flex items-center gap-x-3 rounded-md p-2 text-sm font-semibold {{ if eq .active "drivers" }}bg-blue-600/20 text-blue-700{{ else }}text-gray-700 hover:bg-blue-600/10 hover:text-blue-700{{ end }}">
+                                <svg class="h-6 w-6 shrink-0 {{ if eq .active "drivers" }}text-blue-700{{ else }}text-gray-500 group-hover:text-blue-700{{ end }}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                                </svg>
+                                <span class="menu-text">Fahrer</span>
+                                </a>
+                            </li>
+
+                            <!-- Projekte -->
+                            <li class="sidebar-item relative">
+                                <a href="/projects" class="group flex items-center gap-x-3 rounded-md p-2 text-sm font-semibold {{ if eq .active "projects" }}bg-blue-600/20 text-blue-700{{ else }}text-gray-700 hover:bg-blue-600/10 hover:text-blue-700{{ end }}">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                                     class="h-6 w-6 shrink-0 {{ if eq .active "projects" }}text-blue-700{{ else }}text-gray-500 group-hover:text-blue-700{{ end }}">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
+                                </svg>
+                                <span class="menu-text">Projekte</span>
+                                </a>
+                            </li>
+
+                            <!-- Buchungen -->
+                            <li class="sidebar-item relative">
+                                <a href="/bookings" class="group flex items-center gap-x-3 rounded-md p-2 text-sm font-semibold {{ if eq .active "bookings" }}bg-blue-600/20 text-blue-700{{ else }}text-gray-700 hover:bg-blue-600/10 hover:text-blue-700{{ end }}">
+                                <svg class="h-6 w-6 shrink-0 {{ if eq .active "bookings" }}text-blue-700{{ else }}text-gray-500 group-hover:text-blue-700{{ end }}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+                                </svg>
+                                <span class="menu-text">Buchungen</span>
+                                </a>
+                            </li>
+
+                            <!-- Berichte -->
+                            <li class="sidebar-item relative">
+                                <a href="/reports" class="group flex items-center gap-x-3 rounded-md p-2 text-sm font-semibold {{ if eq .active "reports" }}bg-blue-600/20 text-blue-700{{ else }}text-gray-700 hover:bg-blue-600/10 hover:text-blue-700{{ end }}">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                                     class="h-6 w-6 shrink-0 {{ if eq .active "reports" }}text-blue-700{{ else }}text-gray-500 group-hover:text-blue-700{{ end }}">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                                </svg>
+                                <span class="menu-text">Berichte</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <!-- Footer-Navigationselemente -->
+                    <li class="mt-auto space-y-3">
+                        <!-- Toggle Button für Sidebar -->
+                        <div class="sidebar-item relative">
+                            <button id="toggle-sidebar" class="w-full group flex items-center gap-x-3 rounded-md p-2 text-sm font-semibold text-gray-700 hover:bg-blue-600/10 hover:text-blue-700">
+                                <!-- Pfeil nach links (Einklappen) -->
+                                <svg id="collapse-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M15.707 15.707a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+                                </svg>
+                                <!-- Pfeil nach rechts (Ausklappen, versteckt) -->
+                                <svg id="expand-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10.293 15.707a1 1 0 010-1.414L14.586 10l-4.293-4.293a1 1 0 111.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                                </svg>
+                                <span class="menu-text">Sidebar</span>
+                            </button>
                         </div>
-                        <a href="/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1" id="user-menu-item-0">Mein Profil</a>
-                        <a href="/settings" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1" id="user-menu-item-1">Einstellungen</a>
-                        <a href="/logout" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1" id="user-menu-item-2">Abmelden</a>
-                    </div>
+
+                        <!-- Einstellungen -->
+                        <div class="sidebar-item relative">
+                            <a href="/settings" class="group flex items-center gap-x-3 rounded-md p-2 text-sm font-semibold {{ if eq .active "settings" }}bg-blue-600/20 text-blue-700{{ else }}text-gray-700 hover:bg-blue-600/10 hover:text-blue-700{{ end }}">
+                            <svg class="h-6 w-6 shrink-0 {{ if eq .active "settings" }}text-blue-700{{ else }}text-gray-500 group-hover:text-blue-700{{ end }}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                            </svg>
+                            <span class="menu-text">Einstellungen</span>
+                            </a>
+                        </div>
+
+                        <!-- Logout -->
+                        <div class="sidebar-item relative">
+                            <a href="/logout" class="group flex items-center gap-x-3 rounded-md p-2 text-sm font-semibold {{ if eq .active "logout" }}bg-blue-600/20 text-blue-700{{ else }}text-gray-700 hover:bg-blue-600/10 hover:text-blue-700{{ end }}">
+                            <svg class="h-6 w-6 shrink-0 {{ if eq .active "logout" }}text-blue-700{{ else }}text-gray-500 group-hover:text-blue-700{{ end }}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
+                            </svg>
+                            <span class="menu-text">Abmelden</span>
+                            </a>
+                        </div>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Mobile Menü (off-canvas) -->
+    <div id="mobile-menu" class="relative z-50 lg:hidden" role="dialog" aria-modal="true" style="display: none;">
+        <div class="fixed inset-0 bg-gray-900/80" aria-hidden="true"></div>
+
+        <div class="fixed inset-0 flex">
+            <div class="relative mr-16 flex w-full max-w-xs flex-1">
+                <!-- Schließen-Button -->
+                <div class="absolute top-0 right-0 -mr-12 pt-2">
+                    <button id="close-sidebar-button" type="button" class="ml-1 flex h-10 w-10 items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
+                        <span class="sr-only">Menü schließen</span>
+                        <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
                 </div>
-            </div>
-            <div class="-mr-2 flex items-center sm:hidden">
-                <!-- Mobile menu button -->
-                <button type="button" class="relative inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500" aria-controls="mobile-menu" aria-expanded="false" id="mobile-menu-button">
-                    <span class="absolute -inset-0.5"></span>
-                    <span class="sr-only">Hauptmenü öffnen</span>
-                    <!--
-                      Icon when menu is closed.
 
-                      Menu open: "hidden", Menu closed: "block"
-                    -->
-                    <svg class="block size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-                    </svg>
-                    <!--
-                      Icon when menu is open.
+                <!-- Mobile Sidebar Inhalt -->
+                <div class="flex grow flex-col gap-y-5 overflow-y-auto bg-gradient-to-br from-blue-50/80 via-blue-50/80 to-indigo-50/80 px-6 pb-4">
+                    <div class="flex h-16 shrink-0 items-center">
+                        <h1 class="text-xl font-semibold text-blue-600">FleetFlow</h1>
+                    </div>
 
-                      Menu open: "block", Menu closed: "hidden"
-                    -->
-                    <svg class="hidden size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-                    </svg>
-                </button>
+                    <!-- Mobile Navigation -->
+                    <nav class="flex flex-1 flex-col">
+                        <ul role="list" class="flex flex-1 flex-col gap-y-7">
+                            <li>
+                                <ul role="list" class="-mx-2 space-y-1">
+                                    <li>
+                                        <a href="/dashboard" class="group flex items-center gap-x-3 rounded-md p-2 text-sm font-semibold {{ if eq .active "dashboard" }}bg-blue-600/20 text-blue-700{{ else }}text-gray-700 hover:bg-blue-600/10 hover:text-blue-700{{ end }}">
+                                        <svg class="h-6 w-6 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                                        </svg>
+                                        Dashboard
+                                        </a>
+                                    </li>
+
+                                    <li>
+                                        <a href="/vehicles" class="group flex items-center gap-x-3 rounded-md p-2 text-sm font-semibold {{ if eq .active "vehicles" }}bg-blue-600/20 text-blue-700{{ else }}text-gray-700 hover:bg-blue-600/10 hover:text-blue-700{{ end }}">
+                                        <svg class="h-6 w-6 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
+                                        </svg>
+                                        Fahrzeuge
+                                        </a>
+                                    </li>
+
+                                    <li>
+                                        <a href="/drivers" class="group flex items-center gap-x-3 rounded-md p-2 text-sm font-semibold {{ if eq .active "drivers" }}bg-blue-600/20 text-blue-700{{ else }}text-gray-700 hover:bg-blue-600/10 hover:text-blue-700{{ end }}">
+                                        <svg class="h-6 w-6 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                                        </svg>
+                                        Fahrer
+                                        </a>
+                                    </li>
+
+                                    <li>
+                                        <a href="/projects" class="group flex items-center gap-x-3 rounded-md p-2 text-sm font-semibold {{ if eq .active "projects" }}bg-blue-600/20 text-blue-700{{ else }}text-gray-700 hover:bg-blue-600/10 hover:text-blue-700{{ end }}">
+                                        <svg class="h-6 w-6 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
+                                        </svg>
+                                        Projekte
+                                        </a>
+                                    </li>
+
+                                    <li>
+                                        <a href="/bookings" class="group flex items-center gap-x-3 rounded-md p-2 text-sm font-semibold {{ if eq .active "bookings" }}bg-blue-600/20 text-blue-700{{ else }}text-gray-700 hover:bg-blue-600/10 hover:text-blue-700{{ end }}">
+                                        <svg class="h-6 w-6 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+                                        </svg>
+                                        Buchungen
+                                        </a>
+                                    </li>
+
+                                    <li>
+                                        <a href="/reports" class="group flex items-center gap-x-3 rounded-md p-2 text-sm font-semibold {{ if eq .active "reports" }}bg-blue-600/20 text-blue-700{{ else }}text-gray-700 hover:bg-blue-600/10 hover:text-blue-700{{ end }}">
+                                        <svg class="h-6 w-6 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                                        </svg>
+                                        Berichte
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+
+                            <!-- Footer-Navigation für mobil -->
+                            <li class="mt-auto space-y-1">
+                                <!-- Einstellungen für mobil -->
+                                <a href="/settings" class="group -mx-2 flex items-center gap-x-3 rounded-md p-2 text-sm font-semibold {{ if eq .active "settings" }}bg-blue-600/20 text-blue-700{{ else }}text-gray-700 hover:bg-blue-600/10 hover:text-blue-700{{ end }}">
+                                <svg class="h-6 w-6 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                </svg>
+                                Einstellungen
+                                </a>
+
+                                <!-- Logout für mobil -->
+                                <a href="/logout" class="group -mx-2 flex items-center gap-x-3 rounded-md p-2 text-sm font-semibold {{ if eq .active "logout" }}bg-blue-600/20 text-blue-700{{ else }}text-gray-700 hover:bg-blue-600/10 hover:text-blue-700{{ end }}">
+                                <svg class="h-6 w-6 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
+                                </svg>
+                                Abmelden
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Mobile menu, show/hide based on menu state. -->
-    <div class="hidden sm:hidden" id="mobile-menu">
-        <div class="space-y-1 pt-2 pb-3">
-            <!-- Current: "bg-indigo-50 border-indigo-500 text-indigo-700", Default: "border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700" -->
-            <a href="/dashboard" class="block border-l-4 border-indigo-500 bg-indigo-50 py-2 pl-3 pr-4 text-base font-medium text-indigo-700">Dashboard</a>
-            <a href="/vehicles" class="block border-l-4 border-transparent py-2 pl-3 pr-4 text-base font-medium text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700">Fahrzeuge</a>
-            <a href="/drivers" class="block border-l-4 border-transparent py-2 pl-3 pr-4 text-base font-medium text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700">Fahrer</a>
-            <a href="/bookings" class="block border-l-4 border-transparent py-2 pl-3 pr-4 text-base font-medium text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700">Buchungen</a>
-            <a href="/reports" class="block border-l-4 border-transparent py-2 pl-3 pr-4 text-base font-medium text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700">Berichte</a>
-        </div>
-        <div class="border-t border-gray-200 pt-4 pb-3">
-            <div class="flex items-center px-4">
-                <div class="shrink-0">
-                    <img class="size-10 rounded-full" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="">
+    <!-- Hauptinhalt-Bereich -->
+    <div id="main-content" class="lg:pl-64 flex flex-col min-h-screen w-full">
+        <!-- Obere Leiste -->
+        <div class="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
+            <!-- Mobile Menü-Button - nur für mobile Geräte -->
+            <button id="mobile-sidebar-button" type="button" class="-m-2.5 p-2.5 text-gray-700 lg:hidden">
+                <span class="sr-only">Menü öffnen</span>
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                </svg>
+            </button>
+
+            <!-- Expand-Sidebar-Button - nur für Desktop, wenn Sidebar eingeklappt -->
+            <button id="expand-sidebar-button" type="button" class="-m-2.5 p-2.5 text-gray-700 hidden">
+                <span class="sr-only">Menü erweitern</span>
+                <img src="/static/images/FleetFlow-Logo-Symbol.svg" alt="FleetFlow" class="h-6 w-6">
+            </button>
+
+            <!-- Linker Bereich: Datum und Willkommen -->
+            <div class="flex items-center flex-1">
+                <div>
+                    <p class="text-sm text-gray-500">{{.currentDate}}</p>
+                    <p class="text-base font-medium text-gray-900">Willkommen zurück, {{.user}}</p>
                 </div>
-                <div class="ml-3">
-                    <div class="text-base font-medium text-gray-800">{{.user}}</div>
-                    <div class="text-sm font-medium text-gray-500">admin@fleetdrive.com</div>
-                </div>
-                <button type="button" class="relative ml-auto shrink-0 rounded-full bg-white p-1 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                    <span class="absolute -inset-1.5"></span>
+            </div>
+
+            <!-- Rechter Bereich: Benachrichtigungen -->
+            <div class="flex items-center">
+                <button type="button" class="-m-2.5 p-2.5 text-gray-500 hover:text-blue-700">
                     <span class="sr-only">Benachrichtigungen anzeigen</span>
-                    <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
                     </svg>
                 </button>
-            </div>
-            <div class="mt-3 space-y-1">
-                <a href="/profile" class="block px-4 py-2 text-base font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800">Mein Profil</a>
-                <a href="/settings" class="block px-4 py-2 text-base font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800">Einstellungen</a>
-                <a href="/logout" class="block px-4 py-2 text-base font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800">Abmelden</a>
+
+                <!-- Profil-Anzeige -->
+                <a href="/profile" class="flex items-center ml-4 hover:opacity-80">
+                    <div class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-800 text-sm font-medium">
+                        Test
+                    </div>
+                    <span class="hidden lg:ml-4 lg:flex lg:items-center">
+                        <span class="text-sm font-semibold text-gray-900" aria-hidden="true">{{.user}}</span>
+                    </span>
+                </a>
             </div>
         </div>
-    </div>
-</nav>
 
-<script>
-    // Toggle Mobile Menu
-    document.addEventListener('DOMContentLoaded', function() {
-        const mobileMenuButton = document.getElementById('mobile-menu-button');
-        const mobileMenu = document.getElementById('mobile-menu');
-        const menuOpenIcon = mobileMenuButton.querySelector('.block');
-        const menuCloseIcon = mobileMenuButton.querySelector('.hidden');
+        <!-- Hier kommt der Hauptinhalt der jeweiligen Seite -->
 
-        mobileMenuButton.addEventListener('click', function() {
-            const expanded = this.getAttribute('aria-expanded') === 'true';
-            this.setAttribute('aria-expanded', !expanded);
-            mobileMenu.classList.toggle('hidden');
-            menuOpenIcon.classList.toggle('hidden');
-            menuOpenIcon.classList.toggle('block');
-            menuCloseIcon.classList.toggle('hidden');
-            menuCloseIcon.classList.toggle('block');
-        });
+        <script>
+            // Toggle Mobile Menu
+            document.addEventListener('DOMContentLoaded', function() {
+                const mobileMenuButton = document.getElementById('mobile-sidebar-button');
+                const mobileMenu = document.getElementById('mobile-menu');
+                const closeSidebarButton = document.getElementById('close-sidebar-button');
+                const toggleSidebarButton = document.getElementById('toggle-sidebar');
+                const expandSidebarButton = document.getElementById('expand-sidebar-button');
+                const sidebar = document.getElementById('sidebar');
+                const mainContent = document.getElementById('main-content');
+                const collapseIcon = document.getElementById('collapse-icon');
+                const expandIcon = document.getElementById('expand-icon');
+                const sidebarLogoFull = document.getElementById('sidebar-logo-full');
+                const sidebarLogoIcon = document.getElementById('sidebar-logo-icon');
+                const menuTexts = document.querySelectorAll('.menu-text');
 
-        // Toggle Profile Dropdown
-        const userMenuButton = document.getElementById('user-menu-button');
-        const userMenuDropdown = document.getElementById('user-menu-dropdown');
+                // Mobile Menu Toggle
+                mobileMenuButton.addEventListener('click', function() {
+                    mobileMenu.style.display = 'block';
+                });
 
-        userMenuButton.addEventListener('click', function() {
-            const expanded = this.getAttribute('aria-expanded') === 'true';
-            this.setAttribute('aria-expanded', !expanded);
+                closeSidebarButton.addEventListener('click', function() {
+                    mobileMenu.style.display = 'none';
+                });
 
-            if (!expanded) {
-                // Show the menu with animation
-                userMenuDropdown.classList.remove('hidden');
-                // Add animation classes (wait a tiny bit for the hidden to be removed)
-                setTimeout(() => {
-                    userMenuDropdown.classList.add('transition', 'ease-out', 'duration-200', 'transform', 'opacity-100', 'scale-100');
-                    userMenuDropdown.classList.remove('opacity-0', 'scale-95');
-                }, 10);
-            } else {
-                // Hide with animation
-                userMenuDropdown.classList.add('transition', 'ease-in', 'duration-75', 'transform', 'opacity-0', 'scale-95');
-                userMenuDropdown.classList.remove('opacity-100', 'scale-100');
-                // Hide completely after animation completes
-                setTimeout(() => {
-                    userMenuDropdown.classList.add('hidden');
-                }, 200);
-            }
-        });
+                // Desktop Sidebar Toggle
+                function toggleDesktopSidebar() {
+                    const isCollapsed = document.body.classList.contains('sidebar-collapsed');
 
-        // Close dropdown when clicking outside
-        document.addEventListener('click', function(event) {
-            if (!userMenuButton.contains(event.target) && !userMenuDropdown.contains(event.target)) {
-                userMenuButton.setAttribute('aria-expanded', 'false');
-                userMenuDropdown.classList.add('hidden');
-            }
-        });
-
-        // Funktion zum Hervorheben des aktuellen Menüpunkts basierend auf URL
-        function highlightCurrentNavItem() {
-            // Aktuelle URL-Pfad erhalten
-            const currentPath = window.location.pathname;
-
-            // Desktop Navigation Menüpunkte auswählen
-            const desktopNavItems = document.querySelectorAll('.sm\\:flex.sm\\:space-x-8 > a');
-
-            // Mobile Navigation Menüpunkte auswählen
-            const mobileNavItems = document.querySelectorAll('#mobile-menu .space-y-1 > a');
-
-            // Funktion zum Setzen der aktiven Klasse basierend auf dem Pfad
-            function setActiveClass(items, isMobile) {
-                items.forEach(item => {
-                    const href = item.getAttribute('href');
-
-                    // Entferne aktive Klassen von allen Items
-                    if (isMobile) {
-                        item.classList.remove('border-indigo-500', 'bg-indigo-50', 'text-indigo-700');
-                        item.classList.add('border-transparent', 'text-gray-500', 'hover:border-gray-300', 'hover:bg-gray-50', 'hover:text-gray-700');
+                    if (isCollapsed) {
+                        // Expand sidebar
+                        document.body.classList.remove('sidebar-collapsed');
+                        sidebar.style.width = '16rem';
+                        mainContent.classList.add('lg:pl-64');
+                        mainContent.classList.remove('lg:pl-16');
+                        collapseIcon.classList.remove('hidden');
+                        expandIcon.classList.add('hidden');
+                        expandSidebarButton.classList.add('hidden');
+                        sidebarLogoFull.classList.remove('hidden');
+                        sidebarLogoIcon.classList.add('hidden');
+                        menuTexts.forEach(text => text.style.display = 'inline');
                     } else {
-                        item.classList.remove('border-indigo-500', 'text-gray-900');
-                        item.classList.add('border-transparent', 'text-gray-500', 'hover:border-gray-300', 'hover:text-gray-700');
+                        // Collapse sidebar
+                        document.body.classList.add('sidebar-collapsed');
+                        sidebar.style.width = '4rem';
+                        mainContent.classList.remove('lg:pl-64');
+                        mainContent.classList.add('lg:pl-16');
+                        collapseIcon.classList.add('hidden');
+                        expandIcon.classList.remove('hidden');
+                        expandSidebarButton.classList.remove('hidden');
+                        sidebarLogoFull.classList.add('hidden');
+                        sidebarLogoIcon.classList.remove('hidden');
+                        menuTexts.forEach(text => text.style.display = 'none');
                     }
+                }
 
-                    // Prüfe, ob dies der aktuelle Pfad ist oder ob es der Root-Pfad ist und wir auf Dashboard sind
-                    if (href === currentPath || (href === '/dashboard' && (currentPath === '/' || currentPath === ''))) {
-                        if (isMobile) {
-                            item.classList.remove('border-transparent', 'text-gray-500', 'hover:border-gray-300', 'hover:bg-gray-50', 'hover:text-gray-700');
-                            item.classList.add('border-indigo-500', 'bg-indigo-50', 'text-indigo-700');
-                        } else {
-                            item.classList.remove('border-transparent', 'text-gray-500', 'hover:border-gray-300', 'hover:text-gray-700');
-                            item.classList.add('border-indigo-500', 'text-gray-900');
-                        }
+                toggleSidebarButton.addEventListener('click', toggleDesktopSidebar);
+                expandSidebarButton.addEventListener('click', toggleDesktopSidebar);
+
+                // Close mobile menu when clicking outside
+                document.addEventListener('click', function(event) {
+                    if (mobileMenu.style.display === 'block' &&
+                        !mobileMenu.contains(event.target) &&
+                        !mobileMenuButton.contains(event.target)) {
+                        mobileMenu.style.display = 'none';
                     }
                 });
-            }
 
-            // Aktive Klassen für Desktop und Mobile Navigation setzen
-            setActiveClass(desktopNavItems, false);
-            setActiveClass(mobileNavItems, true);
-        }
+                // Highlight current navigation item
+                function highlightCurrentNavItem() {
+                    const currentPath = window.location.pathname;
+                    const navItems = document.querySelectorAll('.sidebar-item a');
 
-        // Beim Laden der Seite ausführen
-        highlightCurrentNavItem();
-    });
+                    navItems.forEach(item => {
+                        const href = item.getAttribute('href');
+                        if (href === currentPath || (href === '/dashboard' && (currentPath === '/' || currentPath === ''))) {
+                            item.classList.add('bg-blue-600/20', 'text-blue-700');
+                            item.classList.remove('text-gray-700', 'hover:bg-blue-600/10', 'hover:text-blue-700');
+                        }
+                    });
+                }
 
+                highlightCurrentNavItem();
+            });
+        </script>
 
-
-</script>
-
-{{ end }}
+        {{ end }}
