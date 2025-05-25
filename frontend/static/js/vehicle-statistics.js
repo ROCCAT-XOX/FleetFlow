@@ -1,409 +1,345 @@
 // frontend/static/js/vehicle-statistics.js
 
-export default class VehicleStatistics {
-    constructor(vehicleId) {
-        this.vehicleId = vehicleId;
-        this.initializeCharts();
+function renderStatisticsCharts(vehicle, fuelCosts, maintenance, usage) {
+    // Kraftstoffverbrauch berechnen
+    if (fuelCosts && fuelCosts.length > 0) {
+        calculateFuelStatistics(fuelCosts);
+        renderFuelCostChart(fuelCosts);
     }
 
-    async loadStatistics() {
-        try {
-            // Statistikdaten von API laden
-            const [
-                vehicleResponse,
-                fuelResponse,
-                maintenanceResponse,
-                usageResponse
-            ] = await Promise.all([
-                fetch(`/api/vehicles/${this.vehicleId}`),
-                fetch(`/api/fuelcosts/vehicle/${this.vehicleId}`),
-                fetch(`/api/maintenance/vehicle/${this.vehicleId}`),
-                fetch(`/api/usage/vehicle/${this.vehicleId}`)
-            ]);
+    // Monatliche Kosten
+    renderMonthlyCostsChart(fuelCosts, maintenance);
 
-            if (!vehicleResponse.ok || !fuelResponse.ok || !maintenanceResponse.ok || !usageResponse.ok) {
-                throw new Error('Fehler beim Laden der Statistikdaten');
-            }
+    // Nutzungsstatistiken
+    renderUsageStatistics(usage);
 
-            const vehicleData = await vehicleResponse.json();
-            const fuelData = await fuelResponse.json();
-            const maintenanceData = await maintenanceResponse.json();
-            const usageData = await usageResponse.json();
+    // Zusammenfassung
+    renderSummaryStatistics(vehicle, fuelCosts, maintenance, usage);
+}
 
-            // Statistiken berechnen und anzeigen
-            this.calculateFuelConsumption(fuelData.fuelCosts || []);
-            this.calculateTotalCosts(maintenanceData.maintenance || [], fuelData.fuelCosts || []);
-            this.processUsageStatistics(usageData.usage || []);
+function calculateFuelStatistics(fuelCosts) {
+    if (!fuelCosts || fuelCosts.length === 0) return;
 
-            // Charts aktualisieren
-            this.updateCostChart(maintenanceData.maintenance || [], fuelData.fuelCosts || []);
-            this.updateDriverPieChart(usageData.usage || []);
-            this.updateProjectPieChart(usageData.usage || []);
-            this.updateFuelCostsChart(fuelData.fuelCosts || []);
-            this.updateSummary(vehicleData.vehicle, maintenanceData.maintenance || [], fuelData.fuelCosts || []);
-        } catch (error) {
-            console.error('Fehler beim Laden der Statistiken:', error);
-            this.showError('Fehler beim Laden der Statistiken');
+    // Sortieren nach Kilometerstand
+    const sortedCosts = [...fuelCosts].sort((a, b) => a.mileage - b.mileage);
+
+    let totalFuel = 0;
+    let totalCost = 0;
+    let totalDistance = 0;
+
+    for (let i = 1; i < sortedCosts.length; i++) {
+        const distance = sortedCosts[i].mileage - sortedCosts[i-1].mileage;
+        if (distance > 0) {
+            totalDistance += distance;
+            totalFuel += sortedCosts[i].amount;
+            totalCost += sortedCosts[i].totalCost;
         }
     }
 
-    initializeCharts() {
-        // Kosten der letzten 12 Monate Chart
-        if (!this.costChart) {
-            this.costChart = new ApexCharts(document.querySelector("#costChart"), {
-                series: [{
-                    name: 'Wartung',
-                    data: []
-                }, {
-                    name: 'Kraftstoff',
-                    data: []
-                }],
-                chart: {
-                    type: 'bar',
-                    height: 320,
-                    stacked: true,
-                    toolbar: {
-                        show: false
-                    }
-                },
-                colors: ['#4F46E5', '#10B981'],
-                plotOptions: {
-                    bar: {
-                        horizontal: false,
-                        columnWidth: '55%',
-                    },
-                },
-                dataLabels: {
-                    enabled: false
-                },
-                xaxis: {
-                    categories: [],
-                },
-                yaxis: {
-                    title: {
-                        text: 'Kosten (€)'
-                    }
-                },
-                legend: {
-                    position: 'top'
-                },
-                fill: {
-                    opacity: 1
+    const avgConsumption = totalDistance > 0 ? (totalFuel / totalDistance * 100).toFixed(2) : 0;
+    const costPerKm = totalDistance > 0 ? (totalCost / totalDistance).toFixed(3) : 0;
+
+    // Anzeige aktualisieren
+    const avgConsumptionEl = document.getElementById('stats-avg-consumption');
+    const totalCostsEl = document.getElementById('stats-total-fuel-costs');
+    const costPerKmEl = document.getElementById('stats-cost-per-km');
+
+    if (avgConsumptionEl) avgConsumptionEl.textContent = avgConsumption;
+    if (totalCostsEl) totalCostsEl.textContent = `€ ${totalCost.toFixed(2)}`;
+    if (costPerKmEl) costPerKmEl.textContent = `€ ${costPerKm}`;
+}
+
+function renderFuelCostChart(fuelCosts) {
+    const chartContainer = document.getElementById('stats-fuel-costs-chart');
+    if (!chartContainer) return;
+
+    // Daten für Chart vorbereiten
+    const monthlyData = {};
+
+    fuelCosts.forEach(cost => {
+        const date = new Date(cost.date);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+
+        if (!monthlyData[monthKey]) {
+            monthlyData[monthKey] = { cost: 0, amount: 0 };
+        }
+
+        monthlyData[monthKey].cost += cost.totalCost;
+        monthlyData[monthKey].amount += cost.amount;
+    });
+
+    const sortedMonths = Object.keys(monthlyData).sort();
+    const labels = sortedMonths.map(month => {
+        const [year, m] = month.split('-');
+        return `${m}/${year}`;
+    });
+
+    const costData = sortedMonths.map(month => monthlyData[month].cost);
+
+    const options = {
+        series: [{
+            name: 'Kraftstoffkosten',
+            data: costData
+        }],
+        chart: {
+            type: 'area',
+            height: 288,
+            toolbar: { show: false }
+        },
+        dataLabels: { enabled: false },
+        stroke: { curve: 'smooth' },
+        xaxis: {
+            categories: labels,
+            labels: { rotate: -45 }
+        },
+        yaxis: {
+            title: { text: 'Kosten (€)' },
+            labels: {
+                formatter: function (val) {
+                    return '€ ' + val.toFixed(0);
                 }
-            });
-            this.costChart.render();
-        }
-
-        // Fahrer Pie Chart
-        if (!this.driverPieChart) {
-            this.driverPieChart = new ApexCharts(document.querySelector("#driverPieChart"), {
-                series: [],
-                chart: {
-                    type: 'pie',
-                    height: 320
-                },
-                labels: [],
-                legend: {
-                    position: 'bottom'
-                },
-                responsive: [{
-                    breakpoint: 480,
-                    options: {
-                        chart: {
-                            width: 300
-                        },
-                        legend: {
-                            position: 'bottom'
-                        }
-                    }
-                }]
-            });
-            this.driverPieChart.render();
-        }
-
-        // Projekt Pie Chart
-        if (!this.projectPieChart) {
-            this.projectPieChart = new ApexCharts(document.querySelector("#projectPieChart"), {
-                series: [],
-                chart: {
-                    type: 'pie',
-                    height: 320
-                },
-                labels: [],
-                legend: {
-                    position: 'bottom'
-                },
-                responsive: [{
-                    breakpoint: 480,
-                    options: {
-                        chart: {
-                            width: 300
-                        },
-                        legend: {
-                            position: 'bottom'
-                        }
-                    }
-                }]
-            });
-            this.projectPieChart.render();
-        }
-
-        // Kraftstoffkosten Chart
-        if (!this.fuelCostsChart) {
-            this.fuelCostsChart = new ApexCharts(document.querySelector("#stats-fuel-costs-chart"), {
-                series: [{
-                    name: 'Kraftstoffkosten',
-                    data: []
-                }],
-                chart: {
-                    type: 'line',
-                    height: 288,
-                    toolbar: {
-                        show: false
-                    }
-                },
-                stroke: {
-                    width: 3,
-                    curve: 'smooth'
-                },
-                xaxis: {
-                    categories: [],
-                    labels: {
-                        rotate: -45,
-                        rotateAlways: true
-                    }
-                },
-                yaxis: {
-                    title: {
-                        text: 'Kosten (€)'
-                    }
-                },
-                tooltip: {
-                    y: {
-                        formatter: function(value) {
-                            return value.toFixed(2) + ' €';
-                        }
-                    }
+            }
+        },
+        colors: ['#3B82F6'],
+        tooltip: {
+            y: {
+                formatter: function (val) {
+                    return '€ ' + val.toFixed(2);
                 }
-            });
-            this.fuelCostsChart.render();
-        }
-    }
-
-    calculateFuelConsumption(fuelCosts) {
-        if (fuelCosts.length < 2) {
-            document.getElementById('stats-avg-consumption').textContent = '--';
-            return;
-        }
-
-        let totalConsumption = 0;
-        let totalDistance = 0;
-
-        // Sortiere nach Kilometerstand
-        const sortedFuelCosts = [...fuelCosts].sort((a, b) => a.mileage - b.mileage);
-
-        for (let i = 1; i < sortedFuelCosts.length; i++) {
-            const prev = sortedFuelCosts[i - 1];
-            const curr = sortedFuelCosts[i];
-
-            const distance = curr.mileage - prev.mileage;
-            if (distance > 0) {
-                totalDistance += distance;
-                totalConsumption += curr.amount;
             }
         }
+    };
 
-        if (totalDistance > 0) {
-            const avgConsumption = (totalConsumption / totalDistance) * 100;
-            document.getElementById('stats-avg-consumption').textContent = avgConsumption.toFixed(2);
-        } else {
-            document.getElementById('stats-avg-consumption').textContent = '--';
-        }
+    const chart = new ApexCharts(chartContainer, options);
+    chart.render();
+}
+
+function renderMonthlyCostsChart(fuelCosts, maintenance) {
+    const chartContainer = document.getElementById('costChart');
+    if (!chartContainer) return;
+
+    // Letzten 12 Monate
+    const months = [];
+    const now = new Date();
+    for (let i = 11; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        months.push({
+            key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+            label: d.toLocaleDateString('de-DE', { month: 'short', year: '2-digit' })
+        });
     }
 
-    calculateTotalCosts(maintenance, fuelCosts) {
-        const totalFuelCosts = fuelCosts.reduce((sum, entry) => sum + (entry.totalCost || 0), 0);
-        document.getElementById('stats-total-fuel-costs').textContent =
-            totalFuelCosts.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+    // Kosten aggregieren
+    const costsByMonth = {};
+    months.forEach(m => {
+        costsByMonth[m.key] = { fuel: 0, maintenance: 0 };
+    });
 
-        if (fuelCosts.length > 1) {
-            const sortedFuelCosts = [...fuelCosts].sort((a, b) => a.mileage - b.mileage);
-            const totalDistance = sortedFuelCosts[sortedFuelCosts.length - 1].mileage - sortedFuelCosts[0].mileage;
+    // Tankkosten
+    (fuelCosts || []).forEach(cost => {
+        const date = new Date(cost.date);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        if (costsByMonth[monthKey]) {
+            costsByMonth[monthKey].fuel += cost.totalCost;
+        }
+    });
 
-            if (totalDistance > 0) {
-                const costPerKm = totalFuelCosts / totalDistance;
-                document.getElementById('stats-cost-per-km').textContent =
-                    costPerKm.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €/km';
-            } else {
-                document.getElementById('stats-cost-per-km').textContent = '--';
+    // Wartungskosten
+    (maintenance || []).forEach(m => {
+        const date = new Date(m.date);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        if (costsByMonth[monthKey] && m.cost) {
+            costsByMonth[monthKey].maintenance += m.cost;
+        }
+    });
+
+    const options = {
+        series: [{
+            name: 'Kraftstoff',
+            data: months.map(m => costsByMonth[m.key].fuel)
+        }, {
+            name: 'Wartung',
+            data: months.map(m => costsByMonth[m.key].maintenance)
+        }],
+        chart: {
+            type: 'bar',
+            height: 320,
+            stacked: true,
+            toolbar: { show: false }
+        },
+        plotOptions: {
+            bar: {
+                horizontal: false,
+                columnWidth: '55%',
             }
-        } else {
-            document.getElementById('stats-cost-per-km').textContent = '--';
-        }
-    }
+        },
+        dataLabels: { enabled: false },
+        xaxis: {
+            categories: months.map(m => m.label),
+            labels: { rotate: -45 }
+        },
+        yaxis: {
+            title: { text: 'Kosten (€)' },
+            labels: {
+                formatter: function (val) {
+                    return '€ ' + val.toFixed(0);
+                }
+            }
+        },
+        legend: {
+            position: 'top'
+        },
+        fill: {
+            opacity: 1
+        },
+        colors: ['#3B82F6', '#10B981']
+    };
 
-    processUsageStatistics(usageData) {
-        // Gruppiere nach Fahrern und Projekten
+    const chart = new ApexCharts(chartContainer, options);
+    chart.render();
+}
+
+function renderUsageStatistics(usage) {
+    // Nutzung nach Fahrer
+    const driverChart = document.getElementById('driverPieChart');
+    if (driverChart && usage && usage.length > 0) {
         const driverUsage = {};
+
+        usage.forEach(u => {
+            const driver = u.driverName || 'Unbekannt';
+            if (!driverUsage[driver]) {
+                driverUsage[driver] = 0;
+            }
+
+            if (u.startDate && u.endDate) {
+                const start = new Date(u.startDate);
+                const end = new Date(u.endDate);
+                const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+                driverUsage[driver] += days;
+            }
+        });
+
+        const driverOptions = {
+            series: Object.values(driverUsage),
+            labels: Object.keys(driverUsage),
+            chart: {
+                type: 'donut',
+                height: 320
+            },
+            plotOptions: {
+                pie: {
+                    donut: {
+                        size: '70%'
+                    }
+                }
+            },
+            legend: {
+                position: 'bottom'
+            }
+        };
+
+        const driverChartInstance = new ApexCharts(driverChart, driverOptions);
+        driverChartInstance.render();
+    }
+
+    // Nutzung nach Projekt
+    const projectChart = document.getElementById('projectPieChart');
+    if (projectChart && usage && usage.length > 0) {
         const projectUsage = {};
 
-        usageData.forEach(usage => {
-            // Nach Fahrer gruppieren
-            const driverName = usage.driverName || 'Unbekannt';
-            if (!driverUsage[driverName]) {
-                driverUsage[driverName] = 0;
-            }
-            if (usage.endMileage && usage.startMileage) {
-                driverUsage[driverName] += usage.endMileage - usage.startMileage;
-            }
-
-            // Nach Projekt gruppieren
-            const project = usage.project || usage.purpose || 'Sonstige';
+        usage.forEach(u => {
+            const project = u.purpose || 'Sonstiges';
             if (!projectUsage[project]) {
                 projectUsage[project] = 0;
             }
-            if (usage.endMileage && usage.startMileage) {
-                projectUsage[project] += usage.endMileage - usage.startMileage;
+
+            if (u.startDate && u.endDate) {
+                const start = new Date(u.startDate);
+                const end = new Date(u.endDate);
+                const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+                projectUsage[project] += days;
             }
         });
 
-        return { driverUsage, projectUsage };
+        const projectOptions = {
+            series: Object.values(projectUsage),
+            labels: Object.keys(projectUsage),
+            chart: {
+                type: 'donut',
+                height: 320
+            },
+            plotOptions: {
+                pie: {
+                    donut: {
+                        size: '70%'
+                    }
+                }
+            },
+            legend: {
+                position: 'bottom'
+            }
+        };
+
+        const projectChartInstance = new ApexCharts(projectChart, projectOptions);
+        projectChartInstance.render();
+    }
+}
+
+function renderSummaryStatistics(vehicle, fuelCosts, maintenance, usage) {
+    // Gesamtkilometer
+    const totalKmEl = document.getElementById('total-kilometers');
+    if (totalKmEl && vehicle) {
+        totalKmEl.textContent = vehicle.mileage ? vehicle.mileage.toLocaleString() + ' km' : '0 km';
     }
 
-    updateCostChart(maintenance, fuelCosts) {
-        // Kosten für die letzten 12 Monate aggregieren
-        const months = [];
-        const maintenanceCosts = [];
-        const fuelCostsMonthly = [];
+    // Kosten pro km
+    const costPerKmEl = document.getElementById('cost-per-km');
+    if (costPerKmEl && vehicle && vehicle.mileage > 0) {
+        const totalFuelCost = (fuelCosts || []).reduce((sum, cost) => sum + cost.totalCost, 0);
+        const totalMaintenanceCost = (maintenance || []).reduce((sum, m) => sum + (m.cost || 0), 0);
+        const totalCost = totalFuelCost + totalMaintenanceCost;
+        const costPerKm = totalCost / vehicle.mileage;
+        costPerKmEl.textContent = '€ ' + costPerKm.toFixed(3);
+    }
 
-        const now = new Date();
-        for (let i = 11; i >= 0; i--) {
-            const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-            const monthYear = date.toLocaleString('de-DE', { month: 'short', year: 'numeric' });
-            months.push(monthYear);
+    // Gesamtkosten (12 Monate)
+    const totalCostEl = document.getElementById('total-cost');
+    if (totalCostEl) {
+        const twelveMonthsAgo = new Date();
+        twelveMonthsAgo.setFullYear(twelveMonthsAgo.getFullYear() - 1);
 
-            // Wartungskosten dieses Monats
-            const maintenanceInMonth = maintenance.filter(m => {
-                const mDate = new Date(m.date);
-                return mDate.getMonth() === date.getMonth() && mDate.getFullYear() === date.getFullYear();
-            });
-            maintenanceCosts.push(maintenanceInMonth.reduce((sum, m) => sum + (m.cost || 0), 0));
+        const recentFuelCosts = (fuelCosts || [])
+            .filter(cost => new Date(cost.date) >= twelveMonthsAgo)
+            .reduce((sum, cost) => sum + cost.totalCost, 0);
 
-            // Kraftstoffkosten dieses Monats
-            const fuelInMonth = fuelCosts.filter(f => {
-                const fDate = new Date(f.date);
-                return fDate.getMonth() === date.getMonth() && fDate.getFullYear() === date.getFullYear();
-            });
-            fuelCostsMonthly.push(fuelInMonth.reduce((sum, f) => sum + (f.totalCost || 0), 0));
-        }
+        const recentMaintenanceCosts = (maintenance || [])
+            .filter(m => new Date(m.date) >= twelveMonthsAgo)
+            .reduce((sum, m) => sum + (m.cost || 0), 0);
 
-        this.costChart.updateOptions({
-            xaxis: {
-                categories: months
+        const totalRecentCost = recentFuelCosts + recentMaintenanceCosts;
+        totalCostEl.textContent = '€ ' + totalRecentCost.toFixed(2);
+    }
+
+    // Auslastung
+    const utilizationEl = document.getElementById('utilization');
+    if (utilizationEl && usage) {
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+        let usedDays = 0;
+        usage.forEach(u => {
+            if (u.startDate && u.endDate) {
+                const start = new Date(Math.max(new Date(u.startDate), thirtyDaysAgo));
+                const end = new Date(Math.min(new Date(u.endDate), new Date()));
+
+                if (start <= end) {
+                    const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+                    usedDays += days;
+                }
             }
         });
 
-        this.costChart.updateSeries([{
-            name: 'Wartung',
-            data: maintenanceCosts
-        }, {
-            name: 'Kraftstoff',
-            data: fuelCostsMonthly
-        }]);
-    }
-
-    updateDriverPieChart(usageData) {
-        const { driverUsage } = this.processUsageStatistics(usageData);
-
-        const driverNames = Object.keys(driverUsage);
-        const driverValues = Object.values(driverUsage);
-
-        this.driverPieChart.updateOptions({
-            labels: driverNames
-        });
-
-        this.driverPieChart.updateSeries(driverValues);
-    }
-
-    updateProjectPieChart(usageData) {
-        const { projectUsage } = this.processUsageStatistics(usageData);
-
-        const projectNames = Object.keys(projectUsage);
-        const projectValues = Object.values(projectUsage);
-
-        this.projectPieChart.updateOptions({
-            labels: projectNames
-        });
-
-        this.projectPieChart.updateSeries(projectValues);
-    }
-
-    updateFuelCostsChart(fuelCosts) {
-        // Sortiere nach Datum
-        const sortedFuelCosts = [...fuelCosts].sort((a, b) => new Date(a.date) - new Date(b.date));
-
-        const dates = sortedFuelCosts.map(entry =>
-            new Date(entry.date).toLocaleDateString('de-DE')
-        );
-        const costs = sortedFuelCosts.map(entry => entry.totalCost || 0);
-
-        this.fuelCostsChart.updateOptions({
-            xaxis: {
-                categories: dates
-            }
-        });
-
-        this.fuelCostsChart.updateSeries([{
-            name: 'Kraftstoffkosten',
-            data: costs
-        }]);
-    }
-
-    updateSummary(vehicle, maintenance, fuelCosts) {
-        // Gesamtkilometer
-        document.getElementById('total-kilometers').textContent =
-            vehicle.mileage ? vehicle.mileage.toLocaleString() + ' km' : '-';
-
-        // Kosten pro km (bereits berechnet)
-
-        // Gesamtkosten (letzte 12 Monate)
-        const now = new Date();
-        const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 12, 1);
-
-        const maintenanceLast12 = maintenance.filter(m => new Date(m.date) >= twelveMonthsAgo);
-        const fuelCostsLast12 = fuelCosts.filter(f => new Date(f.date) >= twelveMonthsAgo);
-
-        const totalMaintenance = maintenanceLast12.reduce((sum, m) => sum + (m.cost || 0), 0);
-        const totalFuel = fuelCostsLast12.reduce((sum, f) => sum + (f.totalCost || 0), 0);
-        const totalCosts = totalMaintenance + totalFuel;
-
-        document.getElementById('total-cost').textContent =
-            totalCosts.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
-
-        // Auslastung (hier könnte man die tatsächliche Nutzungsdauer verwenden)
-        document.getElementById('utilization').textContent = '-';
-    }
-
-    showError(message) {
-        // Zeige Fehlermeldung in allen relevanten Bereichen
-        const errorElements = [
-            'stats-avg-consumption',
-            'stats-total-fuel-costs',
-            'stats-cost-per-km',
-            'total-kilometers',
-            'cost-per-km',
-            'total-cost',
-            'utilization'
-        ];
-
-        errorElements.forEach(id => {
-            const element = document.getElementById(id);
-            if (element) {
-                element.textContent = 'Fehler';
-                element.classList.add('text-red-500');
-            }
-        });
-
-        console.error(message);
+        const utilization = Math.min(100, Math.round((usedDays / 30) * 100));
+        utilizationEl.textContent = utilization + '%';
     }
 }

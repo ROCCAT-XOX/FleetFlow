@@ -1,30 +1,26 @@
-
-// frontend/js/car-manufacturers.js
-
-export const carManufacturers = [
-    { name: 'Audi', logo: '/assets/logo/audi.svg' },
-    { name: 'BMW', logo: '/assets/logo/bmw.svg' },
-    { name: 'Mercedes-Benz', logo: '/assets/logo/mercedes.svg' },
-    { name: 'Volkswagen', logo: '/assets/logo/volkswagen.svg' },
-    { name: 'Porsche', logo: '/assets/logo/porsche.svg' },
-    { name: 'Dacia', logo: '/assets/logo/dacia.svg' },
-    { name: 'Ford', logo: '/assets/logo/ford.svg' },
-    { name: 'Toyota', logo: '/assets/logo/toyota.svg' },
-    { name: 'Honda', logo: '/assets/logo/honda.svg' },
-    { name: 'Tesla', logo: '/assets/logo/tesla.svg' },
-    { name: 'Volvo', logo: '/assets/logo/volvo.svg' },
-    { name: 'Nissan', logo: '/assets/logo/nissan.svg' },
-    { name: 'Hyundai', logo: '/assets/logo/hyundai.svg' },
-    { name: 'Kia', logo: '/assets/logo/kia.svg' },
-    { name: 'Peugeot', logo: '/assets/logo/peugeot.svg' },
-    { name: 'Renault', logo: '/assets/logo/renault.svg' },
-    { name: 'Skoda', logo: '/assets/logo/skoda.svg' },
-    { name: 'Fiat', logo: '/assets/logo/fiat.svg' },
-    { name: 'Opel', logo: '/assets/logo/opel.svg' },
-    { name: 'Seat', logo: '/assets/logo/seat.svg' },
-    { name: 'Mazda', logo: '/assets/logo/mazda.svg' }
+// frontend/static/js/car-manufacturers.js
+const carManufacturers = [
+    { name: 'Audi', logo: 'audi.svg' },
+    { name: 'BMW', logo: 'bmw.svg' },
+    { name: 'Mercedes-Benz', logo: 'mercedes.svg' },
+    { name: 'Volkswagen', logo: 'volkswagen.svg' },
+    { name: 'Ford', logo: 'ford.svg' },
+    { name: 'Opel', logo: 'opel.svg' },
+    { name: 'Renault', logo: 'renault.svg' },
+    { name: 'Peugeot', logo: 'peugeot.svg' },
+    { name: 'Citroen', logo: 'citroen.svg' },
+    { name: 'Fiat', logo: 'fiat.svg' },
+    { name: 'Tesla', logo: 'tesla.svg' },
+    { name: 'Toyota', logo: 'toyota.svg' },
+    { name: 'Honda', logo: 'honda.svg' },
+    { name: 'Hyundai', logo: 'hyundai.svg' },
+    { name: 'Kia', logo: 'kia.svg' },
+    { name: 'Mazda', logo: 'mazda.svg' },
+    { name: 'Nissan', logo: 'nissan.svg' },
+    { name: 'Seat', logo: 'seat.svg' },
+    { name: 'Skoda', logo: 'skoda.svg' },
+    { name: 'Volvo', logo: 'volvo.svg' }
 ];
-
 export function getManufacturerLogo(brand) {
     const manufacturer = carManufacturers.find(m => m.name.toLowerCase() === brand.toLowerCase());
     return manufacturer ? manufacturer.logo : '/assets/logo/default.svg';
