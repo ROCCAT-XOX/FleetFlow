@@ -20,12 +20,15 @@
     <!-- Fahrzeug Header -->
     <div class="bg-white shadow rounded-lg p-6 mb-6">
         <div class="flex justify-between items-center">
-            <div>
-                <h1 class="text-2xl font-bold text-gray-900">{{ .vehicle.brand }} {{ .vehicle.model }}</h1>
-                <p class="text-gray-500">{{ .vehicle.licensePlate }} • {{ .vehicle.year }}</p>
+            <div class="flex items-center gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">{{ .vehicle.brand }} {{ .vehicle.model }}</h1>
+                    <p class="text-gray-500">{{ .vehicle.licensePlate }} • {{ .vehicle.year }}</p>
+                </div>
+                <img id="brand-logo" class="h-12 w-auto hidden" src="" alt="">
             </div>
             <span class="px-3 py-1 rounded-full text-sm font-semibold
-                {{ if eq .vehicle.status "available" }}bg-green-100 text-green-800{{ end }}
+            {{ if eq .vehicle.status "available" }}bg-green-100 text-green-800{{ end }}
             {{ if eq .vehicle.status "inuse" }}bg-yellow-100 text-yellow-800{{ end }}
             {{ if eq .vehicle.status "maintenance" }}bg-red-100 text-red-800{{ end }}">
             {{ if eq .vehicle.status "available" }}Verfügbar{{ end }}
@@ -69,6 +72,43 @@
     {{ template "vehicle/registration_static" . }}
     {{ end }}
 </main>
+<script>
+    // Logo direkt beim Seitenladen setzen
+    document.addEventListener('DOMContentLoaded', function() {
+        const brandLogo = document.getElementById('brand-logo');
+
+        // Marke aus dem H1-Element extrahieren
+        const header = document.querySelector('h1.text-2xl');
+        if (header && brandLogo) {
+            const brand = header.textContent.split(' ')[0]; // Erstes Wort ist die Marke
+            console.log('Gefundene Marke:', brand);
+
+            if (brand) {
+                // Logo-Pfad setzen
+                const logoPath = `/assets/logo/${brand.toLowerCase()}.svg`;
+                console.log('Versuche Logo zu laden:', logoPath);
+
+                brandLogo.src = logoPath;
+                brandLogo.alt = brand;
+
+                brandLogo.onload = function() {
+                    brandLogo.classList.remove('hidden');
+                    console.log('Logo erfolgreich geladen');
+                };
+
+                brandLogo.onerror = function() {
+                    console.log('SVG nicht gefunden, versuche PNG');
+                    brandLogo.src = `/assets/logo/${brand.toLowerCase()}.png`;
+
+                    brandLogo.onerror = function() {
+                        console.log('Kein Logo gefunden');
+                        brandLogo.classList.add('hidden');
+                    };
+                };
+            }
+        }
+    });
+</script>
 
 {{ template "footer" .}}
 </body>

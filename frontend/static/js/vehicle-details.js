@@ -26,29 +26,40 @@ async function loadVehicleDetails(vehicleId) {
         const data = await response.json();
         const vehicle = data.vehicle;
 
-        // Header aktualisieren
-        document.getElementById('vehicle-header').textContent = `${vehicle.brand} ${vehicle.model}`;
-        document.getElementById('vehicle-subheader').textContent = `${vehicle.licensePlate} • ${vehicle.year}`;
-        document.getElementById('vehicle-title').textContent = `${vehicle.brand} ${vehicle.model}`;
-
-        // Status Badge aktualisieren
-        updateStatusBadge(vehicle.status);
-
         // Markenlogo laden
         const brandLogo = document.getElementById('brand-logo');
-        const logoPath = `/static/images/car-brands/${vehicle.brand.toLowerCase()}.svg`;
+        if (brandLogo && vehicle.brand) {
+            // Logo-Pfad erstellen
+            const logoPath = `static/assets/logo/${vehicle.brand.toLowerCase()}.svg`;
 
-        // Prüfen ob Logo existiert
-        fetch(logoPath)
-            .then(response => {
-                if (response.ok) {
-                    brandLogo.src = logoPath;
+            // Direkt das src-Attribut setzen
+            brandLogo.src = logoPath;
+            brandLogo.alt = vehicle.brand;
+
+            // Event-Listener für erfolgreichen Ladevorgang
+            brandLogo.onload = function() {
+                brandLogo.classList.remove('hidden');
+                console.log('Logo erfolgreich geladen:', logoPath);
+            };
+
+            // Event-Listener für Fehler beim Laden
+            brandLogo.onerror = function() {
+                console.log('Logo nicht gefunden:', logoPath);
+                // Versuche alternatives Format oder verstecke das Element
+                const altLogoPath = `/assets/logo/${vehicle.brand.toLowerCase()}.png`;
+
+                brandLogo.src = altLogoPath;
+                brandLogo.onload = function() {
                     brandLogo.classList.remove('hidden');
-                }
-            })
-            .catch(() => {
-                brandLogo.classList.add('hidden');
-            });
+                    console.log('Alternatives Logo geladen:', altLogoPath);
+                };
+
+                brandLogo.onerror = function() {
+                    brandLogo.classList.add('hidden');
+                    console.log('Kein Logo gefunden für:', vehicle.brand);
+                };
+            };
+        }
 
     } catch (error) {
         console.error('Fehler:', error);

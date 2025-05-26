@@ -2,7 +2,7 @@
 const carManufacturers = [
     { name: 'Audi', logo: 'audi.svg' },
     { name: 'BMW', logo: 'bmw.svg' },
-    { name: 'Mercedes-Benz', logo: 'mercedes.svg' },
+    { name: 'Mercedes-Benz', logo: 'mercedes-benz.svg' },
     { name: 'Volkswagen', logo: 'volkswagen.svg' },
     { name: 'Ford', logo: 'ford.svg' },
     { name: 'Opel', logo: 'opel.svg' },
