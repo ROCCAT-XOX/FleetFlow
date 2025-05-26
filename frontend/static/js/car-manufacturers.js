@@ -21,7 +21,8 @@ const carManufacturers = [
     { name: 'Skoda', logo: 'skoda.svg' },
     { name: 'Volvo', logo: 'volvo.svg' }
 ];
-export function getManufacturerLogo(brand) {
+
+function getManufacturerLogo(brand) {
     const manufacturer = carManufacturers.find(m => m.name.toLowerCase() === brand.toLowerCase());
     return manufacturer ? manufacturer.logo : '/assets/logo/default.svg';
 }

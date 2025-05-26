@@ -1,5 +1,5 @@
 // frontend/static/js/vehicles.js
-import { carManufacturers } from './car-manufacturers.js';
+
 // Funktion zum Speichern eines Fahrzeugs (Erstellen oder Aktualisieren)
 function saveVehicle(vehicleData, isEdit = false) {
     console.log('Zu speichernde Fahrzeugdaten:', vehicleData);
