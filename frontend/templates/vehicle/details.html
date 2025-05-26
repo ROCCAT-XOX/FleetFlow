@@ -1,130 +1,76 @@
 {{ define "vehicle/details.html" }}
 {{ template "head" .}}
-<body class="bg-gray-50 dark:bg-gray-900 min-h-screen flex flex-col">
-<!-- Navigation -->
+<body class="bg-gray-50 min-h-screen flex flex-col">
 {{ template "navigation" .}}
 
-<!-- Main Content -->
 <main class="container mx-auto px-4 py-6 flex-grow">
+    <!-- Breadcrumb -->
     <div class="mb-6">
         <nav class="flex" aria-label="Breadcrumb">
             <ol class="inline-flex items-center space-x-1 md:space-x-3">
-                <li class="inline-flex items-center">
-                    <a href="/dashboard" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white">
-                        <svg class="w-3 h-3 mr-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="m19.707 9.293-2-2-7-7a1 1 0 0 0-1.414 0l-7 7-2 2a1 1 0 0 0 1.414 1.414L2 10.414V18a2 2 0 0 0 2 2h3a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h3a2 2 0 0 0 2-2v-7.586l.293.293a1 1 0 0 0 1.414-1.414Z"/>
-                        </svg>
-                        Dashboard
-                    </a>
-                </li>
-                <li>
-                    <div class="flex items-center">
-                        <svg class="w-3 h-3 text-gray-400 mx-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
-                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
-                        </svg>
-                        <a href="/vehicles" class="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2 dark:text-gray-400 dark:hover:text-white">Fahrzeuge</a>
-                    </div>
-                </li>
-                <li aria-current="page">
-                    <div class="flex items-center">
-                        <svg class="w-3 h-3 text-gray-400 mx-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
-                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
-                        </svg>
-                        <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2 dark:text-gray-400" id="vehicle-title">Fahrzeugdetails</span>
-                    </div>
-                </li>
+                <li><a href="/dashboard" class="text-gray-700 hover:text-blue-600">Dashboard</a></li>
+                <li><span class="mx-2 text-gray-500">/</span></li>
+                <li><a href="/vehicles" class="text-gray-700 hover:text-blue-600">Fahrzeuge</a></li>
+                <li><span class="mx-2 text-gray-500">/</span></li>
+                <li class="text-gray-500">{{ .vehicle.brand }} {{ .vehicle.model }}</li>
             </ol>
         </nav>
     </div>
 
-    <!-- Fahrzeug-Header mit Status -->
-    <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-6">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+    <!-- Fahrzeug Header -->
+    <div class="bg-white shadow rounded-lg p-6 mb-6">
+        <div class="flex justify-between items-center">
             <div>
-                <h1 class="text-2xl font-bold text-gray-900 dark:text-white" id="vehicle-header">Fahrzeugdetails</h1>
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400" id="vehicle-subheader">Detaillierte Informationen</p>
+                <h1 class="text-2xl font-bold text-gray-900">{{ .vehicle.brand }} {{ .vehicle.model }}</h1>
+                <p class="text-gray-500">{{ .vehicle.licensePlate }} • {{ .vehicle.year }}</p>
             </div>
-            <img id="brand-logo" class="h-8 w-auto mr-3 hidden" src="" alt="">
-            <div class="mt-4 md:mt-0 flex items-center">
-                    <span id="vehicle-status-badge" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
-                        Verfügbar
-                    </span>
-            </div>
+            <span class="px-3 py-1 rounded-full text-sm font-semibold
+                {{ if eq .vehicle.status "available" }}bg-green-100 text-green-800{{ end }}
+            {{ if eq .vehicle.status "inuse" }}bg-yellow-100 text-yellow-800{{ end }}
+            {{ if eq .vehicle.status "maintenance" }}bg-red-100 text-red-800{{ end }}">
+            {{ if eq .vehicle.status "available" }}Verfügbar{{ end }}
+            {{ if eq .vehicle.status "inuse" }}In Benutzung{{ end }}
+            {{ if eq .vehicle.status "maintenance" }}In Wartung{{ end }}
+            </span>
         </div>
     </div>
 
-    <!-- Fahrzeug-Tabs -->
-    <div class="mb-6">
-        <div class="sm:hidden">
-            <label for="tabs" class="sr-only">Tab auswählen</label>
-            <select id="tabs" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                <option value="basic-info">Grunddaten</option>
-                <option value="current-usage">Aktuelle Nutzung</option>
-                <option value="usage-history">Nutzungshistorie</option>
-                <option value="maintenance">Wartung & Inspektion</option>
-                <option value="fuel-costs">Tankkosten</option>
-                <option value="registration-insurance">Zulassung & Versicherung</option>
-                <option value="statistics">Statistiken</option>
-            </select>
-        </div>
-        <div class="hidden sm:block">
-            <div class="border-b border-gray-200 dark:border-gray-700">
-                <nav class="-mb-px flex space-x-8" aria-label="Tabs">
-                    <button class="vehicle-tab-btn border-blue-500 text-blue-600 dark:text-blue-500 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="basic-info">Grunddaten</button>
-                    <button class="vehicle-tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="current-usage">Aktuelle Nutzung</button>
-                    <button class="vehicle-tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="usage-history">Nutzungshistorie</button>
-                    <button class="vehicle-tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="maintenance">Wartung</button>
-                    <button class="vehicle-tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="fuel-costs">Tankkosten</button>
-                    <button class="vehicle-tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="registration-insurance">Zulassung</button>
-                    <button class="vehicle-tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="statistics">Statistiken</button>
-                </nav>
-            </div>
-        </div>
+    <!-- Tabs als Links -->
+    <div class="border-b border-gray-200 mb-6">
+        <nav class="-mb-px flex space-x-8">
+            <a href="?tab=basic" class="py-4 px-1 border-b-2 font-medium text-sm {{ if or (eq .tab "basic") (not .tab) }}border-blue-500 text-blue-600{{ else }}border-transparent text-gray-500 hover:text-gray-700{{ end }}">
+            Grunddaten
+            </a>
+            <a href="?tab=usage" class="py-4 px-1 border-b-2 font-medium text-sm {{ if eq .tab "usage" }}border-blue-500 text-blue-600{{ else }}border-transparent text-gray-500 hover:text-gray-700{{ end }}">
+            Nutzung
+            </a>
+            <a href="?tab=maintenance" class="py-4 px-1 border-b-2 font-medium text-sm {{ if eq .tab "maintenance" }}border-blue-500 text-blue-600{{ else }}border-transparent text-gray-500 hover:text-gray-700{{ end }}">
+            Wartung
+            </a>
+            <a href="?tab=fuel" class="py-4 px-1 border-b-2 font-medium text-sm {{ if eq .tab "fuel" }}border-blue-500 text-blue-600{{ else }}border-transparent text-gray-500 hover:text-gray-700{{ end }}">
+            Tankkosten
+            </a>
+            <a href="?tab=registration" class="py-4 px-1 border-b-2 font-medium text-sm {{ if eq .tab "registration" }}border-blue-500 text-blue-600{{ else }}border-transparent text-gray-500 hover:text-gray-700{{ end }}">
+            Zulassung
+            </a>
+        </nav>
     </div>
 
-    <!-- Tab-Inhalte -->
-    <div id="vehicle-tabs-content">
-        <!-- Grunddaten -->
-        {{ template "vehicle/basic_info" .}}
-
-        <!-- Aktuelle Nutzung -->
-        {{ template "vehicle/current_usage" .}}
-
-        <!-- Nutzungshistorie -->
-        {{ template "vehicle/usage_history" .}}
-
-        <!-- Wartung & Inspektionen -->
-        {{ template "vehicle/maintenance" .}}
-
-        <!-- Tankkosten -->
-        {{ template "vehicle/fuel_costs" .}}
-
-        <!-- Zulassung & Versicherung -->
-        {{ template "vehicle/registration" .}}
-
-        <!-- Statistiken -->
-        {{ template "vehicle/statistics" .}}
-    </div>
+    <!-- Tab Content -->
+    {{ if or (eq .tab "basic") (not .tab) }}
+    {{ template "vehicle/basic_info_static" . }}
+    {{ else if eq .tab "usage" }}
+    {{ template "vehicle/usage_static" . }}
+    {{ else if eq .tab "maintenance" }}
+    {{ template "vehicle/maintenance_static" . }}
+    {{ else if eq .tab "fuel" }}
+    {{ template "vehicle/fuel_static" . }}
+    {{ else if eq .tab "registration" }}
+    {{ template "vehicle/registration_static" . }}
+    {{ end }}
 </main>
 
-<!-- Footer -->
 {{ template "footer" .}}
-
-<!-- Modals -->
-{{ template "vehicle/modals" . }}
-
-<!-- Externe Bibliotheken -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<!-- Externe Bibliotheken -->
-<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-
-<!-- Eigene JavaScript-Dateien (KEINE Module, richtige Reihenfolge!) -->
-<script src="/static/js/car-manufacturers.js"></script>
-<script src="/static/js/vehicle-api.js"></script>
-<script src="/static/js/vehicle-statistics.js"></script>
-<script src="/static/js/vehicle-modals.js"></script>
-<script src="/static/js/vehicle-details.js"></script>
-
 </body>
 </html>
 {{ end }}

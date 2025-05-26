@@ -1,0 +1,47 @@
+{{ define "vehicle/basic_info_static" }}
+<div class="bg-white shadow rounded-lg">
+    <div class="px-4 py-5 sm:px-6 bg-gray-50 border-b border-gray-200">
+        <h3 class="text-lg font-medium text-gray-900">Fahrzeuginformationen</h3>
+    </div>
+    <div class="px-4 py-5 sm:p-6">
+        <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Kennzeichen</dt>
+                <dd class="mt-1 text-sm text-gray-900">{{ .vehicle.licensePlate }}</dd>
+            </div>
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Marke & Modell</dt>
+                <dd class="mt-1 text-sm text-gray-900">{{ .vehicle.brand }} {{ .vehicle.model }}</dd>
+            </div>
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Baujahr</dt>
+                <dd class="mt-1 text-sm text-gray-900">{{ .vehicle.year }}</dd>
+            </div>
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Farbe</dt>
+                <dd class="mt-1 text-sm text-gray-900">{{ if .vehicle.color }}{{ .vehicle.color }}{{ else }}-{{ end }}</dd>
+            </div>
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Fahrzeug-ID</dt>
+                <dd class="mt-1 text-sm text-gray-900">{{ if .vehicle.vehicleId }}{{ .vehicle.vehicleId }}{{ else }}-{{ end }}</dd>
+            </div>
+            <div>
+                <dt class="text-sm font-medium text-gray-500">VIN</dt>
+                <dd class="mt-1 text-sm text-gray-900">{{ if .vehicle.vin }}{{ .vehicle.vin }}{{ else }}-{{ end }}</dd>
+            </div>
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Kraftstoffart</dt>
+                <dd class="mt-1 text-sm text-gray-900">{{ if .vehicle.fuelType }}{{ .vehicle.fuelType }}{{ else }}-{{ end }}</dd>
+            </div>
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Kilometerstand</dt>
+                <dd class="mt-1 text-sm text-gray-900">{{ if .vehicle.mileage }}{{ .vehicle.mileage }} km{{ else }}-{{ end }}</dd>
+            </div>
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Aktueller Fahrer</dt>
+                <dd class="mt-1 text-sm text-gray-900">{{ if .driverName }}{{ .driverName }}{{ else }}Nicht zugewiesen{{ end }}</dd>
+            </div>
+        </dl>
+    </div>
+</div>
+{{ end }}

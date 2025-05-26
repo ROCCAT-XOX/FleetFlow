@@ -1,0 +1,74 @@
+{{ define "vehicle/usage_static" }}
+<div class="bg-white shadow rounded-lg">
+    <div class="px-4 py-5 sm:px-6 bg-gray-50 border-b border-gray-200">
+        <h3 class="text-lg font-medium text-gray-900">Fahrzeugnutzung</h3>
+    </div>
+    <div class="px-4 py-5 sm:p-6">
+        <!-- Aktuelle Nutzung -->
+        <div class="mb-8">
+            <h4 class="text-base font-medium text-gray-900 mb-4">Aktuelle Nutzung</h4>
+            {{ if .currentUsage }}
+            <dl class="grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2">
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Fahrer</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ .currentUsage.driverName }}</dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Seit</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ .currentUsage.startDate | formatDate }}</dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Zweck</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ .currentUsage.purpose }}</dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Abteilung</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ .currentUsage.department }}</dd>
+                </div>
+            </dl>
+            {{ else }}
+            <p class="text-sm text-gray-500">Keine aktive Nutzung</p>
+            {{ end }}
+        </div>
+
+        <!-- Nutzungshistorie -->
+        <div>
+            <h4 class="text-base font-medium text-gray-900 mb-4">Letzte Nutzungen</h4>
+            <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+                <table class="min-w-full divide-y divide-gray-300">
+                    <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Zeitraum</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fahrer</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Zweck</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kilometer</th>
+                    </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                    {{ if .usageHistory }}
+                    {{ range .usageHistory }}
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ .startDate | formatDate }} - {{ if .endDate }}{{ .endDate | formatDate }}{{ else }}Aktiv{{ end }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ .driverName }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-900">{{ .purpose }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ if .endMileage }}{{ .endMileage }}{{ else }}{{ .startMileage }}{{ end }} km
+                        </td>
+                    </tr>
+                    {{ end }}
+                    {{ else }}
+                    <tr>
+                        <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">
+                            Keine Nutzungshistorie vorhanden
+                        </td>
+                    </tr>
+                    {{ end }}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{{ end }}
