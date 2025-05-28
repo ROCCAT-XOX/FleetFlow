@@ -324,163 +324,195 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Farbpalette definieren
+        // Farbpalette mit verschiedenen Blautönen von hell nach dunkel
         const chartColors = [
-            '#2563EB', // Blau
-            '#10B981', // Grün
-            '#F59E0B', // Gelb
-            '#EF4444', // Rot
-            '#8B5CF6'  // Violett
+            '#2463EB', // Dunkelblau (Hauptfarbe)
+            '#4F7FF0', // Mittelblau
+            '#7399F3', // Helleres Blau
+            '#9AB5F6', // Helles Blau
+            '#BFD0F9', // Sehr helles Blau
+            '#DEE7FD'  // Hellstes Blau
         ];
 
         // Flottenaktivität-Diagramm
-        const fleetCtx = document.getElementById('fleetActivityChart').getContext('2d');
-        const fleetActivityChart = new Chart(fleetCtx, {
-            type: 'line',
-            data: {
-                labels: {{.fleetActivityLabels}},
-        datasets: [
+        const fleetCtx = document.getElementById('fleetActivityChart')?.getContext('2d');
+        if (fleetCtx) {
+            const fleetActivityChart = new Chart(fleetCtx, {
+                type: 'line',
+                data: {
+                    labels: {{.fleetActivityLabels}},
+            datasets: [
+                {
+                    label: 'Fahrzeuge in Nutzung',
+                    data: {{.fleetActivityInUse}},
+            borderColor: chartColors[0],
+                backgroundColor: `${chartColors[0]}20`,
+                fill: true,
+                tension: 0.4,
+                borderRadius: 8
+        },
             {
-                label: 'Fahrzeuge in Nutzung',
-                data: {{.fleetActivityInUse}},
-        borderColor: chartColors[0],
-            backgroundColor: `${chartColors[0]}20`,
-            fill: true,
-            tension: 0.4
-    },
-        {
-            label: 'Fahrzeuge in Wartung',
-                data: {{.fleetActivityMaintenance}},
-            borderColor: chartColors[3],
-                backgroundColor: `${chartColors[3]}20`,
-            fill: true,
-            tension: 0.4,
-            borderDash: [5, 5]
-        }
-    ]
-    },
-        options: {
-            responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                tooltip: {
-                    mode: 'index',
-                        intersect: false
-                },
-                legend: {
-                    position: 'top',
-                }
-            },
-            scales: {
-                x: {
-                    grid: {
-                        display: false
-                    }
-                },
-                y: {
-                    beginAtZero: true,
-                        ticks: {
-                        stepSize: 1,
-                            precision: 0
-                    }
-                }
+                label: 'Fahrzeuge in Wartung',
+                    data: {{.fleetActivityMaintenance}},
+                borderColor: chartColors[2],
+                    backgroundColor: `${chartColors[2]}20`,
+                fill: true,
+                tension: 0.4,
+                borderDash: [5, 5],
+                borderRadius: 8
             }
-        }
-    });
-
-        // Kraftstoffkosten nach Fahrzeug
-        const fuelCtx = document.getElementById('fuelCostsByVehicleChart').getContext('2d');
-        const fuelLabels = {{.fuelCostVehicleLabels}};
-        const fuelColors = fuelLabels.map((_, index) => chartColors[index % chartColors.length]);
-
-        const fuelCostsChart = new Chart(fuelCtx, {
-            type: 'bar',
-            data: {
-                labels: fuelLabels,
-                datasets: [{
-                    label: 'Kraftstoffkosten (€)',
-                    data: {{.fuelCostVehicleData}},
-            backgroundColor: fuelColors,
-            borderColor: fuelColors,
-            borderWidth: 1,
-            borderRadius: {
-                topLeft: 8,
-                topRight: 8,
-                bottomLeft: 0,
-                bottomRight: 0
-            },
-            borderSkipped: 'bottom'
-        }]
-    },
-        options: {
-            responsive: true,
-                maintainAspectRatio: false,
+        ]
+        },
+            options: {
+                responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                    tooltip: {
+                        mode: 'index',
+                            intersect: false
+                    },
+                    legend: {
+                        position: 'top',
+                    }
+                },
                 scales: {
-                y: {
-                    beginAtZero: true,
-                        ticks: {
-                        callback: function(value, index, values) {
-                            return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(value);
+                    x: {
+                        grid: {
+                            display: false
                         }
-                    }
-                }
-            },
-            plugins: {
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            let label = context.dataset.label || '';
-                            if (label) {
-                                label += ': ';
-                            }
-                            if (context.parsed.y !== null) {
-                                label += new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(context.parsed.y);
-                            }
-                            return label;
+                    },
+                    y: {
+                        beginAtZero: true,
+                            ticks: {
+                            stepSize: 1,
+                                precision: 0
                         }
                     }
                 }
             }
+        });
         }
-    });
 
-        // Fahrzeugauslastung
-        const utilizationCtx = document.getElementById('vehicleUtilizationChart').getContext('2d');
-        const utilizationChart = new Chart(utilizationCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Verfügbar', 'In Nutzung', 'In Wartung'],
-                datasets: [{
-                    data: {{.vehicleUtilizationData}},
-            backgroundColor: [chartColors[1], chartColors[2], chartColors[3]],
-            hoverOffset: 4
-        }]
-    },
-        options: {
-            responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                legend: {
-                    position: 'bottom',
+        // Kraftstoffkosten nach Fahrzeug - mit Fehlerbehandlung
+        const fuelCtx = document.getElementById('fuelCostsByVehicleChart')?.getContext('2d');
+        if (fuelCtx) {
+            // Sichere Initialisierung von fuelLabels
+            const fuelLabels = {{.fuelCostVehicleLabels}} || [];
+            const fuelColors = Array.isArray(fuelLabels)
+                ? fuelLabels.map((_, index) => chartColors[index % chartColors.length])
+                : [];
+
+            const fuelCostsChart = new Chart(fuelCtx, {
+                type: 'bar',
+                data: {
+                    labels: fuelLabels,
+                    datasets: [{
+                        label: 'Kraftstoffkosten (€)',
+                        data: {{.fuelCostVehicleData}} || [],
+                backgroundColor: fuelColors,
+                borderColor: fuelColors.map(color => color.replace(/(.*)/, '$1DD')), // Etwas dunklere Border
+                borderWidth: 1,
+                borderRadius: {
+                    topLeft: 8,
+                    topRight: 8,
+                    bottomLeft: 0,
+                    bottomRight: 0
                 },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            let label = context.label || '';
-                            if (label) {
-                                label += ': ';
+                borderSkipped: 'bottom'
+            }]
+        },
+            options: {
+                responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                    y: {
+                        beginAtZero: true,
+                            ticks: {
+                            callback: function(value, index, values) {
+                                return new Intl.NumberFormat('de-DE', {
+                                    style: 'currency',
+                                    currency: 'EUR'
+                                }).format(value);
                             }
-                            if (context.parsed !== null) {
-                                label += context.parsed;
-                                label += ' Fahrzeuge';
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += new Intl.NumberFormat('de-DE', {
+                                        style: 'currency',
+                                        currency: 'EUR'
+                                    }).format(context.parsed.y);
+                                }
+                                return label;
                             }
-                            return label;
                         }
                     }
                 }
             }
+        });
         }
-    });
+
+        // Fahrzeugauslastung - Donut Chart
+        const utilizationCtx = document.getElementById('vehicleUtilizationChart')?.getContext('2d');
+        if (utilizationCtx) {
+            const utilizationChart = new Chart(utilizationCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Verfügbar', 'In Nutzung', 'In Wartung'],
+                    datasets: [{
+                        data: {{.vehicleUtilizationData}} || [0, 0, 0],
+                backgroundColor: [chartColors[1], chartColors[0], chartColors[3]],
+                borderColor: [chartColors[0], chartColors[0], chartColors[2]],
+                borderWidth: 2,
+                hoverOffset: 8,
+                borderRadius: 4
+            }]
+        },
+            options: {
+                responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                    legend: {
+                        position: 'bottom',
+                            labels: {
+                            padding: 20,
+                                usePointStyle: true,
+                                pointStyle: 'circle'
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed !== null) {
+                                    label += context.parsed;
+                                    label += ' Fahrzeuge';
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                cutout: '60%' // Macht den Donut dünner
+            }
+        });
+        }
 
         // Filter für Fahrzeugübersicht
         const vehicleFilter = document.getElementById('vehicle-filter');

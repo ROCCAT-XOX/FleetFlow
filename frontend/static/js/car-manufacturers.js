@@ -24,5 +24,5 @@ const carManufacturers = [
 
 function getManufacturerLogo(brand) {
     const manufacturer = carManufacturers.find(m => m.name.toLowerCase() === brand.toLowerCase());
-    return manufacturer ? manufacturer.logo : '/assets/logo/default.svg';
+    return manufacturer ? manufacturer.logo : '/assets/images/default.svg';
 }

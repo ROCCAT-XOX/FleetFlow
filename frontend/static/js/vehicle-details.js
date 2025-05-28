@@ -27,7 +27,7 @@ async function loadVehicleDetails(vehicleId) {
         const vehicle = data.vehicle;
 
         // Markenlogo laden
-        const brandLogo = document.getElementById('brand-logo');
+        const brandLogo = document.getElementById('brand-images');
         if (brandLogo && vehicle.brand) {
             // Logo-Pfad erstellen
             const logoPath = `static/assets/logo/${vehicle.brand.toLowerCase()}.svg`;
