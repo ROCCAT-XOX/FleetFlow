@@ -3,68 +3,61 @@
 <body class="bg-gray-50">
 <!-- Navbar würde hier stehen -->
 {{ template "navigation" .}}
-<!-- Hauptinhalt -->
-<div class="flex-1 xl:px-8">
-    <div class="mx-auto max-w-full px-4 sm:px-6 lg:px-8 py-8">
-        <div class="md:flex md:items-center md:justify-between mb-6">
-            <div class="flex-1 min-w-0">
-                <h1 class="text-2xl font-bold text-gray-900">Fahrer</h1>
-            </div>
-            <div class="mt-4 md:mt-0">
-                <button id="add-driver-btn" type="button" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    <svg class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                    Fahrer hinzufügen
-                </button>
-            </div>
+<!-- Hauptinhalt - ohne max-w-7xl für volle Breite -->
+<div class="px-4 sm:px-6 lg:px-8 py-8">
+    <div class="md:flex md:items-center md:justify-between mb-6">
+        <div class="flex-1 min-w-0">
+            <h1 class="text-2xl font-bold text-gray-900">Fahrer</h1>
         </div>
+        <div class="mt-4 md:mt-0">
+            <button id="add-driver-btn" type="button" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                <svg class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Fahrer hinzufügen
+            </button>
+        </div>
+    </div>
 
-        <!-- Filter und Suche -->
-        <div class="bg-white p-4 rounded-md shadow-sm mb-6">
-            <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
-                <div class="flex-1">
-                    <label for="search" class="sr-only">Suche</label>
-                    <div class="relative rounded-md shadow-sm">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
-                        </div>
-                        <input type="text" name="search" id="search-driver" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 pr-12 sm:text-sm border-gray-300 rounded-md" placeholder="Fahrer suchen...">
+    <!-- Filter und Suche -->
+    <div class="bg-white p-4 rounded-md shadow-sm mb-6">
+        <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
+            <div class="flex-1">
+                <label for="search" class="sr-only">Suche</label>
+                <div class="relative rounded-md shadow-sm">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
                     </div>
-                </div>
-                <div class="sm:w-64">
-                    <select id="status-filter" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                        <option value="all">Alle Status</option>
-                        <option value="available">Verfügbar</option>
-                        <option value="onduty">Im Dienst</option>
-                        <option value="offduty">Außer Dienst</option>
-                    </select>
+                    <input type="text" name="search" id="search-driver" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 pr-12 sm:text-sm border-gray-300 rounded-md" placeholder="Fahrer suchen...">
                 </div>
             </div>
+            <div class="sm:w-1/4">
+                <select id="status-filter" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                    <option value="all">Alle Status</option>
+                    <option value="available">Verfügbar</option>
+                    <option value="onduty">Im Dienst</option>
+                    <option value="offduty">Außer Dienst</option>
+                </select>
+            </div>
         </div>
+    </div>
 
-        <!-- Fahrer-Grid für breitere Darstellung -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-            <div id="drivers-grid" class="col-span-full">
-                <!-- Fahrer-Liste -->
-                <div class="bg-white shadow overflow-hidden sm:rounded-md">
-                    <ul role="list" class="divide-y divide-gray-200" id="drivers-list">
-                        <!-- Wird dynamisch durch JavaScript gefüllt -->
-                        <li class="py-8 text-center text-gray-500">
-                            <div class="flex justify-center items-center">
-                                <svg class="animate-spin h-8 w-8 mr-3 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                <p class="text-lg">Fahrer werden geladen...</p>
-                            </div>
-                        </li>
-                    </ul>
+    <!-- Fahrer-Liste für volle Breite -->
+    <div class="bg-white shadow overflow-hidden sm:rounded-md">
+        <ul role="list" class="divide-y divide-gray-200" id="drivers-list">
+            <!-- Wird dynamisch durch JavaScript gefüllt -->
+            <li class="py-8 text-center text-gray-500">
+                <div class="flex justify-center items-center">
+                    <svg class="animate-spin h-8 w-8 mr-3 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <p class="text-lg">Fahrer werden geladen...</p>
                 </div>
-            </div>
-        </div>
+            </li>
+        </ul>
     </div>
 </div>
 
