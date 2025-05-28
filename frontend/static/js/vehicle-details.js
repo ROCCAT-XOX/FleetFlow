@@ -46,7 +46,7 @@ async function loadVehicleDetails(vehicleId) {
             brandLogo.onerror = function() {
                 console.log('Logo nicht gefunden:', logoPath);
                 // Versuche alternatives Format oder verstecke das Element
-                const altLogoPath = `/assets/logo/${vehicle.brand.toLowerCase()}.png`;
+                const altLogoPath = `static/assets/logo/${vehicle.brand.toLowerCase()}.png`;
 
                 brandLogo.src = altLogoPath;
                 brandLogo.onload = function() {
