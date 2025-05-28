@@ -122,196 +122,91 @@
     </div>
 </div>
 
-<!-- Modal bleibt unverändert -->
+<!-- Modal für Fahrzeug hinzufügen/bearbeiten -->
 <div id="vehicle-modal" class="fixed z-10 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <!-- Modal Content - bleibt wie im Original -->
     <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
         <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
-        <!-- Modal Panel - gleicher Inhalt wie vorher -->
-        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full">
+        <!-- Modal Panel - vereinfacht nur mit Kerndaten -->
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
             <form id="vehicle-form">
                 <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                    <div class="sm:flex sm:items-start">
-                        <div class="w-full">
-                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
-                                Fahrzeug hinzufügen
-                            </h3>
+                    <div class="w-full">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                            Fahrzeug hinzufügen
+                        </h3>
 
-                            <!-- Tabs für die verschiedenen Bereiche -->
-                            <div class="mt-4 border-b border-gray-200">
-                                <nav class="-mb-px flex space-x-8" aria-label="Tabs">
-                                    <button type="button" class="tab-btn border-indigo-500 text-indigo-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="vehicle-data">
-                                        Fahrzeugdaten
-                                    </button>
-                                    <button type="button" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="registration-data">
-                                        Zulassung & Versicherung
-                                    </button>
-                                    <button type="button" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="driver-assignment">
-                                        Fahrerzuordnung
-                                    </button>
-                                </nav>
+                        <!-- Nur Kerndaten -->
+                        <div class="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                            <!-- Kennzeichen -->
+                            <div class="sm:col-span-3">
+                                <label for="license" class="block text-sm font-medium text-gray-700">Kennzeichen *</label>
+                                <input type="text" name="license" id="license" required class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
                             </div>
 
-                            <!-- Tab-Inhalte -->
-                            <div class="py-5">
-                                <!-- Tab 1: Fahrzeugdaten -->
-                                <div id="vehicle-data" class="tab-content">
-                                    <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                                        <div class="sm:col-span-3">
-                                            <label for="vehicle_brand" class="block text-sm font-medium text-gray-700">Marke</label>
-                                            <select id="vehicle_brand" name="vehicle_brand" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                                                <option value="">Marke auswählen</option>
-                                            </select>
-                                        </div>
+                            <!-- Marke -->
+                            <div class="sm:col-span-3">
+                                <label for="vehicle_brand" class="block text-sm font-medium text-gray-700">Marke *</label>
+                                <select id="vehicle_brand" name="vehicle_brand" required class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                    <option value="">Marke auswählen</option>
+                                </select>
+                            </div>
 
-                                        <div class="sm:col-span-3">
-                                            <label for="model" class="block text-sm font-medium text-gray-700">Modell</label>
-                                            <input type="text" name="model" id="model" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                                        </div>
+                            <!-- Modell -->
+                            <div class="sm:col-span-3">
+                                <label for="model" class="block text-sm font-medium text-gray-700">Modell *</label>
+                                <input type="text" name="model" id="model" required class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                            </div>
 
-                                        <div class="sm:col-span-2">
-                                            <label for="year" class="block text-sm font-medium text-gray-700">Baujahr</label>
-                                            <input type="number" name="year" id="year" min="1900" max="2099" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                                        </div>
+                            <!-- Baujahr -->
+                            <div class="sm:col-span-3">
+                                <label for="year" class="block text-sm font-medium text-gray-700">Baujahr *</label>
+                                <input type="number" name="year" id="year" min="1900" max="2099" required class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                            </div>
 
-                                        <div class="sm:col-span-2">
-                                            <label for="license" class="block text-sm font-medium text-gray-700">Kennzeichen</label>
-                                            <input type="text" name="license" id="license" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                                        </div>
-
-                                        <div class="sm:col-span-2">
-                                            <label for="color" class="block text-sm font-medium text-gray-700">Farbe</label>
-                                            <input type="text" name="color" id="color" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                                        </div>
-
-                                        <div class="sm:col-span-3">
-                                            <label for="vin" class="block text-sm font-medium text-gray-700">Fahrzeug-Identifikationsnummer (VIN)</label>
-                                            <input type="text" name="vin" id="vin" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                                        </div>
-
-                                        <div class="sm:col-span-3">
-                                            <label for="mileage" class="block text-sm font-medium text-gray-700">Kilometerstand</label>
-                                            <div class="mt-1 relative rounded-md shadow-sm">
-                                                <input type="number" name="mileage" id="mileage" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pr-12 sm:text-sm border-gray-300 rounded-md" placeholder="0">
-                                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                                    <span class="text-gray-500 sm:text-sm">km</span>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="sm:col-span-3">
-                                            <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
-                                            <select id="status" name="status" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                                                <option value="available">Verfügbar</option>
-                                                <option value="inuse">In Benutzung</option>
-                                                <option value="maintenance">In Wartung</option>
-                                                <option value="inactive">Nicht aktiv</option>
-                                            </select>
-                                        </div>
-
-                                        <div class="sm:col-span-3">
-                                            <label for="fuel-type" class="block text-sm font-medium text-gray-700">Kraftstoffart</label>
-                                            <select id="fuel-type" name="fuel-type" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                                                <option value="diesel">Diesel</option>
-                                                <option value="gasoline">Benzin</option>
-                                                <option value="electric">Elektro</option>
-                                                <option value="hybrid">Hybrid</option>
-                                            </select>
-                                        </div>
+                            <!-- Kilometerstand -->
+                            <div class="sm:col-span-3">
+                                <label for="mileage" class="block text-sm font-medium text-gray-700">Kilometerstand</label>
+                                <div class="mt-1 relative rounded-md shadow-sm">
+                                    <input type="number" name="mileage" id="mileage" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pr-12 sm:text-sm border-gray-300 rounded-md" placeholder="0">
+                                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 sm:text-sm">km</span>
                                     </div>
                                 </div>
+                            </div>
 
-                                <!-- Tab 2: Zulassung & Versicherung -->
-                                <div id="registration-data" class="tab-content hidden">
-                                    <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                                        <div class="sm:col-span-3">
-                                            <label for="registration-date" class="block text-sm font-medium text-gray-700">Zulassungsdatum</label>
-                                            <input type="date" name="registration-date" id="registration-date" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                                        </div>
+                            <!-- Farbe -->
+                            <div class="sm:col-span-3">
+                                <label for="color" class="block text-sm font-medium text-gray-700">Farbe</label>
+                                <input type="text" name="color" id="color" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" placeholder="z.B. Schwarz">
+                            </div>
 
-                                        <div class="sm:col-span-3">
-                                            <label for="registration-expiry" class="block text-sm font-medium text-gray-700">Ablaufdatum der Zulassung</label>
-                                            <input type="date" name="registration-expiry" id="registration-expiry" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                                        </div>
+                            <!-- Kraftstoffart -->
+                            <div class="sm:col-span-3">
+                                <label for="fuel-type" class="block text-sm font-medium text-gray-700">Kraftstoffart</label>
+                                <select id="fuel-type" name="fuel-type" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                    <option value="Benzin">Benzin</option>
+                                    <option value="Diesel">Diesel</option>
+                                    <option value="Elektro">Elektro</option>
+                                    <option value="Hybrid (Benzin/Elektro)">Hybrid (Benzin/Elektro)</option>
+                                    <option value="Hybrid (Diesel/Elektro)">Hybrid (Diesel/Elektro)</option>
+                                    <option value="Wasserstoff">Wasserstoff</option>
+                                </select>
+                            </div>
 
-                                        <div class="sm:col-span-3">
-                                            <label for="insurance-company" class="block text-sm font-medium text-gray-700">Versicherungsgesellschaft</label>
-                                            <input type="text" name="insurance-company" id="insurance-company" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                                        </div>
-
-                                        <div class="sm:col-span-3">
-                                            <label for="insurance-policy" class="block text-sm font-medium text-gray-700">Versicherungspolice-Nr.</label>
-                                            <input type="text" name="insurance-policy" id="insurance-policy" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                                        </div>
-
-                                        <div class="sm:col-span-3">
-                                            <label for="insurance-type" class="block text-sm font-medium text-gray-700">Versicherungstyp</label>
-                                            <select id="insurance-type" name="insurance-type" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                                                <option value="Haftpflicht">Haftpflicht</option>
-                                                <option value="Vollkasko">Vollkasko</option>
-                                                <option value="Teilkasko">Teilkasko</option>
-                                            </select>
-                                        </div>
-
-                                        <div class="sm:col-span-3">
-                                            <label for="insurance-expiry" class="block text-sm font-medium text-gray-700">Ablaufdatum der Versicherung</label>
-                                            <input type="date" name="insurance-expiry" id="insurance-expiry" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                                        </div>
-
-                                        <div class="sm:col-span-3">
-                                            <label for="next-inspection" class="block text-sm font-medium text-gray-700">Nächste HU/AU</label>
-                                            <input type="date" name="next-inspection" id="next-inspection" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Tab 3: Fahrerzuordnung -->
-                                <div id="driver-assignment" class="tab-content hidden">
-                                    <div class="mt-2">
-                                        <label for="assigned-driver" class="block text-sm font-medium text-gray-700">Zugewiesener Fahrer</label>
-                                        <select id="assigned-driver" name="assigned-driver" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                                            <option value="">Keinen Fahrer zuweisen</option>
-                                        </select>
-                                    </div>
-
-                                    <div class="mt-6">
-                                        <fieldset>
-                                            <legend class="text-base font-medium text-gray-900">Nutzungsbeschränkungen</legend>
-                                            <div class="mt-4 space-y-4">
-                                                <div class="flex items-start">
-                                                    <div class="flex items-center h-5">
-                                                        <input id="restricted-use" name="restricted-use" type="checkbox" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
-                                                    </div>
-                                                    <div class="ml-3 text-sm">
-                                                        <label for="restricted-use" class="font-medium text-gray-700">Eingeschränkte Nutzung</label>
-                                                        <p class="text-gray-500">Der Fahrer darf das Fahrzeug nur für bestimmte Zwecke nutzen.</p>
-                                                    </div>
-                                                </div>
-
-                                                <div class="flex items-start">
-                                                    <div class="flex items-center h-5">
-                                                        <input id="business-only" name="business-only" type="checkbox" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
-                                                    </div>
-                                                    <div class="ml-3 text-sm">
-                                                        <label for="business-only" class="font-medium text-gray-700">Nur geschäftliche Nutzung</label>
-                                                        <p class="text-gray-500">Das Fahrzeug darf nur für geschäftliche Zwecke verwendet werden.</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </fieldset>
-                                    </div>
-
-                                    <div class="mt-6">
-                                        <label for="assignment-notes" class="block text-sm font-medium text-gray-700">Anmerkungen zur Zuweisung</label>
-                                        <div class="mt-1">
-                                            <textarea id="assignment-notes" name="assignment-notes" rows="3" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border border-gray-300 rounded-md"></textarea>
-                                        </div>
-                                    </div>
-                                </div>
+                            <!-- Status -->
+                            <div class="sm:col-span-3">
+                                <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
+                                <select id="status" name="status" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                    <option value="available">Verfügbar</option>
+                                    <option value="inuse">In Benutzung</option>
+                                    <option value="maintenance">In Wartung</option>
+                                </select>
                             </div>
                         </div>
+
+                        <p class="mt-6 text-sm text-gray-500">* Pflichtfelder</p>
                     </div>
                 </div>
                 <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
@@ -326,7 +221,6 @@
         </div>
     </div>
 </div>
-
 <!-- JavaScript-Datei einbinden -->
 <script src="/static/js/car-manufacturers.js"></script>
 <script src="/static/js/vehicles.js"></script>
