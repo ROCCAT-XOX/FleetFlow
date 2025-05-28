@@ -81,15 +81,23 @@
     <div id="sidebar" class="hidden lg:fixed lg:inset-y-0 lg:flex lg:flex-col sidebar-transition" style="width: 16rem;">
         <div class="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-gradient-to-br from-blue-50/80 via-blue-50/80 to-indigo-50/80 px-6 pb-4">
             <!-- Logo -->
-            <div class="flex h-16 shrink-0 items-center justify-center pt-4">
-                <div class="flex items-center">
+            <div class="flex h-24 shrink-0 items-center justify-center pt-4">
+                <div class="flex items-center justify-center w-full">
                     <!-- Logo für ausgefahrene Sidebar -->
-                    <img id="sidebar-logo-full" src="/static/logo/Logo-Schriftzug.svg" alt="FleetFlow" class="h-8">
+                    <img id="sidebar-logo-full"
+                         src="/static/logo/FleetFlow-Logo-Schriftzug.svg"
+                         alt="FleetFlow"
+                         style="height: 60px; width: auto; max-width: 200px;"
+                         class="object-contain">
+
                     <!-- Logo für eingeklappte Sidebar -->
-                    <img id="sidebar-logo-icon" src="/static/logo/Logo-Icon.svg" alt="FleetFlow" class="h-8 hidden">
+                    <img id="sidebar-logo-icon"
+                         src="/static/logo/FleetFlow-Logo-Icon.svg"
+                         alt="FF"
+                         style="height: 48px; width: 48px;"
+                         class="hidden object-contain">
                 </div>
             </div>
-
             <!-- Hauptnavigation -->
             <nav class="flex flex-1 flex-col">
                 <ul role="list" class="flex flex-1 flex-col gap-y-7">
@@ -341,26 +349,28 @@
                 const mobileMenu = document.getElementById('mobile-menu');
                 const closeSidebarButton = document.getElementById('close-sidebar-button');
                 const toggleSidebarButton = document.getElementById('toggle-sidebar');
-                const expandSidebarButton = document.getElementById('expand-sidebar-button');
                 const sidebar = document.getElementById('sidebar');
                 const mainContent = document.getElementById('main-content');
                 const collapseIcon = document.getElementById('collapse-icon');
                 const expandIcon = document.getElementById('expand-icon');
                 const sidebarLogoFull = document.getElementById('sidebar-logo-full');
                 const sidebarLogoIcon = document.getElementById('sidebar-logo-icon');
-                const menuTexts = document.querySelectorAll('.menu-text');
 
                 // Mobile Menu Toggle
-                mobileMenuButton.addEventListener('click', function() {
-                    mobileMenu.style.display = 'block';
-                });
+                if (mobileMenuButton && mobileMenu && closeSidebarButton) {
+                    mobileMenuButton.addEventListener('click', function() {
+                        mobileMenu.style.display = 'block';
+                    });
 
-                closeSidebarButton.addEventListener('click', function() {
-                    mobileMenu.style.display = 'none';
-                });
+                    closeSidebarButton.addEventListener('click', function() {
+                        mobileMenu.style.display = 'none';
+                    });
+                }
 
                 // Desktop Sidebar Toggle
                 function toggleDesktopSidebar() {
+                    if (!sidebar || !mainContent) return;
+
                     const isCollapsed = document.body.classList.contains('sidebar-collapsed');
 
                     if (isCollapsed) {
@@ -369,35 +379,38 @@
                         sidebar.style.width = '16rem';
                         mainContent.classList.add('lg:pl-64');
                         mainContent.classList.remove('lg:pl-16');
-                        collapseIcon.classList.remove('hidden');
-                        expandIcon.classList.add('hidden');
-                        expandSidebarButton.classList.add('hidden');
-                        sidebarLogoFull.classList.remove('hidden');
-                        sidebarLogoIcon.classList.add('hidden');
-                        // Menu texts werden über CSS gesteuert
+
+                        if (collapseIcon) collapseIcon.classList.remove('hidden');
+                        if (expandIcon) expandIcon.classList.add('hidden');
+
+                        // Logo handling
+                        if (sidebarLogoFull) sidebarLogoFull.classList.remove('hidden');
+                        if (sidebarLogoIcon) sidebarLogoIcon.classList.add('hidden');
                     } else {
                         // Collapse sidebar
                         document.body.classList.add('sidebar-collapsed');
                         sidebar.style.width = '4rem';
                         mainContent.classList.remove('lg:pl-64');
                         mainContent.classList.add('lg:pl-16');
-                        collapseIcon.classList.add('hidden');
-                        expandIcon.classList.remove('hidden');
-                        expandSidebarButton.classList.remove('hidden');
-                        sidebarLogoFull.classList.add('hidden');
-                        sidebarLogoIcon.classList.remove('hidden');
-                        // Menu texts werden über CSS gesteuert
+
+                        if (collapseIcon) collapseIcon.classList.add('hidden');
+                        if (expandIcon) expandIcon.classList.remove('hidden');
+
+                        // Logo handling
+                        if (sidebarLogoFull) sidebarLogoFull.classList.add('hidden');
+                        if (sidebarLogoIcon) sidebarLogoIcon.classList.remove('hidden');
                     }
                 }
 
-                toggleSidebarButton.addEventListener('click', toggleDesktopSidebar);
-                expandSidebarButton.addEventListener('click', toggleDesktopSidebar);
+                if (toggleSidebarButton) {
+                    toggleSidebarButton.addEventListener('click', toggleDesktopSidebar);
+                }
 
                 // Close mobile menu when clicking outside
                 document.addEventListener('click', function(event) {
-                    if (mobileMenu.style.display === 'block' &&
+                    if (mobileMenu && mobileMenu.style.display === 'block' &&
                         !mobileMenu.contains(event.target) &&
-                        !mobileMenuButton.contains(event.target)) {
+                        mobileMenuButton && !mobileMenuButton.contains(event.target)) {
                         mobileMenu.style.display = 'none';
                     }
                 });
