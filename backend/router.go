@@ -97,9 +97,9 @@ func setupAuthorizedRoutes(group *gin.RouterGroup) {
 	group.GET("/vehicles", func(c *gin.Context) {
 		user, _ := c.Get("user")
 		c.HTML(http.StatusOK, "vehicles.html", gin.H{
-			"title": "Fahrzeugübersicht",
-			"user":  user.(*model.User).FirstName + " " + user.(*model.User).LastName,
-			"year":  currentYear,
+			"title":       "Fahrzeugübersicht",
+			"user":        user.(*model.User).FirstName + " " + user.(*model.User).LastName,
+			"currentDate": "Test",
 		})
 	})
 

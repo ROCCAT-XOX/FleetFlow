@@ -1,27 +1,65 @@
 {{ template "head" .}}
 <body class="bg-gray-50">
-<!-- Navbar wie in vorherigem Code -->
 {{ template "navigation" .}}
-<!-- Hauptinhalt - ohne max-w-7xl für volle Breite -->
+
+<!-- Hauptinhalt -->
 <div class="px-4 sm:px-6 lg:px-8 py-8">
-    <div class="md:flex md:items-center md:justify-between mb-6">
-        <div class="flex-1 min-w-0">
-            <h1 class="text-2xl font-bold text-gray-900">Fahrzeuge</h1>
-        </div>
-        <div class="mt-4 md:mt-0">
-            <button id="add-vehicle-btn" type="button" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                <svg class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                Fahrzeug hinzufügen
-            </button>
+    <!-- Header mit Titel und Info -->
+    <div class="mb-6">
+        <div class="flex items-start justify-between">
+            <div class="flex-1">
+                <div class="flex items-center mb-2">
+                    <!-- Fahrzeug Icon -->
+                    <svg class="h-8 w-8 text-gray-700 mr-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
+                    </svg>
+                    <h1 class="text-2xl font-bold text-gray-900">Fahrzeuge</h1>
+                </div>
+                <!-- Info Text -->
+                <p class="text-sm text-gray-600 flex items-center">
+                    Solltest du Fragen haben bekommst du über unser Info-Center zu einem Erklärvideo
+                    <a href="#" class="ml-1 text-indigo-600 hover:text-indigo-800">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+                        </svg>
+                    </a>
+                </p>
+            </div>
+            <div class="mt-4 md:mt-0">
+                <button id="add-vehicle-btn" type="button" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Fahrzeug hinzufügen
+                    <svg class="ml-2 -mr-1 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                </button>
+            </div>
         </div>
     </div>
 
-    <!-- Filter und Suche -->
+    <!-- Filter-Leiste -->
     <div class="bg-white p-4 rounded-md shadow-sm mb-6">
-        <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
-            <div class="flex-1">
+        <div class="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4">
+            <!-- Filter Buttons -->
+            <div class="flex flex-wrap gap-2">
+                <button class="filter-btn active px-4 py-2 text-sm font-medium rounded-md bg-indigo-600 text-white" data-filter="all">
+                    Alle
+                </button>
+                <button class="filter-btn px-4 py-2 text-sm font-medium rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200" data-filter="available">
+                    Aktiv
+                </button>
+                <button class="filter-btn px-4 py-2 text-sm font-medium rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200" data-filter="inuse">
+                    In Benutzung
+                </button>
+                <button class="filter-btn px-4 py-2 text-sm font-medium rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200" data-filter="maintenance">
+                    In Wartung
+                </button>
+                <button class="filter-btn px-4 py-2 text-sm font-medium rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200" data-filter="inactive">
+                    Nicht aktiv
+                </button>
+            </div>
+
+            <!-- Suche -->
+            <div class="flex-1 sm:ml-auto sm:max-w-xs">
                 <label for="search" class="sr-only">Suche</label>
                 <div class="relative rounded-md shadow-sm">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -32,33 +70,66 @@
                     <input type="text" name="search" id="search" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 pr-12 sm:text-sm border-gray-300 rounded-md" placeholder="Fahrzeug suchen...">
                 </div>
             </div>
-            <div class="sm:w-1/4">
-                <select id="status-filter" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                    <option value="all">Alle Status</option>
-                    <option value="available">Verfügbar</option>
-                    <option value="inuse">In Benutzung</option>
-                    <option value="maintenance">In Wartung</option>
-                </select>
-            </div>
         </div>
     </div>
 
-    <!-- Fahrzeug-Grid - mehr Spalten für große Bildschirme -->
-    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-        <!-- Wird durch JavaScript befüllt -->
+    <!-- Fahrzeug-Tabelle -->
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+            <tr>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Marke
+                </th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Kennzeichen
+                </th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Baujahr
+                </th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Kilometerstand
+                </th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Fahrer
+                </th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Farbe
+                </th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                </th>
+                <th scope="col" class="relative px-6 py-3">
+                    <span class="sr-only">Details</span>
+                </th>
+            </tr>
+            </thead>
+            <tbody id="vehicles-table-body" class="bg-white divide-y divide-gray-200">
+            <!-- Wird durch JavaScript befüllt -->
+            <tr>
+                <td colspan="8" class="px-6 py-8 text-center">
+                    <div class="flex justify-center items-center">
+                        <svg class="animate-spin h-8 w-8 mr-3 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <p class="text-lg text-gray-500">Fahrzeuge werden geladen...</p>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
     </div>
 </div>
 
-<!-- Modal: Fahrzeug hinzufügen/bearbeiten -->
+<!-- Modal bleibt unverändert -->
 <div id="vehicle-modal" class="fixed z-10 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <!-- Modal Content - bleibt wie im Original -->
     <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <!-- Hintergrund-Overlay -->
         <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
-
-        <!-- Zentriert den Modal-Inhalt -->
         <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
-        <!-- Modal-Panel -->
+        <!-- Modal Panel - gleicher Inhalt wie vorher -->
         <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full">
             <form id="vehicle-form">
                 <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
@@ -136,6 +207,7 @@
                                                 <option value="available">Verfügbar</option>
                                                 <option value="inuse">In Benutzung</option>
                                                 <option value="maintenance">In Wartung</option>
+                                                <option value="inactive">Nicht aktiv</option>
                                             </select>
                                         </div>
 
@@ -258,5 +330,175 @@
 <!-- JavaScript-Datei einbinden -->
 <script src="/static/js/car-manufacturers.js"></script>
 <script src="/static/js/vehicles.js"></script>
+
+<!-- Zusätzliches Script für Tabellen-Funktionalität -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Filter Button Funktionalität
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        let currentFilter = 'all';
+
+        filterButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Entferne active class von allen Buttons
+                filterButtons.forEach(btn => {
+                    btn.classList.remove('bg-indigo-600', 'text-white');
+                    btn.classList.add('bg-gray-100', 'text-gray-700');
+                });
+
+                // Setze active class auf geklickten Button
+                this.classList.remove('bg-gray-100', 'text-gray-700');
+                this.classList.add('bg-indigo-600', 'text-white');
+
+                currentFilter = this.dataset.filter;
+                filterVehicles();
+            });
+        });
+
+        // Fahrzeuge filtern
+        function filterVehicles() {
+            const rows = document.querySelectorAll('#vehicles-table-body tr[data-status]');
+
+            rows.forEach(row => {
+                const status = row.dataset.status;
+
+                if (currentFilter === 'all') {
+                    row.style.display = '';
+                } else if (currentFilter === status) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        // Such-Funktionalität
+        const searchInput = document.getElementById('search');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                const searchText = this.value.toLowerCase();
+                const rows = document.querySelectorAll('#vehicles-table-body tr[data-status]');
+
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    if (text.includes(searchText)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
+        }
+    });
+
+    // Überschreibe die renderVehicles Funktion für Tabellen-Ansicht
+    window.renderVehicles = function(vehicles) {
+        if (!vehicles || !Array.isArray(vehicles)) {
+            vehicles = [];
+        }
+
+        const tbody = document.getElementById('vehicles-table-body');
+        if (!tbody) {
+            console.error('Tabellen-Body nicht gefunden');
+            return;
+        }
+
+        tbody.innerHTML = '';
+
+        if (vehicles.length === 0) {
+            tbody.innerHTML = `
+            <tr>
+                <td colspan="8" class="px-6 py-4 text-center text-gray-500">
+                    Keine Fahrzeuge gefunden.
+                </td>
+            </tr>
+        `;
+            return;
+        }
+
+        vehicles.forEach(vehicle => {
+            let statusClass, statusText, statusValue;
+
+            switch (vehicle.status) {
+                case 'available':
+                    statusClass = 'bg-green-100 text-green-800';
+                    statusText = 'Aktiv';
+                    statusValue = 'available';
+                    break;
+                case 'inuse':
+                    statusClass = 'bg-yellow-100 text-yellow-800';
+                    statusText = 'In Benutzung';
+                    statusValue = 'inuse';
+                    break;
+                case 'maintenance':
+                    statusClass = 'bg-orange-100 text-orange-800';
+                    statusText = 'In Wartung';
+                    statusValue = 'maintenance';
+                    break;
+                case 'inactive':
+                    statusClass = 'bg-gray-100 text-gray-800';
+                    statusText = 'Nicht aktiv';
+                    statusValue = 'inactive';
+                    break;
+                default:
+                    statusClass = 'bg-gray-100 text-gray-800';
+                    statusText = vehicle.status || 'Unbekannt';
+                    statusValue = 'unknown';
+            }
+
+            const row = document.createElement('tr');
+            row.setAttribute('data-status', statusValue);
+            row.innerHTML = `
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                    <img class="h-8 w-8 mr-3"
+                         src="/static/assets/${(vehicle.brand || '').toLowerCase()}.svg"
+                         alt="${vehicle.brand}"
+                         onerror="this.style.display='none'">
+                    <div class="text-sm font-medium text-gray-900">${vehicle.brand || ''}</div>
+                </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                ${vehicle.licensePlate || ''}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                ${vehicle.year || '-'}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                ${vehicle.mileage ? vehicle.mileage.toLocaleString('de-DE') + ' km' : '-'}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                ${vehicle.driverName || vehicle.currentDriverId ? vehicle.driverName : 'Nicht zugewiesen'}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                ${vehicle.color || '-'}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}">
+                    ${statusText}
+                </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <a href="/vehicle-details/${vehicle.id}" class="text-indigo-600 hover:text-indigo-900 mr-3">Details</a>
+                <button type="button" class="text-gray-600 hover:text-gray-900 edit-vehicle-btn" data-id="${vehicle.id}">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                </button>
+            </td>
+        `;
+
+            tbody.appendChild(row);
+        });
+
+        // Event-Listener für Bearbeiten-Buttons
+        document.querySelectorAll('.edit-vehicle-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const vehicleId = this.dataset.id;
+                openVehicleModal(true, vehicleId);
+            });
+        });
+    };
+</script>
 </body>
 </html>

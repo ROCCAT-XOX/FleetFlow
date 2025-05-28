@@ -29,12 +29,13 @@
         display: flex;
         align-items: center;
         gap: 0.75rem;
-        position: relative;
     }
 
-    /* Zentriere Icons wenn Sidebar kollabiert ist */
+    /* Zentriere alle Links wenn Sidebar kollabiert ist */
     body.sidebar-collapsed .sidebar-nav-link {
         justify-content: center !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
     }
 
     /* Verstecke Text wenn Sidebar kollabiert ist */
@@ -49,19 +50,17 @@
         height: 1.5rem;
     }
 
-    /* Tooltip für kollabierte Sidebar */
-    body.sidebar-collapsed .sidebar-item:hover::after {
-        content: attr(data-tooltip);
-        position: absolute;
-        left: 100%;
-        margin-left: 0.5rem;
-        padding: 0.25rem 0.75rem;
-        background-color: rgba(0, 0, 0, 0.9);
-        color: white;
-        font-size: 0.875rem;
-        border-radius: 0.375rem;
-        white-space: nowrap;
-        z-index: 50;
+    /* Spezielle Behandlung für den Toggle Button */
+    body.sidebar-collapsed #toggle-sidebar {
+        justify-content: center !important;
+        padding: 0.5rem !important;
+        width: 100% !important;
+    }
+
+    /* Sidebar Item Padding anpassen */
+    body.sidebar-collapsed .sidebar-item {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
     }
 
     /* Sidebar Übergang */
@@ -79,34 +78,26 @@
 <div class="flex h-full">
     <!-- Seitliche Navigation für Desktop -->
     <div id="sidebar" class="hidden lg:fixed lg:inset-y-0 lg:flex lg:flex-col sidebar-transition" style="width: 16rem;">
-        <div class="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-gradient-to-br from-blue-50/80 via-blue-50/80 to-indigo-50/80 px-6 pb-4">
+        <div class="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-gradient-to-b from-white via-[#DFE9FD] to-[#B5CAF7] px-6 pb-4">
             <!-- Logo -->
-            <div class="flex h-24 shrink-0 items-center justify-center pt-4">
-                <div class="flex items-center justify-center w-full">
+            <div class="flex h-16 shrink-0 items-center justify-center pt-4">
+                <div class="flex items-center">
                     <!-- Logo für ausgefahrene Sidebar -->
-                    <img id="sidebar-logo-full"
-                         src="/static/logo/FleetFlow-Logo-Schriftzug.svg"
-                         alt="FleetFlow"
-                         style="height: 60px; width: auto; max-width: 200px;"
-                         class="object-contain">
-
+                    <img id="sidebar-logo-full" src="/static/images/FleetFlow-Logo-Schriftzug.svg" alt="FleetFlow" class="h-8">
                     <!-- Logo für eingeklappte Sidebar -->
-                    <img id="sidebar-logo-icon"
-                         src="/static/logo/FleetFlow-Logo-Icon.svg"
-                         alt="FF"
-                         style="height: 48px; width: 48px;"
-                         class="hidden object-contain">
+                    <img id="sidebar-logo-icon" src="/static/images/FleetFlow-Logo-Icon.svg" alt="FleetFlow" class="h-8 hidden">
                 </div>
             </div>
+
             <!-- Hauptnavigation -->
             <nav class="flex flex-1 flex-col">
                 <ul role="list" class="flex flex-1 flex-col gap-y-7">
                     <li>
                         <ul role="list" class="-mx-2 space-y-1">
                             <!-- Dashboard -->
-                            <li class="sidebar-item relative" data-tooltip="Dashboard">
-                                <a href="/dashboard" class="sidebar-nav-link group rounded-md p-2 text-sm font-semibold {{ if eq .active "dashboard" }}bg-blue-600/20 text-blue-700{{ else }}text-gray-700 hover:bg-blue-600/10 hover:text-blue-700{{ end }}">
-                                <svg class="shrink-0 {{ if eq .active "dashboard" }}text-blue-700{{ else }}text-gray-500 group-hover:text-blue-700{{ end }}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <li class="sidebar-item relative">
+                                <a href="/dashboard" class="sidebar-nav-link group rounded-md p-2 text-sm font-semibold {{ if eq .active "dashboard" }}bg-[#3B82F6]/20 text-[#2563EB]{{ else }}text-[#5F5F5F] hover:bg-[#3B82F6]/30 hover:text-[#2563EB]{{ end }}">
+                                <svg class="h-6 w-6 shrink-0 {{ if eq .active "dashboard" }}text-[#2563EB]{{ else }}text-[#5F5F5F] group-hover:text-[#2563EB]{{ end }}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
                                 </svg>
                                 <span class="menu-text">Dashboard</span>
@@ -114,9 +105,9 @@
                             </li>
 
                             <!-- Fahrzeuge -->
-                            <li class="sidebar-item relative" data-tooltip="Fahrzeuge">
-                                <a href="/vehicles" class="sidebar-nav-link group rounded-md p-2 text-sm font-semibold {{ if eq .active "vehicles" }}bg-blue-600/20 text-blue-700{{ else }}text-gray-700 hover:bg-blue-600/10 hover:text-blue-700{{ end }}">
-                                <svg class="shrink-0 {{ if eq .active "vehicles" }}text-blue-700{{ else }}text-gray-500 group-hover:text-blue-700{{ end }}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <li class="sidebar-item relative">
+                                <a href="/vehicles" class="sidebar-nav-link group rounded-md p-2 text-sm font-semibold {{ if eq .active "vehicles" }}bg-[#3B82F6]/20 text-[#2563EB]{{ else }}text-[#5F5F5F] hover:bg-[#3B82F6]/30 hover:text-[#2563EB]{{ end }}">
+                                <svg class="h-6 w-6 shrink-0 {{ if eq .active "vehicles" }}text-[#2563EB]{{ else }}text-[#5F5F5F] group-hover:text-[#2563EB]{{ end }}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
                                 </svg>
                                 <span class="menu-text">Fahrzeuge</span>
@@ -124,9 +115,9 @@
                             </li>
 
                             <!-- Fahrer -->
-                            <li class="sidebar-item relative" data-tooltip="Fahrer">
-                                <a href="/drivers" class="sidebar-nav-link group rounded-md p-2 text-sm font-semibold {{ if eq .active "drivers" }}bg-blue-600/20 text-blue-700{{ else }}text-gray-700 hover:bg-blue-600/10 hover:text-blue-700{{ end }}">
-                                <svg class="shrink-0 {{ if eq .active "drivers" }}text-blue-700{{ else }}text-gray-500 group-hover:text-blue-700{{ end }}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <li class="sidebar-item relative">
+                                <a href="/drivers" class="sidebar-nav-link group rounded-md p-2 text-sm font-semibold {{ if eq .active "drivers" }}bg-[#3B82F6]/20 text-[#2563EB]{{ else }}text-[#5F5F5F] hover:bg-[#3B82F6]/30 hover:text-[#2563EB]{{ end }}">
+                                <svg class="h-6 w-6 shrink-0 {{ if eq .active "drivers" }}text-[#2563EB]{{ else }}text-[#5F5F5F] group-hover:text-[#2563EB]{{ end }}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
                                 </svg>
                                 <span class="menu-text">Fahrer</span>
@@ -134,9 +125,9 @@
                             </li>
 
                             <!-- Buchungen -->
-                            <li class="sidebar-item relative" data-tooltip="Buchungen">
-                                <a href="/bookings" class="sidebar-nav-link group rounded-md p-2 text-sm font-semibold {{ if eq .active "bookings" }}bg-blue-600/20 text-blue-700{{ else }}text-gray-700 hover:bg-blue-600/10 hover:text-blue-700{{ end }}">
-                                <svg class="shrink-0 {{ if eq .active "bookings" }}text-blue-700{{ else }}text-gray-500 group-hover:text-blue-700{{ end }}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <li class="sidebar-item relative">
+                                <a href="/bookings" class="sidebar-nav-link group rounded-md p-2 text-sm font-semibold {{ if eq .active "bookings" }}bg-[#3B82F6]/20 text-[#2563EB]{{ else }}text-[#5F5F5F] hover:bg-[#3B82F6]/30 hover:text-[#2563EB]{{ end }}">
+                                <svg class="h-6 w-6 shrink-0 {{ if eq .active "bookings" }}text-[#2563EB]{{ else }}text-[#5F5F5F] group-hover:text-[#2563EB]{{ end }}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
                                 </svg>
                                 <span class="menu-text">Buchungen</span>
@@ -144,10 +135,10 @@
                             </li>
 
                             <!-- Berichte -->
-                            <li class="sidebar-item relative" data-tooltip="Berichte">
-                                <a href="/reports" class="sidebar-nav-link group rounded-md p-2 text-sm font-semibold {{ if eq .active "reports" }}bg-blue-600/20 text-blue-700{{ else }}text-gray-700 hover:bg-blue-600/10 hover:text-blue-700{{ end }}">
+                            <li class="sidebar-item relative">
+                                <a href="/reports" class="sidebar-nav-link group rounded-md p-2 text-sm font-semibold {{ if eq .active "reports" }}bg-[#3B82F6]/20 text-[#2563EB]{{ else }}text-[#5F5F5F] hover:bg-[#3B82F6]/30 hover:text-[#2563EB]{{ end }}">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
-                                     class="shrink-0 {{ if eq .active "reports" }}text-blue-700{{ else }}text-gray-500 group-hover:text-blue-700{{ end }}">
+                                     class="h-6 w-6 shrink-0 {{ if eq .active "reports" }}text-[#2563EB]{{ else }}text-[#5F5F5F] group-hover:text-[#2563EB]{{ end }}">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
                                 </svg>
                                 <span class="menu-text">Berichte</span>
@@ -159,14 +150,14 @@
                     <!-- Footer-Navigationselemente -->
                     <li class="mt-auto space-y-3">
                         <!-- Toggle Button für Sidebar -->
-                        <div class="sidebar-item relative" data-tooltip="Sidebar">
-                            <button id="toggle-sidebar" class="sidebar-nav-link w-full group rounded-md p-2 text-sm font-semibold text-gray-700 hover:bg-blue-600/10 hover:text-blue-700">
+                        <div class="sidebar-item relative -mx-2">
+                            <button id="toggle-sidebar" class="sidebar-nav-link w-full group rounded-md p-2 text-sm font-semibold text-[#5F5F5F] hover:bg-[#3B82F6]/30 hover:text-[#2563EB] transition-all">
                                 <!-- Pfeil nach links (Einklappen) -->
-                                <svg id="collapse-icon" xmlns="http://www.w3.org/2000/svg" class="shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                                <svg id="collapse-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0" viewBox="0 0 20 20" fill="currentColor">
                                     <path fill-rule="evenodd" d="M15.707 15.707a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
                                 </svg>
                                 <!-- Pfeil nach rechts (Ausklappen, versteckt) -->
-                                <svg id="expand-icon" xmlns="http://www.w3.org/2000/svg" class="shrink-0 hidden" viewBox="0 0 20 20" fill="currentColor">
+                                <svg id="expand-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 hidden" viewBox="0 0 20 20" fill="currentColor">
                                     <path fill-rule="evenodd" d="M10.293 15.707a1 1 0 010-1.414L14.586 10l-4.293-4.293a1 1 0 111.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z" clip-rule="evenodd" />
                                 </svg>
                                 <span class="menu-text">Sidebar</span>
@@ -174,9 +165,9 @@
                         </div>
 
                         <!-- Einstellungen -->
-                        <div class="sidebar-item relative" data-tooltip="Einstellungen">
-                            <a href="/settings" class="sidebar-nav-link group rounded-md p-2 text-sm font-semibold {{ if eq .active "settings" }}bg-blue-600/20 text-blue-700{{ else }}text-gray-700 hover:bg-blue-600/10 hover:text-blue-700{{ end }}">
-                            <svg class="shrink-0 {{ if eq .active "settings" }}text-blue-700{{ else }}text-gray-500 group-hover:text-blue-700{{ end }}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <div class="sidebar-item relative">
+                            <a href="/settings" class="sidebar-nav-link group rounded-md p-2 text-sm font-semibold {{ if eq .active "settings" }}bg-[#3B82F6]/20 text-[#2563EB]{{ else }}text-[#5F5F5F] hover:bg-[#3B82F6]/30 hover:text-[#2563EB]{{ end }}">
+                            <svg class="h-6 w-6 shrink-0 {{ if eq .active "settings" }}text-[#2563EB]{{ else }}text-[#5F5F5F] group-hover:text-[#2563EB]{{ end }}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" />
                             <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
                             </svg>
@@ -185,9 +176,9 @@
                         </div>
 
                         <!-- Logout -->
-                        <div class="sidebar-item relative" data-tooltip="Abmelden">
-                            <a href="/logout" class="sidebar-nav-link group rounded-md p-2 text-sm font-semibold {{ if eq .active "logout" }}bg-blue-600/20 text-blue-700{{ else }}text-gray-700 hover:bg-blue-600/10 hover:text-blue-700{{ end }}">
-                            <svg class="shrink-0 {{ if eq .active "logout" }}text-blue-700{{ else }}text-gray-500 group-hover:text-blue-700{{ end }}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <div class="sidebar-item relative">
+                            <a href="/logout" class="sidebar-nav-link group rounded-md p-2 text-sm font-semibold {{ if eq .active "logout" }}bg-[#3B82F6]/20 text-[#2563EB]{{ else }}text-[#5F5F5F] hover:bg-[#3B82F6]/30 hover:text-[#2563EB]{{ end }}">
+                            <svg class="h-6 w-6 shrink-0 {{ if eq .active "logout" }}text-[#2563EB]{{ else }}text-[#5F5F5F] group-hover:text-[#2563EB]{{ end }}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
                             </svg>
                             <span class="menu-text">Abmelden</span>
@@ -199,7 +190,7 @@
         </div>
     </div>
 
-    <!-- Mobile Menü (off-canvas) -->
+    <!-- Mobile Menü (off-canvas) mit denselben Farbanpassungen -->
     <div id="mobile-menu" class="relative z-50 lg:hidden" role="dialog" aria-modal="true" style="display: none;">
         <div class="fixed inset-0 bg-gray-900/80" aria-hidden="true"></div>
 
@@ -215,57 +206,58 @@
                     </button>
                 </div>
 
-                <!-- Mobile Sidebar Inhalt -->
-                <div class="flex grow flex-col gap-y-5 overflow-y-auto bg-gradient-to-br from-blue-50/80 via-blue-50/80 to-indigo-50/80 px-6 pb-4">
+                <!-- Mobile Sidebar Inhalt mit angepassten Farben -->
+                <div class="flex grow flex-col gap-y-5 overflow-y-auto bg-gradient-to-b from-white via-[#DFE9FD] to-[#B5CAF7] px-6 pb-4">
                     <div class="flex h-16 shrink-0 items-center">
                         <h1 class="text-xl font-semibold text-blue-600">FleetFlow</h1>
                     </div>
 
-                    <!-- Mobile Navigation -->
+                    <!-- Die gleiche Navigation wie Desktop mit angepassten Farben -->
                     <nav class="flex flex-1 flex-col">
                         <ul role="list" class="flex flex-1 flex-col gap-y-7">
                             <li>
                                 <ul role="list" class="-mx-2 space-y-1">
                                     <li>
-                                        <a href="/dashboard" class="group flex items-center gap-x-3 rounded-md p-2 text-sm font-semibold {{ if eq .active "dashboard" }}bg-blue-600/20 text-blue-700{{ else }}text-gray-700 hover:bg-blue-600/10 hover:text-blue-700{{ end }}">
-                                        <svg class="h-6 w-6 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                                        <a href="/dashboard" class="group flex items-center gap-x-3 rounded-md p-2 text-sm font-semibold {{ if eq .active "dashboard" }}bg-[#3B82F6]/20 text-[#2563EB]{{ else }}text-[#5F5F5F] hover:bg-[#3B82F6]/30 hover:text-[#2563EB]{{ end }}">
+                                        <svg class="h-6 w-6 shrink-0 {{ if eq .active "dashboard" }}text-[#2563EB]{{ else }}text-[#5F5F5F] group-hover:text-[#2563EB]{{ end }}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
                                         </svg>
                                         Dashboard
                                         </a>
                                     </li>
 
+                                    <!-- Weitere mobile Navigationseinträge mit angepassten Farben -->
                                     <li>
-                                        <a href="/vehicles" class="group flex items-center gap-x-3 rounded-md p-2 text-sm font-semibold {{ if eq .active "vehicles" }}bg-blue-600/20 text-blue-700{{ else }}text-gray-700 hover:bg-blue-600/10 hover:text-blue-700{{ end }}">
-                                        <svg class="h-6 w-6 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
+                                        <a href="/vehicles" class="group flex items-center gap-x-3 rounded-md p-2 text-sm font-semibold {{ if eq .active "vehicles" }}bg-[#3B82F6]/20 text-[#2563EB]{{ else }}text-[#5F5F5F] hover:bg-[#3B82F6]/30 hover:text-[#2563EB]{{ end }}">
+                                        <svg class="h-6 w-6 shrink-0 {{ if eq .active "vehicles" }}text-[#2563EB]{{ else }}text-[#5F5F5F] group-hover:text-[#2563EB]{{ end }}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
                                         </svg>
                                         Fahrzeuge
                                         </a>
                                     </li>
 
                                     <li>
-                                        <a href="/drivers" class="group flex items-center gap-x-3 rounded-md p-2 text-sm font-semibold {{ if eq .active "drivers" }}bg-blue-600/20 text-blue-700{{ else }}text-gray-700 hover:bg-blue-600/10 hover:text-blue-700{{ end }}">
-                                        <svg class="h-6 w-6 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                                        <a href="/drivers" class="group flex items-center gap-x-3 rounded-md p-2 text-sm font-semibold {{ if eq .active "drivers" }}bg-[#3B82F6]/20 text-[#2563EB]{{ else }}text-[#5F5F5F] hover:bg-[#3B82F6]/30 hover:text-[#2563EB]{{ end }}">
+                                        <svg class="h-6 w-6 shrink-0 {{ if eq .active "drivers" }}text-[#2563EB]{{ else }}text-[#5F5F5F] group-hover:text-[#2563EB]{{ end }}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
                                         </svg>
                                         Fahrer
                                         </a>
                                     </li>
 
                                     <li>
-                                        <a href="/bookings" class="group flex items-center gap-x-3 rounded-md p-2 text-sm font-semibold {{ if eq .active "bookings" }}bg-blue-600/20 text-blue-700{{ else }}text-gray-700 hover:bg-blue-600/10 hover:text-blue-700{{ end }}">
-                                        <svg class="h-6 w-6 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+                                        <a href="/bookings" class="group flex items-center gap-x-3 rounded-md p-2 text-sm font-semibold {{ if eq .active "bookings" }}bg-[#3B82F6]/20 text-[#2563EB]{{ else }}text-[#5F5F5F] hover:bg-[#3B82F6]/30 hover:text-[#2563EB]{{ end }}">
+                                        <svg class="h-6 w-6 shrink-0 {{ if eq .active "bookings" }}text-[#2563EB]{{ else }}text-[#5F5F5F] group-hover:text-[#2563EB]{{ end }}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
                                         </svg>
                                         Buchungen
                                         </a>
                                     </li>
 
                                     <li>
-                                        <a href="/reports" class="group flex items-center gap-x-3 rounded-md p-2 text-sm font-semibold {{ if eq .active "reports" }}bg-blue-600/20 text-blue-700{{ else }}text-gray-700 hover:bg-blue-600/10 hover:text-blue-700{{ end }}">
-                                        <svg class="h-6 w-6 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                                        <a href="/reports" class="group flex items-center gap-x-3 rounded-md p-2 text-sm font-semibold {{ if eq .active "reports" }}bg-[#3B82F6]/20 text-[#2563EB]{{ else }}text-[#5F5F5F] hover:bg-[#3B82F6]/30 hover:text-[#2563EB]{{ end }}">
+                                        <svg class="h-6 w-6 shrink-0 {{ if eq .active "reports" }}text-[#2563EB]{{ else }}text-[#5F5F5F] group-hover:text-[#2563EB]{{ end }}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
                                         </svg>
                                         Berichte
                                         </a>
@@ -276,18 +268,18 @@
                             <!-- Footer-Navigation für mobil -->
                             <li class="mt-auto space-y-1">
                                 <!-- Einstellungen für mobil -->
-                                <a href="/settings" class="group -mx-2 flex items-center gap-x-3 rounded-md p-2 text-sm font-semibold {{ if eq .active "settings" }}bg-blue-600/20 text-blue-700{{ else }}text-gray-700 hover:bg-blue-600/10 hover:text-blue-700{{ end }}">
-                                <svg class="h-6 w-6 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                <a href="/settings" class="group -mx-2 flex items-center gap-x-3 rounded-md p-2 text-sm font-semibold {{ if eq .active "settings" }}bg-[#3B82F6]/20 text-[#2563EB]{{ else }}text-[#5F5F5F] hover:bg-[#3B82F6]/30 hover:text-[#2563EB]{{ end }}">
+                                <svg class="h-6 w-6 shrink-0 {{ if eq .active "settings" }}text-[#2563EB]{{ else }}text-[#5F5F5F] group-hover:text-[#2563EB]{{ end }}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
                                 </svg>
                                 Einstellungen
                                 </a>
 
                                 <!-- Logout für mobil -->
-                                <a href="/logout" class="group -mx-2 flex items-center gap-x-3 rounded-md p-2 text-sm font-semibold {{ if eq .active "logout" }}bg-blue-600/20 text-blue-700{{ else }}text-gray-700 hover:bg-blue-600/10 hover:text-blue-700{{ end }}">
-                                <svg class="h-6 w-6 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
+                                <a href="/logout" class="group -mx-2 flex items-center gap-x-3 rounded-md p-2 text-sm font-semibold {{ if eq .active "logout" }}bg-[#3B82F6]/20 text-[#2563EB]{{ else }}text-[#5F5F5F] hover:bg-[#3B82F6]/30 hover:text-[#2563EB]{{ end }}">
+                                <svg class="h-6 w-6 shrink-0 {{ if eq .active "logout" }}text-[#2563EB]{{ else }}text-[#5F5F5F] group-hover:text-[#2563EB]{{ end }}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
                                 </svg>
                                 Abmelden
                                 </a>
@@ -303,35 +295,27 @@
     <div id="main-content" class="lg:pl-64 flex flex-col min-h-screen w-full">
         <!-- Obere Leiste -->
         <div class="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
-            <!-- Mobile Menü-Button - nur für mobile Geräte -->
-            <button id="mobile-sidebar-button" type="button" class="-m-2.5 p-2.5 text-gray-700 lg:hidden">
-                <span class="sr-only">Menü öffnen</span>
-                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-                </svg>
-            </button>
-
-            <!-- Linker Bereich: Datum und Willkommen -->
+                        <!-- Linker Bereich: Datum und Willkommen -->
             <div class="flex items-center flex-1">
                 <div>
-                    <p class="text-sm text-gray-500">{{.currentDate}}</p>
+                    <p class="text-sm text-[#5F5F5F]">{{.currentDate}}</p>
                     <p class="text-base font-medium text-gray-900">Willkommen zurück, {{.user}}</p>
                 </div>
             </div>
 
             <!-- Rechter Bereich: Benachrichtigungen -->
             <div class="flex items-center">
-                <button type="button" class="-m-2.5 p-2.5 text-gray-500 hover:text-blue-700">
+                <button type="button" class="-m-2.5 p-2.5 text-[#5F5F5F] hover:text-[#2563EB]">
                     <span class="sr-only">Benachrichtigungen anzeigen</span>
                     <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
                     </svg>
                 </button>
 
-                <!-- Profil-Anzeige -->
+                <!-- Profil-Anzeige mit Link zu /profile -->
                 <a href="/profile" class="flex items-center ml-4 hover:opacity-80">
                     <div class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-800 text-sm font-medium">
-                        Test
+                        {{ getInitials (printf "%s %s" .user "")}}
                     </div>
                     <span class="hidden lg:ml-4 lg:flex lg:items-center">
                         <span class="text-sm font-semibold text-gray-900" aria-hidden="true">{{.user}}</span>
@@ -341,7 +325,6 @@
         </div>
 
         <!-- Hier kommt der Hauptinhalt der jeweiligen Seite -->
-
         <script>
             // Toggle Mobile Menu
             document.addEventListener('DOMContentLoaded', function() {
@@ -355,6 +338,62 @@
                 const expandIcon = document.getElementById('expand-icon');
                 const sidebarLogoFull = document.getElementById('sidebar-logo-full');
                 const sidebarLogoIcon = document.getElementById('sidebar-logo-icon');
+                const expandSidebarButton = document.getElementById('expand-sidebar-button');
+
+                // Funktion zum Anwenden des Sidebar-Zustands
+                function applySidebarState(isCollapsed) {
+                    if (!sidebar || !mainContent) return;
+
+                    if (isCollapsed) {
+                        // Sidebar ist eingeklappt
+                        document.body.classList.add('sidebar-collapsed');
+                        sidebar.style.width = '4rem';
+                        mainContent.classList.remove('lg:pl-64');
+                        mainContent.classList.add('lg:pl-16');
+
+                        // Icons
+                        if (collapseIcon) collapseIcon.classList.add('hidden');
+                        if (expandIcon) expandIcon.classList.remove('hidden');
+                        if (expandSidebarButton) expandSidebarButton.classList.remove('hidden');
+
+                        // Logo handling
+                        if (sidebarLogoFull) sidebarLogoFull.classList.add('hidden');
+                        if (sidebarLogoIcon) sidebarLogoIcon.classList.remove('hidden');
+
+                        // Hide menu text
+                        document.querySelectorAll('.menu-text').forEach(text => {
+                            text.style.display = 'none';
+                        });
+                    } else {
+                        // Sidebar ist ausgeklappt
+                        document.body.classList.remove('sidebar-collapsed');
+                        sidebar.style.width = '16rem';
+                        mainContent.classList.add('lg:pl-64');
+                        mainContent.classList.remove('lg:pl-16');
+
+                        // Icons
+                        if (collapseIcon) collapseIcon.classList.remove('hidden');
+                        if (expandIcon) expandIcon.classList.add('hidden');
+                        if (expandSidebarButton) expandSidebarButton.classList.add('hidden');
+
+                        // Logo handling
+                        if (sidebarLogoFull) sidebarLogoFull.classList.remove('hidden');
+                        if (sidebarLogoIcon) sidebarLogoIcon.classList.add('hidden');
+
+                        // Show menu text
+                        document.querySelectorAll('.menu-text').forEach(text => {
+                            text.style.display = '';
+                        });
+                    }
+                }
+
+                // Sidebar-Zustand aus localStorage laden und anwenden
+                const savedSidebarState = localStorage.getItem('sidebarCollapsed');
+                if (savedSidebarState === 'true') {
+                    applySidebarState(true);
+                } else {
+                    applySidebarState(false);
+                }
 
                 // Mobile Menu Toggle
                 if (mobileMenuButton && mobileMenu && closeSidebarButton) {
@@ -372,38 +411,21 @@
                     if (!sidebar || !mainContent) return;
 
                     const isCollapsed = document.body.classList.contains('sidebar-collapsed');
+                    const newState = !isCollapsed;
 
-                    if (isCollapsed) {
-                        // Expand sidebar
-                        document.body.classList.remove('sidebar-collapsed');
-                        sidebar.style.width = '16rem';
-                        mainContent.classList.add('lg:pl-64');
-                        mainContent.classList.remove('lg:pl-16');
+                    // Zustand speichern
+                    localStorage.setItem('sidebarCollapsed', newState);
 
-                        if (collapseIcon) collapseIcon.classList.remove('hidden');
-                        if (expandIcon) expandIcon.classList.add('hidden');
-
-                        // Logo handling
-                        if (sidebarLogoFull) sidebarLogoFull.classList.remove('hidden');
-                        if (sidebarLogoIcon) sidebarLogoIcon.classList.add('hidden');
-                    } else {
-                        // Collapse sidebar
-                        document.body.classList.add('sidebar-collapsed');
-                        sidebar.style.width = '4rem';
-                        mainContent.classList.remove('lg:pl-64');
-                        mainContent.classList.add('lg:pl-16');
-
-                        if (collapseIcon) collapseIcon.classList.add('hidden');
-                        if (expandIcon) expandIcon.classList.remove('hidden');
-
-                        // Logo handling
-                        if (sidebarLogoFull) sidebarLogoFull.classList.add('hidden');
-                        if (sidebarLogoIcon) sidebarLogoIcon.classList.remove('hidden');
-                    }
+                    // Zustand anwenden
+                    applySidebarState(newState);
                 }
 
                 if (toggleSidebarButton) {
                     toggleSidebarButton.addEventListener('click', toggleDesktopSidebar);
+                }
+
+                if (expandSidebarButton) {
+                    expandSidebarButton.addEventListener('click', toggleDesktopSidebar);
                 }
 
                 // Close mobile menu when clicking outside
@@ -423,14 +445,47 @@
                     navItems.forEach(item => {
                         const href = item.getAttribute('href');
                         if (href === currentPath || (href === '/dashboard' && (currentPath === '/' || currentPath === ''))) {
-                            item.classList.add('bg-blue-600/20', 'text-blue-700');
-                            item.classList.remove('text-gray-700', 'hover:bg-blue-600/10', 'hover:text-blue-700');
+                            item.classList.add('bg-[#3B82F6]/20', 'text-[#2563EB]');
+                            item.classList.remove('text-[#5F5F5F]', 'hover:bg-[#3B82F6]/30', 'hover:text-[#2563EB]');
                         }
                     });
                 }
 
                 highlightCurrentNavItem();
+
+                // Tooltips für kollabierte Sidebar
+                const sidebarItems = document.querySelectorAll('.sidebar-item');
+                sidebarItems.forEach(item => {
+                    item.addEventListener('mouseenter', function() {
+                        if (document.body.classList.contains('sidebar-collapsed')) {
+                            const tooltip = document.createElement('div');
+                            tooltip.className = 'sidebar-tooltip';
+                            tooltip.textContent = this.querySelector('.menu-text')?.textContent || '';
+                            tooltip.style.cssText = `
+                                position: absolute;
+                                left: 100%;
+                                top: 50%;
+                                transform: translateY(-50%);
+                                margin-left: 0.5rem;
+                                padding: 0.25rem 0.75rem;
+                                background-color: rgba(0, 0, 0, 0.9);
+                                color: white;
+                                font-size: 0.875rem;
+                                border-radius: 0.375rem;
+                                white-space: nowrap;
+                                z-index: 50;
+                            `;
+                            this.appendChild(tooltip);
+                        }
+                    });
+
+                    item.addEventListener('mouseleave', function() {
+                        const tooltip = this.querySelector('.sidebar-tooltip');
+                        if (tooltip) {
+                            tooltip.remove();
+                        }
+                    });
+                });
             });
         </script>
-
         {{ end }}

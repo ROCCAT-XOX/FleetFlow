@@ -179,7 +179,7 @@ func (r *UserRepository) CreateAdminUserIfNotExists() error {
 	admin := &model.User{
 		FirstName: "Admin",
 		LastName:  "User",
-		Email:     "admin@fleetdrive.com",
+		Email:     "admin@FleetFlow.com",
 		Password:  "admin",
 		Role:      model.RoleAdmin,    // Jetzt kann direkt der Typ verwendet werden
 		Status:    model.StatusActive, // Jetzt kann direkt der Typ verwendet werden

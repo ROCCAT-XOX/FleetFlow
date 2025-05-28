@@ -69,7 +69,6 @@ func setupRouter() *gin.Engine {
 
 	// Serve static files
 	router.Static("/static", "./frontend/static")
-	router.Static("/assets", "./frontend/assets")
 
 	// Load HTML templates with helper functions
 	templ := template.Must(template.New("").Funcs(utils.TemplateHelpers()).ParseGlob("frontend/templates/*.html"))
