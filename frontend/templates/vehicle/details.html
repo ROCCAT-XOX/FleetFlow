@@ -19,16 +19,25 @@
 
     <!-- Fahrzeug Header -->
     <div class="bg-white shadow rounded-lg p-6 mb-6">
-        <div class="flex justify-between items-center">
+        <div class="flex items-center justify-between gap-4">
+            <!-- Logo und Fahrzeuginfo -->
             <div class="flex items-center gap-4">
+                <!-- Logo -->
+                <img id="brand-logo" class="h-12 w-auto flex-shrink-0"
+                     src="/static/assets/{{ .vehicle.brand | lower }}.svg"
+                     alt="{{ .vehicle.brand }}"
+                     onerror="this.style.display='none'">
+
+                <!-- Fahrzeugdaten -->
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900">{{ .vehicle.brand }} {{ .vehicle.model }}</h1>
                     <p class="text-gray-500">{{ .vehicle.licensePlate }} • {{ .vehicle.year }}</p>
                 </div>
-                <img id="brand-logo" class="h-12 w-auto hidden" src="" alt="">
             </div>
-            <span class="px-3 py-1 rounded-full text-sm font-semibold
-            {{ if eq .vehicle.status "available" }}bg-green-100 text-green-800{{ end }}
+
+            <!-- Status -->
+            <span class="px-3 py-1 rounded-full text-sm font-semibold flex-shrink-0
+        {{ if eq .vehicle.status "available" }}bg-green-100 text-green-800{{ end }}
             {{ if eq .vehicle.status "inuse" }}bg-yellow-100 text-yellow-800{{ end }}
             {{ if eq .vehicle.status "maintenance" }}bg-red-100 text-red-800{{ end }}">
             {{ if eq .vehicle.status "available" }}Verfügbar{{ end }}
@@ -106,7 +115,7 @@
         if (brandLogo) {
             const brand = '{{ .vehicle.brand }}'.toLowerCase();
             if (brand) {
-                const logoPath = `/static/assets/logo/${brand}.svg`;
+                const logoPath = `/static/assets/${brand}.svg`;
                 brandLogo.src = logoPath;
                 brandLogo.alt = '{{ .vehicle.brand }}';
 

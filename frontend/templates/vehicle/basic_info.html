@@ -48,7 +48,17 @@
                 </div>
                 <div class="sm:col-span-1">
                     <dt class="text-sm font-medium text-gray-500">Aktueller Kilometerstand</dt>
-                    <dd class="mt-1 text-sm text-gray-900">{{if .vehicle.mileage}}{{formatMileage .vehicle.mileage}}{{else}}-{{end}}</dd>
+                    <dd class="mt-1 text-sm text-gray-900">
+                        {{if .vehicle.mileage}}
+                        {{if eq .vehicle.mileage 0}}
+                        0 km
+                        {{else}}
+                        {{.vehicle.mileage | formatNumber}} km
+                        {{end}}
+                        {{else}}
+                        -
+                        {{end}}
+                    </dd>
                 </div>
             </dl>
 
@@ -95,8 +105,12 @@
                 <div class="sm:col-span-1">
                     <dt class="text-sm font-medium text-gray-500">Abmessungen (L × B × H)</dt>
                     <dd class="mt-1 text-sm text-gray-900">
-                        {{if and .vehicle.length .vehicle.width .vehicle.height}}
+                        {{if ne .vehicle.length 0}}
+                        {{if ne .vehicle.width 0}}
+                        {{if ne .vehicle.height 0}}
                         {{.vehicle.length}} × {{.vehicle.width}} × {{.vehicle.height}} mm
+                        {{else}}-{{end}}
+                        {{else}}-{{end}}
                         {{else}}-{{end}}
                     </dd>
                 </div>

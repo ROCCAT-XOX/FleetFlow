@@ -1,24 +1,77 @@
 // frontend/static/js/vehicle-modals.js
 
+// Modal Initialisierung - wird bei DOMContentLoaded ausgeführt
+function initializeModals() {
+    initializeMaintenanceModal();
+    initializeFuelCostModal();
+    initializeUsageModal();
+    initializeRegistrationModal();
+    initializeVehicleEditModal();
+
+    // Modal-Schließen bei Klick außerhalb
+    document.querySelectorAll('.fixed.z-10').forEach(modal => {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.add('hidden');
+            }
+        });
+    });
+
+    // Close-Button Event-Listener
+    document.querySelectorAll('.close-modal-btn, .close-edit-modal-btn, .close-current-usage-modal-btn, #close-registration-modal-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const modal = this.closest('.fixed.z-10');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+        });
+    });
+}
+
 // Wartungs-Modal
 function initializeMaintenanceModal() {
     const form = document.getElementById('maintenance-form');
-    const closeBtn = document.querySelector('#maintenance-modal .close-modal-btn');
     const modal = document.getElementById('maintenance-modal');
-
-    if (closeBtn) {
-        closeBtn.addEventListener('click', () => {
-            modal.classList.add('hidden');
-        });
-    }
 
     if (form) {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const vehicleId = window.location.pathname.split('/').pop();
-            await saveMaintenanceEntry(vehicleId, new FormData(form));
-            modal.classList.add('hidden');
-            loadMaintenance(vehicleId);
+            const formData = new FormData(form);
+
+            const data = {
+                vehicleId: vehicleId,
+                date: formData.get('maintenance-date'),
+                type: formData.get('maintenance-type'),
+                mileage: parseInt(formData.get('mileage')) || 0,
+                cost: parseFloat(formData.get('cost')) || 0,
+                workshop: formData.get('workshop'),
+                notes: formData.get('maintenance-notes')
+            };
+
+            try {
+                const isEdit = form.dataset.isEdit === 'true';
+                const maintenanceId = form.dataset.maintenanceId;
+
+                const url = isEdit ? `/api/maintenance/${maintenanceId}` : '/api/maintenance';
+                const method = isEdit ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) throw new Error('Fehler beim Speichern');
+
+                showNotification('Wartungseintrag erfolgreich gespeichert', 'success');
+                modal.classList.add('hidden');
+                setTimeout(() => window.location.reload(), 1000);
+
+            } catch (error) {
+                console.error('Fehler:', error);
+                showNotification('Fehler beim Speichern des Wartungseintrags', 'error');
+            }
         });
     }
 }
@@ -26,26 +79,54 @@ function initializeMaintenanceModal() {
 // Tankkosten-Modal
 function initializeFuelCostModal() {
     const form = document.getElementById('vehicle-fuel-cost-form');
-    const closeBtn = document.getElementById('vehicle-close-fuel-modal-btn');
     const modal = document.getElementById('vehicle-fuel-cost-modal');
-
-    if (closeBtn) {
-        closeBtn.addEventListener('click', () => {
-            modal.classList.add('hidden');
-        });
-    }
 
     if (form) {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const vehicleId = window.location.pathname.split('/').pop();
-            await saveFuelCost(vehicleId, new FormData(form));
-            modal.classList.add('hidden');
-            loadFuelCosts(vehicleId);
+            const formData = new FormData(form);
+
+            const data = {
+                vehicleId: vehicleId,
+                driverId: formData.get('driver') || null,
+                date: formData.get('fuel-date'),
+                fuelType: formData.get('fuel-type'),
+                amount: parseFloat(formData.get('amount')) || 0,
+                pricePerUnit: parseFloat(formData.get('price-per-unit')) || 0,
+                totalCost: parseFloat(formData.get('total-cost')) || 0,
+                mileage: parseInt(formData.get('mileage')) || 0,
+                location: formData.get('location'),
+                receiptNumber: formData.get('receipt-number')
+            };
+
+            try {
+                const isEdit = form.dataset.isEdit === 'true';
+                const fuelCostId = form.dataset.fuelCostId;
+
+                const url = isEdit ? `/api/fuelcosts/${fuelCostId}` : '/api/fuelcosts';
+                const method = isEdit ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) throw new Error('Fehler beim Speichern');
+
+                showNotification('Tankkosten erfolgreich gespeichert', 'success');
+                modal.classList.add('hidden');
+                setTimeout(() => window.location.reload(), 1000);
+
+            } catch (error) {
+                console.error('Fehler:', error);
+                showNotification('Fehler beim Speichern der Tankkosten', 'error');
+            }
         });
     }
 
-    // Automatische Berechnung der Gesamtkosten
+    // Automatische Berechnung
     const amountInput = document.getElementById('vehicle-fuel-amount');
     const priceInput = document.getElementById('vehicle-fuel-price-per-unit');
     const totalInput = document.getElementById('vehicle-fuel-total-cost');
@@ -65,23 +146,51 @@ function initializeFuelCostModal() {
 // Nutzungs-Modal
 function initializeUsageModal() {
     const form = document.getElementById('usage-form');
-    const closeBtn = document.querySelector('#usage-modal .close-modal-btn');
     const modal = document.getElementById('usage-modal');
-
-    if (closeBtn) {
-        closeBtn.addEventListener('click', () => {
-            modal.classList.add('hidden');
-        });
-    }
 
     if (form) {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const vehicleId = window.location.pathname.split('/').pop();
-            await saveUsageEntry(vehicleId, new FormData(form));
-            modal.classList.add('hidden');
-            loadUsageHistory(vehicleId);
-            loadCurrentUsage(vehicleId);
+            const formData = new FormData(form);
+
+            const data = {
+                vehicleId: vehicleId,
+                driverId: formData.get('driver'),
+                startDate: formData.get('start-date'),
+                startTime: formData.get('start-time'),
+                endDate: formData.get('end-date'),
+                endTime: formData.get('end-time'),
+                startMileage: parseInt(formData.get('start-mileage')) || 0,
+                endMileage: parseInt(formData.get('end-mileage')) || 0,
+                purpose: formData.get('project'),
+                status: formData.get('end-date') ? 'completed' : 'active',
+                notes: formData.get('usage-notes')
+            };
+
+            try {
+                const isEdit = form.dataset.isEdit === 'true';
+                const usageId = form.dataset.usageId;
+
+                const url = isEdit ? `/api/usage/${usageId}` : '/api/usage';
+                const method = isEdit ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) throw new Error('Fehler beim Speichern');
+
+                showNotification('Nutzungseintrag erfolgreich gespeichert', 'success');
+                modal.classList.add('hidden');
+                setTimeout(() => window.location.reload(), 1000);
+
+            } catch (error) {
+                console.error('Fehler:', error);
+                showNotification('Fehler beim Speichern des Nutzungseintrags', 'error');
+            }
         });
     }
 }
@@ -89,99 +198,189 @@ function initializeUsageModal() {
 // Zulassungs-Modal
 function initializeRegistrationModal() {
     const form = document.getElementById('registration-form');
-    const closeBtn = document.getElementById('close-registration-modal-btn');
     const modal = document.getElementById('registration-modal');
-
-    if (closeBtn) {
-        closeBtn.addEventListener('click', () => {
-            modal.classList.add('hidden');
-        });
-    }
 
     if (form) {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const vehicleId = window.location.pathname.split('/').pop();
-            await updateRegistrationInfo(vehicleId, new FormData(form));
-            modal.classList.add('hidden');
-            loadRegistration(vehicleId);
+            const formData = new FormData(form);
+
+            try {
+                // Erst die aktuellen Fahrzeugdaten laden
+                const vehicleResponse = await fetch(`/api/vehicles/${vehicleId}`);
+                const vehicleData = await vehicleResponse.json();
+                const vehicle = vehicleData.vehicle;
+
+                // Alle Fahrzeugdaten mit den neuen Zulassungsdaten zusammenführen
+                const data = {
+                    ...vehicle,
+                    registrationDate: formData.get('registration-date'),
+                    registrationExpiry: formData.get('registration-expiry'),
+                    nextInspectionDate: formData.get('next-inspection'),
+                    insuranceCompany: formData.get('insurance-company'),
+                    insuranceNumber: formData.get('insurance-number'),
+                    insuranceType: formData.get('insurance-type'),
+                    insuranceExpiry: formData.get('insurance-expiry'),
+                    insuranceCost: parseFloat(formData.get('insurance-cost')) || 0
+                };
+
+                const response = await fetch(`/api/vehicles/${vehicleId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) throw new Error('Fehler beim Aktualisieren');
+
+                showNotification('Zulassungsdaten erfolgreich aktualisiert', 'success');
+                modal.classList.add('hidden');
+                setTimeout(() => window.location.reload(), 1000);
+
+            } catch (error) {
+                console.error('Fehler:', error);
+                showNotification('Fehler beim Aktualisieren der Zulassungsdaten', 'error');
+            }
         });
     }
 }
 
-// Modal öffnen Funktionen
-window.openEditVehicleModal = async function(vehicleId) {
+// Fahrzeug bearbeiten Modal
+function initializeVehicleEditModal() {
+    const form = document.getElementById('edit-vehicle-form');
     const modal = document.getElementById('edit-vehicle-modal');
-    const response = await fetch(`/api/vehicles/${vehicleId}`);
-    const data = await response.json();
-    const vehicle = data.vehicle;
 
-    // Formular mit Daten füllen
-    document.getElementById('license_plate').value = vehicle.licensePlate || '';
-    document.getElementById('vehicle_brand').value = vehicle.brand || '';
-    document.getElementById('model').value = vehicle.model || '';
-    document.getElementById('year').value = vehicle.year || '';
-    document.getElementById('color').value = vehicle.color || '';
-    document.getElementById('vehicle_id').value = vehicle.vehicleId || '';
-    document.getElementById('vin').value = vehicle.vin || '';
-    document.getElementById('fuel_type').value = vehicle.fuelType || '';
-    document.getElementById('current_mileage').value = vehicle.mileage || '';
+    if (form) {
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const vehicleId = window.location.pathname.split('/').pop();
+            const formData = new FormData(form);
 
-    modal.classList.remove('hidden');
-};
+            const data = {
+                licensePlate: formData.get('license_plate'),
+                brand: formData.get('vehicle_brand'),
+                model: formData.get('model'),
+                year: parseInt(formData.get('year')),
+                color: formData.get('color'),
+                vehicleId: formData.get('vehicle_id'),
+                vin: formData.get('vin'),
+                vehicleType: formData.get('vehicle_type'),
+                fuelType: formData.get('fuel_type'),
+                mileage: parseInt(formData.get('current_mileage')) || 0,
 
-// Modal: Wartung hinzufügen
+                // Technische Daten
+                engineDisplacement: parseInt(formData.get('engine_displacement')) || 0,
+                powerRating: parseFloat(formData.get('power_rating')) || 0,
+                numberOfAxles: parseInt(formData.get('number_of_axles')) || 0,
+                tireSize: formData.get('tire_size'),
+                rimType: formData.get('rim_type'),
+                emissionClass: formData.get('emission_class'),
+                maxSpeed: parseInt(formData.get('max_speed')) || 0,
+                towingCapacity: parseInt(formData.get('towing_capacity')) || 0,
+
+                // Abmessungen & Gewichte
+                length: parseInt(formData.get('length')) || 0,
+                width: parseInt(formData.get('width')) || 0,
+                height: parseInt(formData.get('height')) || 0,
+                curbWeight: parseInt(formData.get('curb_weight')) || 0,
+                grossWeight: parseInt(formData.get('gross_weight')) || 0,
+                technicalMaxWeight: parseInt(formData.get('technical_max_weight')) || 0,
+                specialFeatures: formData.get('special_features')
+            };
+
+            try {
+                const response = await fetch(`/api/vehicles/${vehicleId}/basic-info`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) throw new Error('Fehler beim Aktualisieren');
+
+                showNotification('Fahrzeugdaten erfolgreich aktualisiert', 'success');
+                modal.classList.add('hidden');
+                setTimeout(() => window.location.reload(), 1000);
+
+            } catch (error) {
+                console.error('Fehler:', error);
+                showNotification('Fehler beim Aktualisieren der Fahrzeugdaten', 'error');
+            }
+        });
+    }
+
+    // Tab-Funktionalität
+    initializeModalTabs();
+}
+
+// Tab-Funktionalität für Modal
+function initializeModalTabs() {
+    const tabButtons = document.querySelectorAll('#edit-vehicle-modal .tab-btn');
+    const tabContents = document.querySelectorAll('#edit-vehicle-modal .tab-content');
+
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const targetTab = button.dataset.tab;
+
+            // Alle Tabs verstecken
+            tabContents.forEach(content => {
+                content.classList.add('hidden');
+            });
+
+            // Alle Buttons deaktivieren
+            tabButtons.forEach(btn => {
+                btn.classList.remove('border-indigo-500', 'text-indigo-600');
+                btn.classList.add('border-transparent', 'text-gray-500');
+            });
+
+            // Gewählten Tab anzeigen
+            const targetContent = document.getElementById(`${targetTab}-tab`);
+            if (targetContent) {
+                targetContent.classList.remove('hidden');
+            }
+
+            // Gewählten Button aktivieren
+            button.classList.add('border-indigo-500', 'text-indigo-600');
+            button.classList.remove('border-transparent', 'text-gray-500');
+        });
+    });
+}
+
+// Modal öffnen Funktionen
 window.openAddMaintenanceModal = function(vehicleId) {
     const modal = document.getElementById('maintenance-modal');
     const form = document.getElementById('maintenance-form');
 
-    if (!modal) {
-        console.error('Maintenance Modal nicht gefunden');
-        return;
-    }
-
     if (form) {
         form.reset();
+        form.dataset.isEdit = 'false';
+        delete form.dataset.maintenanceId;
+
+        // Aktuelles Datum setzen
+        const dateInput = document.getElementById('maintenance-date');
+        if (dateInput) {
+            dateInput.value = new Date().toISOString().split('T')[0];
+        }
     }
 
-    const modalTitle = document.getElementById('maintenance-modal-title');
-    if (modalTitle) {
-        modalTitle.textContent = 'Wartung/Inspektion hinzufügen';
+    if (modal) {
+        modal.classList.remove('hidden');
     }
-
-    // Aktuelles Datum setzen
-    const dateInput = document.getElementById('maintenance-date');
-    if (dateInput) {
-        dateInput.value = new Date().toISOString().split('T')[0];
-    }
-
-    // VehicleId speichern für Submit
-    if (form) {
-        form.dataset.vehicleId = vehicleId;
-    }
-
-    modal.classList.remove('hidden');
 };
 
-
-// Modal: Tankkosten hinzufügen
 window.openAddFuelCostModal = async function(vehicleId) {
     const modal = document.getElementById('vehicle-fuel-cost-modal');
     const form = document.getElementById('vehicle-fuel-cost-form');
 
-    if (!modal) {
-        console.error('Fuel Cost Modal nicht gefunden');
-        return;
-    }
-
     if (form) {
         form.reset();
-    }
+        form.dataset.isEdit = 'false';
+        delete form.dataset.fuelCostId;
 
-    // Fahrzeug-ID setzen
-    const vehicleIdInput = document.getElementById('vehicle-fuel-vehicle-id');
-    if (vehicleIdInput) {
-        vehicleIdInput.value = vehicleId;
+        // Aktuelles Datum setzen
+        const dateInput = document.getElementById('vehicle-fuel-date');
+        if (dateInput) {
+            dateInput.value = new Date().toISOString().split('T')[0];
+        }
     }
 
     // Fahrer laden
@@ -191,10 +390,7 @@ window.openAddFuelCostModal = async function(vehicleId) {
         const select = document.getElementById('vehicle-fuel-driver');
 
         if (select) {
-            // Erste Option beibehalten
             select.innerHTML = '<option value="">Keinen Fahrer auswählen</option>';
-
-            // Fahrer hinzufügen
             if (data.drivers) {
                 data.drivers.forEach(driver => {
                     const option = document.createElement('option');
@@ -208,33 +404,31 @@ window.openAddFuelCostModal = async function(vehicleId) {
         console.error('Fehler beim Laden der Fahrer:', error);
     }
 
-    // Aktuelles Datum setzen
-    const dateInput = document.getElementById('vehicle-fuel-date');
-    if (dateInput) {
-        dateInput.value = new Date().toISOString().split('T')[0];
+    if (modal) {
+        modal.classList.remove('hidden');
     }
-
-    // VehicleId speichern für Submit
-    if (form) {
-        form.dataset.vehicleId = vehicleId;
-    }
-
-    modal.classList.remove('hidden');
 };
 
-
-// Modal: Nutzung hinzufügen
 window.openAddUsageModal = async function(vehicleId) {
     const modal = document.getElementById('usage-modal');
     const form = document.getElementById('usage-form');
 
-    if (!modal) {
-        console.error('Usage Modal nicht gefunden');
-        return;
-    }
-
     if (form) {
         form.reset();
+        form.dataset.isEdit = 'false';
+        delete form.dataset.usageId;
+
+        // Aktuelles Datum und Zeit setzen
+        const now = new Date();
+        const startDateInput = document.getElementById('start-date');
+        const startTimeInput = document.getElementById('start-time');
+
+        if (startDateInput) {
+            startDateInput.value = now.toISOString().split('T')[0];
+        }
+        if (startTimeInput) {
+            startTimeInput.value = now.toTimeString().slice(0, 5);
+        }
     }
 
     // Fahrer laden
@@ -245,7 +439,6 @@ window.openAddUsageModal = async function(vehicleId) {
 
         if (select) {
             select.innerHTML = '<option value="">Fahrer auswählen</option>';
-
             if (data.drivers) {
                 data.drivers.forEach(driver => {
                     const option = document.createElement('option');
@@ -259,35 +452,13 @@ window.openAddUsageModal = async function(vehicleId) {
         console.error('Fehler beim Laden der Fahrer:', error);
     }
 
-    // Aktuelles Datum und Zeit setzen
-    const now = new Date();
-    const startDateInput = document.getElementById('start-date');
-    const startTimeInput = document.getElementById('start-time');
-
-    if (startDateInput) {
-        startDateInput.value = now.toISOString().split('T')[0];
+    if (modal) {
+        modal.classList.remove('hidden');
     }
-    if (startTimeInput) {
-        startTimeInput.value = now.toTimeString().slice(0, 5);
-    }
-
-    // VehicleId speichern für Submit
-    if (form) {
-        form.dataset.vehicleId = vehicleId;
-    }
-
-    modal.classList.remove('hidden');
 };
 
-// Modal: Zulassung bearbeiten
 window.openEditRegistrationModal = async function(vehicleId) {
     const modal = document.getElementById('registration-modal');
-    const form = document.getElementById('registration-form');
-
-    if (!modal) {
-        console.error('Registration Modal nicht gefunden');
-        return;
-    }
 
     try {
         const response = await fetch(`/api/vehicles/${vehicleId}`);
@@ -315,66 +486,136 @@ window.openEditRegistrationModal = async function(vehicleId) {
         setFieldValue('insurance-expiry', vehicle.insuranceExpiry, true);
         setFieldValue('insurance-cost', vehicle.insuranceCost);
 
-        // VehicleId speichern für Submit
-        if (form) {
-            form.dataset.vehicleId = vehicleId;
+        if (modal) {
+            modal.classList.remove('hidden');
         }
-
-        modal.classList.remove('hidden');
     } catch (error) {
         console.error('Fehler beim Laden der Fahrzeugdaten:', error);
         alert('Fehler beim Laden der Fahrzeugdaten');
     }
 };
 
-// Hilfsfunktion zum Laden der Fahrer
-async function loadDriversForSelect(selectId) {
+window.openEditCurrentUsageModal = async function(vehicleId) {
     try {
-        const response = await fetch('/api/drivers');
+        // Aktive Nutzung finden
+        const response = await fetch(`/api/usage/vehicle/${vehicleId}`);
         const data = await response.json();
-        const select = document.getElementById(selectId);
+        const activeUsage = data.usage.find(u => u.status === 'active');
 
-        // Erste Option beibehalten
-        const firstOption = select.querySelector('option:first-child');
-        select.innerHTML = '';
-        if (firstOption) {
-            select.appendChild(firstOption);
+        if (!activeUsage) {
+            alert('Keine aktive Nutzung vorhanden');
+            return;
         }
 
-        // Fahrer hinzufügen
-        data.drivers.forEach(driver => {
-            const option = document.createElement('option');
-            option.value = driver.id;
-            option.textContent = `${driver.firstName} ${driver.lastName}`;
-            select.appendChild(option);
-        });
-    } catch (error) {
-        console.error('Fehler beim Laden der Fahrer:', error);
-    }
-}
+        // Modal mit Daten füllen
+        const modal = document.getElementById('edit-usage-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
 
-// Modal: Fahrzeug bearbeiten
+            // Form mit der aktiven Nutzungs-ID konfigurieren
+            const form = document.getElementById('edit-current-usage-form');
+            if (form) {
+                form.dataset.usageId = activeUsage.id;
+            }
+        }
+
+    } catch (error) {
+        console.error('Fehler beim Laden der aktuellen Nutzung:', error);
+    }
+};
+
 window.openEditVehicleModal = async function(vehicleId) {
+    console.log('Opening edit modal for vehicle:', vehicleId);
+
+    // Falls vehicleId nicht übergeben wurde, aus URL extrahieren
+    if (!vehicleId) {
+        vehicleId = window.location.pathname.split('/').pop();
+        console.log('Extracted vehicle ID from URL:', vehicleId);
+    }
+
     const modal = document.getElementById('edit-vehicle-modal');
+
     if (!modal) {
-        console.error('Edit Vehicle Modal nicht gefunden');
+        console.error('Edit vehicle modal not found');
+        alert('Modal konnte nicht gefunden werden');
         return;
     }
 
     try {
-        const response = await fetch(`/api/vehicles/${vehicleId}`);
-        const data = await response.json();
-        const vehicle = data.vehicle;
+        // Lade Fahrzeugdaten
+        const url = `/api/vehicles/${vehicleId}`;
+        console.log('Fetching from URL:', url);
 
-        // Formular-Elemente sicher abrufen
+        const response = await fetch(url);
+        console.log('API Response status:', response.status);
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('API Error Response:', errorText);
+            throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+        }
+
+        const data = await response.json();
+        console.log('Complete API response:', data);
+
+        // Flexiblere Datenextraktion
+        let vehicle = null;
+
+        // Prüfe verschiedene mögliche Response-Strukturen
+        if (data.vehicle) {
+            vehicle = data.vehicle;
+        } else if (data.Vehicle) {
+            vehicle = data.Vehicle;
+        } else if (data.id) {
+            // Direkte Fahrzeugdaten ohne Wrapper
+            vehicle = data;
+        } else {
+            console.error('Unexpected response structure:', data);
+            throw new Error('Unerwartete Antwortstruktur von der API');
+        }
+
+        console.log('Extracted vehicle data:', vehicle);
+
+        // Marken-Dropdown initialisieren
+        const brandSelect = document.getElementById('vehicle_brand');
+        if (brandSelect) {
+            // Prüfen ob carManufacturers geladen ist
+            if (typeof carManufacturers !== 'undefined' && Array.isArray(carManufacturers)) {
+                brandSelect.innerHTML = '<option value="">Marke auswählen</option>';
+                carManufacturers.forEach(manufacturer => {
+                    const option = document.createElement('option');
+                    option.value = manufacturer.name;
+                    option.textContent = manufacturer.name;
+                    if (manufacturer.name === vehicle.brand) {
+                        option.selected = true;
+                    }
+                    brandSelect.appendChild(option);
+                });
+            } else {
+                console.warn('carManufacturers not loaded, adding current brand only');
+                // Falls carManufacturers nicht geladen ist, füge nur die aktuelle Marke hinzu
+                brandSelect.innerHTML = `
+                    <option value="">Marke auswählen</option>
+                    <option value="${vehicle.brand}" selected>${vehicle.brand}</option>
+                `;
+            }
+        } else {
+            console.error('Brand select element not found');
+        }
+
+        // Hilfsfunktion zum sicheren Setzen von Feldwerten
         const setFieldValue = (id, value) => {
             const element = document.getElementById(id);
-            if (element) element.value = value || '';
+            if (element) {
+                element.value = value !== null && value !== undefined ? value : '';
+                console.log(`Set ${id} to:`, value);
+            } else {
+                console.warn(`Field not found: ${id}`);
+            }
         };
 
         // Grunddaten
         setFieldValue('license_plate', vehicle.licensePlate);
-        setFieldValue('vehicle_brand', vehicle.brand);
         setFieldValue('model', vehicle.model);
         setFieldValue('year', vehicle.year);
         setFieldValue('color', vehicle.color);
@@ -408,109 +649,89 @@ window.openEditVehicleModal = async function(vehicleId) {
 
         // Modal anzeigen
         modal.classList.remove('hidden');
+        console.log('Modal opened successfully');
+
     } catch (error) {
         console.error('Fehler beim Laden der Fahrzeugdaten:', error);
-        alert('Fehler beim Laden der Fahrzeugdaten');
+        alert('Fehler beim Laden der Fahrzeugdaten: ' + error.message);
     }
 };
 
-// Tab-Funktionalität für Modal
-function initializeModalTabs() {
-    const tabButtons = document.querySelectorAll('#edit-vehicle-modal .tab-btn');
-    const tabContents = document.querySelectorAll('#edit-vehicle-modal .tab-content');
-
-    tabButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            const targetTab = button.dataset.tab;
-
-            // Alle Tabs verstecken
-            tabContents.forEach(content => {
-                content.classList.add('hidden');
-            });
-
-            // Alle Buttons deaktivieren
-            tabButtons.forEach(btn => {
-                btn.classList.remove('border-indigo-500', 'text-indigo-600', 'active');
-                btn.classList.add('border-transparent', 'text-gray-500');
-            });
-
-            // Gewählten Tab anzeigen
-            const targetContent = document.getElementById(`${targetTab}-tab`);
-            if (targetContent) {
-                targetContent.classList.remove('hidden');
+// Close-Button Event-Listener
+document.addEventListener('DOMContentLoaded', function() {
+    // Alle Close-Buttons
+    document.querySelectorAll('.close-modal-btn, .close-edit-modal-btn, .close-current-usage-modal-btn, #close-registration-modal-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const modal = this.closest('.fixed.z-10');
+            if (modal) {
+                modal.classList.add('hidden');
             }
-
-            // Gewählten Button aktivieren
-            button.classList.add('border-indigo-500', 'text-indigo-600', 'active');
-            button.classList.remove('border-transparent', 'text-gray-500');
         });
     });
+});
+
+// Notification Helper
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 px-6 py-3 rounded-md shadow-lg z-50 ${
+        type === 'success' ? 'bg-green-500 text-white' :
+            type === 'error' ? 'bg-red-500 text-white' :
+                'bg-blue-500 text-white'
+    }`;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
 }
 
+document.addEventListener('DOMContentLoaded', function() {
+    initializeModals();
+});
 
-// Fahrzeug bearbeiten Modal - Erweitere die Submit-Funktion
-function initializeVehicleEditModal() {
-    const form = document.getElementById('edit-vehicle-form');
-    const closeBtn = document.querySelector('.close-edit-modal-btn');
-    const modal = document.getElementById('edit-vehicle-modal');
+// Debug-Funktion zum Testen
+async function debugVehicleAPI() {
+    const vehicleId = window.location.pathname.split('/').pop();
+    console.log('Testing vehicle ID:', vehicleId);
 
-    if (closeBtn) {
-        closeBtn.addEventListener('click', () => {
-            modal.classList.add('hidden');
-        });
+    try {
+        const response = await fetch(`/api/vehicles/${vehicleId}`);
+        const text = await response.text();
+        console.log('Raw response:', text);
+
+        try {
+            const json = JSON.parse(text);
+            console.log('Parsed JSON:', json);
+            console.log('Has vehicle property:', !!json.vehicle);
+            console.log('Vehicle data:', json.vehicle);
+        } catch (e) {
+            console.error('JSON parse error:', e);
+        }
+    } catch (error) {
+        console.error('Fetch error:', error);
     }
 
-    if (form) {
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const vehicleId = window.location.pathname.split('/').pop();
-            const formData = new FormData(form);
+    // Check if modal exists
+    console.log('Edit modal exists:', !!document.getElementById('edit-vehicle-modal'));
+    console.log('Form exists:', !!document.getElementById('edit-vehicle-form'));
+}
 
-            // Erweiterte Daten sammeln
-            const data = {
-                licensePlate: formData.get('license_plate'),
-                brand: formData.get('vehicle_brand'),
-                model: formData.get('model'),
-                year: parseInt(formData.get('year')),
-                color: formData.get('color'),
-                vehicleId: formData.get('vehicle_id'),
-                vin: formData.get('vin'),
-                vehicleType: formData.get('vehicle_type'),
-                fuelType: formData.get('fuel_type'),
-                mileage: parseInt(formData.get('current_mileage')) || 0,
+// Führen Sie diese Funktion aus
+debugVehicleAPI();
 
-                // Technische Daten
-                engineDisplacement: parseInt(formData.get('engine_displacement')) || 0,
-                powerRating: parseFloat(formData.get('power_rating')) || 0,
-                numberOfAxles: parseInt(formData.get('number_of_axles')) || 0,
-                tireSize: formData.get('tire_size'),
-                rimType: formData.get('rim_type'),
-                emissionClass: formData.get('emission_class'),
-                maxSpeed: parseInt(formData.get('max_speed')) || 0,
-                towingCapacity: parseInt(formData.get('towing_capacity')) || 0,
+// Debug-Funktion
+async function checkVehicleData() {
+    const vehicleId = window.location.pathname.split('/').pop();
+    const response = await fetch(`/api/vehicles/${vehicleId}`);
+    const data = await response.json();
 
-                // Abmessungen & Gewichte
-                length: parseInt(formData.get('length')) || 0,
-                width: parseInt(formData.get('width')) || 0,
-                height: parseInt(formData.get('height')) || 0,
-                curbWeight: parseInt(formData.get('curb_weight')) || 0,
-                grossWeight: parseInt(formData.get('gross_weight')) || 0,
-                technicalMaxWeight: parseInt(formData.get('technical_max_weight')) || 0,
-                specialFeatures: formData.get('special_features')
-            };
-
-            await updateVehicleBasicInfo(vehicleId, data);
-            modal.classList.add('hidden');
-            loadBasicInfo(vehicleId);
-        });
+    console.log('Vehicle data:', data);
+    if (data.vehicle) {
+        console.log('Mileage:', data.vehicle.mileage);
+        console.log('FuelType:', data.vehicle.fuelType);
+        console.log('All vehicle properties:', Object.keys(data.vehicle));
     }
 }
 
-// Modal Initialisierung
-function initializeModals() {
-    initializeVehicleEditModal();
-    initializeMaintenanceModal();
-    initializeFuelCostModal();
-    initializeUsageModal();
-    initializeRegistrationModal();
-}
+checkVehicleData();
