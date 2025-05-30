@@ -1,65 +1,107 @@
 {{ template "head" .}}
-<body class="bg-gray-50">
+<body class="bg-gray-50 min-h-screen flex flex-col">
 {{ template "navigation" .}}
 
-<!-- Hauptinhalt -->
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div class="md:flex md:items-center md:justify-between mb-6">
-        <div class="flex-1 min-w-0">
-            <h1 class="text-2xl font-bold text-gray-900">Einstellungen</h1>
-            <p class="mt-1 text-sm text-gray-500">Verwalten Sie die Systemeinstellungen und Konfigurationen</p>
+<!-- Main Content -->
+<main class="container mx-auto px-4 py-6 flex-grow">
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-900">Einstellungen</h1>
+        <p class="mt-1 text-sm text-gray-500">Verwalten Sie Systemeinstellungen und Konfigurationen für FleetDrive</p>
+
+        <!-- Erfolgs- oder Fehlermeldung -->
+        {{if .success}}
+        <div class="mt-4 p-4 bg-green-100 border border-green-200 rounded-md">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-green-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium text-green-800">
+                        {{if eq .success "added"}}Benutzer wurde erfolgreich hinzugefügt.
+                        {{else if eq .success "updated"}}Benutzer wurde erfolgreich aktualisiert.
+                        {{else if eq .success "deleted"}}Benutzer wurde erfolgreich gelöscht.
+                        {{else}}Operation erfolgreich ausgeführt.
+                        {{end}}
+                    </p>
+                </div>
+            </div>
         </div>
+        {{end}}
     </div>
 
     <!-- Tab Navigation -->
     <div class="mb-6 border-b border-gray-200">
-        <nav class="flex space-x-8" aria-label="Tabs">
-            <button class="tab-btn border-indigo-500 text-indigo-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="general">
+        <nav class="flex -mb-px space-x-8" aria-label="Tabs">
+            <button class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-indigo-500 text-indigo-600" data-tab="general">
+                <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
                 Allgemein
             </button>
-            <button class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="notifications">
-                Benachrichtigungen
-            </button>
-            <button class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="appearance">
-                Erscheinungsbild
-            </button>
+
             {{ if eq .userRole "admin" }}
-            <button class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="users">
+            <button class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="users">
+                <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                </svg>
                 Benutzerverwaltung
             </button>
             {{ end }}
+
+            <button class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="integrations">
+                <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                </svg>
+                Integrationen
+            </button>
+
+            <button class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-400 flex items-center cursor-not-allowed" data-tab="notifications">
+                <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4.828 2.828l15.546 15.546a1 1 0 01-1.414 1.414L2.414 4.242a1 1 0 011.414-1.414zm9.9 2.829a7 7 0 00-9.9 9.9l9.9-9.9z"></path>
+                </svg>
+                Benachrichtigungen
+                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
+                    Bald verfügbar
+                </span>
+            </button>
         </nav>
     </div>
 
-    <!-- Tab-Inhalte -->
-    <div id="settings-tabs-content">
-        <!-- Allgemeine Einstellungen -->
-        <div id="general" class="settings-tab-content">
+    <!-- Tab Content -->
+    <!-- 1. Allgemeine Einstellungen -->
+    <div id="general-tab" class="tab-content">
+        <div class="grid grid-cols-1 gap-6">
+            <!-- Firmeninformationen -->
             <div class="bg-white shadow sm:rounded-lg">
                 <div class="px-4 py-5 sm:p-6">
-                    <h3 class="text-lg leading-6 font-medium text-gray-900">Allgemeine Einstellungen</h3>
-                    <div class="mt-2 max-w-xl text-sm text-gray-500">
-                        <p>Passen Sie grundlegende Einstellungen des Systems an.</p>
-                    </div>
-                    <form class="mt-5 space-y-6">
-                        <div>
-                            <label for="company-name" class="block text-sm font-medium text-gray-700">Unternehmensname</label>
-                            <input type="text" name="company-name" id="company-name" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" value="FleetFlow GmbH">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 mb-2">Firmeninformationen</h3>
+                    <p class="text-sm text-gray-500 mb-4">Grundlegende Informationen über Ihr Unternehmen</p>
+
+                    <form class="space-y-4">
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div>
+                                <label for="company-name" class="block text-sm font-medium text-gray-700">Firmenname</label>
+                                <input type="text" name="company-name" id="company-name" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" value="FleetDrive GmbH">
+                            </div>
+                            <div>
+                                <label for="fleet-size" class="block text-sm font-medium text-gray-700">Flottengröße</label>
+                                <select id="fleet-size" name="fleet-size" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                    <option>1-10 Fahrzeuge</option>
+                                    <option>11-50 Fahrzeuge</option>
+                                    <option>51-100 Fahrzeuge</option>
+                                    <option>100+ Fahrzeuge</option>
+                                </select>
+                            </div>
                         </div>
                         <div>
                             <label for="company-address" class="block text-sm font-medium text-gray-700">Adresse</label>
                             <textarea id="company-address" name="company-address" rows="3" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">Musterstraße 123
 80333 München</textarea>
                         </div>
-                        <div>
-                            <label for="timezone" class="block text-sm font-medium text-gray-700">Zeitzone</label>
-                            <select id="timezone" name="timezone" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                                <option value="Europe/Berlin" selected>Europa/Berlin (CET/CEST)</option>
-                                <option value="Europe/London">Europa/London (GMT/BST)</option>
-                                <option value="America/New_York">Amerika/New York (EST/EDT)</option>
-                            </select>
-                        </div>
-                        <div>
+                        <div class="flex justify-end">
                             <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                 Speichern
                             </button>
@@ -67,73 +109,49 @@
                     </form>
                 </div>
             </div>
-        </div>
 
-        <!-- Benachrichtigungseinstellungen -->
-        <div id="notifications" class="settings-tab-content hidden">
+            <!-- System-Einstellungen -->
             <div class="bg-white shadow sm:rounded-lg">
                 <div class="px-4 py-5 sm:p-6">
-                    <h3 class="text-lg leading-6 font-medium text-gray-900">Benachrichtigungseinstellungen</h3>
-                    <div class="mt-2 max-w-xl text-sm text-gray-500">
-                        <p>Legen Sie fest, welche Benachrichtigungen Sie erhalten möchten.</p>
-                    </div>
-                    <form class="mt-5 space-y-6">
-                        <fieldset>
-                            <legend class="text-sm font-medium text-gray-700">E-Mail-Benachrichtigungen</legend>
-                            <div class="mt-4 space-y-4">
-                                <div class="flex items-start">
-                                    <div class="flex items-center h-5">
-                                        <input id="email-bookings" name="email-bookings" type="checkbox" checked class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
-                                    </div>
-                                    <div class="ml-3 text-sm">
-                                        <label for="email-bookings" class="font-medium text-gray-700">Buchungsbenachrichtigungen</label>
-                                        <p class="text-gray-500">Erhalten Sie eine Benachrichtigung bei neuen Fahrzeugbuchungen.</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-start">
-                                    <div class="flex items-center h-5">
-                                        <input id="email-maintenance" name="email-maintenance" type="checkbox" checked class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
-                                    </div>
-                                    <div class="ml-3 text-sm">
-                                        <label for="email-maintenance" class="font-medium text-gray-700">Wartungsbenachrichtigungen</label>
-                                        <p class="text-gray-500">Erhalten Sie eine Benachrichtigung bei anstehenden Wartungen.</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-start">
-                                    <div class="flex items-center h-5">
-                                        <input id="email-reports" name="email-reports" type="checkbox" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
-                                    </div>
-                                    <div class="ml-3 text-sm">
-                                        <label for="email-reports" class="font-medium text-gray-700">Berichtsbenachrichtigungen</label>
-                                        <p class="text-gray-500">Erhalten Sie wöchentliche und monatliche Berichte per E-Mail.</p>
-                                    </div>
-                                </div>
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 mb-2">System-Einstellungen</h3>
+                    <p class="text-sm text-gray-500 mb-4">Anpassungen für die Nutzung von FleetDrive</p>
+
+                    <form class="space-y-4">
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div>
+                                <label for="timezone" class="block text-sm font-medium text-gray-700">Zeitzone</label>
+                                <select id="timezone" name="timezone" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                    <option value="Europe/Berlin" selected>Europa/Berlin (CET/CEST)</option>
+                                    <option value="Europe/London">Europa/London (GMT/BST)</option>
+                                    <option value="America/New_York">Amerika/New York (EST/EDT)</option>
+                                </select>
                             </div>
-                        </fieldset>
-                        <fieldset>
-                            <legend class="text-sm font-medium text-gray-700">System-Benachrichtigungen</legend>
-                            <div class="mt-4 space-y-4">
-                                <div class="flex items-start">
-                                    <div class="flex items-center h-5">
-                                        <input id="system-alerts" name="system-alerts" type="checkbox" checked class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
-                                    </div>
-                                    <div class="ml-3 text-sm">
-                                        <label for="system-alerts" class="font-medium text-gray-700">Systemwarnungen</label>
-                                        <p class="text-gray-500">Erhalten Sie Benachrichtigungen über wichtige Systemereignisse.</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-start">
-                                    <div class="flex items-center h-5">
-                                        <input id="driver-alerts" name="driver-alerts" type="checkbox" checked class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
-                                    </div>
-                                    <div class="ml-3 text-sm">
-                                        <label for="driver-alerts" class="font-medium text-gray-700">Fahrerbenachrichtigungen</label>
-                                        <p class="text-gray-500">Erhalten Sie Benachrichtigungen über Führerscheinablauf und Schulungen.</p>
-                                    </div>
-                                </div>
+                            <div>
+                                <label for="currency" class="block text-sm font-medium text-gray-700">Währung</label>
+                                <select id="currency" name="currency" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                    <option value="EUR" selected>Euro (€)</option>
+                                    <option value="USD">US Dollar ($)</option>
+                                    <option value="GBP">Britisches Pfund (£)</option>
+                                </select>
                             </div>
-                        </fieldset>
-                        <div>
+                        </div>
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div>
+                                <label for="distance-unit" class="block text-sm font-medium text-gray-700">Entfernungseinheit</label>
+                                <select id="distance-unit" name="distance-unit" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                    <option value="km" selected>Kilometer</option>
+                                    <option value="miles">Meilen</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="fuel-unit" class="block text-sm font-medium text-gray-700">Kraftstoffeinheit</label>
+                                <select id="fuel-unit" name="fuel-unit" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                    <option value="liter" selected>Liter</option>
+                                    <option value="gallon">Gallone</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="flex justify-end">
                             <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                 Speichern
                             </button>
@@ -142,80 +160,84 @@
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Erscheinungsbild-Einstellungen -->
-        <div id="appearance" class="settings-tab-content hidden">
-            <div class="bg-white shadow sm:rounded-lg">
-                <div class="px-4 py-5 sm:p-6">
-                    <h3 class="text-lg leading-6 font-medium text-gray-900">Erscheinungsbild</h3>
-                    <div class="mt-2 max-w-xl text-sm text-gray-500">
-                        <p>Passen Sie das Erscheinungsbild der Benutzeroberfläche an.</p>
+    <!-- 2. Benutzerverwaltung (nur für Admins) -->
+    {{ if eq .userRole "admin" }}
+    <div id="users-tab" class="tab-content hidden">
+        <div class="bg-white shadow sm:rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <div class="sm:flex sm:items-center sm:justify-between mb-6">
+                    <div>
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">Benutzerverwaltung</h3>
+                        <p class="mt-1 text-sm text-gray-500">Verwalten Sie Fahrer, Manager und Administratoren</p>
                     </div>
-                    <form class="mt-5 space-y-6">
-                        <fieldset>
-                            <legend class="text-sm font-medium text-gray-700">Farbschema</legend>
-                            <div class="mt-4 space-y-4">
-                                <div class="flex items-center">
-                                    <input id="theme-light" name="theme" type="radio" checked class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300">
-                                    <label for="theme-light" class="ml-3 block text-sm font-medium text-gray-700">
-                                        Helles Design
-                                    </label>
+                    <button type="button" onclick="openModal('addUserModal')" class="mt-3 sm:mt-0 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
+                        </svg>
+                        Benutzer hinzufügen
+                    </button>
+                </div>
+
+                <!-- Statistiken -->
+                <div class="grid grid-cols-1 gap-5 sm:grid-cols-3 mb-6">
+                    <div class="bg-gray-50 overflow-hidden rounded-lg">
+                        <div class="p-5">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <svg class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                    </svg>
                                 </div>
-                                <div class="flex items-center">
-                                    <input id="theme-dark" name="theme" type="radio" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300">
-                                    <label for="theme-dark" class="ml-3 block text-sm font-medium text-gray-700">
-                                        Dunkles Design
-                                    </label>
-                                </div>
-                                <div class="flex items-center">
-                                    <input id="theme-system" name="theme" type="radio" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300">
-                                    <label for="theme-system" class="ml-3 block text-sm font-medium text-gray-700">
-                                        Systemeinstellung
-                                    </label>
+                                <div class="ml-5 w-0 flex-1">
+                                    <dl>
+                                        <dt class="text-sm font-medium text-gray-500 truncate">Aktive Benutzer</dt>
+                                        <dd class="text-lg font-medium text-gray-900">{{if .users}}{{len .users}}{{else}}0{{end}}</dd>
+                                    </dl>
                                 </div>
                             </div>
-                        </fieldset>
-                        <div>
-                            <label for="language" class="block text-sm font-medium text-gray-700">Sprache</label>
-                            <select id="language" name="language" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                                <option selected>Deutsch</option>
-                                <option>English</option>
-                                <option>Français</option>
-                                <option>Español</option>
-                            </select>
                         </div>
-                        <div>
-                            <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                Speichern
-                            </button>
+                    </div>
+                    <div class="bg-gray-50 overflow-hidden rounded-lg">
+                        <div class="p-5">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <svg class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                    </svg>
+                                </div>
+                                <div class="ml-5 w-0 flex-1">
+                                    <dl>
+                                        <dt class="text-sm font-medium text-gray-500 truncate">Fahrer</dt>
+                                        <dd class="text-lg font-medium text-gray-900">{{if .driverCount}}{{.driverCount}}{{else}}0{{end}}</dd>
+                                    </dl>
+                                </div>
+                            </div>
                         </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <!-- Benutzerverwaltung -->
-        {{ if eq .userRole "admin" }}
-        <div id="users" class="settings-tab-content hidden">
-            <div class="bg-white shadow sm:rounded-lg mb-6">
-                <div class="px-4 py-5 sm:p-6">
-                    <div class="sm:flex sm:items-center sm:justify-between">
-                        <div>
-                            <h3 class="text-lg leading-6 font-medium text-gray-900">Benutzerverwaltung</h3>
-                            <p class="mt-1 text-sm text-gray-500">Fügen Sie Benutzer hinzu oder bearbeiten Sie bestehende Benutzerkonten.</p>
+                    </div>
+                    <div class="bg-gray-50 overflow-hidden rounded-lg">
+                        <div class="p-5">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <svg class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                    </svg>
+                                </div>
+                                <div class="ml-5 w-0 flex-1">
+                                    <dl>
+                                        <dt class="text-sm font-medium text-gray-500 truncate">Administratoren</dt>
+                                        <dd class="text-lg font-medium text-gray-900">{{if .adminCount}}{{.adminCount}}{{else}}0{{end}}</dd>
+                                    </dl>
+                                </div>
+                            </div>
                         </div>
-                        <button type="button" id="add-user-btn" class="mt-3 sm:mt-0 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            <svg class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                            </svg>
-                            Benutzer hinzufügen
-                        </button>
                     </div>
                 </div>
 
                 <!-- Benutzerliste -->
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
+                <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+                    <table class="min-w-full divide-y divide-gray-300">
                         <thead class="bg-gray-50">
                         <tr>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
@@ -225,460 +247,394 @@
                             <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Aktionen</th>
                         </tr>
                         </thead>
-                        <tbody id="users-table-body" class="bg-white divide-y divide-gray-200">
-                        <!-- Platzhalter für dynamische Daten -->
+                        <tbody class="bg-white divide-y divide-gray-200">
+                        {{range .users}}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-10 w-10 bg-indigo-100 rounded-full flex items-center justify-center">
+                                        <span class="text-indigo-800 font-medium">{{ getInitials (printf "%s %s" .FirstName .LastName) }}</span>
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-gray-900">{{.FirstName}} {{.LastName}}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{.Email}}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {{if eq .Role "admin"}}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                    Administrator
+                                </span>
+                                {{else if eq .Role "manager"}}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    Manager
+                                </span>
+                                {{else}}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    Benutzer
+                                </span>
+                                {{end}}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {{if eq .Status "active"}}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    Aktiv
+                                </span>
+                                {{else}}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                    Inaktiv
+                                </span>
+                                {{end}}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <button type="button" onclick="openEditUserModal('{{.ID.Hex}}', '{{.FirstName}}', '{{.LastName}}', '{{.Email}}', '{{.Role}}', '{{.Status}}')" class="text-indigo-600 hover:text-indigo-900 mr-3">
+                                    Bearbeiten
+                                </button>
+                                <button type="button" onclick="confirmDeleteUser('{{.ID.Hex}}', '{{.FirstName}} {{.LastName}}')" class="text-red-600 hover:text-red-900">
+                                    Löschen
+                                </button>
+                            </td>
+                        </tr>
+                        {{else}}
+                        <tr>
+                            <td colspan="5" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+                                Keine Benutzer gefunden
+                            </td>
+                        </tr>
+                        {{end}}
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
-        {{ end }}
     </div>
-</div>
+    {{ end }}
 
-<!-- Benutzer-Modals -->
-<!-- Modal: Benutzer hinzufügen -->
-<div id="addUserModal" class="fixed z-10 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <!-- Hintergrund-Overlay -->
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+    <!-- 3. Integrationen -->
+    <div id="integrations-tab" class="tab-content hidden">
+        <div class="space-y-6">
+            <!-- Aktive Integrationen -->
+            <div class="bg-white shadow sm:rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 mb-2">Fleet Management Integrationen</h3>
+                    <p class="text-sm text-gray-500 mb-6">Verbinden Sie FleetDrive mit externen Diensten für erweiterte Funktionen</p>
 
-        <!-- Zentriert den Modal-Inhalt -->
-        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-        <!-- Modal-Panel -->
-        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-            <form id="addUserForm">
-                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                    <div class="sm:flex sm:items-start">
-                        <div class="w-full">
-                            <h3 class="text-lg leading-6 font-medium text-gray-900">
-                                Benutzer hinzufügen
-                            </h3>
-
+                    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                        <!-- GPS Tracking Integration -->
+                        <div class="relative rounded-lg border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
+                            <div class="flex items-center mb-4">
+                                <div class="flex-shrink-0">
+                                    <div class="h-10 w-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                        <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="text-lg font-medium text-gray-900">GPS Tracking</h3>
+                                    <p class="text-sm text-gray-500">Echtzeitüberwachung der Fahrzeugposition</p>
+                                </div>
+                            </div>
                             <div class="mt-4">
-                                <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                                    <div class="sm:col-span-3">
-                                        <label for="firstName" class="block text-sm font-medium text-gray-700">Vorname</label>
-                                        <input type="text" name="firstName" id="firstName" required class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                                    </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                        Nicht konfiguriert
+                                    </span>
+                                    <button type="button" class="text-sm text-indigo-600 hover:text-indigo-900 font-medium">
+                                        Einrichten
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
 
-                                    <div class="sm:col-span-3">
-                                        <label for="lastName" class="block text-sm font-medium text-gray-700">Nachname</label>
-                                        <input type="text" name="lastName" id="lastName" required class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                        <!-- Fuel Card Integration -->
+                        <div class="relative rounded-lg border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
+                            <div class="flex items-center mb-4">
+                                <div class="flex-shrink-0">
+                                    <div class="h-10 w-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                        <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                                        </svg>
                                     </div>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="text-lg font-medium text-gray-900">Tankkarten</h3>
+                                    <p class="text-sm text-gray-500">Automatische Kraftstoffkosten-Synchronisation</p>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <div class="flex items-center justify-between">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                        Nicht konfiguriert
+                                    </span>
+                                    <button type="button" class="text-sm text-indigo-600 hover:text-indigo-900 font-medium">
+                                        Einrichten
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
 
-                                    <div class="sm:col-span-6">
-                                        <label for="email" class="block text-sm font-medium text-gray-700">E-Mail</label>
-                                        <input type="email" name="email" id="email" required class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                        <!-- Insurance Integration -->
+                        <div class="relative rounded-lg border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
+                            <div class="flex items-center mb-4">
+                                <div class="flex-shrink-0">
+                                    <div class="h-10 w-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+                                        <svg class="h-6 w-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                        </svg>
                                     </div>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="text-lg font-medium text-gray-900">Versicherung</h3>
+                                    <p class="text-sm text-gray-500">Schadensmeldungen und Vertragsverwaltung</p>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <div class="flex items-center justify-between">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                        Nicht konfiguriert
+                                    </span>
+                                    <button type="button" class="text-sm text-indigo-600 hover:text-indigo-900 font-medium">
+                                        Einrichten
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
 
-                                    <div class="sm:col-span-6">
-                                        <label for="password" class="block text-sm font-medium text-gray-700">Passwort</label>
-                                        <input type="password" name="password" id="password" required class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                        <!-- Workshop Integration -->
+                        <div class="relative rounded-lg border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
+                            <div class="flex items-center mb-4">
+                                <div class="flex-shrink-0">
+                                    <div class="h-10 w-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                                        <svg class="h-6 w-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        </svg>
                                     </div>
-
-                                    <div class="sm:col-span-3">
-                                        <label for="role" class="block text-sm font-medium text-gray-700">Rolle</label>
-                                        <select id="role" name="role" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                                            <option value="user">Benutzer</option>
-                                            <option value="manager">Manager</option>
-                                            <option value="admin">Administrator</option>
-                                        </select>
-                                    </div>
-
-                                    <div class="sm:col-span-3">
-                                        <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
-                                        <select id="status" name="status" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                                            <option value="active">Aktiv</option>
-                                            <option value="inactive">Inaktiv</option>
-                                        </select>
-                                    </div>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="text-lg font-medium text-gray-900">Werkstätten</h3>
+                                    <p class="text-sm text-gray-500">Wartungstermine und Kostenabrechnung</p>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <div class="flex items-center justify-between">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                        Nicht konfiguriert
+                                    </span>
+                                    <button type="button" class="text-sm text-indigo-600 hover:text-indigo-900 font-medium">
+                                        Einrichten
+                                    </button>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                    <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm">
+            </div>
+
+            <!-- Verfügbare Integrationen -->
+            <div class="bg-white shadow sm:rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">Kommende Integrationen</h3>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                            In Entwicklung
+                        </span>
+                    </div>
+                    <p class="text-sm text-gray-500 mb-6">Diese Funktionen werden in zukünftigen Updates verfügbar sein</p>
+
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                        <div class="relative rounded-lg border border-gray-200 bg-gray-50 p-4 opacity-60">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <svg class="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2M7 4h10l1 15H6L7 4zM4 7h16M9 12h6"></path>
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <h3 class="text-sm font-medium text-gray-900">Telematik</h3>
+                                    <p class="text-xs text-gray-500">Fahrzeugdaten in Echtzeit</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="relative rounded-lg border border-gray-200 bg-gray-50 p-4 opacity-60">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <svg class="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <h3 class="text-sm font-medium text-gray-900">Mobile App</h3>
+                                    <p class="text-xs text-gray-500">iOS und Android App</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="relative rounded-lg border border-gray-200 bg-gray-50 p-4 opacity-60">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <svg class="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <h3 class="text-sm font-medium text-gray-900">BI Dashboard</h3>
+                                    <p class="text-xs text-gray-500">Erweiterte Analysen</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="relative rounded-lg border border-gray-200 bg-gray-50 p-4 opacity-60">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <svg class="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <h3 class="text-sm font-medium text-gray-900">API</h3>
+                                    <p class="text-xs text-gray-500">REST API für Entwickler</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Benachrichtigungen (Disabled) -->
+    <div id="notifications-tab" class="tab-content hidden">
+        <div class="bg-white shadow sm:rounded-lg">
+            <div class="px-4 py-5 sm:p-6 text-center">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4.828 2.828l15.546 15.546a1 1 0 01-1.414 1.414L2.414 4.242a1 1 0 011.414-1.414zm9.9 2.829a7 7 0 00-9.9 9.9l9.9-9.9z"></path>
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">Benachrichtigungen kommen bald</h3>
+                <p class="mt-1 text-sm text-gray-500">Diese Funktion wird in einem zukünftigen Update verfügbar sein.</p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- User Modals (gleich wie vorher aber vereinfacht) -->
+<div id="addUserModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75"></div>
+        <div class="relative bg-white rounded-lg max-w-md w-full mx-auto shadow-xl">
+            <div class="flex justify-between items-center px-6 py-4 border-b">
+                <h3 class="text-lg font-medium text-gray-900">Benutzer hinzufügen</h3>
+                <button type="button" onclick="closeModal('addUserModal')" class="text-gray-400 hover:text-gray-500">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <form id="addUserForm" action="/users/add" method="POST" class="px-6 py-4">
+                <div class="space-y-4">
+                    <div>
+                        <label for="firstName" class="block text-sm font-medium text-gray-700">Vorname</label>
+                        <input type="text" name="firstName" id="firstName" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label for="lastName" class="block text-sm font-medium text-gray-700">Nachname</label>
+                        <input type="text" name="lastName" id="lastName" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700">E-Mail</label>
+                        <input type="email" name="email" id="email" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700">Passwort</label>
+                        <input type="password" name="password" id="password" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label for="role" class="block text-sm font-medium text-gray-700">Rolle</label>
+                        <select name="role" id="role" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            <option value="user">Fahrer</option>
+                            <option value="manager">Manager</option>
+                            <option value="admin">Administrator</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-5 flex justify-end space-x-3">
+                    <button type="button" onclick="closeModal('addUserModal')" class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Abbrechen
+                    </button>
+                    <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
                         Hinzufügen
                     </button>
-                    <button type="button" onclick="closeModal('addUserModal')" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
-                        Abbrechen
-                    </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<!-- Modal: Benutzer bearbeiten -->
-<div id="editUserModal" class="fixed z-10 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <!-- Hintergrund-Overlay -->
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
-
-        <!-- Zentriert den Modal-Inhalt -->
-        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-        <!-- Modal-Panel -->
-        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-            <form id="editUserForm">
-                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                    <div class="sm:flex sm:items-start">
-                        <div class="w-full">
-                            <h3 class="text-lg leading-6 font-medium text-gray-900">
-                                Benutzer bearbeiten
-                            </h3>
-
-                            <div class="mt-4">
-                                <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                                    <div class="sm:col-span-3">
-                                        <label for="edit-firstName" class="block text-sm font-medium text-gray-700">Vorname</label>
-                                        <input type="text" name="firstName" id="edit-firstName" required class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                                    </div>
-
-                                    <div class="sm:col-span-3">
-                                        <label for="edit-lastName" class="block text-sm font-medium text-gray-700">Nachname</label>
-                                        <input type="text" name="lastName" id="edit-lastName" required class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                                    </div>
-
-                                    <div class="sm:col-span-6">
-                                        <label for="edit-email" class="block text-sm font-medium text-gray-700">E-Mail</label>
-                                        <input type="email" name="email" id="edit-email" required class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                                    </div>
-
-                                    <div class="sm:col-span-6">
-                                        <label for="edit-password" class="block text-sm font-medium text-gray-700">Neues Passwort (leer lassen, wenn unverändert)</label>
-                                        <input type="password" name="password" id="edit-password" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                                    </div>
-
-                                    <div class="sm:col-span-3">
-                                        <label for="edit-role" class="block text-sm font-medium text-gray-700">Rolle</label>
-                                        <select id="edit-role" name="role" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                                            <option value="user">Benutzer</option>
-                                            <option value="manager">Manager</option>
-                                            <option value="admin">Administrator</option>
-                                        </select>
-                                    </div>
-
-                                    <div class="sm:col-span-3">
-                                        <label for="edit-status" class="block text-sm font-medium text-gray-700">Status</label>
-                                        <select id="edit-status" name="status" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                                            <option value="active">Aktiv</option>
-                                            <option value="inactive">Inaktiv</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                    <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm">
-                        Speichern
-                    </button>
-                    <button type="button" onclick="closeModal('editUserModal')" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
-                        Abbrechen
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+<!-- Footer -->
+{{ template "footer" . }}
 
 <script>
-    // Tab-Funktionalität
+    // Tab-Wechsel Funktionalität
     document.addEventListener('DOMContentLoaded', function() {
-        const tabButtons = document.querySelectorAll('.tab-btn');
-        const tabContents = document.querySelectorAll('.settings-tab-content');
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
 
-        tabButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const tabId = this.getAttribute('data-tab');
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                if (this.classList.contains('cursor-not-allowed')) {
+                    return;
+                }
 
-                // Alle Tabs deaktivieren
-                tabButtons.forEach(btn => {
-                    btn.classList.remove('border-indigo-500', 'text-indigo-600');
-                    btn.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+                const tab = this.getAttribute('data-tab');
+
+                // Aktiven Button-Zustand ändern
+                tabBtns.forEach(button => {
+                    if (!button.classList.contains('cursor-not-allowed')) {
+                        button.classList.remove('border-indigo-500', 'text-indigo-600');
+                        button.classList.add('border-transparent', 'text-gray-500');
+                    }
                 });
 
-                // Alle Tab-Inhalte verstecken
+                this.classList.remove('border-transparent', 'text-gray-500');
+                this.classList.add('border-indigo-500', 'text-indigo-600');
+
+                // Tab-Inhalte ein-/ausblenden
                 tabContents.forEach(content => {
                     content.classList.add('hidden');
                 });
 
-                // Aktuellen Tab aktivieren
-                this.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
-                this.classList.add('border-indigo-500', 'text-indigo-600');
-
-                // Aktuellen Tab-Inhalt anzeigen
-                document.getElementById(tabId).classList.remove('hidden');
-
-                // Wenn Benutzer-Tab aktiviert wird, lade die Benutzer
-                if (tabId === 'users') {
-                    loadUsers();
-                }
+                document.getElementById(tab + '-tab').classList.remove('hidden');
             });
         });
-
-        // Add User Button Event Listener
-        const addUserBtn = document.getElementById('add-user-btn');
-        if (addUserBtn) {
-            addUserBtn.addEventListener('click', () => openModal('addUserModal'));
-        }
     });
-
-    // Benutzer laden
-    function loadUsers() {
-        fetch('/api/users')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Fehler beim Laden der Benutzer');
-                }
-                return response.json();
-            })
-            .then(data => {
-                const users = data.users || [];
-                renderUsers(users);
-            })
-            .catch(error => {
-                console.error('Fehler:', error);
-                const tableBody = document.getElementById('users-table-body');
-                if (tableBody) {
-                    tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="5" class="px-6 py-4 text-center text-sm text-red-500">
-                            Fehler beim Laden der Benutzer: ${error.message}
-                        </td>
-                    </tr>
-                `;
-                }
-            });
-    }
-
-    // Benutzer in Tabelle rendern
-    function renderUsers(users) {
-        const tableBody = document.getElementById('users-table-body');
-        if (!tableBody) return;
-
-        if (users.length === 0) {
-            tableBody.innerHTML = `
-            <tr>
-                <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
-                    Keine Benutzer gefunden
-                </td>
-            </tr>
-        `;
-            return;
-        }
-
-        tableBody.innerHTML = users.map(user => {
-            const roleClass = getRoleClass(user.role);
-            const statusClass = getStatusClass(user.status);
-
-            return `
-            <tr>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="flex items-center">
-                        <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
-                            <span class="text-indigo-600 font-medium text-sm">
-                                ${(user.firstName || user.username || 'U')[0].toUpperCase()}
-                            </span>
-                        </div>
-                        <div class="ml-4">
-                            <div class="text-sm font-medium text-gray-900">
-                                ${user.firstName || ''} ${user.lastName || ''}
-                            </div>
-                            <div class="text-sm text-gray-500">
-                                ${user.username || ''}
-                            </div>
-                        </div>
-                    </div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm text-gray-900">${user.email || ''}</div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${roleClass}">
-                        ${getRoleText(user.role)}
-                    </span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}">
-                        ${getStatusText(user.status)}
-                    </span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button onclick="openEditUserModal('${user.id}', '${user.firstName || ''}', '${user.lastName || ''}', '${user.email || ''}', '${user.role}', '${user.status}')" class="text-indigo-600 hover:text-indigo-900 mr-3">
-                        Bearbeiten
-                    </button>
-                    <button onclick="confirmDeleteUser('${user.id}', '${user.firstName || user.username}')" class="text-red-600 hover:text-red-900">
-                        Löschen
-                    </button>
-                </td>
-            </tr>
-        `;
-        }).join('');
-    }
-
-    // Hilfsfunktionen für Klassen und Text
-    function getRoleClass(role) {
-        switch (role) {
-            case 'admin':
-                return 'bg-purple-100 text-purple-800';
-            case 'manager':
-                return 'bg-blue-100 text-blue-800';
-            default:
-                return 'bg-green-100 text-green-800';
-        }
-    }
-
-    function getStatusClass(status) {
-        return status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
-    }
-
-    function getRoleText(role) {
-        switch (role) {
-            case 'admin':
-                return 'Administrator';
-            case 'manager':
-                return 'Manager';
-            default:
-                return 'Benutzer';
-        }
-    }
-
-    function getStatusText(status) {
-        return status === 'active' ? 'Aktiv' : 'Inaktiv';
-    }
 
     // Modal-Funktionen
-    function openModal(modalId) {
-        document.getElementById(modalId).classList.remove('hidden');
+    function openModal(id) {
+        document.getElementById(id).classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
     }
 
-    function closeModal(modalId) {
-        document.getElementById(modalId).classList.add('hidden');
+    function closeModal(id) {
+        document.getElementById(id).classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
     }
 
-    // Benutzer bearbeiten
+    // Placeholder functions for user management
     function openEditUserModal(id, firstName, lastName, email, role, status) {
-        // Formular vorausfüllen
-        document.getElementById('edit-firstName').value = firstName;
-        document.getElementById('edit-lastName').value = lastName;
-        document.getElementById('edit-email').value = email;
-        document.getElementById('edit-role').value = role;
-        document.getElementById('edit-status').value = status;
-
-        // ID speichern (z.B. in einem data-Attribut)
-        const form = document.getElementById('editUserForm');
-        form.setAttribute('data-user-id', id);
-
-        openModal('editUserModal');
+        // Implementation for edit user modal
+        console.log('Edit user:', {id, firstName, lastName, email, role, status});
     }
 
-    // Benutzer löschen bestätigen
     function confirmDeleteUser(id, name) {
         if (confirm(`Möchten Sie den Benutzer "${name}" wirklich löschen?`)) {
-            deleteUser(id);
+            // Implementation for delete user
+            console.log('Delete user:', id);
         }
     }
-
-    // API-Aufrufe
-    function deleteUser(id) {
-        fetch(`/api/users/${id}`, {
-            method: 'DELETE',
-        })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Fehler beim Löschen des Benutzers');
-                }
-                return response.json();
-            })
-            .then(data => {
-                alert('Benutzer erfolgreich gelöscht!');
-                loadUsers(); // Benutzer neu laden
-            })
-            .catch(error => {
-                console.error('Fehler:', error);
-                alert('Fehler beim Löschen des Benutzers');
-            });
-    }
-
-    // Formular-Handling
-    document.getElementById('addUserForm').addEventListener('submit', function(event) {
-        event.preventDefault();
-
-        const formData = new FormData(this);
-        const userData = {};
-
-        for (let [key, value] of formData.entries()) {
-            userData[key] = value;
-        }
-
-        // API-Aufruf zum Hinzufügen des Benutzers
-        fetch('/api/users', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(userData)
-        })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Fehler beim Hinzufügen des Benutzers');
-                }
-                return response.json();
-            })
-            .then(data => {
-                closeModal('addUserModal');
-                alert('Benutzer erfolgreich hinzugefügt!');
-                loadUsers(); // Benutzer neu laden
-            })
-            .catch(error => {
-                console.error('Fehler:', error);
-                alert('Fehler beim Hinzufügen des Benutzers');
-            });
-    });
-
-    document.getElementById('editUserForm').addEventListener('submit', function(event) {
-        event.preventDefault();
-
-        const userId = this.getAttribute('data-user-id');
-        const formData = new FormData(this);
-        const userData = {};
-
-        for (let [key, value] of formData.entries()) {
-            userData[key] = value;
-        }
-
-        // API-Aufruf zum Aktualisieren des Benutzers
-        fetch(`/api/users/${userId}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(userData)
-        })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Fehler beim Aktualisieren des Benutzers');
-                }
-                return response.json();
-            })
-            .then(data => {
-                closeModal('editUserModal');
-                alert('Benutzer erfolgreich aktualisiert!');
-                loadUsers(); // Benutzer neu laden
-            })
-            .catch(error => {
-                console.error('Fehler:', error);
-                alert('Fehler beim Aktualisieren des Benutzers');
-            });
-    });
 </script>
-
-{{ template "footer" .}}
 </body>
 </html>

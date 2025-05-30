@@ -69,14 +69,47 @@ func setupAuthorizedRoutes(group *gin.RouterGroup) {
 	// Dashboard-Route mit dem neuen Handler
 	group.GET("/dashboard", dashboardHandler.GetCompleteDashboardData)
 
+	// backend/router.go - Settings Route Anpassung
+	// Ersetze die bestehende Settings-Route in setupAuthorizedRoutes
+
 	group.GET("/settings", func(c *gin.Context) {
 		user, _ := c.Get("user")
-		c.HTML(http.StatusOK, "settings.html", gin.H{
-			"title":    "Einstellungen",
-			"user":     user.(*model.User).FirstName + " " + user.(*model.User).LastName,
-			"userRole": user.(*model.User).Role,
-			"year":     currentYear,
-		})
+		currentUser := user.(*model.User)
+
+		// Template-Daten vorbereiten
+		templateData := gin.H{
+			"title":       "Einstellungen",
+			"user":        currentUser.FirstName + " " + currentUser.LastName,
+			"userRole":    currentUser.Role,
+			"year":        currentYear,
+			"users":       []*model.User{}, // Leeres Array als Standard
+			"driverCount": 0,
+			"adminCount":  0,
+		}
+
+		// Nur für Admins: Benutzer laden und Statistiken berechnen
+		if currentUser.Role == model.RoleAdmin {
+			userRepo := repository.NewUserRepository()
+			users, err := userRepo.FindAll()
+			if err == nil {
+				templateData["users"] = users
+
+				// Statistiken berechnen
+				var driverCount, adminCount int
+				for _, u := range users {
+					switch u.Role {
+					case model.RoleUser:
+						driverCount++
+					case model.RoleAdmin:
+						adminCount++
+					}
+				}
+				templateData["driverCount"] = driverCount
+				templateData["adminCount"] = adminCount
+			}
+		}
+
+		c.HTML(http.StatusOK, "settings.html", templateData)
 	})
 
 	// Profile route
