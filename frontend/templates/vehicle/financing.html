@@ -51,7 +51,7 @@
                     <div class="sm:col-span-1">
                         <dt class="text-sm font-medium text-gray-500">Kaufpreis</dt>
                         <dd class="mt-1 text-sm text-gray-900">
-                            {{if gt .vehicle.purchasePrice 0}}
+                            {{if .vehicle.purchasePrice}}
                             {{formatCurrency .vehicle.purchasePrice}}
                             {{else}}
                             -
@@ -94,7 +94,7 @@
                     <div class="sm:col-span-1">
                         <dt class="text-sm font-medium text-gray-500">Monatliche Rate</dt>
                         <dd class="mt-1 text-sm text-gray-900">
-                            {{if gt .vehicle.financeMonthlyRate 0}}
+                            {{if .vehicle.financeMonthlyRate}}
                             {{formatCurrency .vehicle.financeMonthlyRate}}
                             {{else}}
                             -
@@ -104,7 +104,7 @@
                     <div class="sm:col-span-1">
                         <dt class="text-sm font-medium text-gray-500">Zinssatz</dt>
                         <dd class="mt-1 text-sm text-gray-900">
-                            {{if gt .vehicle.financeInterestRate 0}}
+                            {{if .vehicle.financeInterestRate}}
                             {{printf "%.2f" .vehicle.financeInterestRate}}%
                             {{else}}
                             -
@@ -114,7 +114,7 @@
                     <div class="sm:col-span-1">
                         <dt class="text-sm font-medium text-gray-500">Anzahlung</dt>
                         <dd class="mt-1 text-sm text-gray-900">
-                            {{if gt .vehicle.financeDownPayment 0}}
+                            {{if .vehicle.financeDownPayment}}
                             {{formatCurrency .vehicle.financeDownPayment}}
                             {{else}}
                             -
@@ -124,7 +124,7 @@
                     <div class="sm:col-span-1">
                         <dt class="text-sm font-medium text-gray-500">Gesamtbetrag</dt>
                         <dd class="mt-1 text-sm text-gray-900">
-                            {{if gt .vehicle.financeTotalAmount 0}}
+                            {{if .vehicle.financeTotalAmount}}
                             {{formatCurrency .vehicle.financeTotalAmount}}
                             {{else}}
                             -
@@ -167,7 +167,7 @@
                     <div class="sm:col-span-1">
                         <dt class="text-sm font-medium text-gray-500">Monatliche Rate</dt>
                         <dd class="mt-1 text-sm text-gray-900">
-                            {{if gt .vehicle.leaseMonthlyRate 0}}
+                            {{if .vehicle.leaseMonthlyRate}}
                             {{formatCurrency .vehicle.leaseMonthlyRate}}
                             {{else}}
                             -
@@ -177,7 +177,7 @@
                     <div class="sm:col-span-1">
                         <dt class="text-sm font-medium text-gray-500">Kilometer-Limit/Jahr</dt>
                         <dd class="mt-1 text-sm text-gray-900">
-                            {{if gt .vehicle.leaseMileageLimit 0}}
+                            {{if .vehicle.leaseMileageLimit}}
                             {{formatNumber .vehicle.leaseMileageLimit}} km
                             {{else}}
                             -
@@ -187,7 +187,7 @@
                     <div class="sm:col-span-1">
                         <dt class="text-sm font-medium text-gray-500">Mehrkilometer-Kosten</dt>
                         <dd class="mt-1 text-sm text-gray-900">
-                            {{if gt .vehicle.leaseExcessMileageCost 0}}
+                            {{if .vehicle.leaseExcessMileageCost}}
                             {{formatCurrency .vehicle.leaseExcessMileageCost}}/km
                             {{else}}
                             -
@@ -197,7 +197,7 @@
                     <div class="sm:col-span-1">
                         <dt class="text-sm font-medium text-gray-500">Restwert</dt>
                         <dd class="mt-1 text-sm text-gray-900">
-                            {{if gt .vehicle.leaseResidualValue 0}}
+                            {{if .vehicle.leaseResidualValue}}
                             {{formatCurrency .vehicle.leaseResidualValue}}
                             {{else}}
                             -
