@@ -1,28 +1,5 @@
 // frontend/static/js/vehicle-modals.js
 
-// Fahrzeug bearbeiten Modal
-function initializeVehicleEditModal() {
-    const form = document.getElementById('edit-vehicle-form');
-    const closeBtn = document.querySelector('.close-edit-modal-btn');
-    const modal = document.getElementById('edit-vehicle-modal');
-
-    if (closeBtn) {
-        closeBtn.addEventListener('click', () => {
-            modal.classList.add('hidden');
-        });
-    }
-
-    if (form) {
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const vehicleId = window.location.pathname.split('/').pop();
-            await updateVehicleBasicInfo(vehicleId, new FormData(form));
-            modal.classList.add('hidden');
-            loadBasicInfo(vehicleId);
-        });
-    }
-}
-
 // Wartungs-Modal
 function initializeMaintenanceModal() {
     const form = document.getElementById('maintenance-form');
@@ -244,6 +221,138 @@ async function loadDriversForSelect(selectId) {
         });
     } catch (error) {
         console.error('Fehler beim Laden der Fahrer:', error);
+    }
+}
+
+window.openEditVehicleModal = async function(vehicleId) {
+    const modal = document.getElementById('edit-vehicle-modal');
+    const response = await fetch(`/api/vehicles/${vehicleId}`);
+    const data = await response.json();
+    const vehicle = data.vehicle;
+
+    // Formular mit Daten füllen
+    // Grunddaten
+    document.getElementById('license_plate').value = vehicle.licensePlate || '';
+    document.getElementById('vehicle_brand').value = vehicle.brand || '';
+    document.getElementById('model').value = vehicle.model || '';
+    document.getElementById('year').value = vehicle.year || '';
+    document.getElementById('color').value = vehicle.color || '';
+    document.getElementById('vehicle_id').value = vehicle.vehicleId || '';
+    document.getElementById('vin').value = vehicle.vin || '';
+    document.getElementById('vehicle_type').value = vehicle.vehicleType || '';
+    document.getElementById('fuel_type').value = vehicle.fuelType || '';
+    document.getElementById('current_mileage').value = vehicle.mileage || '';
+
+    // Technische Daten
+    document.getElementById('engine_displacement').value = vehicle.engineDisplacement || '';
+    document.getElementById('power_rating').value = vehicle.powerRating || '';
+    document.getElementById('number_of_axles').value = vehicle.numberOfAxles || '';
+    document.getElementById('tire_size').value = vehicle.tireSize || '';
+    document.getElementById('rim_type').value = vehicle.rimType || '';
+    document.getElementById('emission_class').value = vehicle.emissionClass || '';
+    document.getElementById('max_speed').value = vehicle.maxSpeed || '';
+    document.getElementById('towing_capacity').value = vehicle.towingCapacity || '';
+
+    // Abmessungen & Gewichte
+    document.getElementById('length').value = vehicle.length || '';
+    document.getElementById('width').value = vehicle.width || '';
+    document.getElementById('height').value = vehicle.height || '';
+    document.getElementById('curb_weight').value = vehicle.curbWeight || '';
+    document.getElementById('gross_weight').value = vehicle.grossWeight || '';
+    document.getElementById('technical_max_weight').value = vehicle.technicalMaxWeight || '';
+    document.getElementById('special_features').value = vehicle.specialFeatures || '';
+
+    // Tab-Funktionalität initialisieren
+    initializeModalTabs();
+
+    modal.classList.remove('hidden');
+};
+
+// Tab-Funktionalität für Modal
+function initializeModalTabs() {
+    const tabButtons = document.querySelectorAll('#edit-vehicle-modal .tab-btn');
+    const tabContents = document.querySelectorAll('#edit-vehicle-modal .tab-content');
+
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const targetTab = button.dataset.tab;
+
+            // Alle Tabs verstecken
+            tabContents.forEach(content => {
+                content.classList.add('hidden');
+            });
+
+            // Alle Buttons deaktivieren
+            tabButtons.forEach(btn => {
+                btn.classList.remove('border-indigo-500', 'text-indigo-600', 'active');
+                btn.classList.add('border-transparent', 'text-gray-500');
+            });
+
+            // Gewählten Tab anzeigen
+            document.getElementById(`${targetTab}-tab`).classList.remove('hidden');
+
+            // Gewählten Button aktivieren
+            button.classList.add('border-indigo-500', 'text-indigo-600', 'active');
+            button.classList.remove('border-transparent', 'text-gray-500');
+        });
+    });
+}
+
+// Fahrzeug bearbeiten Modal - Erweitere die Submit-Funktion
+function initializeVehicleEditModal() {
+    const form = document.getElementById('edit-vehicle-form');
+    const closeBtn = document.querySelector('.close-edit-modal-btn');
+    const modal = document.getElementById('edit-vehicle-modal');
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            modal.classList.add('hidden');
+        });
+    }
+
+    if (form) {
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const vehicleId = window.location.pathname.split('/').pop();
+            const formData = new FormData(form);
+
+            // Erweiterte Daten sammeln
+            const data = {
+                licensePlate: formData.get('license_plate'),
+                brand: formData.get('vehicle_brand'),
+                model: formData.get('model'),
+                year: parseInt(formData.get('year')),
+                color: formData.get('color'),
+                vehicleId: formData.get('vehicle_id'),
+                vin: formData.get('vin'),
+                vehicleType: formData.get('vehicle_type'),
+                fuelType: formData.get('fuel_type'),
+                mileage: parseInt(formData.get('current_mileage')) || 0,
+
+                // Technische Daten
+                engineDisplacement: parseInt(formData.get('engine_displacement')) || 0,
+                powerRating: parseFloat(formData.get('power_rating')) || 0,
+                numberOfAxles: parseInt(formData.get('number_of_axles')) || 0,
+                tireSize: formData.get('tire_size'),
+                rimType: formData.get('rim_type'),
+                emissionClass: formData.get('emission_class'),
+                maxSpeed: parseInt(formData.get('max_speed')) || 0,
+                towingCapacity: parseInt(formData.get('towing_capacity')) || 0,
+
+                // Abmessungen & Gewichte
+                length: parseInt(formData.get('length')) || 0,
+                width: parseInt(formData.get('width')) || 0,
+                height: parseInt(formData.get('height')) || 0,
+                curbWeight: parseInt(formData.get('curb_weight')) || 0,
+                grossWeight: parseInt(formData.get('gross_weight')) || 0,
+                technicalMaxWeight: parseInt(formData.get('technical_max_weight')) || 0,
+                specialFeatures: formData.get('special_features')
+            };
+
+            await updateVehicleBasicInfo(vehicleId, data);
+            modal.classList.add('hidden');
+            loadBasicInfo(vehicleId);
+        });
     }
 }
 

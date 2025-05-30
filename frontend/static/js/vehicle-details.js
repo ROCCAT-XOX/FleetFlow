@@ -167,15 +167,40 @@ async function loadBasicInfo(vehicleId) {
         const data = await response.json();
         const vehicle = data.vehicle;
 
-        // Felder aktualisieren
+        // Grunddaten
         document.getElementById('license-plate-display').textContent = vehicle.licensePlate || '-';
         document.getElementById('brand-model-display').textContent = `${vehicle.brand} ${vehicle.model}` || '-';
         document.getElementById('year-display').textContent = vehicle.year || '-';
         document.getElementById('color-display').textContent = vehicle.color || '-';
         document.getElementById('vehicle-id-display').textContent = vehicle.vehicleId || '-';
         document.getElementById('vin-display').textContent = vehicle.vin || '-';
+        document.getElementById('vehicle-type-display').textContent = vehicle.vehicleType || '-';
         document.getElementById('fuel-type-display').textContent = vehicle.fuelType || '-';
         document.getElementById('mileage-display').textContent = vehicle.mileage ? `${vehicle.mileage.toLocaleString()} km` : '-';
+
+        // Technische Daten
+        document.getElementById('engine-displacement-display').textContent = vehicle.engineDisplacement ? `${vehicle.engineDisplacement} cm³` : '-';
+        document.getElementById('power-rating-display').textContent = vehicle.powerRating ? `${vehicle.powerRating} kW` : '-';
+        document.getElementById('number-of-axles-display').textContent = vehicle.numberOfAxles || '-';
+        document.getElementById('max-speed-display').textContent = vehicle.maxSpeed ? `${vehicle.maxSpeed} km/h` : '-';
+        document.getElementById('tire-size-display').textContent = vehicle.tireSize || '-';
+        document.getElementById('rim-type-display').textContent = vehicle.rimType || '-';
+        document.getElementById('emission-class-display').textContent = vehicle.emissionClass || '-';
+        document.getElementById('towing-capacity-display').textContent = vehicle.towingCapacity ? `${vehicle.towingCapacity} kg` : '-';
+
+        // Abmessungen & Gewichte
+        if (vehicle.length && vehicle.width && vehicle.height) {
+            document.getElementById('dimensions-display').textContent = `${vehicle.length} × ${vehicle.width} × ${vehicle.height} mm`;
+        } else {
+            document.getElementById('dimensions-display').textContent = '-';
+        }
+
+        document.getElementById('curb-weight-display').textContent = vehicle.curbWeight ? `${vehicle.curbWeight} kg` : '-';
+        document.getElementById('gross-weight-display').textContent = vehicle.grossWeight ? `${vehicle.grossWeight} kg` : '-';
+        document.getElementById('technical-max-weight-display').textContent = vehicle.technicalMaxWeight ? `${vehicle.technicalMaxWeight} kg` : '-';
+
+        // Besonderheiten
+        document.getElementById('special-features-display').textContent = vehicle.specialFeatures || 'Keine besonderen Merkmale eingetragen';
 
     } catch (error) {
         console.error('Fehler:', error);

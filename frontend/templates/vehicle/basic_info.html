@@ -3,7 +3,6 @@
     <div class="bg-white overflow-hidden shadow rounded-lg">
         <div class="px-4 py-5 sm:px-6 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
             <div class="flex items-center">
-
                 <h3 class="text-lg leading-6 font-medium text-gray-900">Fahrzeuginformationen</h3>
             </div>
             <button type="button" id="edit-vehicle-btn" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
@@ -14,7 +13,9 @@
             </button>
         </div>
         <div class="px-4 py-5 sm:p-6">
-            <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+            <!-- Grunddaten -->
+            <h4 class="text-base font-medium text-gray-900 mb-4">Grunddaten</h4>
+            <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 mb-8">
                 <div class="sm:col-span-1">
                     <dt class="text-sm font-medium text-gray-500">Kennzeichen</dt>
                     <dd class="mt-1 text-sm text-gray-900" id="license-plate-display">-</dd>
@@ -40,6 +41,10 @@
                     <dd class="mt-1 text-sm text-gray-900" id="vin-display">-</dd>
                 </div>
                 <div class="sm:col-span-1">
+                    <dt class="text-sm font-medium text-gray-500">Art des Fahrzeugs</dt>
+                    <dd class="mt-1 text-sm text-gray-900" id="vehicle-type-display">-</dd>
+                </div>
+                <div class="sm:col-span-1">
                     <dt class="text-sm font-medium text-gray-500">Kraftstoffart</dt>
                     <dd class="mt-1 text-sm text-gray-900" id="fuel-type-display">-</dd>
                 </div>
@@ -48,6 +53,70 @@
                     <dd class="mt-1 text-sm text-gray-900" id="mileage-display">-</dd>
                 </div>
             </dl>
+
+            <!-- Technische Daten -->
+            <h4 class="text-base font-medium text-gray-900 mb-4 pt-6 border-t">Technische Daten</h4>
+            <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 mb-8">
+                <div class="sm:col-span-1">
+                    <dt class="text-sm font-medium text-gray-500">Hubraum</dt>
+                    <dd class="mt-1 text-sm text-gray-900" id="engine-displacement-display">-</dd>
+                </div>
+                <div class="sm:col-span-1">
+                    <dt class="text-sm font-medium text-gray-500">Nennleistung</dt>
+                    <dd class="mt-1 text-sm text-gray-900" id="power-rating-display">-</dd>
+                </div>
+                <div class="sm:col-span-1">
+                    <dt class="text-sm font-medium text-gray-500">Anzahl der Achsen</dt>
+                    <dd class="mt-1 text-sm text-gray-900" id="number-of-axles-display">-</dd>
+                </div>
+                <div class="sm:col-span-1">
+                    <dt class="text-sm font-medium text-gray-500">Höchstgeschwindigkeit</dt>
+                    <dd class="mt-1 text-sm text-gray-900" id="max-speed-display">-</dd>
+                </div>
+                <div class="sm:col-span-1">
+                    <dt class="text-sm font-medium text-gray-500">Reifengröße</dt>
+                    <dd class="mt-1 text-sm text-gray-900" id="tire-size-display">-</dd>
+                </div>
+                <div class="sm:col-span-1">
+                    <dt class="text-sm font-medium text-gray-500">Felgentyp</dt>
+                    <dd class="mt-1 text-sm text-gray-900" id="rim-type-display">-</dd>
+                </div>
+                <div class="sm:col-span-1">
+                    <dt class="text-sm font-medium text-gray-500">Schadstoffklasse</dt>
+                    <dd class="mt-1 text-sm text-gray-900" id="emission-class-display">-</dd>
+                </div>
+                <div class="sm:col-span-1">
+                    <dt class="text-sm font-medium text-gray-500">Zulässige Anhängelast</dt>
+                    <dd class="mt-1 text-sm text-gray-900" id="towing-capacity-display">-</dd>
+                </div>
+            </dl>
+
+            <!-- Abmessungen & Gewichte -->
+            <h4 class="text-base font-medium text-gray-900 mb-4 pt-6 border-t">Abmessungen & Gewichte</h4>
+            <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 mb-8">
+                <div class="sm:col-span-1">
+                    <dt class="text-sm font-medium text-gray-500">Abmessungen (L × B × H)</dt>
+                    <dd class="mt-1 text-sm text-gray-900" id="dimensions-display">-</dd>
+                </div>
+                <div class="sm:col-span-1">
+                    <dt class="text-sm font-medium text-gray-500">Leermasse</dt>
+                    <dd class="mt-1 text-sm text-gray-900" id="curb-weight-display">-</dd>
+                </div>
+                <div class="sm:col-span-1">
+                    <dt class="text-sm font-medium text-gray-500">Gesamtmasse</dt>
+                    <dd class="mt-1 text-sm text-gray-900" id="gross-weight-display">-</dd>
+                </div>
+                <div class="sm:col-span-1">
+                    <dt class="text-sm font-medium text-gray-500">Technisch zulässige Gesamtmasse</dt>
+                    <dd class="mt-1 text-sm text-gray-900" id="technical-max-weight-display">-</dd>
+                </div>
+            </dl>
+
+            <!-- Besonderheiten -->
+            <div class="pt-6 border-t">
+                <h4 class="text-base font-medium text-gray-900 mb-4">Besonderheiten</h4>
+                <p class="text-sm text-gray-900" id="special-features-display">-</p>
+            </div>
         </div>
     </div>
 </div>

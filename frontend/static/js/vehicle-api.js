@@ -1,20 +1,8 @@
 // frontend/static/js/vehicle-api.js
 
 // Fahrzeug-Basisdaten aktualisieren
-async function updateVehicleBasicInfo(vehicleId, formData) {
+async function updateVehicleBasicInfo(vehicleId, data) {
     try {
-        const data = {
-            licensePlate: formData.get('license_plate'),
-            brand: formData.get('vehicle_brand'),
-            model: formData.get('model'),
-            year: parseInt(formData.get('year')),
-            color: formData.get('color'),
-            vehicleId: formData.get('vehicle_id'),
-            vin: formData.get('vin'),
-            fuelType: formData.get('fuel_type'),
-            mileage: parseInt(formData.get('current_mileage'))
-        };
-
         const response = await fetch(`/api/vehicles/${vehicleId}/basic-info`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },

@@ -384,7 +384,24 @@ func (h *VehicleHandler) UpdateBasicInfo(c *gin.Context) {
 		VIN          string         `json:"vin"`
 		FuelType     model.FuelType `json:"fuelType"`
 		Mileage      int            `json:"mileage"`
-		Notes        string         `json:"notes"`
+
+		// Neue technische Felder
+		VehicleType        string  `json:"vehicleType"`
+		EngineDisplacement int     `json:"engineDisplacement"`
+		PowerRating        float64 `json:"powerRating"`
+		NumberOfAxles      int     `json:"numberOfAxles"`
+		TireSize           string  `json:"tireSize"`
+		RimType            string  `json:"rimType"`
+		GrossWeight        int     `json:"grossWeight"`
+		TechnicalMaxWeight int     `json:"technicalMaxWeight"`
+		Length             int     `json:"length"`
+		Width              int     `json:"width"`
+		Height             int     `json:"height"`
+		EmissionClass      string  `json:"emissionClass"`
+		CurbWeight         int     `json:"curbWeight"`
+		MaxSpeed           int     `json:"maxSpeed"`
+		TowingCapacity     int     `json:"towingCapacity"`
+		SpecialFeatures    string  `json:"specialFeatures"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -409,7 +426,7 @@ func (h *VehicleHandler) UpdateBasicInfo(c *gin.Context) {
 	oldMileage := vehicle.Mileage
 	oldVIN := vehicle.VIN
 
-	// NUR die Grunddaten aktualisieren, keine Datums- oder Versicherungsfelder
+	// Grunddaten aktualisieren
 	vehicle.LicensePlate = req.LicensePlate
 	vehicle.Brand = req.Brand
 	vehicle.Model = req.Model
@@ -419,7 +436,24 @@ func (h *VehicleHandler) UpdateBasicInfo(c *gin.Context) {
 	vehicle.VIN = req.VIN
 	vehicle.FuelType = req.FuelType
 	vehicle.Mileage = req.Mileage
-	//vehicle.Notes = req.Notes
+
+	// Neue technische Felder aktualisieren
+	vehicle.VehicleType = req.VehicleType
+	vehicle.EngineDisplacement = req.EngineDisplacement
+	vehicle.PowerRating = req.PowerRating
+	vehicle.NumberOfAxles = req.NumberOfAxles
+	vehicle.TireSize = req.TireSize
+	vehicle.RimType = req.RimType
+	vehicle.GrossWeight = req.GrossWeight
+	vehicle.TechnicalMaxWeight = req.TechnicalMaxWeight
+	vehicle.Length = req.Length
+	vehicle.Width = req.Width
+	vehicle.Height = req.Height
+	vehicle.EmissionClass = req.EmissionClass
+	vehicle.CurbWeight = req.CurbWeight
+	vehicle.MaxSpeed = req.MaxSpeed
+	vehicle.TowingCapacity = req.TowingCapacity
+	vehicle.SpecialFeatures = req.SpecialFeatures
 
 	// Fahrzeug in der Datenbank aktualisieren
 	if err := h.vehicleRepo.Update(vehicle); err != nil {

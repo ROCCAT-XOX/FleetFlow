@@ -194,17 +194,33 @@
         <!-- Zentriert den Modal-Inhalt -->
         <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
-        <!-- Modal-Panel -->
-        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+        <!-- Modal-Panel - größer für mehr Felder -->
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full max-h-[90vh] overflow-y-auto">
             <form id="edit-vehicle-form">
                 <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                    <div class="sm:flex sm:items-start">
-                        <div class="w-full">
-                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="vehicle-modal-title">
-                                Fahrzeug bearbeiten
-                            </h3>
+                    <div class="w-full">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="vehicle-modal-title">
+                            Fahrzeug bearbeiten
+                        </h3>
 
-                            <div class="mt-4">
+                        <!-- Tab Navigation -->
+                        <div class="mt-4 border-b border-gray-200">
+                            <nav class="-mb-px flex space-x-8">
+                                <button type="button" class="tab-btn active py-2 px-1 border-b-2 font-medium text-sm border-indigo-500 text-indigo-600" data-tab="basic">
+                                    Grunddaten
+                                </button>
+                                <button type="button" class="tab-btn py-2 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="technical">
+                                    Technische Daten
+                                </button>
+                                <button type="button" class="tab-btn py-2 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="dimensions">
+                                    Abmessungen & Gewichte
+                                </button>
+                            </nav>
+                        </div>
+
+                        <div class="mt-4">
+                            <!-- Grunddaten Tab -->
+                            <div id="basic-tab" class="tab-content">
                                 <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                                     <div class="sm:col-span-3">
                                         <label for="license_plate" class="block text-sm font-medium text-gray-700">Kennzeichen</label>
@@ -244,6 +260,11 @@
                                     </div>
 
                                     <div class="sm:col-span-3">
+                                        <label for="vehicle_type" class="block text-sm font-medium text-gray-700">Art des Fahrzeugs</label>
+                                        <input type="text" name="vehicle_type" id="vehicle_type" placeholder="z.B. PKW, LKW, Transporter" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+
+                                    <div class="sm:col-span-3">
                                         <label for="fuel_type" class="block text-sm font-medium text-gray-700">Kraftstoffart</label>
                                         <select name="fuel_type" id="fuel_type" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
                                             <option value="Benzin">Benzin</option>
@@ -264,12 +285,140 @@
                                             </div>
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+
+                            <!-- Technische Daten Tab -->
+                            <div id="technical-tab" class="tab-content hidden">
+                                <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                                    <div class="sm:col-span-3">
+                                        <label for="engine_displacement" class="block text-sm font-medium text-gray-700">Hubraum</label>
+                                        <div class="mt-1 relative rounded-md shadow-sm">
+                                            <input type="number" name="engine_displacement" id="engine_displacement" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pr-12 sm:text-sm border-gray-300 rounded-md">
+                                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                                <span class="text-gray-500 sm:text-sm">cm³</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="power_rating" class="block text-sm font-medium text-gray-700">Nennleistung</label>
+                                        <div class="mt-1 relative rounded-md shadow-sm">
+                                            <input type="number" step="0.1" name="power_rating" id="power_rating" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pr-12 sm:text-sm border-gray-300 rounded-md">
+                                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                                <span class="text-gray-500 sm:text-sm">kW</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="number_of_axles" class="block text-sm font-medium text-gray-700">Anzahl der Achsen</label>
+                                        <input type="number" name="number_of_axles" id="number_of_axles" min="2" max="10" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="max_speed" class="block text-sm font-medium text-gray-700">Höchstgeschwindigkeit</label>
+                                        <div class="mt-1 relative rounded-md shadow-sm">
+                                            <input type="number" name="max_speed" id="max_speed" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pr-12 sm:text-sm border-gray-300 rounded-md">
+                                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                                <span class="text-gray-500 sm:text-sm">km/h</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="tire_size" class="block text-sm font-medium text-gray-700">Reifengröße</label>
+                                        <input type="text" name="tire_size" id="tire_size" placeholder="z.B. 225/45 R17" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="rim_type" class="block text-sm font-medium text-gray-700">Felgentyp</label>
+                                        <input type="text" name="rim_type" id="rim_type" placeholder="z.B. Alufelgen 17 Zoll" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="emission_class" class="block text-sm font-medium text-gray-700">Schadstoffklasse</label>
+                                        <input type="text" name="emission_class" id="emission_class" placeholder="z.B. Euro 6" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="towing_capacity" class="block text-sm font-medium text-gray-700">Zulässige Anhängelast</label>
+                                        <div class="mt-1 relative rounded-md shadow-sm">
+                                            <input type="number" name="towing_capacity" id="towing_capacity" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pr-12 sm:text-sm border-gray-300 rounded-md">
+                                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                                <span class="text-gray-500 sm:text-sm">kg</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Abmessungen & Gewichte Tab -->
+                            <div id="dimensions-tab" class="tab-content hidden">
+                                <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                                    <div class="sm:col-span-2">
+                                        <label for="length" class="block text-sm font-medium text-gray-700">Länge</label>
+                                        <div class="mt-1 relative rounded-md shadow-sm">
+                                            <input type="number" name="length" id="length" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pr-12 sm:text-sm border-gray-300 rounded-md">
+                                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                                <span class="text-gray-500 sm:text-sm">mm</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="sm:col-span-2">
+                                        <label for="width" class="block text-sm font-medium text-gray-700">Breite</label>
+                                        <div class="mt-1 relative rounded-md shadow-sm">
+                                            <input type="number" name="width" id="width" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pr-12 sm:text-sm border-gray-300 rounded-md">
+                                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                                <span class="text-gray-500 sm:text-sm">mm</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="sm:col-span-2">
+                                        <label for="height" class="block text-sm font-medium text-gray-700">Höhe</label>
+                                        <div class="mt-1 relative rounded-md shadow-sm">
+                                            <input type="number" name="height" id="height" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pr-12 sm:text-sm border-gray-300 rounded-md">
+                                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                                <span class="text-gray-500 sm:text-sm">mm</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="curb_weight" class="block text-sm font-medium text-gray-700">Leermasse</label>
+                                        <div class="mt-1 relative rounded-md shadow-sm">
+                                            <input type="number" name="curb_weight" id="curb_weight" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pr-12 sm:text-sm border-gray-300 rounded-md">
+                                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                                <span class="text-gray-500 sm:text-sm">kg</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="gross_weight" class="block text-sm font-medium text-gray-700">Gesamtmasse</label>
+                                        <div class="mt-1 relative rounded-md shadow-sm">
+                                            <input type="number" name="gross_weight" id="gross_weight" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pr-12 sm:text-sm border-gray-300 rounded-md">
+                                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                                <span class="text-gray-500 sm:text-sm">kg</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="technical_max_weight" class="block text-sm font-medium text-gray-700">Technisch zulässige Gesamtmasse</label>
+                                        <div class="mt-1 relative rounded-md shadow-sm">
+                                            <input type="number" name="technical_max_weight" id="technical_max_weight" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pr-12 sm:text-sm border-gray-300 rounded-md">
+                                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                                <span class="text-gray-500 sm:text-sm">kg</span>
+                                            </div>
+                                        </div>
+                                    </div>
 
                                     <div class="sm:col-span-6">
-                                        <label for="vehicle_notes" class="block text-sm font-medium text-gray-700">Anmerkungen</label>
-                                        <div class="mt-1">
-                                            <textarea id="vehicle_notes" name="vehicle_notes" rows="3" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border border-gray-300 rounded-md"></textarea>
-                                        </div>
+                                        <label for="special_features" class="block text-sm font-medium text-gray-700">Besonderheiten</label>
+                                        <textarea id="special_features" name="special_features" rows="3" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border border-gray-300 rounded-md" placeholder="z.B. Allradantrieb, Anhängerkupplung, Standheizung"></textarea>
                                     </div>
                                 </div>
                             </div>
