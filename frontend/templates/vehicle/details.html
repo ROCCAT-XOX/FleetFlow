@@ -38,35 +38,48 @@
         </div>
     </div>
 
-    <!-- Tab-Container für JavaScript -->
+    <!-- Tab-Container -->
     <div id="vehicle-tabs-container">
         <!-- Tabs als Links -->
         <div class="border-b border-gray-200 mb-6">
             <nav class="-mb-px flex space-x-8">
-                <a href="?tab=basic" class="vehicle-tab-btn py-4 px-1 border-b-2 font-medium text-sm {{ if or (eq .tab "basic") (not .tab) }}border-blue-500 text-blue-600{{ else }}border-transparent text-gray-500 hover:text-gray-700{{ end }}" data-tab="basic-info">
+                <a href="?tab=basic" class="vehicle-tab-btn py-4 px-1 border-b-2 font-medium text-sm {{ if or (eq .tab "basic") (not .tab) }}border-blue-500 text-blue-600{{ else }}border-transparent text-gray-500 hover:text-gray-700{{ end }}">
                 Grunddaten
                 </a>
-                <a href="?tab=usage" class="vehicle-tab-btn py-4 px-1 border-b-2 font-medium text-sm {{ if eq .tab "usage" }}border-blue-500 text-blue-600{{ else }}border-transparent text-gray-500 hover:text-gray-700{{ end }}" data-tab="current-usage">
+                <a href="?tab=usage" class="vehicle-tab-btn py-4 px-1 border-b-2 font-medium text-sm {{ if eq .tab "usage" }}border-blue-500 text-blue-600{{ else }}border-transparent text-gray-500 hover:text-gray-700{{ end }}">
                 Nutzung
                 </a>
-                <a href="?tab=maintenance" class="vehicle-tab-btn py-4 px-1 border-b-2 font-medium text-sm {{ if eq .tab "maintenance" }}border-blue-500 text-blue-600{{ else }}border-transparent text-gray-500 hover:text-gray-700{{ end }}" data-tab="maintenance">
+                <a href="?tab=maintenance" class="vehicle-tab-btn py-4 px-1 border-b-2 font-medium text-sm {{ if eq .tab "maintenance" }}border-blue-500 text-blue-600{{ else }}border-transparent text-gray-500 hover:text-gray-700{{ end }}">
                 Wartung
                 </a>
-                <a href="?tab=fuel" class="vehicle-tab-btn py-4 px-1 border-b-2 font-medium text-sm {{ if eq .tab "fuel" }}border-blue-500 text-blue-600{{ else }}border-transparent text-gray-500 hover:text-gray-700{{ end }}" data-tab="fuel-costs">
+                <a href="?tab=fuel" class="vehicle-tab-btn py-4 px-1 border-b-2 font-medium text-sm {{ if eq .tab "fuel" }}border-blue-500 text-blue-600{{ else }}border-transparent text-gray-500 hover:text-gray-700{{ end }}">
                 Tankkosten
                 </a>
-                <a href="?tab=registration" class="vehicle-tab-btn py-4 px-1 border-b-2 font-medium text-sm {{ if eq .tab "registration" }}border-blue-500 text-blue-600{{ else }}border-transparent text-gray-500 hover:text-gray-700{{ end }}" data-tab="registration-insurance">
+                <a href="?tab=registration" class="vehicle-tab-btn py-4 px-1 border-b-2 font-medium text-sm {{ if eq .tab "registration" }}border-blue-500 text-blue-600{{ else }}border-transparent text-gray-500 hover:text-gray-700{{ end }}">
                 Zulassung
                 </a>
-                <a href="?tab=statistics" class="vehicle-tab-btn py-4 px-1 border-b-2 font-medium text-sm {{ if eq .tab "statistics" }}border-blue-500 text-blue-600{{ else }}border-transparent text-gray-500 hover:text-gray-700{{ end }}" data-tab="statistics">
+                <a href="?tab=statistics" class="vehicle-tab-btn py-4 px-1 border-b-2 font-medium text-sm {{ if eq .tab "statistics" }}border-blue-500 text-blue-600{{ else }}border-transparent text-gray-500 hover:text-gray-700{{ end }}">
                 Statistiken
                 </a>
             </nav>
         </div>
 
-        <!-- Tab Content (Dynamic) -->
+        <!-- Tab Content -->
         <div id="tab-content">
-            <!-- Wird durch JavaScript geladen -->
+            {{ if or (eq .tab "basic") (not .tab) }}
+            {{ template "vehicle/basic_info" . }}
+            {{ else if eq .tab "usage" }}
+            {{ template "vehicle/current_usage" . }}
+            {{ template "vehicle/usage_history" . }}
+            {{ else if eq .tab "maintenance" }}
+            {{ template "vehicle/maintenance" . }}
+            {{ else if eq .tab "fuel" }}
+            {{ template "vehicle/fuel_costs" . }}
+            {{ else if eq .tab "registration" }}
+            {{ template "vehicle/registration" . }}
+            {{ else if eq .tab "statistics" }}
+            {{ template "vehicle/statistics" . }}
+            {{ end }}
         </div>
     </div>
 </main>
@@ -88,22 +101,19 @@
     // Logo direkt beim Seitenladen setzen
     document.addEventListener('DOMContentLoaded', function() {
         const brandLogo = document.getElementById('brand-logo');
-        const header = document.querySelector('h1.text-2xl');
-
-        if (header && brandLogo) {
-            const brand = header.textContent.split(' ')[0];
-
+        if (brandLogo) {
+            const brand = '{{ .vehicle.brand }}'.toLowerCase();
             if (brand) {
-                const logoPath = `/static/assets/logo/${brand.toLowerCase()}.svg`;
+                const logoPath = `/static/assets/logo/${brand}.svg`;
                 brandLogo.src = logoPath;
-                brandLogo.alt = brand;
+                brandLogo.alt = '{{ .vehicle.brand }}';
 
                 brandLogo.onload = function() {
                     brandLogo.classList.remove('hidden');
                 };
 
                 brandLogo.onerror = function() {
-                    brandLogo.src = `/static/assets/logo/${brand.toLowerCase()}.png`;
+                    brandLogo.src = `/static/assets/logo/${brand}.png`;
                     brandLogo.onerror = function() {
                         brandLogo.classList.add('hidden');
                     };

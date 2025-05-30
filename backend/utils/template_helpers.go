@@ -9,6 +9,36 @@ import (
 	"time"
 )
 
+// MaintenanceTypeText gibt den deutschen Text für einen Wartungstyp zurück
+func MaintenanceTypeText(maintenanceType string) string {
+	types := map[string]string{
+		"inspection":  "Inspektion",
+		"oil-change":  "Ölwechsel",
+		"tire-change": "Reifenwechsel",
+		"repair":      "Reparatur",
+		"other":       "Sonstiges",
+	}
+
+	if text, ok := types[maintenanceType]; ok {
+		return text
+	}
+	return maintenanceType
+}
+
+// FormatNumber formatiert Zahlen mit Tausendertrennzeichen
+func FormatNumber(n interface{}) string {
+	switch v := n.(type) {
+	case int:
+		return fmt.Sprintf("%d", v)
+	case int64:
+		return fmt.Sprintf("%d", v)
+	case float64:
+		return fmt.Sprintf("%.0f", v)
+	default:
+		return fmt.Sprintf("%v", n)
+	}
+}
+
 // GetInitials extrahiert die Initialen aus einem Vor- und Nachnamen
 func GetInitials(fullName string) string {
 	parts := strings.Fields(fullName)
@@ -74,14 +104,53 @@ func TemplateHelpers() template.FuncMap {
 		"safeHTML": func(s string) template.HTML {
 			return template.HTML(s)
 		},
-		"formatDate": func(date time.Time) string {
-			return date.Format("02.01.2006")
+		"formatDate": func(date interface{}) string {
+			switch v := date.(type) {
+			case time.Time:
+				return v.Format("02.01.2006")
+			case string:
+				if t, err := time.Parse(time.RFC3339, v); err == nil {
+					return t.Format("02.01.2006")
+				}
+				if t, err := time.Parse("2006-01-02T15:04:05Z", v); err == nil {
+					return t.Format("02.01.2006")
+				}
+				return v
+			default:
+				return ""
+			}
 		},
-		"formatDateTime": func(date time.Time) string {
-			return date.Format("02.01.2006 15:04")
+		"formatDateTime": func(date interface{}) string {
+			switch v := date.(type) {
+			case time.Time:
+				return v.Format("02.01.2006, 15:04 Uhr")
+			case string:
+				if t, err := time.Parse(time.RFC3339, v); err == nil {
+					return t.Format("02.01.2006, 15:04 Uhr")
+				}
+				if t, err := time.Parse("2006-01-02T15:04:05Z", v); err == nil {
+					return t.Format("02.01.2006, 15:04 Uhr")
+				}
+				return v
+			default:
+				return ""
+			}
 		},
-		"formatTime": func(date time.Time) string {
-			return date.Format("15:04")
+		"formatTime": func(date interface{}) string {
+			switch v := date.(type) {
+			case time.Time:
+				return v.Format("15:04")
+			case string:
+				if t, err := time.Parse(time.RFC3339, v); err == nil {
+					return t.Format("15:04")
+				}
+				if t, err := time.Parse("2006-01-02T15:04:05Z", v); err == nil {
+					return t.Format("15:04")
+				}
+				return v
+			default:
+				return ""
+			}
 		},
 		"formatMonth": func(date time.Time) string {
 			return date.Format("Januar 2006")
@@ -164,13 +233,17 @@ func TemplateHelpers() template.FuncMap {
 				return x
 			}
 		},
+		// Printf für formatierte Ausgaben
+		"printf": fmt.Sprintf,
 
 		// FleetFlow-spezifische Hilfsfunktionen
-		"getInitials":       GetInitials,
-		"formatMileage":     FormatMileage,
-		"formatCurrency":    FormatCurrency,
-		"vehicleStatusText": VehicleStatusText,
-		"driverStatusText":  DriverStatusText,
+		"getInitials":         GetInitials,
+		"formatMileage":       FormatMileage,
+		"formatCurrency":      FormatCurrency,
+		"vehicleStatusText":   VehicleStatusText,
+		"driverStatusText":    DriverStatusText,
+		"maintenanceTypeText": MaintenanceTypeText,
+		"formatNumber":        FormatNumber,
 
 		// Weitere nützliche Funktionen
 		"contains": func(s, substr string) bool {
@@ -190,5 +263,16 @@ func TemplateHelpers() template.FuncMap {
 		"join":       strings.Join,
 		"replace":    strings.Replace,
 		"replaceAll": strings.ReplaceAll,
+
+		// Logische Operatoren
+		"and": func(a, b bool) bool {
+			return a && b
+		},
+		"or": func(a, b bool) bool {
+			return a || b
+		},
+		"not": func(a bool) bool {
+			return !a
+		},
 	}
 }
