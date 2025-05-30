@@ -22,7 +22,7 @@
                 <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Kilometerstand</th>
                 <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Kosten</th>
                 <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-0">
-                  <span class="sr-only">Bearbeiten</span>
+                  <span class="sr-only">Aktionen</span>
                 </th>
               </tr>
               </thead>
@@ -31,19 +31,24 @@
               {{range .maintenanceEntries}}
               <tr>
                 <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
-                  {{formatDate .date}}
+                  {{formatDate .Date}}
                 </td>
                 <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                  {{maintenanceTypeText .type}}
+                  {{printf "%s" .Type | maintenanceTypeText}}
                 </td>
                 <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                  {{if .mileage}}{{formatMileage .mileage}}{{else}}-{{end}}
+                  {{if .Mileage}}{{formatMileage .Mileage}}{{else}}-{{end}}
                 </td>
                 <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                  {{if .cost}}{{formatCurrency .cost}}{{else}}-{{end}}
+                  {{if .Cost}}{{formatCurrency .Cost}}{{else}}-{{end}}
                 </td>
                 <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
-                  <button class="text-indigo-600 hover:text-indigo-900" onclick="editMaintenance('{{.id}}')">Details</button>
+                  <button class="text-indigo-600 hover:text-indigo-900 mr-3" onclick="editMaintenance('{{.ID.Hex}}')">Details</button>
+                  <button class="text-red-600 hover:text-red-900" onclick="deleteMaintenance('{{.ID.Hex}}')" title="Löschen">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
                 </td>
               </tr>
               {{end}}

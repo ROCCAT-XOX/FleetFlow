@@ -133,6 +133,9 @@ func setupAuthorizedRoutes(group *gin.RouterGroup) {
 		// Repository initialisieren
 		vehicleRepo := repository.NewVehicleRepository()
 		driverRepo := repository.NewDriverRepository()
+		maintenanceRepo := repository.NewMaintenanceRepository()
+		usageRepo := repository.NewVehicleUsageRepository()
+		fuelCostRepo := repository.NewFuelCostRepository()
 
 		// Fahrzeugdaten laden
 		vehicle, err := vehicleRepo.FindByID(vehicleID)
@@ -153,6 +156,67 @@ func setupAuthorizedRoutes(group *gin.RouterGroup) {
 				driverName = driver.FirstName + " " + driver.LastName
 			}
 		}
+
+		// Wartungseinträge laden
+		maintenanceEntries, _ := maintenanceRepo.FindByVehicle(vehicleID)
+
+		// Nutzungshistorie laden
+		usageHistory, _ := usageRepo.FindByVehicle(vehicleID)
+
+		// Für jeden Nutzungseintrag den Fahrernamen hinzufügen
+		var enrichedUsageHistory []gin.H
+		for _, usage := range usageHistory {
+			driverNameForUsage := ""
+			if !usage.DriverID.IsZero() {
+				driver, err := driverRepo.FindByID(usage.DriverID.Hex())
+				if err == nil {
+					driverNameForUsage = driver.FirstName + " " + driver.LastName
+				}
+			}
+
+			enrichedUsageHistory = append(enrichedUsageHistory, gin.H{
+				"id":           usage.ID.Hex(),
+				"startDate":    usage.StartDate,
+				"endDate":      usage.EndDate,
+				"startMileage": usage.StartMileage,
+				"endMileage":   usage.EndMileage,
+				"purpose":      usage.Purpose,
+				"status":       usage.Status,
+				"notes":        usage.Notes,
+				"driverName":   driverNameForUsage,
+			})
+		}
+
+		// Aktive Nutzung finden
+		var activeUsage gin.H
+		for _, usage := range usageHistory {
+			if usage.Status == model.UsageStatusActive {
+				driverNameForActive := ""
+				if !usage.DriverID.IsZero() {
+					driver, err := driverRepo.FindByID(usage.DriverID.Hex())
+					if err == nil {
+						driverNameForActive = driver.FirstName + " " + driver.LastName
+					}
+				}
+
+				activeUsage = gin.H{
+					"id":           usage.ID.Hex(),
+					"startDate":    usage.StartDate,
+					"endDate":      usage.EndDate,
+					"startMileage": usage.StartMileage,
+					"endMileage":   usage.EndMileage,
+					"purpose":      usage.Purpose,
+					"department":   usage.Department,
+					"status":       usage.Status,
+					"notes":        usage.Notes,
+					"driverName":   driverNameForActive,
+				}
+				break
+			}
+		}
+
+		// Tankkosten laden
+		fuelCosts, _ := fuelCostRepo.FindByVehicle(vehicleID)
 
 		// Tab aus Query Parameter
 		tab := c.DefaultQuery("tab", "basic")
@@ -178,16 +242,39 @@ func setupAuthorizedRoutes(group *gin.RouterGroup) {
 			"insuranceExpiry":    vehicle.InsuranceExpiry,
 			"insuranceCost":      vehicle.InsuranceCost,
 			"nextInspectionDate": vehicle.NextInspectionDate,
+			// Technische Daten
+			"vehicleType":        vehicle.VehicleType,
+			"engineDisplacement": vehicle.EngineDisplacement,
+			"powerRating":        vehicle.PowerRating,
+			"numberOfAxles":      vehicle.NumberOfAxles,
+			"tireSize":           vehicle.TireSize,
+			"rimType":            vehicle.RimType,
+			"emissionClass":      vehicle.EmissionClass,
+			"maxSpeed":           vehicle.MaxSpeed,
+			"towingCapacity":     vehicle.TowingCapacity,
+			// Abmessungen
+			"length":             vehicle.Length,
+			"width":              vehicle.Width,
+			"height":             vehicle.Height,
+			"curbWeight":         vehicle.CurbWeight,
+			"grossWeight":        vehicle.GrossWeight,
+			"technicalMaxWeight": vehicle.TechnicalMaxWeight,
+			"specialFeatures":    vehicle.SpecialFeatures,
 		}
 
 		// Template-Daten
 		templateData := gin.H{
-			"title":      "Fahrzeugdetails",
-			"user":       user.(*model.User).FirstName + " " + user.(*model.User).LastName,
-			"year":       currentYear,
-			"vehicle":    vehicleData,
-			"driverName": driverName,
-			"tab":        tab,
+			"title":              "Fahrzeugdetails",
+			"user":               user.(*model.User).FirstName + " " + user.(*model.User).LastName,
+			"year":               currentYear,
+			"vehicle":            vehicleData,
+			"vehicleId":          vehicleID,
+			"driverName":         driverName,
+			"tab":                tab,
+			"maintenanceEntries": maintenanceEntries,
+			"usageHistory":       enrichedUsageHistory,
+			"activeUsage":        activeUsage,
+			"fuelCosts":          fuelCosts,
 		}
 
 		c.HTML(http.StatusOK, "vehicle/details.html", templateData)

@@ -123,6 +123,24 @@ window.editFuelCost = async function(fuelCostId) {
 // Nutzungseintrag bearbeiten
 window.editUsage = async function(usageId) {
     try {
+        // Erst die Fahrer laden
+        const driversResponse = await fetch('/api/drivers');
+        const driversData = await driversResponse.json();
+        const select = document.getElementById('driver');
+
+        if (select) {
+            select.innerHTML = '<option value="">Fahrer auswählen</option>';
+            if (driversData.drivers) {
+                driversData.drivers.forEach(driver => {
+                    const option = document.createElement('option');
+                    option.value = driver.id;
+                    option.textContent = `${driver.firstName} ${driver.lastName}`;
+                    select.appendChild(option);
+                });
+            }
+        }
+
+        // Dann die Nutzungsdaten laden
         const response = await fetch(`/api/usage/${usageId}`);
         const data = await response.json();
         const usage = data.usage;
@@ -136,7 +154,11 @@ window.editUsage = async function(usageId) {
             document.getElementById('end-time').value = usage.endDate.split('T')[1].substring(0, 5);
         }
 
-        document.getElementById('driver').value = usage.driverId;
+        // Fahrer auswählen - WICHTIG: Nach dem Laden der Fahrerliste
+        if (usage.driverId) {
+            document.getElementById('driver').value = usage.driverId;
+        }
+
         document.getElementById('project').value = usage.purpose || '';
         document.getElementById('start-mileage').value = usage.startMileage;
         document.getElementById('end-mileage').value = usage.endMileage || '';
@@ -149,6 +171,11 @@ window.editUsage = async function(usageId) {
         const form = document.getElementById('usage-form');
         form.dataset.usageId = usageId;
         form.dataset.isEdit = 'true';
+
+        // Reset Submit Status
+        if (typeof resetSubmitStatus === 'function') {
+            resetSubmitStatus();
+        }
 
     } catch (error) {
         console.error('Fehler beim Laden des Nutzungseintrags:', error);
@@ -204,4 +231,60 @@ function showNotification(message, type = 'info') {
 // Nach erfolgreichem Speichern die Seite neu laden
 window.reloadCurrentTab = function() {
     window.location.reload();
+};
+
+// Wartungseintrag löschen
+window.deleteMaintenance = async function(maintenanceId) {
+    if (!confirm('Möchten Sie diesen Wartungseintrag wirklich löschen?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/maintenance/${maintenanceId}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            throw new Error('Fehler beim Löschen');
+        }
+
+        showNotification('Wartungseintrag erfolgreich gelöscht', 'success');
+
+        // Seite nach kurzer Verzögerung neu laden
+        setTimeout(() => {
+            window.location.reload();
+        }, 500);
+
+    } catch (error) {
+        console.error('Fehler beim Löschen:', error);
+        showNotification('Fehler beim Löschen des Wartungseintrags', 'error');
+    }
+};
+
+// Nutzungseintrag löschen
+window.deleteUsage = async function(usageId) {
+    if (!confirm('Möchten Sie diesen Nutzungseintrag wirklich löschen?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/usage/${usageId}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            throw new Error('Fehler beim Löschen');
+        }
+
+        showNotification('Nutzungseintrag erfolgreich gelöscht', 'success');
+
+        // Seite nach kurzer Verzögerung neu laden
+        setTimeout(() => {
+            window.location.reload();
+        }, 500);
+
+    } catch (error) {
+        console.error('Fehler beim Löschen:', error);
+        showNotification('Fehler beim Löschen des Nutzungseintrags', 'error');
+    }
 };

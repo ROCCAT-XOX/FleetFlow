@@ -1,5 +1,8 @@
 // frontend/static/js/vehicle-modals.js
 
+// Globale Variable um Submit-Status zu tracken
+let isSubmitting = false;
+
 // Modal Initialisierung - wird bei DOMContentLoaded ausgeführt
 function initializeModals() {
     initializeMaintenanceModal();
@@ -13,6 +16,7 @@ function initializeModals() {
         modal.addEventListener('click', function(e) {
             if (e.target === this) {
                 this.classList.add('hidden');
+                resetSubmitStatus();
             }
         });
     });
@@ -23,9 +27,15 @@ function initializeModals() {
             const modal = this.closest('.fixed.z-10');
             if (modal) {
                 modal.classList.add('hidden');
+                resetSubmitStatus();
             }
         });
     });
+}
+
+// Reset Submit Status
+function resetSubmitStatus() {
+    isSubmitting = false;
 }
 
 // Wartungs-Modal
@@ -34,45 +44,150 @@ function initializeMaintenanceModal() {
     const modal = document.getElementById('maintenance-modal');
 
     if (form) {
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const vehicleId = window.location.pathname.split('/').pop();
-            const formData = new FormData(form);
+        // Event-Listener nur einmal hinzufügen
+        form.removeEventListener('submit', handleMaintenanceSubmit);
+        form.addEventListener('submit', handleMaintenanceSubmit);
+    }
+}
 
-            const data = {
-                vehicleId: vehicleId,
-                date: formData.get('maintenance-date'),
-                type: formData.get('maintenance-type'),
-                mileage: parseInt(formData.get('mileage')) || 0,
-                cost: parseFloat(formData.get('cost')) || 0,
-                workshop: formData.get('workshop'),
-                notes: formData.get('maintenance-notes')
-            };
+async function handleMaintenanceSubmit(e) {
+    e.preventDefault();
 
-            try {
-                const isEdit = form.dataset.isEdit === 'true';
-                const maintenanceId = form.dataset.maintenanceId;
+    // Verhindere Doppel-Submit
+    if (isSubmitting) {
+        console.log('Submit already in progress');
+        return;
+    }
+    isSubmitting = true;
 
-                const url = isEdit ? `/api/maintenance/${maintenanceId}` : '/api/maintenance';
-                const method = isEdit ? 'PUT' : 'POST';
+    const form = e.target;
+    const modal = document.getElementById('maintenance-modal');
+    const vehicleId = window.location.pathname.split('/').pop();
+    const formData = new FormData(form);
 
-                const response = await fetch(url, {
-                    method: method,
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
+    const data = {
+        vehicleId: vehicleId,
+        date: formData.get('maintenance-date'),
+        type: formData.get('maintenance-type'),
+        mileage: parseInt(formData.get('mileage')) || 0,
+        cost: parseFloat(formData.get('cost')) || 0,
+        workshop: formData.get('workshop'),
+        notes: formData.get('maintenance-notes')
+    };
 
-                if (!response.ok) throw new Error('Fehler beim Speichern');
+    try {
+        const isEdit = form.dataset.isEdit === 'true';
+        const maintenanceId = form.dataset.maintenanceId;
 
-                showNotification('Wartungseintrag erfolgreich gespeichert', 'success');
-                modal.classList.add('hidden');
-                setTimeout(() => window.location.reload(), 1000);
+        const url = isEdit ? `/api/maintenance/${maintenanceId}` : '/api/maintenance';
+        const method = isEdit ? 'PUT' : 'POST';
 
-            } catch (error) {
-                console.error('Fehler:', error);
-                showNotification('Fehler beim Speichern des Wartungseintrags', 'error');
-            }
+        const response = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
         });
+
+        if (!response.ok) throw new Error('Fehler beim Speichern');
+
+        showNotification('Wartungseintrag erfolgreich gespeichert', 'success');
+        modal.classList.add('hidden');
+
+        setTimeout(() => {
+            window.location.reload();
+        }, 500);
+
+    } catch (error) {
+        console.error('Fehler:', error);
+        showNotification('Fehler beim Speichern des Wartungseintrags', 'error');
+        isSubmitting = false;
+    }
+}
+
+// Nutzungs-Modal
+function initializeUsageModal() {
+    const form = document.getElementById('usage-form');
+    const modal = document.getElementById('usage-modal');
+
+    if (form) {
+        // Event-Listener nur einmal hinzufügen
+        form.removeEventListener('submit', handleUsageSubmit);
+        form.addEventListener('submit', handleUsageSubmit);
+    }
+}
+
+async function handleUsageSubmit(e) {
+    e.preventDefault();
+
+    // Verhindere Doppel-Submit
+    if (isSubmitting) {
+        console.log('Submit already in progress');
+        return;
+    }
+    isSubmitting = true;
+
+    const form = e.target;
+    const modal = document.getElementById('usage-modal');
+    const vehicleId = window.location.pathname.split('/').pop();
+    const formData = new FormData(form);
+
+    // Validierung
+    const driverId = formData.get('driver');
+    if (!driverId) {
+        showNotification('Bitte wählen Sie einen Fahrer aus', 'error');
+        isSubmitting = false;
+        return;
+    }
+
+    const data = {
+        vehicleId: vehicleId,
+        driverId: driverId,
+        startDate: formData.get('start-date'),
+        startTime: formData.get('start-time'),
+        endDate: formData.get('end-date'),
+        endTime: formData.get('end-time'),
+        startMileage: parseInt(formData.get('start-mileage')) || 0,
+        endMileage: parseInt(formData.get('end-mileage')) || 0,
+        purpose: formData.get('project'),
+        status: formData.get('end-date') ? 'completed' : 'active',
+        notes: formData.get('usage-notes')
+    };
+
+    try {
+        const isEdit = form.dataset.isEdit === 'true';
+        const usageId = form.dataset.usageId;
+
+        const url = isEdit ? `/api/usage/${usageId}` : '/api/usage';
+        const method = isEdit ? 'PUT' : 'POST';
+
+        console.log('Sending request to:', url, 'with method:', method);
+        console.log('Data:', JSON.stringify(data));
+
+        const response = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        const responseText = await response.text();
+        console.log('Response status:', response.status);
+        console.log('Response text:', responseText);
+
+        if (!response.ok) {
+            throw new Error(`Server responded with ${response.status}: ${responseText}`);
+        }
+
+        showNotification('Nutzungseintrag erfolgreich gespeichert', 'success');
+        modal.classList.add('hidden');
+
+        setTimeout(() => {
+            window.location.reload();
+        }, 500);
+
+    } catch (error) {
+        console.error('Fehler:', error);
+        showNotification('Fehler beim Speichern des Nutzungseintrags: ' + error.message, 'error');
+        isSubmitting = false;
     }
 }
 
@@ -82,48 +197,9 @@ function initializeFuelCostModal() {
     const modal = document.getElementById('vehicle-fuel-cost-modal');
 
     if (form) {
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const vehicleId = window.location.pathname.split('/').pop();
-            const formData = new FormData(form);
-
-            const data = {
-                vehicleId: vehicleId,
-                driverId: formData.get('driver') || null,
-                date: formData.get('fuel-date'),
-                fuelType: formData.get('fuel-type'),
-                amount: parseFloat(formData.get('amount')) || 0,
-                pricePerUnit: parseFloat(formData.get('price-per-unit')) || 0,
-                totalCost: parseFloat(formData.get('total-cost')) || 0,
-                mileage: parseInt(formData.get('mileage')) || 0,
-                location: formData.get('location'),
-                receiptNumber: formData.get('receipt-number')
-            };
-
-            try {
-                const isEdit = form.dataset.isEdit === 'true';
-                const fuelCostId = form.dataset.fuelCostId;
-
-                const url = isEdit ? `/api/fuelcosts/${fuelCostId}` : '/api/fuelcosts';
-                const method = isEdit ? 'PUT' : 'POST';
-
-                const response = await fetch(url, {
-                    method: method,
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-
-                if (!response.ok) throw new Error('Fehler beim Speichern');
-
-                showNotification('Tankkosten erfolgreich gespeichert', 'success');
-                modal.classList.add('hidden');
-                setTimeout(() => window.location.reload(), 1000);
-
-            } catch (error) {
-                console.error('Fehler:', error);
-                showNotification('Fehler beim Speichern der Tankkosten', 'error');
-            }
-        });
+        // Event-Listener nur einmal hinzufügen
+        form.removeEventListener('submit', handleFuelCostSubmit);
+        form.addEventListener('submit', handleFuelCostSubmit);
     }
 
     // Automatische Berechnung
@@ -138,60 +214,68 @@ function initializeFuelCostModal() {
             totalInput.value = (amount * price).toFixed(2);
         };
 
+        amountInput.removeEventListener('input', calculateTotal);
+        priceInput.removeEventListener('input', calculateTotal);
+
         amountInput.addEventListener('input', calculateTotal);
         priceInput.addEventListener('input', calculateTotal);
     }
 }
 
-// Nutzungs-Modal
-function initializeUsageModal() {
-    const form = document.getElementById('usage-form');
-    const modal = document.getElementById('usage-modal');
+async function handleFuelCostSubmit(e) {
+    e.preventDefault();
 
-    if (form) {
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const vehicleId = window.location.pathname.split('/').pop();
-            const formData = new FormData(form);
+    // Verhindere Doppel-Submit
+    if (isSubmitting) {
+        console.log('Submit already in progress');
+        return;
+    }
+    isSubmitting = true;
 
-            const data = {
-                vehicleId: vehicleId,
-                driverId: formData.get('driver'),
-                startDate: formData.get('start-date'),
-                startTime: formData.get('start-time'),
-                endDate: formData.get('end-date'),
-                endTime: formData.get('end-time'),
-                startMileage: parseInt(formData.get('start-mileage')) || 0,
-                endMileage: parseInt(formData.get('end-mileage')) || 0,
-                purpose: formData.get('project'),
-                status: formData.get('end-date') ? 'completed' : 'active',
-                notes: formData.get('usage-notes')
-            };
+    const form = e.target;
+    const modal = document.getElementById('vehicle-fuel-cost-modal');
+    const vehicleId = window.location.pathname.split('/').pop();
+    const formData = new FormData(form);
 
-            try {
-                const isEdit = form.dataset.isEdit === 'true';
-                const usageId = form.dataset.usageId;
+    const data = {
+        vehicleId: vehicleId,
+        driverId: formData.get('driver') || null,
+        date: formData.get('fuel-date'),
+        fuelType: formData.get('fuel-type'),
+        amount: parseFloat(formData.get('amount')) || 0,
+        pricePerUnit: parseFloat(formData.get('price-per-unit')) || 0,
+        totalCost: parseFloat(formData.get('total-cost')) || 0,
+        mileage: parseInt(formData.get('mileage')) || 0,
+        location: formData.get('location'),
+        receiptNumber: formData.get('receipt-number')
+    };
 
-                const url = isEdit ? `/api/usage/${usageId}` : '/api/usage';
-                const method = isEdit ? 'PUT' : 'POST';
+    try {
+        const isEdit = form.dataset.isEdit === 'true';
+        const fuelCostId = form.dataset.fuelCostId;
 
-                const response = await fetch(url, {
-                    method: method,
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
+        const url = isEdit ? `/api/fuelcosts/${fuelCostId}` : '/api/fuelcosts';
+        const method = isEdit ? 'PUT' : 'POST';
 
-                if (!response.ok) throw new Error('Fehler beim Speichern');
-
-                showNotification('Nutzungseintrag erfolgreich gespeichert', 'success');
-                modal.classList.add('hidden');
-                setTimeout(() => window.location.reload(), 1000);
-
-            } catch (error) {
-                console.error('Fehler:', error);
-                showNotification('Fehler beim Speichern des Nutzungseintrags', 'error');
-            }
+        const response = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
         });
+
+        if (!response.ok) throw new Error('Fehler beim Speichern');
+
+        showNotification('Tankkosten erfolgreich gespeichert', 'success');
+        modal.classList.add('hidden');
+
+        setTimeout(() => {
+            window.location.reload();
+        }, 500);
+
+    } catch (error) {
+        console.error('Fehler:', error);
+        showNotification('Fehler beim Speichern der Tankkosten', 'error');
+        isSubmitting = false;
     }
 }
 
@@ -201,47 +285,53 @@ function initializeRegistrationModal() {
     const modal = document.getElementById('registration-modal');
 
     if (form) {
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const vehicleId = window.location.pathname.split('/').pop();
-            const formData = new FormData(form);
+        form.removeEventListener('submit', handleRegistrationSubmit);
+        form.addEventListener('submit', handleRegistrationSubmit);
+    }
+}
 
-            try {
-                // Erst die aktuellen Fahrzeugdaten laden
-                const vehicleResponse = await fetch(`/api/vehicles/${vehicleId}`);
-                const vehicleData = await vehicleResponse.json();
-                const vehicle = vehicleData.vehicle;
+async function handleRegistrationSubmit(e) {
+    e.preventDefault();
 
-                // Alle Fahrzeugdaten mit den neuen Zulassungsdaten zusammenführen
-                const data = {
-                    ...vehicle,
-                    registrationDate: formData.get('registration-date'),
-                    registrationExpiry: formData.get('registration-expiry'),
-                    nextInspectionDate: formData.get('next-inspection'),
-                    insuranceCompany: formData.get('insurance-company'),
-                    insuranceNumber: formData.get('insurance-number'),
-                    insuranceType: formData.get('insurance-type'),
-                    insuranceExpiry: formData.get('insurance-expiry'),
-                    insuranceCost: parseFloat(formData.get('insurance-cost')) || 0
-                };
+    const form = e.target;
+    const modal = document.getElementById('registration-modal');
+    const vehicleId = window.location.pathname.split('/').pop();
+    const formData = new FormData(form);
 
-                const response = await fetch(`/api/vehicles/${vehicleId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
+    try {
+        // Erst die aktuellen Fahrzeugdaten laden
+        const vehicleResponse = await fetch(`/api/vehicles/${vehicleId}`);
+        const vehicleData = await vehicleResponse.json();
+        const vehicle = vehicleData.vehicle;
 
-                if (!response.ok) throw new Error('Fehler beim Aktualisieren');
+        // Alle Fahrzeugdaten mit den neuen Zulassungsdaten zusammenführen
+        const data = {
+            ...vehicle,
+            registrationDate: formData.get('registration-date'),
+            registrationExpiry: formData.get('registration-expiry'),
+            nextInspectionDate: formData.get('next-inspection'),
+            insuranceCompany: formData.get('insurance-company'),
+            insuranceNumber: formData.get('insurance-number'),
+            insuranceType: formData.get('insurance-type'),
+            insuranceExpiry: formData.get('insurance-expiry'),
+            insuranceCost: parseFloat(formData.get('insurance-cost')) || 0
+        };
 
-                showNotification('Zulassungsdaten erfolgreich aktualisiert', 'success');
-                modal.classList.add('hidden');
-                setTimeout(() => window.location.reload(), 1000);
-
-            } catch (error) {
-                console.error('Fehler:', error);
-                showNotification('Fehler beim Aktualisieren der Zulassungsdaten', 'error');
-            }
+        const response = await fetch(`/api/vehicles/${vehicleId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
         });
+
+        if (!response.ok) throw new Error('Fehler beim Aktualisieren');
+
+        showNotification('Zulassungsdaten erfolgreich aktualisiert', 'success');
+        modal.classList.add('hidden');
+        setTimeout(() => window.location.reload(), 500);
+
+    } catch (error) {
+        console.error('Fehler:', error);
+        showNotification('Fehler beim Aktualisieren der Zulassungsdaten', 'error');
     }
 }
 
@@ -251,65 +341,71 @@ function initializeVehicleEditModal() {
     const modal = document.getElementById('edit-vehicle-modal');
 
     if (form) {
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const vehicleId = window.location.pathname.split('/').pop();
-            const formData = new FormData(form);
-
-            const data = {
-                licensePlate: formData.get('license_plate'),
-                brand: formData.get('vehicle_brand'),
-                model: formData.get('model'),
-                year: parseInt(formData.get('year')),
-                color: formData.get('color'),
-                vehicleId: formData.get('vehicle_id'),
-                vin: formData.get('vin'),
-                vehicleType: formData.get('vehicle_type'),
-                fuelType: formData.get('fuel_type'),
-                mileage: parseInt(formData.get('current_mileage')) || 0,
-
-                // Technische Daten
-                engineDisplacement: parseInt(formData.get('engine_displacement')) || 0,
-                powerRating: parseFloat(formData.get('power_rating')) || 0,
-                numberOfAxles: parseInt(formData.get('number_of_axles')) || 0,
-                tireSize: formData.get('tire_size'),
-                rimType: formData.get('rim_type'),
-                emissionClass: formData.get('emission_class'),
-                maxSpeed: parseInt(formData.get('max_speed')) || 0,
-                towingCapacity: parseInt(formData.get('towing_capacity')) || 0,
-
-                // Abmessungen & Gewichte
-                length: parseInt(formData.get('length')) || 0,
-                width: parseInt(formData.get('width')) || 0,
-                height: parseInt(formData.get('height')) || 0,
-                curbWeight: parseInt(formData.get('curb_weight')) || 0,
-                grossWeight: parseInt(formData.get('gross_weight')) || 0,
-                technicalMaxWeight: parseInt(formData.get('technical_max_weight')) || 0,
-                specialFeatures: formData.get('special_features')
-            };
-
-            try {
-                const response = await fetch(`/api/vehicles/${vehicleId}/basic-info`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-
-                if (!response.ok) throw new Error('Fehler beim Aktualisieren');
-
-                showNotification('Fahrzeugdaten erfolgreich aktualisiert', 'success');
-                modal.classList.add('hidden');
-                setTimeout(() => window.location.reload(), 1000);
-
-            } catch (error) {
-                console.error('Fehler:', error);
-                showNotification('Fehler beim Aktualisieren der Fahrzeugdaten', 'error');
-            }
-        });
+        form.removeEventListener('submit', handleVehicleEditSubmit);
+        form.addEventListener('submit', handleVehicleEditSubmit);
     }
 
     // Tab-Funktionalität
     initializeModalTabs();
+}
+
+async function handleVehicleEditSubmit(e) {
+    e.preventDefault();
+
+    const form = e.target;
+    const modal = document.getElementById('edit-vehicle-modal');
+    const vehicleId = window.location.pathname.split('/').pop();
+    const formData = new FormData(form);
+
+    const data = {
+        licensePlate: formData.get('license_plate'),
+        brand: formData.get('vehicle_brand'),
+        model: formData.get('model'),
+        year: parseInt(formData.get('year')),
+        color: formData.get('color'),
+        vehicleId: formData.get('vehicle_id'),
+        vin: formData.get('vin'),
+        vehicleType: formData.get('vehicle_type'),
+        fuelType: formData.get('fuel_type'),
+        mileage: parseInt(formData.get('current_mileage')) || 0,
+
+        // Technische Daten
+        engineDisplacement: parseInt(formData.get('engine_displacement')) || 0,
+        powerRating: parseFloat(formData.get('power_rating')) || 0,
+        numberOfAxles: parseInt(formData.get('number_of_axles')) || 0,
+        tireSize: formData.get('tire_size'),
+        rimType: formData.get('rim_type'),
+        emissionClass: formData.get('emission_class'),
+        maxSpeed: parseInt(formData.get('max_speed')) || 0,
+        towingCapacity: parseInt(formData.get('towing_capacity')) || 0,
+
+        // Abmessungen & Gewichte
+        length: parseInt(formData.get('length')) || 0,
+        width: parseInt(formData.get('width')) || 0,
+        height: parseInt(formData.get('height')) || 0,
+        curbWeight: parseInt(formData.get('curb_weight')) || 0,
+        grossWeight: parseInt(formData.get('gross_weight')) || 0,
+        technicalMaxWeight: parseInt(formData.get('technical_max_weight')) || 0,
+        specialFeatures: formData.get('special_features')
+    };
+
+    try {
+        const response = await fetch(`/api/vehicles/${vehicleId}/basic-info`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        if (!response.ok) throw new Error('Fehler beim Aktualisieren');
+
+        showNotification('Fahrzeugdaten erfolgreich aktualisiert', 'success');
+        modal.classList.add('hidden');
+        setTimeout(() => window.location.reload(), 500);
+
+    } catch (error) {
+        console.error('Fehler:', error);
+        showNotification('Fehler beim Aktualisieren der Fahrzeugdaten', 'error');
+    }
 }
 
 // Tab-Funktionalität für Modal
@@ -354,54 +450,13 @@ window.openAddMaintenanceModal = function(vehicleId) {
         form.reset();
         form.dataset.isEdit = 'false';
         delete form.dataset.maintenanceId;
+        resetSubmitStatus();
 
         // Aktuelles Datum setzen
         const dateInput = document.getElementById('maintenance-date');
         if (dateInput) {
             dateInput.value = new Date().toISOString().split('T')[0];
         }
-    }
-
-    if (modal) {
-        modal.classList.remove('hidden');
-    }
-};
-
-window.openAddFuelCostModal = async function(vehicleId) {
-    const modal = document.getElementById('vehicle-fuel-cost-modal');
-    const form = document.getElementById('vehicle-fuel-cost-form');
-
-    if (form) {
-        form.reset();
-        form.dataset.isEdit = 'false';
-        delete form.dataset.fuelCostId;
-
-        // Aktuelles Datum setzen
-        const dateInput = document.getElementById('vehicle-fuel-date');
-        if (dateInput) {
-            dateInput.value = new Date().toISOString().split('T')[0];
-        }
-    }
-
-    // Fahrer laden
-    try {
-        const response = await fetch('/api/drivers');
-        const data = await response.json();
-        const select = document.getElementById('vehicle-fuel-driver');
-
-        if (select) {
-            select.innerHTML = '<option value="">Keinen Fahrer auswählen</option>';
-            if (data.drivers) {
-                data.drivers.forEach(driver => {
-                    const option = document.createElement('option');
-                    option.value = driver.id;
-                    option.textContent = `${driver.firstName} ${driver.lastName}`;
-                    select.appendChild(option);
-                });
-            }
-        }
-    } catch (error) {
-        console.error('Fehler beim Laden der Fahrer:', error);
     }
 
     if (modal) {
@@ -417,6 +472,7 @@ window.openAddUsageModal = async function(vehicleId) {
         form.reset();
         form.dataset.isEdit = 'false';
         delete form.dataset.usageId;
+        resetSubmitStatus();
 
         // Aktuelles Datum und Zeit setzen
         const now = new Date();
@@ -439,6 +495,49 @@ window.openAddUsageModal = async function(vehicleId) {
 
         if (select) {
             select.innerHTML = '<option value="">Fahrer auswählen</option>';
+            if (data.drivers) {
+                data.drivers.forEach(driver => {
+                    const option = document.createElement('option');
+                    option.value = driver.id;
+                    option.textContent = `${driver.firstName} ${driver.lastName}`;
+                    select.appendChild(option);
+                });
+            }
+        }
+    } catch (error) {
+        console.error('Fehler beim Laden der Fahrer:', error);
+    }
+
+    if (modal) {
+        modal.classList.remove('hidden');
+    }
+};
+
+window.openAddFuelCostModal = async function(vehicleId) {
+    const modal = document.getElementById('vehicle-fuel-cost-modal');
+    const form = document.getElementById('vehicle-fuel-cost-form');
+
+    if (form) {
+        form.reset();
+        form.dataset.isEdit = 'false';
+        delete form.dataset.fuelCostId;
+        resetSubmitStatus();
+
+        // Aktuelles Datum setzen
+        const dateInput = document.getElementById('vehicle-fuel-date');
+        if (dateInput) {
+            dateInput.value = new Date().toISOString().split('T')[0];
+        }
+    }
+
+    // Fahrer laden
+    try {
+        const response = await fetch('/api/drivers');
+        const data = await response.json();
+        const select = document.getElementById('vehicle-fuel-driver');
+
+        if (select) {
+            select.innerHTML = '<option value="">Keinen Fahrer auswählen</option>';
             if (data.drivers) {
                 data.drivers.forEach(driver => {
                     const option = document.createElement('option');
@@ -657,19 +756,6 @@ window.openEditVehicleModal = async function(vehicleId) {
     }
 };
 
-// Close-Button Event-Listener
-document.addEventListener('DOMContentLoaded', function() {
-    // Alle Close-Buttons
-    document.querySelectorAll('.close-modal-btn, .close-edit-modal-btn, .close-current-usage-modal-btn, #close-registration-modal-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const modal = this.closest('.fixed.z-10');
-            if (modal) {
-                modal.classList.add('hidden');
-            }
-        });
-    });
-});
-
 // Notification Helper
 function showNotification(message, type = 'info') {
     const notification = document.createElement('div');
@@ -686,52 +772,7 @@ function showNotification(message, type = 'info') {
     }, 3000);
 }
 
+// Initialisierung nur einmal beim Laden
 document.addEventListener('DOMContentLoaded', function() {
     initializeModals();
 });
-
-// Debug-Funktion zum Testen
-async function debugVehicleAPI() {
-    const vehicleId = window.location.pathname.split('/').pop();
-    console.log('Testing vehicle ID:', vehicleId);
-
-    try {
-        const response = await fetch(`/api/vehicles/${vehicleId}`);
-        const text = await response.text();
-        console.log('Raw response:', text);
-
-        try {
-            const json = JSON.parse(text);
-            console.log('Parsed JSON:', json);
-            console.log('Has vehicle property:', !!json.vehicle);
-            console.log('Vehicle data:', json.vehicle);
-        } catch (e) {
-            console.error('JSON parse error:', e);
-        }
-    } catch (error) {
-        console.error('Fetch error:', error);
-    }
-
-    // Check if modal exists
-    console.log('Edit modal exists:', !!document.getElementById('edit-vehicle-modal'));
-    console.log('Form exists:', !!document.getElementById('edit-vehicle-form'));
-}
-
-// Führen Sie diese Funktion aus
-debugVehicleAPI();
-
-// Debug-Funktion
-async function checkVehicleData() {
-    const vehicleId = window.location.pathname.split('/').pop();
-    const response = await fetch(`/api/vehicles/${vehicleId}`);
-    const data = await response.json();
-
-    console.log('Vehicle data:', data);
-    if (data.vehicle) {
-        console.log('Mileage:', data.vehicle.mileage);
-        console.log('FuelType:', data.vehicle.fuelType);
-        console.log('All vehicle properties:', Object.keys(data.vehicle));
-    }
-}
-
-checkVehicleData();
