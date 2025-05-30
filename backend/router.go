@@ -307,7 +307,6 @@ func setupAuthorizedRoutes(group *gin.RouterGroup) {
 			"year":  currentYear,
 		})
 	})
-
 	// Buchungen
 	group.GET("/bookings", func(c *gin.Context) {
 		user, _ := c.Get("user")
@@ -415,6 +414,8 @@ func setupAPIRoutes(api *gin.RouterGroup) {
 		drivers.POST("", driverHandler.CreateDriver)
 		drivers.PUT("/:id", driverHandler.UpdateDriver)
 		drivers.DELETE("/:id", middleware.AdminMiddleware(), driverHandler.DeleteDriver)
+		// Neue Route für Fahrzeugzuordnung
+		drivers.PUT("/:id/assign-vehicle", driverHandler.AssignVehicle)
 	}
 
 	// Wartungs-API

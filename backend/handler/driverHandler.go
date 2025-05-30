@@ -288,3 +288,119 @@ func (h *DriverHandler) DeleteDriver(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Fahrer erfolgreich gelöscht"})
 }
+
+// AssignVehicleRequest repräsentiert die Anfrage zum Zuweisen eines Fahrzeugs
+type AssignVehicleRequest struct {
+	VehicleID string `json:"vehicleId"`
+}
+
+// AssignVehicle behandelt die Anfrage, einem Fahrer ein Fahrzeug zuzuweisen
+func (h *DriverHandler) AssignVehicle(c *gin.Context) {
+	driverID := c.Param("id")
+
+	// Prüfen, ob der Fahrer existiert
+	driver, err := h.driverRepo.FindByID(driverID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Fahrer nicht gefunden"})
+		return
+	}
+
+	var req AssignVehicleRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Wenn VehicleID leer ist, Zuweisung entfernen
+	if req.VehicleID == "" {
+		h.unassignVehicle(c, driver)
+		return
+	}
+
+	// Prüfen, ob das Fahrzeug existiert
+	vehicleID, err := primitive.ObjectIDFromHex(req.VehicleID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Ungültige Fahrzeug-ID"})
+		return
+	}
+
+	vehicle, err := h.vehicleRepo.FindByID(req.VehicleID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Fahrzeug nicht gefunden"})
+		return
+	}
+
+	// Prüfen, ob das Fahrzeug bereits einem anderen Fahrer zugewiesen ist
+	if !vehicle.CurrentDriverID.IsZero() && vehicle.CurrentDriverID.Hex() != driverID {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Das Fahrzeug ist bereits einem anderen Fahrer zugewiesen"})
+		return
+	}
+
+	// Altes Fahrzeug zurücksetzen, falls vorhanden
+	if !driver.AssignedVehicleID.IsZero() {
+		oldVehicle, err := h.vehicleRepo.FindByID(driver.AssignedVehicleID.Hex())
+		if err == nil && oldVehicle.CurrentDriverID.Hex() == driverID {
+			oldVehicle.CurrentDriverID = primitive.ObjectID{}
+			oldVehicle.Status = model.VehicleStatusAvailable
+			h.vehicleRepo.Update(oldVehicle)
+		}
+	}
+
+	// Neue Zuweisung setzen
+	driver.AssignedVehicleID = vehicleID
+	driver.Status = model.DriverStatusOnDuty
+
+	vehicle.CurrentDriverID = driver.ID
+	vehicle.Status = model.VehicleStatusInUse
+
+	// Beide Objekte aktualisieren
+	if err := h.driverRepo.Update(driver); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Fehler beim Aktualisieren des Fahrers"})
+		return
+	}
+
+	if err := h.vehicleRepo.Update(vehicle); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Fehler beim Aktualisieren des Fahrzeugs"})
+		return
+	}
+
+	// Antwort mit aktualisierten Daten
+	var vehicleName string
+	if !driver.AssignedVehicleID.IsZero() {
+		vehicleName = vehicle.Brand + " " + vehicle.Model + " (" + vehicle.LicensePlate + ")"
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"driver":      driver,
+		"vehicleName": vehicleName,
+		"message":     "Fahrzeug erfolgreich zugewiesen",
+	})
+}
+
+// unassignVehicle entfernt die Fahrzeugzuweisung von einem Fahrer
+func (h *DriverHandler) unassignVehicle(c *gin.Context, driver *model.Driver) {
+	// Fahrzeug zurücksetzen, falls vorhanden
+	if !driver.AssignedVehicleID.IsZero() {
+		vehicle, err := h.vehicleRepo.FindByID(driver.AssignedVehicleID.Hex())
+		if err == nil && vehicle.CurrentDriverID == driver.ID {
+			vehicle.CurrentDriverID = primitive.ObjectID{}
+			vehicle.Status = model.VehicleStatusAvailable
+			h.vehicleRepo.Update(vehicle)
+		}
+	}
+
+	// Fahrer zurücksetzen
+	driver.AssignedVehicleID = primitive.ObjectID{}
+	driver.Status = model.DriverStatusAvailable
+
+	if err := h.driverRepo.Update(driver); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Fehler beim Aktualisieren des Fahrers"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"driver":      driver,
+		"vehicleName": "",
+		"message":     "Fahrzeugzuweisung erfolgreich entfernt",
+	})
+}
