@@ -7,7 +7,7 @@
 <main class="py-10">
     <div class="px-4 sm:px-6 lg:px-8">
         {{if eq .userRole "user"}}
-        <!-- Eingeschränktes Dashboard für einfache Benutzer -->
+        <!-- Eingeschränktes Dashboard für einfache Benutzer bleibt unverändert -->
         <div class="bg-white shadow rounded-lg p-6 mb-6">
             <h2 class="text-xl font-semibold text-gray-800 mb-4">Willkommen, {{.user}}!</h2>
             <p class="text-gray-600 mb-4">
@@ -38,8 +38,8 @@
         </div>
 
         {{else}}
-        <!-- Dashboard Header mit Statistiken -->
-        <div class="grid grid-cols-1 gap-6 mb-6 lg:grid-cols-4">
+        <!-- Dashboard Header mit erweiterten Statistiken -->
+        <div class="grid grid-cols-1 gap-6 mb-6 lg:grid-cols-6">
             <!-- Fahrzeuge gesamt -->
             <div class="flex items-center p-4 bg-white rounded-lg shadow-md">
                 <div class="flex-shrink-0 mr-4">
@@ -100,13 +100,95 @@
                     <span class="block text-gray-500">In Wartung</span>
                 </div>
             </div>
+
+            <!-- Neue Finanzierungskosten -->
+            <div class="flex items-center p-4 bg-white rounded-lg shadow-md">
+                <div class="flex-shrink-0 mr-4">
+                    <div class="p-3 rounded-full bg-purple-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                        </svg>
+                    </div>
+                </div>
+                <div>
+                    <span class="block text-2xl font-bold text-black">€ {{printf "%.0f" .totalFinancingCosts}}</span>
+                    <span class="block text-gray-500">Monatl. Finanzierung</span>
+                </div>
+            </div>
+
+            <!-- Durchschnittliche Kosten -->
+            <div class="flex items-center p-4 bg-white rounded-lg shadow-md">
+                <div class="flex-shrink-0 mr-4">
+                    <div class="p-3 rounded-full bg-indigo-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                    </div>
+                </div>
+                <div>
+                    <span class="block text-2xl font-bold text-black">€ {{printf "%.0f" .averageCostPerVehicle}}</span>
+                    <span class="block text-gray-500">Ø pro Fahrzeug</span>
+                </div>
+            </div>
         </div>
 
         <!-- Hauptbereich mit Karten -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- Linke Spalte -->
             <div class="lg:col-span-2 space-y-6">
-                <!-- Fahrzeugübersicht-Karte -->
+                <!-- Finanzierungsübersicht -->
+                <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                    <div class="p-4 border-b border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-800">Finanzierungsübersicht</h3>
+                    </div>
+                    <div class="p-4">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            <!-- Finanzierte Fahrzeuge -->
+                            <div class="text-center p-4 bg-blue-50 rounded-lg">
+                                <div class="text-2xl font-bold text-blue-600">{{.financingBreakdown.FinancedCount}}</div>
+                                <div class="text-sm text-gray-600">Finanziert</div>
+                                <div class="text-lg font-semibold text-blue-800 mt-1">€ {{printf "%.0f" .financingBreakdown.FinancedCosts}}/Mon.</div>
+                            </div>
+
+                            <!-- Geleasete Fahrzeuge -->
+                            <div class="text-center p-4 bg-green-50 rounded-lg">
+                                <div class="text-2xl font-bold text-green-600">{{.financingBreakdown.LeasedCount}}</div>
+                                <div class="text-sm text-gray-600">Geleast</div>
+                                <div class="text-lg font-semibold text-green-800 mt-1">€ {{printf "%.0f" .financingBreakdown.LeasedCosts}}/Mon.</div>
+                            </div>
+
+                            <!-- Gekaufte Fahrzeuge -->
+                            <div class="text-center p-4 bg-gray-50 rounded-lg">
+                                <div class="text-2xl font-bold text-gray-600">{{.financingBreakdown.PurchasedCount}}</div>
+                                <div class="text-sm text-gray-600">Gekauft</div>
+                                <div class="text-lg font-semibold text-gray-800 mt-1">€ 0/Mon.</div>
+                            </div>
+                        </div>
+
+                        <!-- Auslaufende Verträge -->
+                        {{if .expiringContracts}}
+                        <div class="mt-4">
+                            <h4 class="text-md font-medium text-gray-800 mb-3">Auslaufende Verträge (nächste 3 Monate)</h4>
+                            <div class="space-y-2">
+                                {{range .expiringContracts}}
+                                <div class="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-200">
+                                    <div>
+                                        <div class="font-medium text-gray-900">{{.VehicleName}}</div>
+                                        <div class="text-sm text-gray-600">{{.ContractType}}</div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-sm font-medium text-orange-800">{{.DaysLeft}} Tage</div>
+                                        <div class="text-xs text-gray-500">{{.EndDate | formatDate}}</div>
+                                    </div>
+                                </div>
+                                {{end}}
+                            </div>
+                        </div>
+                        {{end}}
+                    </div>
+                </div>
+
+                <!-- Fahrzeugübersicht-Karte bleibt unverändert -->
                 <div class="bg-white rounded-xl shadow-md overflow-hidden">
                     <div class="flex items-center justify-between p-4 border-b border-gray-200">
                         <h3 class="text-lg font-semibold text-gray-800">Fahrzeugübersicht</h3>
@@ -123,7 +205,7 @@
                         </div>
                     </div>
                     <div class="p-4">
-                        <!-- Vehicle Grid Section - Vereinfacht -->
+                        <!-- Vehicle Grid Section - bleibt unverändert -->
                         <div id="vehicles-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                             {{range .recentVehicles}}
                             <div class="flex items-center bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors">
@@ -169,20 +251,20 @@
                     </div>
                 </div>
 
-                <!-- Flottenaktivität-Diagramm -->
-                <div class="bg-white rounded-xl shadow-md overflow-hidden">
-                    <div class="p-4 border-b border-gray-200">
-                        <h3 class="text-lg font-semibold text-gray-800">Flottenaktivität (letzte 7 Tage)</h3>
-                    </div>
-                    <div class="p-4">
-                        <div class="relative h-64">
-                            <canvas id="fleetActivityChart"></canvas>
+                <!-- Kosten-Charts -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Monatliche Kosten -->
+                    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                        <div class="p-4 border-b border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-800">Monatliche Kosten</h3>
+                        </div>
+                        <div class="p-4">
+                            <div class="relative h-72">
+                                <canvas id="monthlyCostsChart"></canvas>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Neue Charts -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Kraftstoffkosten nach Fahrzeug -->
                     <div class="bg-white rounded-xl shadow-md overflow-hidden">
                         <div class="p-4 border-b border-gray-200">
@@ -194,22 +276,22 @@
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Fahrzeugauslastung -->
-                    <div class="bg-white rounded-xl shadow-md overflow-hidden">
-                        <div class="p-4 border-b border-gray-200">
-                            <h3 class="text-lg font-semibold text-gray-800">Fahrzeugauslastung</h3>
-                        </div>
-                        <div class="p-4">
-                            <div class="relative h-72">
-                                <canvas id="vehicleUtilizationChart"></canvas>
-                            </div>
+                <!-- Flottenaktivität-Diagramm bleibt unverändert -->
+                <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                    <div class="p-4 border-b border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-800">Flottenaktivität (letzte 7 Tage)</h3>
+                    </div>
+                    <div class="p-4">
+                        <div class="relative h-64">
+                            <canvas id="fleetActivityChart"></canvas>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Rechte Spalte -->
+            <!-- Rechte Spalte bleibt weitgehend unverändert -->
             <div class="space-y-6">
                 <!-- Fahrerübersicht -->
                 <div class="bg-white rounded-xl shadow-md overflow-hidden">
@@ -346,7 +428,7 @@
             '#DEE7FD'  // Hellstes Blau
         ];
 
-        // Flottenaktivität-Diagramm
+        // Flottenaktivität-Diagramm bleibt unverändert
         const fleetCtx = document.getElementById('fleetActivityChart')?.getContext('2d');
         if (fleetCtx) {
             const fleetActivityChart = new Chart(fleetCtx, {
@@ -405,10 +487,66 @@
         });
         }
 
-        // Kraftstoffkosten nach Fahrzeug - mit Fehlerbehandlung
+        // Neues Diagramm: Monatliche Kosten (Wartung + Finanzierung)
+        const monthlyCostsCtx = document.getElementById('monthlyCostsChart')?.getContext('2d');
+        if (monthlyCostsCtx) {
+            const monthlyCostsChart = new Chart(monthlyCostsCtx, {
+                type: 'bar',
+                data: {
+                    labels: {{.maintenanceCostLabels}} || [],
+                datasets: [
+                {
+                    label: 'Wartungskosten',
+                    data: {{.maintenanceCostData}} || [],
+                backgroundColor: chartColors[1],
+                borderColor: chartColors[0],
+                borderWidth: 1,
+                borderRadius: 6
+        },
+            {
+                label: 'Finanzierungskosten',
+                    data: Array({{len .maintenanceCostLabels}}).fill({{.totalFinancingCosts}}),
+                backgroundColor: chartColors[3],
+                    borderColor: chartColors[2],
+                borderWidth: 1,
+                borderRadius: 6
+            }
+        ]
+        },
+            options: {
+                responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                    x: {
+                        stacked: true,
+                            grid: { display: false }
+                    },
+                    y: {
+                        stacked: true,
+                            beginAtZero: true,
+                            ticks: {
+                            callback: function(value) {
+                                return '€ ' + value.toLocaleString();
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': €' + context.parsed.y.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        }
+
+        // Kraftstoffkosten nach Fahrzeug bleibt weitgehend unverändert
         const fuelCtx = document.getElementById('fuelCostsByVehicleChart')?.getContext('2d');
         if (fuelCtx) {
-            // Sichere Initialisierung von fuelLabels
             const fuelLabels = {{.fuelCostVehicleLabels}} || [];
             const fuelColors = Array.isArray(fuelLabels)
                 ? fuelLabels.map((_, index) => chartColors[index % chartColors.length])
@@ -422,7 +560,7 @@
                         label: 'Kraftstoffkosten (€)',
                         data: {{.fuelCostVehicleData}} || [],
                 backgroundColor: fuelColors,
-                borderColor: fuelColors.map(color => color.replace(/(.*)/, '$1DD')), // Etwas dunklere Border
+                borderColor: fuelColors.map(color => color.replace(/(.*)/, '$1DD')),
                 borderWidth: 1,
                 borderRadius: {
                     topLeft: 8,
@@ -477,55 +615,7 @@
         });
         }
 
-        // Fahrzeugauslastung - Donut Chart
-        const utilizationCtx = document.getElementById('vehicleUtilizationChart')?.getContext('2d');
-        if (utilizationCtx) {
-            const utilizationChart = new Chart(utilizationCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Verfügbar', 'In Nutzung', 'In Wartung'],
-                    datasets: [{
-                        data: {{.vehicleUtilizationData}} || [0, 0, 0],
-                backgroundColor: [chartColors[1], chartColors[0], chartColors[3]],
-                borderColor: [chartColors[0], chartColors[0], chartColors[2]],
-                borderWidth: 2,
-                hoverOffset: 8,
-                borderRadius: 4
-            }]
-        },
-            options: {
-                responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                    legend: {
-                        position: 'bottom',
-                            labels: {
-                            padding: 20,
-                                usePointStyle: true,
-                                pointStyle: 'circle'
-                        }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.label || '';
-                                if (label) {
-                                    label += ': ';
-                                }
-                                if (context.parsed !== null) {
-                                    label += context.parsed;
-                                    label += ' Fahrzeuge';
-                                }
-                                return label;
-                            }
-                        }
-                    }
-                },
-                cutout: '60%' // Macht den Donut dünner
-            }
-        });
-        }
-
+        // Fahrzeugfilter bleibt unverändert
         const vehicleFilter = document.getElementById('vehicle-filter');
         if (vehicleFilter) {
             vehicleFilter.addEventListener('change', function() {

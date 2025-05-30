@@ -1,219 +1,151 @@
-{{ template "head" .}}
-<body class="bg-gray-50">
-{{ template "navigation" .}}
+{{ template "head" . }}
+<body class="h-full bg-gray-50">
+<!-- Navigation einfügen -->
+{{ template "navigation" . }}
 
 <!-- Hauptinhalt -->
-<div class="px-4 sm:px-6 lg:px-8 py-8">
-    <!-- Header mit Titel und Info -->
-    <div class="mb-6">
-        <div class="flex items-start justify-between">
-            <div class="flex-1">
-                <div class="flex items-center mb-2">
-                    <!-- Fahrzeug Icon -->
-                    <svg class="h-8 w-8 text-gray-700 mr-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
-                    </svg>
-                    <h1 class="text-2xl font-bold text-gray-900">Fahrzeuge</h1>
-                </div>
-                <!-- Info Text -->
-                <p class="text-sm text-gray-600 flex items-center">
-                    Solltest du Fragen haben bekommst du über unser Info-Center zu einem Erklärvideo
-                    <a href="#" class="ml-1 text-indigo-600 hover:text-indigo-800">
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
-                        </svg>
-                    </a>
+<main class="py-10">
+    <div class="px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="sm:flex sm:items-center">
+            <div class="sm:flex-auto">
+                <h1 class="text-2xl font-semibold text-gray-900">Fahrzeugübersicht</h1>
+                <p class="mt-2 text-sm text-gray-700">
+                    Verwalten Sie alle Fahrzeuge in Ihrer Flotte. Fügen Sie neue Fahrzeuge hinzu, bearbeiten Sie bestehende oder verfolgen Sie deren Status.
                 </p>
             </div>
-            <div class="mt-4 md:mt-0">
-                <button id="add-vehicle-btn" type="button" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    Fahrzeug hinzufügen
-                    <svg class="ml-2 -mr-1 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            <div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
+                <button type="button" id="add-vehicle-btn" class="block rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                    <svg class="-ml-0.5 mr-1.5 h-5 w-5 inline" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" />
                     </svg>
+                    Fahrzeug hinzufügen
                 </button>
             </div>
         </div>
-    </div>
 
-    <!-- Filter-Leiste -->
-    <div class="bg-white p-4 rounded-md shadow-sm mb-6">
-        <div class="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4">
-            <!-- Filter Buttons -->
-            <div class="flex flex-wrap gap-2">
-                <button class="filter-btn active px-4 py-2 text-sm font-medium rounded-md bg-indigo-600 text-white" data-filter="all">
-                    Alle
-                </button>
-                <button class="filter-btn px-4 py-2 text-sm font-medium rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200" data-filter="available">
-                    Aktiv
-                </button>
-                <button class="filter-btn px-4 py-2 text-sm font-medium rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200" data-filter="inuse">
-                    In Benutzung
-                </button>
-                <button class="filter-btn px-4 py-2 text-sm font-medium rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200" data-filter="maintenance">
-                    In Wartung
-                </button>
-                <button class="filter-btn px-4 py-2 text-sm font-medium rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200" data-filter="inactive">
-                    Nicht aktiv
-                </button>
-            </div>
-
-            <!-- Suche -->
-            <div class="flex-1 sm:ml-auto sm:max-w-xs">
-                <label for="search" class="sr-only">Suche</label>
-                <div class="relative rounded-md shadow-sm">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        <!-- Such- und Filterbereich -->
+        <div class="mt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex-1 max-w-lg">
+                <label for="search" class="sr-only">Fahrzeuge suchen</label>
+                <div class="relative">
+                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                        <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
                         </svg>
                     </div>
-                    <input type="text" name="search" id="search" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 pr-12 sm:text-sm border-gray-300 rounded-md" placeholder="Fahrzeug suchen...">
+                    <input id="search" name="search" class="block w-full rounded-md border-0 py-1.5 pl-10 pr-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" placeholder="Nach Kennzeichen, Marke oder Modell suchen..." type="search">
+                </div>
+            </div>
+        </div>
+
+        <!-- Fahrzeugtabelle -->
+        <div class="mt-8 flow-root">
+            <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+                    <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+                        <table class="min-w-full divide-y divide-gray-300">
+                            <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Fahrzeug</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Kennzeichen</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Kraftstoff</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Kilometerstand</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Status</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Fahrer</th>
+                                <th scope="col" class="relative px-6 py-3"><span class="sr-only">Aktionen</span></th>
+                            </tr>
+                            </thead>
+                            <tbody id="vehicles-table-body" class="divide-y divide-gray-200 bg-white">
+                            <!-- Fahrzeugdaten werden hier dynamisch eingefügt -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- Fahrzeug-Tabelle -->
-    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-            <tr>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Marke
-                </th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Kennzeichen
-                </th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Baujahr
-                </th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Kilometerstand
-                </th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Fahrer
-                </th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Farbe
-                </th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                </th>
-                <th scope="col" class="text-center px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                   Details
-                </th>
-            </tr>
-            </thead>
-            <tbody id="vehicles-table-body" class="bg-white divide-y divide-gray-200">
-            <!-- Wird durch JavaScript befüllt -->
-            <tr>
-                <td colspan="8" class="px-6 py-8 text-center">
-                    <div class="flex justify-center items-center">
-                        <svg class="animate-spin h-8 w-8 mr-3 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        <p class="text-lg text-gray-500">Fahrzeuge werden geladen...</p>
-                    </div>
-                </td>
-            </tr>
-            </tbody>
-        </table>
-    </div>
-</div>
+</main>
 
 <!-- Modal für Fahrzeug hinzufügen/bearbeiten -->
-<div id="vehicle-modal" class="fixed z-10 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
-        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+<div id="vehicle-modal" class="fixed inset-0 z-10 overflow-y-auto hidden">
+    <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+        <div class="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+            <div>
+                <div class="mt-3 text-center sm:mt-5">
+                    <h3 id="modal-title" class="text-base font-semibold leading-6 text-gray-900">Fahrzeug hinzufügen</h3>
+                </div>
+            </div>
 
-        <!-- Modal Panel - vereinfacht nur mit Kerndaten -->
-        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-            <form id="vehicle-form">
-                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                    <div class="w-full">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
-                            Fahrzeug hinzufügen
-                        </h3>
+            <form id="vehicle-form" class="mt-5 space-y-4">
+                <!-- Kennzeichen -->
+                <div>
+                    <label for="license" class="block text-sm font-medium leading-6 text-gray-900">Kennzeichen *</label>
+                    <input type="text" name="license" id="license" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                </div>
 
-                        <!-- Nur Kerndaten -->
-                        <div class="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                            <!-- Kennzeichen -->
-                            <div class="sm:col-span-3">
-                                <label for="license" class="block text-sm font-medium text-gray-700">Kennzeichen *</label>
-                                <input type="text" name="license" id="license" required class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                            </div>
+                <!-- Marke -->
+                <div>
+                    <label for="vehicle_brand" class="block text-sm font-medium leading-6 text-gray-900">Marke *</label>
+                    <select name="vehicle_brand" id="vehicle_brand" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        <option value="">Marke auswählen</option>
+                    </select>
+                </div>
 
-                            <!-- Marke -->
-                            <div class="sm:col-span-3">
-                                <label for="vehicle_brand" class="block text-sm font-medium text-gray-700">Marke *</label>
-                                <select id="vehicle_brand" name="vehicle_brand" required class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                                    <option value="">Marke auswählen</option>
-                                </select>
-                            </div>
+                <!-- Modell -->
+                <div>
+                    <label for="model" class="block text-sm font-medium leading-6 text-gray-900">Modell *</label>
+                    <input type="text" name="model" id="model" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                </div>
 
-                            <!-- Modell -->
-                            <div class="sm:col-span-3">
-                                <label for="model" class="block text-sm font-medium text-gray-700">Modell *</label>
-                                <input type="text" name="model" id="model" required class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                            </div>
-
-                            <!-- Baujahr -->
-                            <div class="sm:col-span-3">
-                                <label for="year" class="block text-sm font-medium text-gray-700">Baujahr *</label>
-                                <input type="number" name="year" id="year" min="1900" max="2099" required class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                            </div>
-
-                            <!-- Kilometerstand -->
-                            <div class="sm:col-span-3">
-                                <label for="mileage" class="block text-sm font-medium text-gray-700">Kilometerstand</label>
-                                <div class="mt-1 relative rounded-md shadow-sm">
-                                    <input type="number" name="mileage" id="mileage" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pr-12 sm:text-sm border-gray-300 rounded-md" placeholder="0">
-                                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                        <span class="text-gray-500 sm:text-sm">km</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Farbe -->
-                            <div class="sm:col-span-3">
-                                <label for="color" class="block text-sm font-medium text-gray-700">Farbe</label>
-                                <input type="text" name="color" id="color" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" placeholder="z.B. Schwarz">
-                            </div>
-
-                            <!-- Kraftstoffart -->
-                            <div class="sm:col-span-3">
-                                <label for="fuel-type" class="block text-sm font-medium text-gray-700">Kraftstoffart</label>
-                                <select id="fuel-type" name="fuel-type" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                                    <option value="Benzin">Benzin</option>
-                                    <option value="Diesel">Diesel</option>
-                                    <option value="Elektro">Elektro</option>
-                                    <option value="Hybrid (Benzin/Elektro)">Hybrid (Benzin/Elektro)</option>
-                                    <option value="Hybrid (Diesel/Elektro)">Hybrid (Diesel/Elektro)</option>
-                                    <option value="Wasserstoff">Wasserstoff</option>
-                                </select>
-                            </div>
-
-                            <!-- Status -->
-                            <div class="sm:col-span-3">
-                                <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
-                                <select id="status" name="status" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                                    <option value="available">Verfügbar</option>
-                                    <option value="inuse">In Benutzung</option>
-                                    <option value="maintenance">In Wartung</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <p class="mt-6 text-sm text-gray-500">* Pflichtfelder</p>
+                <!-- Jahr und Farbe -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="year" class="block text-sm font-medium leading-6 text-gray-900">Baujahr *</label>
+                        <input type="number" name="year" id="year" required min="1900" max="2030" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="color" class="block text-sm font-medium leading-6 text-gray-900">Farbe</label>
+                        <input type="text" name="color" id="color" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                     </div>
                 </div>
-                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                    <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm">
+
+                <!-- Kraftstoff und Kilometerstand -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="fuel-type" class="block text-sm font-medium leading-6 text-gray-900">Kraftstoff</label>
+                        <select name="fuel-type" id="fuel-type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            <option value="Benzin">Benzin</option>
+                            <option value="Diesel">Diesel</option>
+                            <option value="Elektro">Elektro</option>
+                            <option value="Hybrid (Benzin/Elektro)">Hybrid (Benzin/Elektro)</option>
+                            <option value="Hybrid (Diesel/Elektro)">Hybrid (Diesel/Elektro)</option>
+                            <option value="Wasserstoff">Wasserstoff</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="mileage" class="block text-sm font-medium leading-6 text-gray-900">Kilometerstand</label>
+                        <input type="number" name="mileage" id="mileage" min="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                    </div>
+                </div>
+
+                <!-- Status -->
+                <div>
+                    <label for="status" class="block text-sm font-medium leading-6 text-gray-900">Status</label>
+                    <select name="status" id="status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        <option value="available">Verfügbar</option>
+                        <option value="inuse">In Nutzung</option>
+                        <option value="maintenance">In Wartung</option>
+                    </select>
+                </div>
+
+                <!-- Buttons -->
+                <div class="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
+                    <button type="submit" class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2">
                         Speichern
                     </button>
-                    <button type="button" id="close-modal-btn" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                    <button type="button" id="close-modal-btn" class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0">
                         Abbrechen
                     </button>
                 </div>
@@ -221,166 +153,134 @@
         </div>
     </div>
 </div>
-<!-- JavaScript-Datei einbinden -->
+
+<!-- Footer -->
+{{ template "footer" . }}
+
+<!-- Scripts -->
 <script src="/static/js/car-manufacturers.js"></script>
 <script src="/static/js/vehicles.js"></script>
-
-<!-- Zusätzliches Script für Tabellen-Funktionalität -->
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Filter-Button Funktionalität
-        const filterButtons = document.querySelectorAll('.filter-btn');
-        let currentFilter = 'all';
-
-        filterButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                filterButtons.forEach(btn => {
-                    btn.classList.remove('bg-indigo-600', 'text-white');
-                    btn.classList.add('bg-gray-100', 'text-gray-700');
-                });
-                this.classList.remove('bg-gray-100', 'text-gray-700');
-                this.classList.add('bg-indigo-600', 'text-white');
-                currentFilter = this.dataset.filter;
-                filterVehicles();
-            });
-        });
-
-        function filterVehicles() {
-            document.querySelectorAll('#vehicles-table-body tr[data-status]').forEach(row => {
-                const status = row.dataset.status;
-                row.style.display = (currentFilter === 'all' || currentFilter === status) ? '' : 'none';
-            });
-        }
-
-        // Such-Funktionalität
-        const searchInput = document.getElementById('search');
-        if (searchInput) {
-            searchInput.addEventListener('input', function() {
-                const searchText = this.value.toLowerCase();
-                document.querySelectorAll('#vehicles-table-body tr[data-status]').forEach(row => {
-                    row.style.display = row.textContent.toLowerCase().includes(searchText) ? '' : 'none';
-                });
-            });
-        }
-    });
-
-    // Überschreibe die renderVehicles-Funktion für Tabellen-Ansicht
-    window.renderVehicles = function(vehicles) {
-        vehicles = Array.isArray(vehicles) ? vehicles : [];
+    // Funktion zum Rendern der Fahrzeugtabelle
+    function renderVehicles(vehicles) {
         const tbody = document.getElementById('vehicles-table-body');
-        if (!tbody) {
-            console.error('Tabellen-Body nicht gefunden');
-            return;
-        }
-        tbody.innerHTML = '';
+        if (!tbody) return;
 
-        if (vehicles.length === 0) {
+        if (!vehicles || vehicles.length === 0) {
             tbody.innerHTML = `
-            <tr>
-                <td colspan="8" class="px-6 py-4 text-center text-gray-500">
-                    Keine Fahrzeuge gefunden.
-                </td>
-            </tr>`;
+                <tr>
+                    <td colspan="7" class="px-6 py-8 text-center">
+                        <div class="text-sm text-gray-500">
+                            <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+                            </svg>
+                            <p>Keine Fahrzeuge vorhanden</p>
+                            <p class="mt-1">Fügen Sie Ihr erstes Fahrzeug hinzu, um zu beginnen.</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
             return;
         }
 
-        vehicles.forEach(vehicle => {
-            let statusClass, statusText, statusValue;
-            switch (vehicle.status) {
-                case 'available':
-                    statusClass = 'bg-green-100 text-green-800';
-                    statusText  = 'Aktiv';
-                    statusValue = 'available';
-                    break;
-                case 'inuse':
-                    statusClass = 'bg-yellow-100 text-yellow-800';
-                    statusText  = 'In Benutzung';
-                    statusValue = 'inuse';
-                    break;
-                case 'maintenance':
-                    statusClass = 'bg-orange-100 text-orange-800';
-                    statusText  = 'In Wartung';
-                    statusValue = 'maintenance';
-                    break;
-                case 'inactive':
-                    statusClass = 'bg-gray-100 text-gray-800';
-                    statusText  = 'Nicht aktiv';
-                    statusValue = 'inactive';
-                    break;
-                default:
-                    statusClass = 'bg-gray-100 text-gray-800';
-                    statusText  = vehicle.status || 'Unbekannt';
-                    statusValue = 'unknown';
-            }
+        tbody.innerHTML = vehicles.map(vehicle => {
+            const statusConfig = {
+                'available': { class: 'bg-green-100 text-green-800', text: 'Verfügbar' },
+                'inuse': { class: 'bg-yellow-100 text-yellow-800', text: 'In Nutzung' },
+                'maintenance': { class: 'bg-red-100 text-red-800', text: 'In Wartung' }
+            };
 
-            const row = document.createElement('tr');
-            row.setAttribute('data-status', statusValue);
-            row.innerHTML = `
-            <td class="px-6 py-4 whitespace-nowrap">
-                <div class="flex items-center">
-                    <img class="h-8 w-8 mr-3"
-                         src="/static/assets/${(vehicle.brand || '').toLowerCase()}.svg"
-                         alt="${vehicle.brand}"
-                         onerror="this.style.display='none'">
-                    <div class="text-sm font-medium text-gray-900">${vehicle.brand || ''}</div>
-                </div>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${vehicle.licensePlate || ''}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${vehicle.year || '-'}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${vehicle.mileage ? vehicle.mileage.toLocaleString('de-DE') + ' km' : '-'}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${vehicle.driverName || vehicle.currentDriverId ? vehicle.driverName : 'Nicht zugewiesen'}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${vehicle.color || '-'}</td>
-            <td class="px-6 py-4 whitespace-nowrap">
-                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}">
-                    ${statusText}
-                </span>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-    <div class="flex items-center justify-between">
-        <!-- View Button -->
-        <button
-            type="button"
-            class="view-vehicle-btn text-indigo-600 hover:text-indigo-900"
-            data-id="${vehicle.id}"
-        >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-            </svg>
-        </button>
+            const status = statusConfig[vehicle.status] || { class: 'bg-gray-100 text-gray-800', text: vehicle.status };
 
-        <!-- Edit Button -->
-        <button
-            type="button"
-            class="edit-vehicle-btn text-indigo-600 hover:text-indigo-900"
-            data-id="${vehicle.id}"
-        >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l9.032-9.032ZM18.259 8.715 18 9.001l-.259-.286Z" />
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v5.25a2.25 2.25 0 0 1-2.25 2.25H5.25a2.25 2.25 0 0 1-2.25-2.25V7.5A2.25 2.25 0 0 1 5.25 5.25h5.25" />
-            </svg>
-        </button>
-    </div>
-</td>
-        `;
-            tbody.appendChild(row);
-        });
+            return `
+                <tr data-status="${vehicle.status}">
+                    <td class="whitespace-nowrap px-6 py-4">
+                        <div class="flex items-center">
+                            <div class="h-10 w-10 flex-shrink-0">
+                                <img class="h-10 w-10 rounded-full object-contain"
+                                     src="/static/assets/${vehicle.brand.toLowerCase()}.svg"
+                                     alt="${vehicle.brand}"
+                                     onerror="this.onerror=null; this.src='/static/images/brands/default.svg';">
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">${vehicle.brand} ${vehicle.model}</div>
+                                <div class="text-sm text-gray-500">Baujahr ${vehicle.year}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
+                        <span class="font-mono font-semibold">${vehicle.licensePlate}</span>
+                    </td>
+                    <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                        ${vehicle.fuelType || 'Nicht angegeben'}
+                    </td>
+                    <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                        ${vehicle.mileage ? vehicle.mileage.toLocaleString() + ' km' : 'Nicht angegeben'}
+                    </td>
+                    <td class="whitespace-nowrap px-6 py-4">
+                        <span class="inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${status.class}">
+                            ${status.text}
+                        </span>
+                    </td>
+                    <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                        ${vehicle.driverName || 'Nicht zugewiesen'}
+                    </td>
+                    <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                        <div class="flex items-center justify-end space-x-2">
+                            <a href="/vehicle-details/${vehicle.id}" class="text-indigo-600 hover:text-indigo-900">
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                            </a>
+                            <button onclick="openVehicleModal(true, '${vehicle.id}')" class="text-blue-600 hover:text-blue-900">
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                            </button>
+                            <button onclick="deleteVehicle('${vehicle.id}')" class="text-red-600 hover:text-red-900">
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
 
-        // Event-Listener für View-Buttons
-        document.querySelectorAll('.view-vehicle-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                window.location.href = `/vehicle-details/${btn.dataset.id}`;
-            });
-        });
+    // Vehicle delete function
+    function deleteVehicle(vehicleId) {
+        if (confirm('Sind Sie sicher, dass Sie dieses Fahrzeug löschen möchten?')) {
+            fetch(`/api/vehicles/${vehicleId}`, {
+                method: 'DELETE'
+            })
+                .then(response => {
+                    if (response.ok) {
+                        // Erfolgsmeldung
+                        const notification = document.createElement('div');
+                        notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-md shadow-lg z-50';
+                        notification.textContent = 'Fahrzeug erfolgreich gelöscht!';
+                        document.body.appendChild(notification);
 
-        // Event-Listener für Edit-Buttons
-        document.querySelectorAll('.edit-vehicle-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                openVehicleModal(true, this.dataset.id);
-            });
-        });
-    };
+                        setTimeout(() => {
+                            notification.remove();
+                        }, 3000);
+
+                        // Tabelle neu laden
+                        loadVehicles();
+                    } else {
+                        alert('Fehler beim Löschen des Fahrzeugs');
+                    }
+                })
+                .catch(error => {
+                    console.error('Fehler:', error);
+                    alert('Fehler beim Löschen des Fahrzeugs');
+                });
+        }
+    }
 </script>
-
 </body>
 </html>

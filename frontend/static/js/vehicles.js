@@ -62,12 +62,25 @@ function initializeBrandDropdown() {
     if (brandSelect) {
         brandSelect.innerHTML = '<option value="">Marke auswählen</option>';
 
-        carManufacturers.forEach(manufacturer => {
-            const option = document.createElement('option');
-            option.value = manufacturer.name;
-            option.textContent = manufacturer.name;
-            brandSelect.appendChild(option);
-        });
+        // Prüfen ob carManufacturers verfügbar ist
+        if (typeof carManufacturers !== 'undefined' && Array.isArray(carManufacturers)) {
+            carManufacturers.forEach(manufacturer => {
+                const option = document.createElement('option');
+                option.value = manufacturer.name;
+                option.textContent = manufacturer.name;
+                brandSelect.appendChild(option);
+            });
+        } else {
+            console.error('carManufacturers ist nicht verfügbar!');
+            // Fallback: Nur grundlegende Marken hinzufügen
+            const basicBrands = ['Audi', 'BMW', 'Mercedes-Benz', 'Volkswagen', 'Ford', 'Toyota', 'Opel'];
+            basicBrands.forEach(brand => {
+                const option = document.createElement('option');
+                option.value = brand;
+                option.textContent = brand;
+                brandSelect.appendChild(option);
+            });
+        }
     } else {
         console.error('Brand Select Element nicht gefunden!');
     }
@@ -177,7 +190,12 @@ function openVehicleModal(isEdit = false, vehicleId = null) {
         modalTitle.textContent = 'Fahrzeug bearbeiten';
 
         fetch(`/api/vehicles/${vehicleId}`)
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 const vehicle = data.vehicle;
                 console.log('Geladene Fahrzeugdaten für Bearbeitung:', vehicle);

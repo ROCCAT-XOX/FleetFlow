@@ -34,6 +34,30 @@ func NewDashboardHandler() *DashboardHandler {
 	}
 }
 
+// Strukturen für Finanzierungsstatistiken
+type FinancingStatistics struct {
+	TotalMonthlyCosts     float64            `json:"totalMonthlyCosts"`
+	AverageCostPerVehicle float64            `json:"averageCostPerVehicle"`
+	Breakdown             FinancingBreakdown `json:"breakdown"`
+	ExpiringContracts     []ExpiringContract `json:"expiringContracts"`
+}
+
+type FinancingBreakdown struct {
+	PurchasedCount int     `json:"purchasedCount"`
+	FinancedCount  int     `json:"financedCount"`
+	LeasedCount    int     `json:"leasedCount"`
+	FinancedCosts  float64 `json:"financedCosts"`
+	LeasedCosts    float64 `json:"leasedCosts"`
+}
+
+type ExpiringContract struct {
+	VehicleID    string    `json:"vehicleId"`
+	VehicleName  string    `json:"vehicleName"`
+	ContractType string    `json:"contractType"`
+	EndDate      time.Time `json:"endDate"`
+	DaysLeft     int       `json:"daysLeft"`
+}
+
 // GetCompleteDashboardData liefert alle Daten für das Dashboard
 func (h *DashboardHandler) GetCompleteDashboardData(c *gin.Context) {
 	// Basisstatistiken
@@ -51,6 +75,9 @@ func (h *DashboardHandler) GetCompleteDashboardData(c *gin.Context) {
 			maintenanceVehicles++
 		}
 	}
+
+	// Finanzierungsstatistiken berechnen
+	financingStats := h.calculateFinancingStatistics(vehicles)
 
 	// Letzte Fahrzeuge (max 6)
 	recentVehicles := vehicles
@@ -79,6 +106,9 @@ func (h *DashboardHandler) GetCompleteDashboardData(c *gin.Context) {
 
 	// Fahrzeugauslastung
 	utilizationData := []int64{availableVehicles, inUseVehicles, maintenanceVehicles}
+
+	// Wartungskosten der letzten 12 Monate
+	maintenanceCostData := h.getMaintenanceCostData()
 
 	// Benutzerrolle aus Context
 	userRole := "admin" // Default
@@ -116,7 +146,119 @@ func (h *DashboardHandler) GetCompleteDashboardData(c *gin.Context) {
 		"fuelCostVehicleLabels":    fuelCostData.Labels,
 		"fuelCostVehicleData":      fuelCostData.Data,
 		"vehicleUtilizationData":   utilizationData,
+		// Neue Finanzierungsstatistiken
+		"totalFinancingCosts":   financingStats.TotalMonthlyCosts,
+		"financingBreakdown":    financingStats.Breakdown,
+		"averageCostPerVehicle": financingStats.AverageCostPerVehicle,
+		"expiringContracts":     financingStats.ExpiringContracts,
+		// Wartungskosten
+		"maintenanceCostLabels": maintenanceCostData.Labels,
+		"maintenanceCostData":   maintenanceCostData.Data,
+		"totalMaintenanceCosts": maintenanceCostData.Total,
 	})
+}
+
+// calculateFinancingStatistics berechnet Finanzierungsstatistiken
+func (h *DashboardHandler) calculateFinancingStatistics(vehicles []*model.Vehicle) FinancingStatistics {
+	stats := FinancingStatistics{
+		Breakdown: FinancingBreakdown{},
+	}
+
+	var totalMonthlyCosts float64
+	var financedCosts, leasedCosts float64
+	var expiringContracts []ExpiringContract
+	now := time.Now()
+	threeMonthsFromNow := now.AddDate(0, 3, 0)
+
+	for _, vehicle := range vehicles {
+		switch vehicle.AcquisitionType {
+		case model.AcquisitionTypePurchased:
+			stats.Breakdown.PurchasedCount++
+
+		case model.AcquisitionTypeFinanced:
+			stats.Breakdown.FinancedCount++
+			financedCosts += vehicle.FinanceMonthlyRate
+			totalMonthlyCosts += vehicle.FinanceMonthlyRate
+
+			// Prüfe auf auslaufende Finanzierungsverträge
+			if !vehicle.FinanceEndDate.IsZero() && vehicle.FinanceEndDate.Before(threeMonthsFromNow) && vehicle.FinanceEndDate.After(now) {
+				expiringContracts = append(expiringContracts, ExpiringContract{
+					VehicleID:    vehicle.ID.Hex(),
+					VehicleName:  vehicle.Brand + " " + vehicle.Model + " (" + vehicle.LicensePlate + ")",
+					ContractType: "Finanzierung",
+					EndDate:      vehicle.FinanceEndDate,
+					DaysLeft:     int(vehicle.FinanceEndDate.Sub(now).Hours() / 24),
+				})
+			}
+
+		case model.AcquisitionTypeLeased:
+			stats.Breakdown.LeasedCount++
+			leasedCosts += vehicle.LeaseMonthlyRate
+			totalMonthlyCosts += vehicle.LeaseMonthlyRate
+
+			// Prüfe auf auslaufende Leasingverträge
+			if !vehicle.LeaseEndDate.IsZero() && vehicle.LeaseEndDate.Before(threeMonthsFromNow) && vehicle.LeaseEndDate.After(now) {
+				expiringContracts = append(expiringContracts, ExpiringContract{
+					VehicleID:    vehicle.ID.Hex(),
+					VehicleName:  vehicle.Brand + " " + vehicle.Model + " (" + vehicle.LicensePlate + ")",
+					ContractType: "Leasing",
+					EndDate:      vehicle.LeaseEndDate,
+					DaysLeft:     int(vehicle.LeaseEndDate.Sub(now).Hours() / 24),
+				})
+			}
+		}
+	}
+
+	stats.TotalMonthlyCosts = totalMonthlyCosts
+	stats.Breakdown.FinancedCosts = financedCosts
+	stats.Breakdown.LeasedCosts = leasedCosts
+	stats.ExpiringContracts = expiringContracts
+
+	// Durchschnittliche Kosten pro Fahrzeug
+	if len(vehicles) > 0 {
+		stats.AverageCostPerVehicle = totalMonthlyCosts / float64(len(vehicles))
+	}
+
+	return stats
+}
+
+// getMaintenanceCostData berechnet Wartungskosten der letzten 12 Monate
+func (h *DashboardHandler) getMaintenanceCostData() struct {
+	Labels []string
+	Data   []float64
+	Total  float64
+} {
+	result := struct {
+		Labels []string
+		Data   []float64
+		Total  float64
+	}{}
+
+	// Letzten 12 Monate
+	now := time.Now()
+	for i := 11; i >= 0; i-- {
+		month := now.AddDate(0, -i, 0)
+		monthStr := month.Format("Jan 2006")
+		result.Labels = append(result.Labels, monthStr)
+
+		// Wartungskosten für diesen Monat berechnen
+		startOfMonth := time.Date(month.Year(), month.Month(), 1, 0, 0, 0, 0, month.Location())
+		endOfMonth := startOfMonth.AddDate(0, 1, 0).Add(-time.Nanosecond)
+
+		maintenanceEntries, _ := h.maintenanceRepo.FindAll()
+		var monthlyCost float64
+
+		for _, entry := range maintenanceEntries {
+			if entry.Date.After(startOfMonth) && entry.Date.Before(endOfMonth) {
+				monthlyCost += entry.Cost
+			}
+		}
+
+		result.Data = append(result.Data, monthlyCost)
+		result.Total += monthlyCost
+	}
+
+	return result
 }
 
 // Hilfsmethoden für spezifische Daten
@@ -363,7 +505,7 @@ func (h *DashboardHandler) getDayName(date time.Time) string {
 	return days[date.Weekday()]
 }
 
-// backend/handler/dashboard.go - Fehlende Methoden hinzufügen
+// API-Methoden
 
 // GetDashboardStats returns general statistics for the dashboard
 func (h *DashboardHandler) GetDashboardStats(c *gin.Context) {
@@ -396,6 +538,18 @@ func (h *DashboardHandler) GetDashboardStats(c *gin.Context) {
 		}
 	}
 
+	c.JSON(http.StatusOK, stats)
+}
+
+// GetFinancingStats liefert Finanzierungsstatistiken
+func (h *DashboardHandler) GetFinancingStats(c *gin.Context) {
+	vehicles, err := h.vehicleRepo.FindAll()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Fehler beim Abrufen der Fahrzeuge"})
+		return
+	}
+
+	stats := h.calculateFinancingStatistics(vehicles)
 	c.JSON(http.StatusOK, stats)
 }
 
