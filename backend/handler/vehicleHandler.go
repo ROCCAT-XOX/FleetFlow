@@ -30,9 +30,48 @@ type CreateVehicleRequest struct {
 	InsuranceNumber    string              `json:"insuranceNumber"`
 	InsuranceType      model.InsuranceType `json:"insuranceType"`
 	InsuranceExpiry    string              `json:"insuranceExpiry"`
-	InsuranceCost      float64             `json:"insuranceCost"` // <-- Diese Zeile hinzufügen
+	InsuranceCost      float64             `json:"insuranceCost"`
 	NextInspectionDate string              `json:"nextInspectionDate"`
 	Status             model.VehicleStatus `json:"status"`
+
+	// Technische Felder
+	VehicleType        string  `json:"vehicleType"`
+	EngineDisplacement int     `json:"engineDisplacement"`
+	PowerRating        float64 `json:"powerRating"`
+	NumberOfAxles      int     `json:"numberOfAxles"`
+	TireSize           string  `json:"tireSize"`
+	RimType            string  `json:"rimType"`
+	GrossWeight        int     `json:"grossWeight"`
+	TechnicalMaxWeight int     `json:"technicalMaxWeight"`
+	Length             int     `json:"length"`
+	Width              int     `json:"width"`
+	Height             int     `json:"height"`
+	EmissionClass      string  `json:"emissionClass"`
+	CurbWeight         int     `json:"curbWeight"`
+	MaxSpeed           int     `json:"maxSpeed"`
+	TowingCapacity     int     `json:"towingCapacity"`
+	SpecialFeatures    string  `json:"specialFeatures"`
+
+	// Finanzierungsfelder
+	AcquisitionType        model.AcquisitionType `json:"acquisitionType"`
+	PurchaseDate           string                `json:"purchaseDate"`
+	PurchasePrice          float64               `json:"purchasePrice"`
+	PurchaseVendor         string                `json:"purchaseVendor"`
+	FinanceStartDate       string                `json:"financeStartDate"`
+	FinanceEndDate         string                `json:"financeEndDate"`
+	FinanceMonthlyRate     float64               `json:"financeMonthlyRate"`
+	FinanceInterestRate    float64               `json:"financeInterestRate"`
+	FinanceDownPayment     float64               `json:"financeDownPayment"`
+	FinanceTotalAmount     float64               `json:"financeTotalAmount"`
+	FinanceBank            string                `json:"financeBank"`
+	LeaseStartDate         string                `json:"leaseStartDate"`
+	LeaseEndDate           string                `json:"leaseEndDate"`
+	LeaseMonthlyRate       float64               `json:"leaseMonthlyRate"`
+	LeaseMileageLimit      int                   `json:"leaseMileageLimit"`
+	LeaseExcessMileageCost float64               `json:"leaseExcessMileageCost"`
+	LeaseCompany           string                `json:"leaseCompany"`
+	LeaseContractNumber    string                `json:"leaseContractNumber"`
+	LeaseResidualValue     float64               `json:"leaseResidualValue"`
 }
 
 // VehicleHandler repräsentiert den Handler für Fahrzeug-Operationen
@@ -146,6 +185,8 @@ func (h *VehicleHandler) CreateVehicle(c *gin.Context) {
 
 	// Datum parsen, wenn vorhanden
 	var registrationDate, registrationExpiry, insuranceExpiry, nextInspectionDate time.Time
+	var purchaseDate, financeStartDate, financeEndDate, leaseStartDate, leaseEndDate time.Time
+
 	if req.RegistrationDate != "" {
 		var err error
 		registrationDate, err = time.Parse("2006-01-02", req.RegistrationDate)
@@ -182,6 +223,52 @@ func (h *VehicleHandler) CreateVehicle(c *gin.Context) {
 		}
 	}
 
+	// Finanzierungsdaten parsen
+	if req.PurchaseDate != "" {
+		var err error
+		purchaseDate, err = time.Parse("2006-01-02", req.PurchaseDate)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Ungültiges Kaufdatum"})
+			return
+		}
+	}
+
+	if req.FinanceStartDate != "" {
+		var err error
+		financeStartDate, err = time.Parse("2006-01-02", req.FinanceStartDate)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Ungültiges Finanzierungsstart-Datum"})
+			return
+		}
+	}
+
+	if req.FinanceEndDate != "" {
+		var err error
+		financeEndDate, err = time.Parse("2006-01-02", req.FinanceEndDate)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Ungültiges Finanzierungsend-Datum"})
+			return
+		}
+	}
+
+	if req.LeaseStartDate != "" {
+		var err error
+		leaseStartDate, err = time.Parse("2006-01-02", req.LeaseStartDate)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Ungültiges Leasingstart-Datum"})
+			return
+		}
+	}
+
+	if req.LeaseEndDate != "" {
+		var err error
+		leaseEndDate, err = time.Parse("2006-01-02", req.LeaseEndDate)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Ungültiges Leasingend-Datum"})
+			return
+		}
+	}
+
 	// Status standardmäßig auf verfügbar setzen, wenn nicht angegeben
 	status := req.Status
 	if status == "" {
@@ -205,9 +292,48 @@ func (h *VehicleHandler) CreateVehicle(c *gin.Context) {
 		InsuranceNumber:    req.InsuranceNumber,
 		InsuranceType:      req.InsuranceType,
 		InsuranceExpiry:    insuranceExpiry,
-		InsuranceCost:      req.InsuranceCost, // <-- Diese Zeile hinzufügen
+		InsuranceCost:      req.InsuranceCost,
 		NextInspectionDate: nextInspectionDate,
 		Status:             status,
+
+		// Technische Daten
+		VehicleType:        req.VehicleType,
+		EngineDisplacement: req.EngineDisplacement,
+		PowerRating:        req.PowerRating,
+		NumberOfAxles:      req.NumberOfAxles,
+		TireSize:           req.TireSize,
+		RimType:            req.RimType,
+		GrossWeight:        req.GrossWeight,
+		TechnicalMaxWeight: req.TechnicalMaxWeight,
+		Length:             req.Length,
+		Width:              req.Width,
+		Height:             req.Height,
+		EmissionClass:      req.EmissionClass,
+		CurbWeight:         req.CurbWeight,
+		MaxSpeed:           req.MaxSpeed,
+		TowingCapacity:     req.TowingCapacity,
+		SpecialFeatures:    req.SpecialFeatures,
+
+		// Finanzierungsdaten
+		AcquisitionType:        req.AcquisitionType,
+		PurchaseDate:           purchaseDate,
+		PurchasePrice:          req.PurchasePrice,
+		PurchaseVendor:         req.PurchaseVendor,
+		FinanceStartDate:       financeStartDate,
+		FinanceEndDate:         financeEndDate,
+		FinanceMonthlyRate:     req.FinanceMonthlyRate,
+		FinanceInterestRate:    req.FinanceInterestRate,
+		FinanceDownPayment:     req.FinanceDownPayment,
+		FinanceTotalAmount:     req.FinanceTotalAmount,
+		FinanceBank:            req.FinanceBank,
+		LeaseStartDate:         leaseStartDate,
+		LeaseEndDate:           leaseEndDate,
+		LeaseMonthlyRate:       req.LeaseMonthlyRate,
+		LeaseMileageLimit:      req.LeaseMileageLimit,
+		LeaseExcessMileageCost: req.LeaseExcessMileageCost,
+		LeaseCompany:           req.LeaseCompany,
+		LeaseContractNumber:    req.LeaseContractNumber,
+		LeaseResidualValue:     req.LeaseResidualValue,
 	}
 
 	// Fahrzeug in der Datenbank speichern
@@ -277,7 +403,7 @@ func (h *VehicleHandler) UpdateVehicle(c *gin.Context) {
 	oldStatus := vehicle.Status
 	oldMileage := vehicle.Mileage
 
-	// Daten aktualisieren
+	// Grunddaten aktualisieren
 	vehicle.LicensePlate = req.LicensePlate
 	vehicle.Brand = req.Brand
 	vehicle.Model = req.Model
@@ -289,8 +415,42 @@ func (h *VehicleHandler) UpdateVehicle(c *gin.Context) {
 	vehicle.InsuranceCompany = req.InsuranceCompany
 	vehicle.InsuranceNumber = req.InsuranceNumber
 	vehicle.InsuranceType = req.InsuranceType
-	vehicle.InsuranceCost = req.InsuranceCost // <-- Diese Zeile hinzufügen
+	vehicle.InsuranceCost = req.InsuranceCost
 	vehicle.Status = req.Status
+
+	// Technische Daten aktualisieren
+	vehicle.VehicleType = req.VehicleType
+	vehicle.EngineDisplacement = req.EngineDisplacement
+	vehicle.PowerRating = req.PowerRating
+	vehicle.NumberOfAxles = req.NumberOfAxles
+	vehicle.TireSize = req.TireSize
+	vehicle.RimType = req.RimType
+	vehicle.GrossWeight = req.GrossWeight
+	vehicle.TechnicalMaxWeight = req.TechnicalMaxWeight
+	vehicle.Length = req.Length
+	vehicle.Width = req.Width
+	vehicle.Height = req.Height
+	vehicle.EmissionClass = req.EmissionClass
+	vehicle.CurbWeight = req.CurbWeight
+	vehicle.MaxSpeed = req.MaxSpeed
+	vehicle.TowingCapacity = req.TowingCapacity
+	vehicle.SpecialFeatures = req.SpecialFeatures
+
+	// Finanzierungsdaten aktualisieren
+	vehicle.AcquisitionType = req.AcquisitionType
+	vehicle.PurchasePrice = req.PurchasePrice
+	vehicle.PurchaseVendor = req.PurchaseVendor
+	vehicle.FinanceMonthlyRate = req.FinanceMonthlyRate
+	vehicle.FinanceInterestRate = req.FinanceInterestRate
+	vehicle.FinanceDownPayment = req.FinanceDownPayment
+	vehicle.FinanceTotalAmount = req.FinanceTotalAmount
+	vehicle.FinanceBank = req.FinanceBank
+	vehicle.LeaseMonthlyRate = req.LeaseMonthlyRate
+	vehicle.LeaseMileageLimit = req.LeaseMileageLimit
+	vehicle.LeaseExcessMileageCost = req.LeaseExcessMileageCost
+	vehicle.LeaseCompany = req.LeaseCompany
+	vehicle.LeaseContractNumber = req.LeaseContractNumber
+	vehicle.LeaseResidualValue = req.LeaseResidualValue
 
 	// Datum parsen, wenn vorhanden
 	if req.RegistrationDate != "" {
@@ -302,7 +462,6 @@ func (h *VehicleHandler) UpdateVehicle(c *gin.Context) {
 		vehicle.RegistrationDate = registrationDate
 	}
 
-	// Ablaufdatum der Zulassung parsen
 	if req.RegistrationExpiry != "" {
 		registrationExpiry, err := time.Parse("2006-01-02", req.RegistrationExpiry)
 		if err != nil {
@@ -312,7 +471,6 @@ func (h *VehicleHandler) UpdateVehicle(c *gin.Context) {
 		vehicle.RegistrationExpiry = registrationExpiry
 	}
 
-	// Ablaufdatum der Versicherung parsen
 	if req.InsuranceExpiry != "" {
 		insuranceExpiry, err := time.Parse("2006-01-02", req.InsuranceExpiry)
 		if err != nil {
@@ -329,6 +487,52 @@ func (h *VehicleHandler) UpdateVehicle(c *gin.Context) {
 			return
 		}
 		vehicle.NextInspectionDate = nextInspectionDate
+	}
+
+	// Finanzierungsdaten parsen
+	if req.PurchaseDate != "" {
+		purchaseDate, err := time.Parse("2006-01-02", req.PurchaseDate)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Ungültiges Kaufdatum"})
+			return
+		}
+		vehicle.PurchaseDate = purchaseDate
+	}
+
+	if req.FinanceStartDate != "" {
+		financeStartDate, err := time.Parse("2006-01-02", req.FinanceStartDate)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Ungültiges Finanzierungsstart-Datum"})
+			return
+		}
+		vehicle.FinanceStartDate = financeStartDate
+	}
+
+	if req.FinanceEndDate != "" {
+		financeEndDate, err := time.Parse("2006-01-02", req.FinanceEndDate)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Ungültiges Finanzierungsend-Datum"})
+			return
+		}
+		vehicle.FinanceEndDate = financeEndDate
+	}
+
+	if req.LeaseStartDate != "" {
+		leaseStartDate, err := time.Parse("2006-01-02", req.LeaseStartDate)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Ungültiges Leasingstart-Datum"})
+			return
+		}
+		vehicle.LeaseStartDate = leaseStartDate
+	}
+
+	if req.LeaseEndDate != "" {
+		leaseEndDate, err := time.Parse("2006-01-02", req.LeaseEndDate)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Ungültiges Leasingend-Datum"})
+			return
+		}
+		vehicle.LeaseEndDate = leaseEndDate
 	}
 
 	// Fahrzeug in der Datenbank aktualisieren
