@@ -322,61 +322,151 @@
 
                     <div class="grid grid-cols-1 gap-6">
                         <!-- PeopleFlow Integration -->
-                        <div class="relative rounded-lg border-2 border-indigo-200 bg-indigo-50 p-6 shadow-sm">
+                        <div class="relative rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
                             <div class="flex items-center mb-4">
                                 <div class="flex-shrink-0">
-                                    <div class="h-12 w-12 bg-white rounded-lg flex items-center justify-center shadow-sm">
-                                        <img src="/static/integrations/PeopleFlow-Logo-Symbol.svg" alt="PeopleFlow" class="h-8 w-8">
+                                    <div class="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center">
+                                        <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                        </svg>
                                     </div>
                                 </div>
-                                <div class="ml-4 flex-1">
-                                    <h3 class="text-xl font-medium text-gray-900">PeopleFlow</h3>
-                                    <p class="text-sm text-gray-600">Synchronisiere Mitarbeiterdaten, Führerscheine und Berechtigungen automatisch zwischen FleetDrive und PeopleFlow</p>
+                                <div class="ml-4">
+                                    <h3 class="text-lg font-medium text-gray-900">PeopleFlow</h3>
+                                    <p class="text-sm text-gray-500">Personalverwaltung und Mitarbeiterdaten</p>
                                 </div>
                             </div>
 
-                            <div class="bg-white rounded-lg p-4 mb-4">
-                                <h4 class="text-sm font-medium text-gray-900 mb-3">Funktionen</h4>
-                                <ul class="space-y-2 text-sm text-gray-600">
-                                    <li class="flex items-center">
-                                        <svg class="h-4 w-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                        </svg>
-                                        Automatische Fahrer-Synchronisation
-                                    </li>
-                                    <li class="flex items-center">
-                                        <svg class="h-4 w-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                        </svg>
-                                        Führerschein-Validierung
-                                    </li>
-                                    <li class="flex items-center">
-                                        <svg class="h-4 w-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                        </svg>
-                                        Berechtigungsmanagement
-                                    </li>
-                                    <li class="flex items-center">
-                                        <svg class="h-4 w-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                        </svg>
-                                        Echtzeit-Datenabgleich
-                                    </li>
-                                </ul>
+                            <!-- Configuration form - only shown when not connected -->
+                            <div id="peopleflowConfigForm" class="mt-2">
+                                <form id="peopleflowForm" action="/api/integrations/peopleflow/save" method="POST">
+                                    <div class="space-y-3">
+                                        <div>
+                                            <label for="peopleflow-base-url" class="block text-sm font-medium text-gray-700">PeopleFlow Server URL</label>
+                                            <div class="mt-1 flex rounded-md shadow-sm">
+                                                <input type="url" name="peopleflow-base-url" id="peopleflow-base-url"
+                                                       class="flex-1 min-w-0 block w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
+                                                       placeholder="https://peopleflow.ihrunternehmen.de">
+                                            </div>
+                                            <p class="mt-1 text-xs text-gray-500">Die vollständige URL zu Ihrer PeopleFlow-Installation</p>
+                                        </div>
+                                        <div>
+                                            <label for="peopleflow-username" class="block text-sm font-medium text-gray-700">Benutzername</label>
+                                            <div class="mt-1 flex rounded-md shadow-sm">
+                                                <input type="text" name="peopleflow-username" id="peopleflow-username"
+                                                       class="flex-1 min-w-0 block w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
+                                                       placeholder="API-Benutzername">
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label for="peopleflow-password" class="block text-sm font-medium text-gray-700">Passwort</label>
+                                            <div class="mt-1 flex rounded-md shadow-sm">
+                                                <input type="password" name="peopleflow-password" id="peopleflow-password"
+                                                       class="flex-1 min-w-0 block w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
+                                                       placeholder="API-Passwort">
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <input id="peopleflow-auto-sync" name="peopleflow-auto-sync" type="checkbox"
+                                                   class="focus:ring-green-500 h-4 w-4 text-green-600 border-gray-300 rounded">
+                                            <div class="ml-3 text-sm">
+                                                <label for="peopleflow-auto-sync" class="font-medium text-gray-700">Automatische Synchronisation</label>
+                                                <p class="text-gray-500">Mitarbeiterdaten automatisch synchronisieren</p>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label for="peopleflow-sync-interval" class="block text-sm font-medium text-gray-700">Sync-Intervall (Minuten)</label>
+                                            <div class="mt-1 flex rounded-md shadow-sm">
+                                                <input type="number" name="peopleflow-sync-interval" id="peopleflow-sync-interval"
+                                                       class="flex-1 min-w-0 block w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
+                                                       placeholder="30" min="5" value="30">
+                                            </div>
+                                            <p class="mt-1 text-xs text-gray-500">Mindestens 5 Minuten</p>
+                                        </div>
+                                        <div class="text-right">
+                                            <button type="button" onclick="savePeopleFlowCredentials()"
+                                                    class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                                Integration einrichten
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <p class="mt-2 text-xs text-gray-500">Die E-Mail-Adresse dient als Identifikator zwischen PeopleFlow und FleetFlow.</p>
+                                </form>
                             </div>
 
-                            <div class="flex items-center justify-between">
-                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
-                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            <!-- Sync Settings Panel - shown when connected -->
+                            <div id="peopleflowSyncSettings" class="mt-2" style="display: none;">
+                                <div class="bg-gray-50 p-4 rounded-md border border-gray-200 mb-4">
+                                    <h4 class="text-sm font-medium text-gray-700 mb-2">Synchronisations-Einstellungen</h4>
+
+                                    <div class="flex items-start mb-3">
+                                        <div class="flex items-center h-5">
+                                            <input id="peopleflow-auto-sync-enabled" name="peopleflow-auto-sync-enabled" type="checkbox"
+                                                   class="focus:ring-green-500 h-4 w-4 text-green-600 border-gray-300 rounded">
+                                        </div>
+                                        <div class="ml-3 text-sm">
+                                            <label for="peopleflow-auto-sync-enabled" class="font-medium text-gray-700">Automatische Synchronisation</label>
+                                            <p class="text-gray-500">Mitarbeiterdaten automatisch im Hintergrund aktualisieren</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
+                                        <div class="flex-grow">
+                                            <label for="peopleflow-sync-interval-minutes" class="block text-sm font-medium text-gray-700">Intervall (Minuten)</label>
+                                            <input type="number" id="peopleflow-sync-interval-minutes" name="peopleflow-sync-interval-minutes"
+                                                   class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
+                                                   min="5" value="30">
+                                        </div>
+                                        <div class="flex-shrink-0 self-end">
+                                            <button type="button" onclick="updatePeopleFlowSyncSettings()"
+                                                    class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                                Speichern
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-3 text-xs text-gray-500">
+                                        <div class="flex items-center mb-1">
+                                            <span class="font-medium">Letzte Synchronisation:</span>
+                                            <span id="peopleflow-last-sync" class="ml-1">wird geladen...</span>
+                                        </div>
+                                        <div class="flex items-center mb-1">
+                                            <span class="font-medium">Synchronisierte Mitarbeiter:</span>
+                                            <span id="peopleflow-synced-count" class="ml-1">wird geladen...</span>
+                                        </div>
+                                        <button type="button" onclick="triggerPeopleFlowFullSync()"
+                                                class="text-green-600 hover:text-green-800 font-medium">
+                                            Jetzt synchronisieren →
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 flex justify-between items-center">
+        <span id="peopleflowStatus" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+            Wird geladen...
+        </span>
+                                <button type="button" id="removePeopleFlowBtn" class="text-sm text-red-600 hover:text-red-900" disabled onclick="removePeopleFlowIntegration()">
+                                    Entfernen
+                                </button>
+                            </div>
+
+                            <!-- Synchronisierungsbuttons -->
+                            <div id="peopleflowSyncButtons" class="mt-4 flex flex-col space-y-2" style="display: none;">
+                                <button type="button" onclick="syncPeopleFlowEmployees()"
+                                        class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                    <svg class="mr-2 h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                                     </svg>
-                                    Nicht konfiguriert
-                                </span>
-                                <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+                                    Mitarbeiterdaten synchronisieren
+                                </button>
+
+                                <button type="button" onclick="syncPeopleFlowDrivers()"
+                                        class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                    <svg class="mr-2 h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                     </svg>
-                                    PeopleFlow verbinden
+                                    Fahrer-Daten synchronisieren
                                 </button>
                             </div>
                         </div>
@@ -599,16 +689,22 @@
 <!-- Footer -->
 {{ template "footer" . }}
 
+
+<!-- PeopleFlow JavaScript einbinden -->
+<script src="/static/js/peopleflow.js"></script>
+
+<!-- Bestehende Scripts erweitern -->
 <script>
-    // Tab-Wechsel Funktionalität
+    // Tab-Wechsel Funktionalität erweitern für PeopleFlow
     document.addEventListener('DOMContentLoaded', function() {
         const tabBtns = document.querySelectorAll('.tab-btn');
         const tabContents = document.querySelectorAll('.tab-content');
 
         tabBtns.forEach(btn => {
             btn.addEventListener('click', function() {
+                // Prüfen, ob der Tab deaktiviert ist (durch cursor-not-allowed Klasse)
                 if (this.classList.contains('cursor-not-allowed')) {
-                    return;
+                    return; // Wenn deaktiviert, keine Aktion ausführen
                 }
 
                 const tab = this.getAttribute('data-tab');
@@ -616,13 +712,13 @@
                 // Aktiven Button-Zustand ändern
                 tabBtns.forEach(button => {
                     if (!button.classList.contains('cursor-not-allowed')) {
-                        button.classList.remove('border-indigo-500', 'text-indigo-600');
-                        button.classList.add('border-transparent', 'text-gray-500');
+                        button.classList.remove('border-green-500', 'text-green-600');
+                        button.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
                     }
                 });
 
-                this.classList.remove('border-transparent', 'text-gray-500');
-                this.classList.add('border-indigo-500', 'text-indigo-600');
+                this.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+                this.classList.add('border-green-500', 'text-green-600');
 
                 // Tab-Inhalte ein-/ausblenden
                 tabContents.forEach(content => {
@@ -630,33 +726,148 @@
                 });
 
                 document.getElementById(tab + '-tab').classList.remove('hidden');
+
+                // Wenn Integrations-Tab aktiviert wird, PeopleFlow-Status laden
+                if (tab === 'integrations') {
+                    setTimeout(() => {
+                        loadPeopleFlowStatus();
+                    }, 100);
+                }
             });
         });
+
+        // Initial-Load für aktiven Tab
+        const activeTab = document.querySelector('.tab-btn.border-green-500');
+        if (activeTab && activeTab.getAttribute('data-tab') === 'integrations') {
+            setTimeout(() => {
+                loadPeopleFlowStatus();
+            }, 500);
+        }
     });
 
-    // Modal-Funktionen
-    function openModal(id) {
-        document.getElementById(id).classList.remove('hidden');
-        document.body.classList.add('overflow-hidden');
+    // Erweitere die bestehende Integration-Status-Funktion
+    function loadAllIntegrationStatus() {
+        // PeopleFlow Status laden
+        if (typeof loadPeopleFlowStatus === 'function') {
+            loadPeopleFlowStatus();
+        }
+
+        // Bestehende Integration-Status-Funktionen aufrufen
+        // (falls vorhanden für Timebutler, 123erfasst, etc.)
     }
 
-    function closeModal(id) {
-        document.getElementById(id).classList.add('hidden');
-        document.body.classList.remove('overflow-hidden');
-    }
+    // Integration-Nachrichten anzeigen
+    function showIntegrationMessage(message, type, integration) {
+        // Zeige eine temporäre Nachricht für eine spezifische Integration an
+        console.log(`${integration}: ${message} (${type})`);
 
-    // Placeholder functions for user management
-    function openEditUserModal(id, firstName, lastName, email, role, status) {
-        // Implementation for edit user modal
-        console.log('Edit user:', {id, firstName, lastName, email, role, status});
-    }
-
-    function confirmDeleteUser(id, name) {
-        if (confirm(`Möchten Sie den Benutzer "${name}" wirklich löschen?`)) {
-            // Implementation for delete user
-            console.log('Delete user:', id);
+        // Optional: Toast-Nachricht anzeigen
+        if (typeof showToast === 'function') {
+            showToast(message, type);
         }
     }
+
+    // PeopleFlow-spezifische Initialisierung
+    function initializePeopleFlowIntegration() {
+        // Überprüfe ob PeopleFlow-Elemente vorhanden sind
+        if (document.getElementById('peopleflowStatus')) {
+            console.log('PeopleFlow Integration UI detected');
+
+            // Status alle 30 Sekunden aktualisieren (nur wenn sichtbar)
+            setInterval(() => {
+                if (document.getElementById('integrations-tab') &&
+                    !document.getElementById('integrations-tab').classList.contains('hidden')) {
+                    loadPeopleFlowStatus();
+                }
+            }, 30000);
+        }
+    }
+
+    // Nach DOM-Load initialisieren
+    document.addEventListener('DOMContentLoaded', function() {
+        initializePeopleFlowIntegration();
+    });
 </script>
+
+<!-- Toast-Notification System (optional) -->
+<script>
+    // Einfaches Toast-System für Benachrichtigungen
+    function showToast(message, type = 'info', duration = 3000) {
+        // Entferne bestehende Toasts
+        const existingToasts = document.querySelectorAll('.toast-notification');
+        existingToasts.forEach(toast => toast.remove());
+
+        // Toast-Container erstellen
+        const toast = document.createElement('div');
+        toast.className = 'toast-notification fixed top-4 right-4 z-50 max-w-sm w-full';
+
+        let bgColor, textColor, icon;
+        switch (type) {
+            case 'success':
+                bgColor = 'bg-green-500';
+                textColor = 'text-white';
+                icon = '✓';
+                break;
+            case 'error':
+                bgColor = 'bg-red-500';
+                textColor = 'text-white';
+                icon = '✗';
+                break;
+            case 'warning':
+                bgColor = 'bg-yellow-500';
+                textColor = 'text-white';
+                icon = '⚠';
+                break;
+            default:
+                bgColor = 'bg-blue-500';
+                textColor = 'text-white';
+                icon = 'ℹ';
+        }
+
+        toast.innerHTML = `
+            <div class="${bgColor} ${textColor} px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2">
+                <span class="font-bold">${icon}</span>
+                <span class="flex-1">${message}</span>
+                <button onclick="this.parentElement.parentElement.remove()" class="ml-2 font-bold hover:opacity-75">×</button>
+            </div>
+        `;
+
+        // Toast anzeigen
+        document.body.appendChild(toast);
+
+        // Animation hinzufügen
+        setTimeout(() => {
+            toast.style.transform = 'translateX(0)';
+            toast.style.opacity = '1';
+        }, 100);
+
+        // Nach Ablauf automatisch entfernen
+        setTimeout(() => {
+            if (toast.parentElement) {
+                toast.style.transform = 'translateX(100%)';
+                toast.style.opacity = '0';
+                setTimeout(() => {
+                    if (toast.parentElement) {
+                        toast.remove();
+                    }
+                }, 300);
+            }
+        }, duration);
+    }
+</script>
+
+<!-- CSS für Toast-Animations -->
+<style>
+    .toast-notification {
+        transform: translateX(100%);
+        opacity: 0;
+        transition: all 0.3s ease-in-out;
+    }
+
+    .toast-notification.show {
+        transform: translateX(0);
+        opacity: 1;
+    }
+</style>
 </body>
 </html>
