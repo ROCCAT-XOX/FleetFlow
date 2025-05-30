@@ -11,35 +11,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // === PeopleFlow Credentials Management ===
 
-// Speichert die PeopleFlow-Anmeldedaten
+// PeopleFlow Anmeldedaten speichern
 function savePeopleFlowCredentials() {
-    const baseUrl = document.getElementById('peopleflow-base-url').value.trim();
-    const username = document.getElementById('peopleflow-username').value.trim();
-    const password = document.getElementById('peopleflow-password').value.trim();
+    const baseUrl = document.getElementById('peopleflow-base-url').value;
+    const username = document.getElementById('peopleflow-username').value;
+    const password = document.getElementById('peopleflow-password').value;
     const autoSync = document.getElementById('peopleflow-auto-sync').checked;
     const syncInterval = parseInt(document.getElementById('peopleflow-sync-interval').value) || 30;
 
-    // Validierung
     if (!baseUrl || !username || !password) {
-        showPeopleFlowMessage('Bitte füllen Sie alle Pflichtfelder aus.', 'error');
+        alert('Bitte füllen Sie alle Pflichtfelder aus.');
         return;
     }
-
-    // URL validieren
-    try {
-        new URL(baseUrl);
-    } catch (e) {
-        showPeopleFlowMessage('Bitte geben Sie eine gültige URL ein.', 'error');
-        return;
-    }
-
-    // Sync-Intervall validieren
-    if (syncInterval < 5) {
-        showPeopleFlowMessage('Das Sync-Intervall muss mindestens 5 Minuten betragen.', 'error');
-        return;
-    }
-
-    showPeopleFlowMessage('Speichere Konfiguration...', 'info');
 
     const data = {
         baseUrl: baseUrl,
@@ -59,16 +42,15 @@ function savePeopleFlowCredentials() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                showPeopleFlowMessage('Konfiguration erfolgreich gespeichert!', 'success');
-                // Verbindung testen
-                setTimeout(testPeopleFlowConnection, 1000);
+                showIntegrationMessage('PeopleFlow-Integration erfolgreich eingerichtet', 'success', 'PeopleFlow');
+                loadPeopleFlowStatus(); // Status neu laden
             } else {
-                showPeopleFlowMessage('Fehler: ' + (data.message || 'Unbekannter Fehler'), 'error');
+                showIntegrationMessage(data.message || 'Fehler beim Einrichten der Integration', 'error', 'PeopleFlow');
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            showPeopleFlowMessage('Fehler beim Speichern der Konfiguration.', 'error');
+            showIntegrationMessage('Netzwerkfehler beim Einrichten der Integration', 'error', 'PeopleFlow');
         });
 }
 
@@ -99,18 +81,33 @@ function testPeopleFlowConnection() {
 
 // Lädt den aktuellen PeopleFlow-Status
 function loadPeopleFlowStatus() {
-    fetch('/api/integrations/status')
+    console.log('Loading PeopleFlow status...');
+
+    fetch('/api/integrations/peopleflow/status')
         .then(response => response.json())
         .then(data => {
-            updatePeopleFlowUI(data.peopleflow || {});
+            if (data.success) {
+                updatePeopleFlowUI(data.data);
+            } else {
+                console.error('Failed to load PeopleFlow status:', data.message);
+                updatePeopleFlowUI({
+                    connected: false,
+                    lastSync: null,
+                    syncedEmployees: 0
+                });
+            }
         })
         .catch(error => {
             console.error('Error loading PeopleFlow status:', error);
-            updatePeopleFlowUI({});
+            updatePeopleFlowUI({
+                connected: false,
+                lastSync: null,
+                syncedEmployees: 0
+            });
         });
 }
 
-// Aktualisiert die PeopleFlow-UI basierend auf dem Status
+// UI basierend auf PeopleFlow Status aktualisieren
 function updatePeopleFlowUI(status) {
     const statusElement = document.getElementById('peopleflowStatus');
     const configForm = document.getElementById('peopleflowConfigForm');
@@ -118,21 +115,34 @@ function updatePeopleFlowUI(status) {
     const syncButtons = document.getElementById('peopleflowSyncButtons');
     const removeBtn = document.getElementById('removePeopleFlowBtn');
 
-    if (!statusElement) return;
+    if (!statusElement) {
+        console.log('PeopleFlow UI elements not found');
+        return;
+    }
 
     if (status.connected) {
-        // Verbunden
+        // Verbunden - zeige Sync-Interface
         statusElement.innerHTML = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Verbunden</span>';
 
         if (configForm) configForm.style.display = 'none';
-        if (syncSettings) syncSettings.style.display = 'block';
+        if (syncSettings) {
+            syncSettings.style.display = 'block';
+
+            // Auto-sync Checkbox setzen
+            const autoSyncCheckbox = document.getElementById('peopleflow-auto-sync-enabled');
+            const syncIntervalInput = document.getElementById('peopleflow-sync-interval-minutes');
+
+            if (autoSyncCheckbox) autoSyncCheckbox.checked = status.autoSync || false;
+            if (syncIntervalInput) syncIntervalInput.value = status.syncInterval || 30;
+        }
         if (syncButtons) syncButtons.style.display = 'block';
         if (removeBtn) removeBtn.disabled = false;
 
-        // Sync-Einstellungen aktualisieren
-        updatePeopleFlowSyncInfo(status);
+        // Letzte Sync-Info aktualisieren
+        updateLastSyncInfo(status);
+
     } else {
-        // Nicht verbunden
+        // Nicht verbunden - zeige Konfigurationsformular
         statusElement.innerHTML = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Nicht verbunden</span>';
 
         if (configForm) configForm.style.display = 'block';
@@ -141,6 +151,26 @@ function updatePeopleFlowUI(status) {
         if (removeBtn) removeBtn.disabled = true;
     }
 }
+
+// Letzte Sync-Informationen aktualisieren
+function updateLastSyncInfo(status) {
+    const lastSyncElement = document.getElementById('peopleflow-last-sync');
+    const syncedCountElement = document.getElementById('peopleflow-synced-count');
+
+    if (lastSyncElement) {
+        if (status.lastSync) {
+            const lastSyncDate = new Date(status.lastSync);
+            lastSyncElement.textContent = lastSyncDate.toLocaleString('de-DE');
+        } else {
+            lastSyncElement.textContent = 'Noch nie';
+        }
+    }
+
+    if (syncedCountElement) {
+        syncedCountElement.textContent = status.syncedEmployees || 0;
+    }
+}
+
 
 // Aktualisiert die Sync-Informationen
 function updatePeopleFlowSyncInfo(status) {
@@ -176,9 +206,13 @@ function updatePeopleFlowSyncInfo(status) {
 
 // === Synchronization Functions ===
 
-// Synchronisiert alle Mitarbeiter von PeopleFlow
+// Mitarbeiter von PeopleFlow synchronisieren
 function syncPeopleFlowEmployees() {
-    showPeopleFlowMessage('Synchronisiere Mitarbeiterdaten...', 'info');
+    const button = event.target;
+    const originalText = button.textContent;
+
+    button.disabled = true;
+    button.textContent = 'Synchronisiere...';
 
     fetch('/api/integrations/peopleflow/sync/employees?type=manual', {
         method: 'POST'
@@ -186,28 +220,29 @@ function syncPeopleFlowEmployees() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                const message = `Synchronisation abgeschlossen! ${data.employeesProcessed} Mitarbeiter verarbeitet (${data.employeesCreated} neu, ${data.employeesUpdated} aktualisiert)`;
-                showPeopleFlowMessage(message, 'success');
-
-                // Status aktualisieren
-                setTimeout(loadPeopleFlowStatus, 2000);
+                showIntegrationMessage(data.message, 'success', 'PeopleFlow');
+                loadPeopleFlowStatus(); // Status neu laden
             } else {
-                let message = 'Synchronisation fehlgeschlagen: ' + (data.message || 'Unbekannter Fehler');
-                if (data.errors && data.errors.length > 0) {
-                    message += `\nFehler: ${data.errorCount}`;
-                }
-                showPeopleFlowMessage(message, 'error');
+                showIntegrationMessage(data.message || 'Synchronisation fehlgeschlagen', 'error', 'PeopleFlow');
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            showPeopleFlowMessage('Fehler bei der Synchronisation.', 'error');
+            showIntegrationMessage('Netzwerkfehler bei der Synchronisation', 'error', 'PeopleFlow');
+        })
+        .finally(() => {
+            button.disabled = false;
+            button.textContent = originalText;
         });
 }
 
-// Synchronisiert fahrtaugliche Mitarbeiter mit FleetFlow-Fahrern
+// Fahrer von PeopleFlow synchronisieren
 function syncPeopleFlowDrivers() {
-    showPeopleFlowMessage('Synchronisiere Fahrer-Daten...', 'info');
+    const button = event.target;
+    const originalText = button.textContent;
+
+    button.disabled = true;
+    button.textContent = 'Synchronisiere...';
 
     fetch('/api/integrations/peopleflow/sync/drivers', {
         method: 'POST'
@@ -215,68 +250,59 @@ function syncPeopleFlowDrivers() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                showPeopleFlowMessage('Fahrer-Daten erfolgreich synchronisiert!', 'success');
+                showIntegrationMessage(data.message, 'success', 'PeopleFlow');
             } else {
-                showPeopleFlowMessage('Fehler beim Synchronisieren der Fahrer: ' + (data.message || 'Unbekannter Fehler'), 'error');
+                showIntegrationMessage(data.message || 'Fahrer-Synchronisation fehlgeschlagen', 'error', 'PeopleFlow');
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            showPeopleFlowMessage('Fehler bei der Fahrer-Synchronisation.', 'error');
+            showIntegrationMessage('Netzwerkfehler bei der Fahrer-Synchronisation', 'error', 'PeopleFlow');
+        })
+        .finally(() => {
+            button.disabled = false;
+            button.textContent = originalText;
         });
 }
 
-// Triggert eine vollständige Synchronisation
+// Vollständige Synchronisation auslösen
 function triggerPeopleFlowFullSync() {
-    showPeopleFlowMessage('Starte vollständige Synchronisation...', 'info');
+    if (!confirm('Möchten Sie eine vollständige Synchronisation aller Mitarbeiter durchführen? Dies kann einige Zeit dauern.')) {
+        return;
+    }
 
-    // Erst Mitarbeiter, dann Fahrer
-    fetch('/api/integrations/peopleflow/sync/employees?type=manual', {
+    fetch('/api/integrations/peopleflow/sync/employees?type=full', {
         method: 'POST'
     })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                showPeopleFlowMessage('Mitarbeiterdaten synchronisiert, synchronisiere Fahrer-Daten...', 'info');
-                return fetch('/api/integrations/peopleflow/sync/drivers', { method: 'POST' });
+                showIntegrationMessage('Vollständige Synchronisation gestartet', 'success', 'PeopleFlow');
+                loadPeopleFlowStatus(); // Status neu laden
             } else {
-                throw new Error(data.message || 'Mitarbeiter-Synchronisation fehlgeschlagen');
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showPeopleFlowMessage('Vollständige Synchronisation erfolgreich abgeschlossen!', 'success');
-                setTimeout(loadPeopleFlowStatus, 2000);
-            } else {
-                showPeopleFlowMessage('Fahrer-Synchronisation fehlgeschlagen: ' + (data.message || 'Unbekannter Fehler'), 'error');
+                showIntegrationMessage(data.message || 'Synchronisation fehlgeschlagen', 'error', 'PeopleFlow');
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            showPeopleFlowMessage('Fehler bei der vollständigen Synchronisation: ' + error.message, 'error');
+            showIntegrationMessage('Netzwerkfehler bei der Synchronisation', 'error', 'PeopleFlow');
         });
 }
 
 // === Settings Management ===
 
-// Aktualisiert die Sync-Einstellungen
+// Sync-Einstellungen aktualisieren
 function updatePeopleFlowSyncSettings() {
     const autoSync = document.getElementById('peopleflow-auto-sync-enabled').checked;
     const syncInterval = parseInt(document.getElementById('peopleflow-sync-interval-minutes').value) || 30;
-
-    if (syncInterval < 5) {
-        showPeopleFlowMessage('Das Sync-Intervall muss mindestens 5 Minuten betragen.', 'error');
-        return;
-    }
 
     const data = {
         autoSync: autoSync,
         syncInterval: syncInterval
     };
 
-    fetch('/api/integrations/peopleflow/set-auto-sync', {
-        method: 'POST',
+    fetch('/api/integrations/peopleflow/auto-sync', {
+        method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
         },
@@ -285,42 +311,40 @@ function updatePeopleFlowSyncSettings() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                showPeopleFlowMessage('Einstellungen erfolgreich gespeichert!', 'success');
+                showIntegrationMessage('Sync-Einstellungen gespeichert', 'success', 'PeopleFlow');
             } else {
-                showPeopleFlowMessage('Fehler beim Speichern: ' + (data.message || 'Unbekannter Fehler'), 'error');
+                showIntegrationMessage(data.message || 'Fehler beim Speichern der Einstellungen', 'error', 'PeopleFlow');
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            showPeopleFlowMessage('Fehler beim Speichern der Einstellungen.', 'error');
+            showIntegrationMessage('Netzwerkfehler beim Speichern der Einstellungen', 'error', 'PeopleFlow');
         });
 }
 
 // === Integration Removal ===
 
-// Entfernt die PeopleFlow-Integration
+// PeopleFlow Integration entfernen
 function removePeopleFlowIntegration() {
-    if (!confirm('Möchten Sie die PeopleFlow-Integration wirklich entfernen? Die synchronisierten Mitarbeiterdaten bleiben erhalten, aber die Verbindung wird getrennt.')) {
+    if (!confirm('Möchten Sie die PeopleFlow-Integration wirklich entfernen? Die Konfiguration geht verloren.')) {
         return;
     }
 
-    showPeopleFlowMessage('Entferne Integration...', 'info');
-
     fetch('/api/integrations/peopleflow/remove', {
-        method: 'POST'
+        method: 'DELETE'
     })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                showPeopleFlowMessage('Integration erfolgreich entfernt!', 'success');
-                setTimeout(loadPeopleFlowStatus, 1000);
+                showIntegrationMessage('PeopleFlow-Integration entfernt', 'success', 'PeopleFlow');
+                loadPeopleFlowStatus(); // Status neu laden
             } else {
-                showPeopleFlowMessage('Fehler beim Entfernen: ' + (data.message || 'Unbekannter Fehler'), 'error');
+                showIntegrationMessage(data.message || 'Fehler beim Entfernen der Integration', 'error', 'PeopleFlow');
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            showPeopleFlowMessage('Fehler beim Entfernen der Integration.', 'error');
+            showIntegrationMessage('Netzwerkfehler beim Entfernen der Integration', 'error', 'PeopleFlow');
         });
 }
 

@@ -502,4 +502,19 @@ func setupAPIRoutes(api *gin.RouterGroup) {
 		dashboard.GET("/fuel-costs-by-vehicle", dashboardHandler.GetFuelCostsByVehicle)
 		// Entfernt: GetVehicleUsageStats da nicht mehr benötigt
 	}
+
+	peopleflow := api.Group("/integrations/peopleflow")
+	{
+		peopleflowHandler := handler.NewPeopleFlowHandler()
+
+		peopleflow.POST("/save", middleware.AdminMiddleware(), peopleflowHandler.SavePeopleFlowCredentials)
+		peopleflow.GET("/test", middleware.AdminMiddleware(), peopleflowHandler.TestPeopleFlowConnection)
+		peopleflow.GET("/status", peopleflowHandler.GetPeopleFlowStatus)
+		peopleflow.POST("/sync/employees", middleware.AdminMiddleware(), peopleflowHandler.SyncPeopleFlowEmployees)
+		peopleflow.POST("/sync/drivers", middleware.AdminMiddleware(), peopleflowHandler.SyncPeopleFlowDrivers)
+		peopleflow.DELETE("/remove", middleware.AdminMiddleware(), peopleflowHandler.RemovePeopleFlowIntegration)
+		peopleflow.GET("/employees", peopleflowHandler.GetPeopleFlowEmployees)
+		peopleflow.GET("/sync-logs", peopleflowHandler.GetPeopleFlowSyncLogs)
+		peopleflow.PUT("/auto-sync", middleware.AdminMiddleware(), peopleflowHandler.UpdatePeopleFlowAutoSync)
+	}
 }

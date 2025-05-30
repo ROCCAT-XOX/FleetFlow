@@ -248,7 +248,8 @@ func (r *PeopleFlowRepository) CreateSyncLog(syncLog *model.PeopleFlowSyncLog) e
 		syncLog.StartTime = time.Now()
 	}
 
-	result, err := r.employeeCollection.InsertOne(ctx, syncLog)
+	// KORREKTUR: Verwendung der richtigen syncLogCollection statt employeeCollection
+	result, err := r.syncLogCollection.InsertOne(ctx, syncLog)
 	if err != nil {
 		return err
 	}

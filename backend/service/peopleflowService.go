@@ -5,6 +5,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"crypto/sha256"
 	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
@@ -21,7 +22,7 @@ import (
 
 // PeopleFlowService verwaltet die Integration mit PeopleFlow
 type PeopleFlowService struct {
-	repo       *repository.PeopleFlowRepository
+	Repo       *repository.PeopleFlowRepository // Exportiert (großer Anfangsbuchstabe)
 	driverRepo *repository.DriverRepository
 	httpClient *http.Client
 	encryptKey []byte
@@ -67,11 +68,14 @@ func NewPeopleFlowService() *PeopleFlowService {
 		},
 	}
 
-	// Encryption Key für Passwort-Verschlüsselung (sollte aus Umgebungsvariable kommen)
-	encryptKey := []byte("fleetflow-peopleflow-encryption-key-32")
+	// Encryption Key für Passwort-Verschlüsselung
+	// SHA256 Hash erstellt automatisch 32 Bytes
+	keyString := "fleetflow-peopleflow-encryption-key"
+	hash := sha256.Sum256([]byte(keyString))
+	encryptKey := hash[:]
 
 	return &PeopleFlowService{
-		repo:       repository.NewPeopleFlowRepository(),
+		Repo:       repository.NewPeopleFlowRepository(),
 		driverRepo: repository.NewDriverRepository(),
 		httpClient: client,
 		encryptKey: encryptKey,
@@ -89,7 +93,7 @@ func (s *PeopleFlowService) SaveIntegrationConfig(baseURL, username, password st
 	}
 
 	// Bestehende Integration laden oder neue erstellen
-	integration, err := s.repo.GetIntegration()
+	integration, err := s.Repo.GetIntegration()
 	if err != nil {
 		return err
 	}
@@ -106,12 +110,12 @@ func (s *PeopleFlowService) SaveIntegrationConfig(baseURL, username, password st
 	integration.SyncInterval = syncInterval
 	integration.IsActive = true
 
-	return s.repo.SaveIntegration(integration)
+	return s.Repo.SaveIntegration(integration)
 }
 
 // TestConnection testet die Verbindung zu PeopleFlow
 func (s *PeopleFlowService) TestConnection() error {
-	integration, err := s.repo.GetIntegration()
+	integration, err := s.Repo.GetIntegration()
 	if err != nil || integration == nil {
 		return errors.New("keine PeopleFlow-Integration konfiguriert")
 	}
@@ -162,17 +166,17 @@ func (s *PeopleFlowService) SyncEmployees(syncType string) (*model.PeopleFlowSyn
 		Status:    "running",
 	}
 
-	err := s.repo.CreateSyncLog(syncLog)
+	err := s.Repo.CreateSyncLog(syncLog)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create sync log: %v", err)
 	}
 
 	// Integration laden
-	integration, err := s.repo.GetIntegration()
+	integration, err := s.Repo.GetIntegration()
 	if err != nil || integration == nil {
 		syncLog.Status = "error"
 		syncLog.ErrorMessage = "Keine PeopleFlow-Integration konfiguriert"
-		s.repo.UpdateSyncLog(syncLog)
+		s.Repo.UpdateSyncLog(syncLog)
 		return syncLog, errors.New("keine PeopleFlow-Integration konfiguriert")
 	}
 
@@ -181,7 +185,7 @@ func (s *PeopleFlowService) SyncEmployees(syncType string) (*model.PeopleFlowSyn
 	if err != nil {
 		syncLog.Status = "error"
 		syncLog.ErrorMessage = "Failed to decrypt password"
-		s.repo.UpdateSyncLog(syncLog)
+		s.Repo.UpdateSyncLog(syncLog)
 		return syncLog, err
 	}
 
@@ -190,7 +194,7 @@ func (s *PeopleFlowService) SyncEmployees(syncType string) (*model.PeopleFlowSyn
 	if err != nil {
 		syncLog.Status = "error"
 		syncLog.ErrorMessage = err.Error()
-		s.repo.UpdateSyncLog(syncLog)
+		s.Repo.UpdateSyncLog(syncLog)
 		return syncLog, err
 	}
 
@@ -205,12 +209,12 @@ func (s *PeopleFlowService) SyncEmployees(syncType string) (*model.PeopleFlowSyn
 		employee := s.convertAPIEmployeeToPeopleFlowEmployee(apiEmployee)
 
 		// Prüfen, ob Mitarbeiter bereits existiert
-		existingEmployee, err := s.repo.FindEmployeeByEmail(employee.Email)
+		existingEmployee, err := s.Repo.FindEmployeeByEmail(employee.Email)
 		if err == nil && existingEmployee != nil {
 			// Mitarbeiter aktualisieren
 			employee.ID = existingEmployee.ID
 			employee.CreatedAt = existingEmployee.CreatedAt
-			err = s.repo.SaveEmployee(employee)
+			err = s.Repo.SaveEmployee(employee)
 			if err != nil {
 				errors = append(errors, fmt.Sprintf("Failed to update employee %s: %v", employee.Email, err))
 			} else {
@@ -218,7 +222,7 @@ func (s *PeopleFlowService) SyncEmployees(syncType string) (*model.PeopleFlowSyn
 			}
 		} else {
 			// Neuer Mitarbeiter
-			err = s.repo.SaveEmployee(employee)
+			err = s.Repo.SaveEmployee(employee)
 			if err != nil {
 				errors = append(errors, fmt.Sprintf("Failed to create employee %s: %v", employee.Email, err))
 			} else {
@@ -227,7 +231,7 @@ func (s *PeopleFlowService) SyncEmployees(syncType string) (*model.PeopleFlowSyn
 		}
 
 		// Sync-Status des Mitarbeiters aktualisieren
-		s.repo.UpdateEmployeeSyncStatus(employee.Email, "synced")
+		s.Repo.UpdateEmployeeSyncStatus(employee.Email, "synced")
 	}
 
 	// Sync-Log abschließen
@@ -251,8 +255,8 @@ func (s *PeopleFlowService) SyncEmployees(syncType string) (*model.PeopleFlowSyn
 		status = "partial"
 	}
 
-	s.repo.UpdateIntegrationStatus(true, time.Now(), status, created+updated)
-	s.repo.UpdateSyncLog(syncLog)
+	s.Repo.UpdateIntegrationStatus(true, time.Now(), status, created+updated)
+	s.Repo.UpdateSyncLog(syncLog)
 
 	return syncLog, nil
 }
@@ -260,7 +264,7 @@ func (s *PeopleFlowService) SyncEmployees(syncType string) (*model.PeopleFlowSyn
 // SyncDriverEligibleEmployees synchronisiert nur fahrtaugliche Mitarbeiter mit FleetFlow-Fahrern
 func (s *PeopleFlowService) SyncDriverEligibleEmployees() error {
 	// Fahrtaugliche PeopleFlow-Mitarbeiter abrufen
-	driverEligibleEmployees, err := s.repo.FindDriverEligibleEmployees()
+	driverEligibleEmployees, err := s.Repo.FindDriverEligibleEmployees()
 	if err != nil {
 		return err
 	}
@@ -448,8 +452,9 @@ func (s *PeopleFlowService) decryptPassword(ciphertext string) (string, error) {
 		return "", errors.New("ciphertext too short")
 	}
 
-	nonce, ciphertext := data[:nonceSize], data[nonceSize:]
-	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
+	// Variable umbenannt um Namenskonflikt zu vermeiden
+	nonce, encryptedData := data[:nonceSize], data[nonceSize:]
+	plaintext, err := gcm.Open(nil, nonce, encryptedData, nil)
 	if err != nil {
 		return "", err
 	}
@@ -461,7 +466,7 @@ func (s *PeopleFlowService) decryptPassword(ciphertext string) (string, error) {
 
 // GetIntegrationStatus gibt den aktuellen Status der Integration zurück
 func (s *PeopleFlowService) GetIntegrationStatus() (map[string]interface{}, error) {
-	integration, err := s.repo.GetIntegration()
+	integration, err := s.Repo.GetIntegration()
 	if err != nil {
 		return nil, err
 	}
@@ -488,7 +493,7 @@ func (s *PeopleFlowService) GetIntegrationStatus() (map[string]interface{}, erro
 
 // RemoveIntegration entfernt die PeopleFlow-Integration
 func (s *PeopleFlowService) RemoveIntegration() error {
-	integration, err := s.repo.GetIntegration()
+	integration, err := s.Repo.GetIntegration()
 	if err != nil || integration == nil {
 		return errors.New("keine Integration gefunden")
 	}
@@ -499,5 +504,5 @@ func (s *PeopleFlowService) RemoveIntegration() error {
 	integration.Password = ""
 	integration.BaseURL = ""
 
-	return s.repo.SaveIntegration(integration)
+	return s.Repo.SaveIntegration(integration)
 }

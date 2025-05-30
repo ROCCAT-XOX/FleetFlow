@@ -180,7 +180,7 @@ func (h *PeopleFlowHandler) RemovePeopleFlowIntegration(c *gin.Context) {
 
 // GetPeopleFlowEmployees gibt alle synchronisierten PeopleFlow-Mitarbeiter zurück
 func (h *PeopleFlowHandler) GetPeopleFlowEmployees(c *gin.Context) {
-	repo := h.service.repo
+	repo := h.service.Repo // Geändert von h.service.repo zu h.service.Repo
 
 	// Query-Parameter für Filterung
 	driverEligibleOnly := c.Query("driver_eligible") == "true"
@@ -220,7 +220,7 @@ func (h *PeopleFlowHandler) GetPeopleFlowSyncLogs(c *gin.Context) {
 		limit = 50 // Maximum 50 Logs
 	}
 
-	repo := h.service.repo
+	repo := h.service.Repo // Geändert von h.service.repo zu h.service.Repo
 	logs, err := repo.FindRecentSyncLogs(limit)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -256,7 +256,7 @@ func (h *PeopleFlowHandler) UpdatePeopleFlowAutoSync(c *gin.Context) {
 		req.SyncInterval = 5
 	}
 
-	repo := h.service.repo
+	repo := h.service.Repo // Geändert von h.service.repo zu h.service.Repo
 	integration, err := repo.GetIntegration()
 	if err != nil || integration == nil {
 		c.JSON(http.StatusNotFound, gin.H{
