@@ -57,20 +57,17 @@ func setupPublicRoutes(router *gin.Engine) {
 	router.GET("/", func(c *gin.Context) {
 		c.Redirect(http.StatusFound, "/dashboard")
 	})
-
 }
 
 // setupAuthorizedRoutes konfiguriert die geschützten Seitenrouten
 func setupAuthorizedRoutes(group *gin.RouterGroup) {
 	currentYear := time.Now().Year()
 
-	group.GET("/dashboard", func(c *gin.Context) {
-		user, _ := c.Get("user")
-		c.HTML(http.StatusOK, "dashboard.html", gin.H{
-			"year": currentYear,
-			"user": user.(*model.User).FirstName + " " + user.(*model.User).LastName,
-		})
-	})
+	// Dashboard Handler erstellen
+	dashboardHandler := handler.NewDashboardHandler()
+
+	// Dashboard-Route mit dem neuen Handler
+	group.GET("/dashboard", dashboardHandler.GetCompleteDashboardData)
 
 	group.GET("/settings", func(c *gin.Context) {
 		user, _ := c.Get("user")
@@ -99,7 +96,8 @@ func setupAuthorizedRoutes(group *gin.RouterGroup) {
 		c.HTML(http.StatusOK, "vehicles.html", gin.H{
 			"title":       "Fahrzeugübersicht",
 			"user":        user.(*model.User).FirstName + " " + user.(*model.User).LastName,
-			"currentDate": "Test",
+			"currentDate": time.Now().Format("Montag, 02. Januar 2006"),
+			"year":        currentYear,
 		})
 	})
 
@@ -290,6 +288,27 @@ func setupAuthorizedRoutes(group *gin.RouterGroup) {
 		})
 	})
 
+	// Buchungen
+	group.GET("/bookings", func(c *gin.Context) {
+		user, _ := c.Get("user")
+		c.HTML(http.StatusOK, "bookings.html", gin.H{
+			"title": "Buchungen",
+			"user":  user.(*model.User).FirstName + " " + user.(*model.User).LastName,
+			"year":  currentYear,
+		})
+	})
+
+	// Berichte
+	group.GET("/reports", func(c *gin.Context) {
+		user, _ := c.Get("user")
+		c.HTML(http.StatusOK, "reports.html", gin.H{
+			"title": "Berichte",
+			"user":  user.(*model.User).FirstName + " " + user.(*model.User).LastName,
+			"year":  currentYear,
+		})
+	})
+
+	// Weitere Routen...
 	// Neuen Fahrer hinzufügen - Formular
 	group.GET("/drivers/new", func(c *gin.Context) {
 		user, _ := c.Get("user")
@@ -312,95 +331,11 @@ func setupAuthorizedRoutes(group *gin.RouterGroup) {
 		})
 	})
 
-	// Neue Fahrzeugzuweisung - Formular
-	group.GET("/assignments/new", func(c *gin.Context) {
-		user, _ := c.Get("user")
-		c.HTML(http.StatusOK, "assignment-form.html", gin.H{
-			"title": "Neue Fahrzeugzuweisung",
-			"user":  user.(*model.User).FirstName + " " + user.(*model.User).LastName,
-			"year":  currentYear,
-			"isNew": true,
-		})
-	})
-
-	// Fahrzeugzuweisung bearbeiten - Formular
-	group.GET("/assignments/edit/:id", func(c *gin.Context) {
-		user, _ := c.Get("user")
-		c.HTML(http.StatusOK, "assignment-form.html", gin.H{
-			"title": "Fahrzeugzuweisung bearbeiten",
-			"user":  user.(*model.User).FirstName + " " + user.(*model.User).LastName,
-			"year":  currentYear,
-			"isNew": false,
-		})
-	})
-
-	// Neue Inspektion/Service hinzufügen - Formular
-	group.GET("/service/new", func(c *gin.Context) {
-		user, _ := c.Get("user")
-		c.HTML(http.StatusOK, "service-form.html", gin.H{
-			"title": "Neue Inspektion erfassen",
-			"user":  user.(*model.User).FirstName + " " + user.(*model.User).LastName,
-			"year":  currentYear,
-			"isNew": true,
-		})
-	})
-
-	// Inspektion/Service bearbeiten - Formular
-	group.GET("/service/edit/:id", func(c *gin.Context) {
-		user, _ := c.Get("user")
-		c.HTML(http.StatusOK, "service-form.html", gin.H{
-			"title": "Inspektion bearbeiten",
-			"user":  user.(*model.User).FirstName + " " + user.(*model.User).LastName,
-			"year":  currentYear,
-			"isNew": false,
-		})
-	})
-
-	// Tankkosten
-	group.GET("/fuel-costs", func(c *gin.Context) {
-		user, _ := c.Get("user")
-		c.HTML(http.StatusOK, "fuel-costs.html", gin.H{
-			"title": "Tankkosten",
-			"user":  user.(*model.User).FirstName + " " + user.(*model.User).LastName,
-			"year":  currentYear,
-		})
-	})
-
-	// Fahrzeug Tankkosten
-	group.GET("/vehicle/:id/fuel-costs", func(c *gin.Context) {
-		user, _ := c.Get("user")
-		c.HTML(http.StatusOK, "vehicle-fuel-costs.html", gin.H{
-			"title": "Fahrzeug Tankkosten",
-			"user":  user.(*model.User).FirstName + " " + user.(*model.User).LastName,
-			"year":  currentYear,
-		})
-	})
-
-	// Neue Routen für Aktivitäten
+	// Weitere Routen für Aktivitäten
 	group.GET("/activities", func(c *gin.Context) {
 		user, _ := c.Get("user")
 		c.HTML(http.StatusOK, "activities.html", gin.H{
 			"title": "Aktivitätsübersicht",
-			"user":  user.(*model.User).FirstName + " " + user.(*model.User).LastName,
-			"year":  currentYear,
-		})
-	})
-
-	// Fahrzeugaktivitäten
-	group.GET("/vehicle/:id/activities", func(c *gin.Context) {
-		user, _ := c.Get("user")
-		c.HTML(http.StatusOK, "vehicle-activities.html", gin.H{
-			"title": "Fahrzeugaktivitäten",
-			"user":  user.(*model.User).FirstName + " " + user.(*model.User).LastName,
-			"year":  currentYear,
-		})
-	})
-
-	// Fahreraktivitäten
-	group.GET("/driver/:id/activities", func(c *gin.Context) {
-		user, _ := c.Get("user")
-		c.HTML(http.StatusOK, "driver-activities.html", gin.H{
-			"title": "Fahreraktivitäten",
 			"user":  user.(*model.User).FirstName + " " + user.(*model.User).LastName,
 			"year":  currentYear,
 		})
@@ -436,11 +371,9 @@ func setupAPIRoutes(api *gin.RouterGroup) {
 		profile.PUT("", profileHandler.UpdateProfile)
 		profile.POST("/password", profileHandler.ChangePassword)
 		profile.GET("/bookings/my-active", profileHandler.GetMyActiveBookings)
-		profile.GET("/profile/notification-settings", profileHandler.GetNotificationSettings)
-		profile.PUT("/profile/notification-settings", profileHandler.UpdateNotificationSettings)
-		profile.PUT("/profile", profileHandler.UpdateProfile)
-		profile.POST("/profile/password", profileHandler.ChangePassword)
-		profile.GET("/profile/stats", profileHandler.GetProfileStats)
+		profile.GET("/notification-settings", profileHandler.GetNotificationSettings)
+		profile.PUT("/notification-settings", profileHandler.UpdateNotificationSettings)
+		profile.GET("/stats", profileHandler.GetProfileStats)
 	}
 
 	// Fahrzeug-API
@@ -508,6 +441,7 @@ func setupAPIRoutes(api *gin.RouterGroup) {
 		activities.GET("/recent", dashboardHandler.GetRecentActivities)
 	}
 
+	// Dashboard-API
 	dashboard := api.Group("/dashboard")
 	{
 		dashboard.GET("/stats", dashboardHandler.GetDashboardStats)

@@ -123,33 +123,45 @@
                         </div>
                     </div>
                     <div class="p-4">
-                        <!-- Vehicle Grid Section -->
-                        <div id="vehicles-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
+                        <!-- Vehicle Grid Section - Vereinfacht -->
+                        <div id="vehicles-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                             {{range .recentVehicles}}
-                            <div class="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-                                <div class="p-4">
-                                    <div class="flex items-center justify-between mb-2">
-                                        <h4 class="text-sm font-medium text-gray-900">{{.Brand}} {{.Model}}</h4>
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                    {{if eq .Status "available"}}bg-green-100 text-green-800
+                            <div class="flex items-center bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors">
+                                <!-- Brand Logo -->
+                                <div class="flex-shrink-0 mr-3">
+                                    <img src="/static/assets/{{.Brand | lower}}.svg"
+                                         alt="{{.Brand}}"
+                                         class="h-8 w-8 object-contain"
+                                         onerror="this.onerror=null; this.src='/static/images/brands/default.svg';">
+                                </div>
+
+                                <!-- Vehicle Info -->
+                                <div class="flex-grow min-w-0">
+                                    <div class="flex items-center justify-between">
+                                        <h4 class="text-sm font-medium text-gray-900 truncate">{{.Brand}} {{.Model}}</h4>
+                                        <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
+                            {{if eq .Status "available"}}bg-green-100 text-green-800
                                         {{else if eq .Status "inuse"}}bg-yellow-100 text-yellow-800
                                         {{else if eq .Status "maintenance"}}bg-red-100 text-red-800
                                         {{else}}bg-gray-100 text-gray-800{{end}}">
-                                        {{if eq .Status "available"}}Verfügbar
-                                        {{else if eq .Status "inuse"}}In Nutzung
-                                        {{else if eq .Status "maintenance"}}In Wartung
-                                        {{else}}{{.Status}}{{end}}
+                                        {{if eq .Status "available"}}●
+                                        {{else if eq .Status "inuse"}}●
+                                        {{else if eq .Status "maintenance"}}●
+                                        {{else}}●{{end}}
                                         </span>
                                     </div>
-                                    <p class="text-sm text-gray-500">{{.LicensePlate}}</p>
-                                    <p class="text-xs text-gray-400 mt-1">{{.Mileage}} km</p>
-                                    <a href="/vehicle-details/{{.ID}}" class="inline-flex items-center text-xs font-medium text-blue-600 hover:text-blue-800 mt-2">
-                                        Details anzeigen →
-                                    </a>
+                                    <p class="text-xs text-gray-500 mt-0.5">{{.LicensePlate}}</p>
                                 </div>
+
+                                <!-- Link -->
+                                <a href="/vehicle-details/{{.ID}}" class="ml-2 flex-shrink-0">
+                                    <svg class="h-4 w-4 text-gray-400 hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </a>
                             </div>
                             {{else}}
-                            <div class="col-span-2 p-4 text-center text-gray-500">
+                            <div class="col-span-full p-4 text-center text-gray-500">
                                 Keine Fahrzeuge gefunden
                             </div>
                             {{end}}
@@ -514,12 +526,27 @@
         });
         }
 
-        // Filter für Fahrzeugübersicht
         const vehicleFilter = document.getElementById('vehicle-filter');
         if (vehicleFilter) {
             vehicleFilter.addEventListener('change', function() {
-                // Hier würde in einer echten Anwendung ein AJAX-Call erfolgen
-                console.log('Filter geändert zu:', this.value);
+                const filterValue = this.value;
+                const vehicles = document.querySelectorAll('#vehicles-container > div[class*="flex items-center"]');
+
+                vehicles.forEach(vehicle => {
+                    if (filterValue === 'all') {
+                        vehicle.style.display = '';
+                    } else {
+                        const statusBadge = vehicle.querySelector('span[class*="rounded"]');
+                        if (statusBadge) {
+                            const hasStatus =
+                                (filterValue === 'available' && statusBadge.classList.contains('bg-green-100')) ||
+                                (filterValue === 'inuse' && statusBadge.classList.contains('bg-yellow-100')) ||
+                                (filterValue === 'maintenance' && statusBadge.classList.contains('bg-red-100'));
+
+                            vehicle.style.display = hasStatus ? '' : 'none';
+                        }
+                    }
+                });
             });
         }
     });
