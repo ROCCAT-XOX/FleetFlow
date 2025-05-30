@@ -736,4 +736,250 @@
         </div>
     </div>
 </div>
+
+<!-- Modal: Finanzierung bearbeiten -->
+<div id="financing-modal" class="fixed z-10 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <!-- Hintergrund-Overlay -->
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+
+        <!-- Zentriert den Modal-Inhalt -->
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+        <!-- Modal-Panel -->
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full max-h-[90vh] overflow-y-auto">
+            <form id="financing-form">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
+                        Finanzierung & Erwerb bearbeiten
+                    </h3>
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-3">Erwerbsart</label>
+                        <div class="grid grid-cols-3 gap-3">
+                            <label class="relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none">
+                                <input type="radio" name="acquisition-type" value="purchased" class="sr-only" onchange="toggleFinancingFields(this.value)">
+                                <div class="flex flex-1">
+                                    <div class="flex flex-col">
+                                        <span class="block text-sm font-medium text-gray-900">Gekauft</span>
+                                        <span class="mt-1 flex items-center text-sm text-gray-500">Vollständig bezahlt</span>
+                                    </div>
+                                </div>
+                                <svg class="h-5 w-5 text-indigo-600 hidden" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                </svg>
+                                <div class="absolute -inset-px rounded-lg border-2 pointer-events-none" aria-hidden="true"></div>
+                            </label>
+
+                            <label class="relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none">
+                                <input type="radio" name="acquisition-type" value="financed" class="sr-only" onchange="toggleFinancingFields(this.value)">
+                                <div class="flex flex-1">
+                                    <div class="flex flex-col">
+                                        <span class="block text-sm font-medium text-gray-900">Finanziert</span>
+                                        <span class="mt-1 flex items-center text-sm text-gray-500">Mit Kredit</span>
+                                    </div>
+                                </div>
+                                <svg class="h-5 w-5 text-indigo-600 hidden" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                </svg>
+                                <div class="absolute -inset-px rounded-lg border-2 pointer-events-none" aria-hidden="true"></div>
+                            </label>
+
+                            <label class="relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none">
+                                <input type="radio" name="acquisition-type" value="leased" class="sr-only" onchange="toggleFinancingFields(this.value)">
+                                <div class="flex flex-1">
+                                    <div class="flex flex-col">
+                                        <span class="block text-sm font-medium text-gray-900">Geleast</span>
+                                        <span class="mt-1 flex items-center text-sm text-gray-500">Leasingvertrag</span>
+                                    </div>
+                                </div>
+                                <svg class="h-5 w-5 text-indigo-600 hidden" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                </svg>
+                                <div class="absolute -inset-px rounded-lg border-2 pointer-events-none" aria-hidden="true"></div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Kauffelder -->
+                    <div id="purchase-fields" class="financing-fields hidden">
+                        <h4 class="text-base font-medium text-gray-900 mb-4">Kaufdetails</h4>
+                        <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                            <div class="sm:col-span-3">
+                                <label for="purchase-date" class="block text-sm font-medium text-gray-700">Kaufdatum</label>
+                                <input type="date" name="purchase-date" id="purchase-date" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                            </div>
+                            <div class="sm:col-span-3">
+                                <label for="purchase-price" class="block text-sm font-medium text-gray-700">Kaufpreis</label>
+                                <div class="mt-1 relative rounded-md shadow-sm">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 sm:text-sm">€</span>
+                                    </div>
+                                    <input type="number" name="purchase-price" id="purchase-price" step="0.01" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md">
+                                </div>
+                            </div>
+                            <div class="sm:col-span-6">
+                                <label for="purchase-vendor" class="block text-sm font-medium text-gray-700">Verkäufer/Händler</label>
+                                <input type="text" name="purchase-vendor" id="purchase-vendor" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Finanzierungsfelder -->
+                    <div id="finance-fields" class="financing-fields hidden">
+                        <h4 class="text-base font-medium text-gray-900 mb-4">Finanzierungsdetails</h4>
+                        <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                            <div class="sm:col-span-3">
+                                <label for="finance-start-date" class="block text-sm font-medium text-gray-700">Vertragsbeginn</label>
+                                <input type="date" name="finance-start-date" id="finance-start-date" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                            </div>
+                            <div class="sm:col-span-3">
+                                <label for="finance-end-date" class="block text-sm font-medium text-gray-700">Vertragsende</label>
+                                <input type="date" name="finance-end-date" id="finance-end-date" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                            </div>
+                            <div class="sm:col-span-3">
+                                <label for="finance-monthly-rate" class="block text-sm font-medium text-gray-700">Monatliche Rate</label>
+                                <div class="mt-1 relative rounded-md shadow-sm">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 sm:text-sm">€</span>
+                                    </div>
+                                    <input type="number" name="finance-monthly-rate" id="finance-monthly-rate" step="0.01" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md">
+                                </div>
+                            </div>
+                            <div class="sm:col-span-3">
+                                <label for="finance-interest-rate" class="block text-sm font-medium text-gray-700">Zinssatz (%)</label>
+                                <input type="number" name="finance-interest-rate" id="finance-interest-rate" step="0.01" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                            </div>
+                            <div class="sm:col-span-3">
+                                <label for="finance-down-payment" class="block text-sm font-medium text-gray-700">Anzahlung</label>
+                                <div class="mt-1 relative rounded-md shadow-sm">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 sm:text-sm">€</span>
+                                    </div>
+                                    <input type="number" name="finance-down-payment" id="finance-down-payment" step="0.01" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md">
+                                </div>
+                            </div>
+                            <div class="sm:col-span-3">
+                                <label for="finance-total-amount" class="block text-sm font-medium text-gray-700">Gesamtbetrag</label>
+                                <div class="mt-1 relative rounded-md shadow-sm">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 sm:text-sm">€</span>
+                                    </div>
+                                    <input type="number" name="finance-total-amount" id="finance-total-amount" step="0.01" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md">
+                                </div>
+                            </div>
+                            <div class="sm:col-span-6">
+                                <label for="finance-bank" class="block text-sm font-medium text-gray-700">Finanzierungsbank</label>
+                                <input type="text" name="finance-bank" id="finance-bank" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Leasingfelder -->
+                    <div id="lease-fields" class="financing-fields hidden">
+                        <h4 class="text-base font-medium text-gray-900 mb-4">Leasingdetails</h4>
+                        <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                            <div class="sm:col-span-3">
+                                <label for="lease-start-date" class="block text-sm font-medium text-gray-700">Vertragsbeginn</label>
+                                <input type="date" name="lease-start-date" id="lease-start-date" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                            </div>
+                            <div class="sm:col-span-3">
+                                <label for="lease-end-date" class="block text-sm font-medium text-gray-700">Vertragsende</label>
+                                <input type="date" name="lease-end-date" id="lease-end-date" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                            </div>
+                            <div class="sm:col-span-3">
+                                <label for="lease-monthly-rate" class="block text-sm font-medium text-gray-700">Monatliche Rate</label>
+                                <div class="mt-1 relative rounded-md shadow-sm">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 sm:text-sm">€</span>
+                                    </div>
+                                    <input type="number" name="lease-monthly-rate" id="lease-monthly-rate" step="0.01" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md">
+                                </div>
+                            </div>
+                            <div class="sm:col-span-3">
+                                <label for="lease-mileage-limit" class="block text-sm font-medium text-gray-700">Kilometer-Limit pro Jahr</label>
+                                <div class="mt-1 relative rounded-md shadow-sm">
+                                    <input type="number" name="lease-mileage-limit" id="lease-mileage-limit" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pr-12 sm:text-sm border-gray-300 rounded-md">
+                                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 sm:text-sm">km</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="sm:col-span-3">
+                                <label for="lease-excess-mileage-cost" class="block text-sm font-medium text-gray-700">Mehrkilometer-Kosten</label>
+                                <div class="mt-1 relative rounded-md shadow-sm">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 sm:text-sm">€</span>
+                                    </div>
+                                    <input type="number" name="lease-excess-mileage-cost" id="lease-excess-mileage-cost" step="0.01" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-20 sm:text-sm border-gray-300 rounded-md">
+                                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 sm:text-sm">/km</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="sm:col-span-3">
+                                <label for="lease-residual-value" class="block text-sm font-medium text-gray-700">Restwert</label>
+                                <div class="mt-1 relative rounded-md shadow-sm">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 sm:text-sm">€</span>
+                                    </div>
+                                    <input type="number" name="lease-residual-value" id="lease-residual-value" step="0.01" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md">
+                                </div>
+                            </div>
+                            <div class="sm:col-span-3">
+                                <label for="lease-company" class="block text-sm font-medium text-gray-700">Leasinggesellschaft</label>
+                                <input type="text" name="lease-company" id="lease-company" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                            </div>
+                            <div class="sm:col-span-3">
+                                <label for="lease-contract-number" class="block text-sm font-medium text-gray-700">Vertragsnummer</label>
+                                <input type="text" name="lease-contract-number" id="lease-contract-number" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm">
+                        Speichern
+                    </button>
+                    <button type="button" class="close-financing-modal-btn mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        Abbrechen
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Funktion zum Umschalten der Finanzierungsfelder
+    function toggleFinancingFields(type) {
+        // Alle Felder verstecken
+        document.querySelectorAll('.financing-fields').forEach(el => el.classList.add('hidden'));
+
+        // Radio Button Styles aktualisieren
+        document.querySelectorAll('input[name="acquisition-type"]').forEach(radio => {
+            const label = radio.parentElement;
+            const svg = label.querySelector('svg');
+            const border = label.querySelector('.absolute');
+
+            if (radio.value === type) {
+                radio.checked = true;
+                svg.classList.remove('hidden');
+                border.classList.add('border-indigo-500');
+            } else {
+                svg.classList.add('hidden');
+                border.classList.remove('border-indigo-500');
+            }
+        });
+
+        // Entsprechende Felder anzeigen
+        if (type === 'purchased') {
+            document.getElementById('purchase-fields').classList.remove('hidden');
+        } else if (type === 'financed') {
+            document.getElementById('finance-fields').classList.remove('hidden');
+        } else if (type === 'leased') {
+            document.getElementById('lease-fields').classList.remove('hidden');
+        }
+    }
+</script>
 {{ end }}

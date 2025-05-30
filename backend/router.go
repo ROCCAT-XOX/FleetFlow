@@ -258,6 +258,26 @@ func setupAuthorizedRoutes(group *gin.RouterGroup) {
 			"grossWeight":        vehicle.GrossWeight,
 			"technicalMaxWeight": vehicle.TechnicalMaxWeight,
 			"specialFeatures":    vehicle.SpecialFeatures,
+			// Finanzierungsinformationen
+			"acquisitionType":        vehicle.AcquisitionType,
+			"purchaseDate":           vehicle.PurchaseDate,
+			"purchasePrice":          vehicle.PurchasePrice,
+			"purchaseVendor":         vehicle.PurchaseVendor,
+			"financeStartDate":       vehicle.FinanceStartDate,
+			"financeEndDate":         vehicle.FinanceEndDate,
+			"financeMonthlyRate":     vehicle.FinanceMonthlyRate,
+			"financeInterestRate":    vehicle.FinanceInterestRate,
+			"financeDownPayment":     vehicle.FinanceDownPayment,
+			"financeTotalAmount":     vehicle.FinanceTotalAmount,
+			"financeBank":            vehicle.FinanceBank,
+			"leaseStartDate":         vehicle.LeaseStartDate,
+			"leaseEndDate":           vehicle.LeaseEndDate,
+			"leaseMonthlyRate":       vehicle.LeaseMonthlyRate,
+			"leaseMileageLimit":      vehicle.LeaseMileageLimit,
+			"leaseExcessMileageCost": vehicle.LeaseExcessMileageCost,
+			"leaseCompany":           vehicle.LeaseCompany,
+			"leaseContractNumber":    vehicle.LeaseContractNumber,
+			"leaseResidualValue":     vehicle.LeaseResidualValue,
 		}
 
 		// Template-Daten

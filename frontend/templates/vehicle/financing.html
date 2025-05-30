@@ -1,0 +1,231 @@
+<!-- frontend/templates/vehicle/financing.html -->
+{{ define "vehicle/financing" }}
+<div id="financing" class="vehicle-tab-content">
+    <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="px-4 py-5 sm:px-6 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">Finanzierung & Erwerb</h3>
+            <button type="button" onclick="openEditFinancingModal('{{.vehicleId}}')" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200">
+                <svg class="-ml-0.5 mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+                Bearbeiten
+            </button>
+        </div>
+        <div class="px-4 py-5 sm:p-6">
+            <div class="mb-6">
+                <h4 class="text-base font-medium text-gray-900 mb-2">Erwerbsart</h4>
+                {{if eq .vehicle.acquisitionType "purchased"}}
+                <span class="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                    Gekauft
+                </span>
+                {{else if eq .vehicle.acquisitionType "financed"}}
+                <span class="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                    Finanziert
+                </span>
+                {{else if eq .vehicle.acquisitionType "leased"}}
+                <span class="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
+                    Geleast
+                </span>
+                {{else}}
+                <span class="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+                    Nicht festgelegt
+                </span>
+                {{end}}
+            </div>
+
+            {{if eq .vehicle.acquisitionType "purchased"}}
+            <!-- Kaufinformationen -->
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <h4 class="text-base font-medium text-gray-900 mb-4">Kaufdetails</h4>
+                <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Kaufdatum</dt>
+                        <dd class="mt-1 text-sm text-gray-900">
+                            {{if not .vehicle.purchaseDate.IsZero}}
+                            {{formatDate .vehicle.purchaseDate}}
+                            {{else}}
+                            -
+                            {{end}}
+                        </dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Kaufpreis</dt>
+                        <dd class="mt-1 text-sm text-gray-900">
+                            {{if gt .vehicle.purchasePrice 0}}
+                            {{formatCurrency .vehicle.purchasePrice}}
+                            {{else}}
+                            -
+                            {{end}}
+                        </dd>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <dt class="text-sm font-medium text-gray-500">Verkäufer/Händler</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{if .vehicle.purchaseVendor}}{{.vehicle.purchaseVendor}}{{else}}-{{end}}</dd>
+                    </div>
+                </dl>
+            </div>
+            {{end}}
+
+            {{if eq .vehicle.acquisitionType "financed"}}
+            <!-- Finanzierungsinformationen -->
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <h4 class="text-base font-medium text-gray-900 mb-4">Finanzierungsdetails</h4>
+                <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Vertragsbeginn</dt>
+                        <dd class="mt-1 text-sm text-gray-900">
+                            {{if not .vehicle.financeStartDate.IsZero}}
+                            {{formatDate .vehicle.financeStartDate}}
+                            {{else}}
+                            -
+                            {{end}}
+                        </dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Vertragsende</dt>
+                        <dd class="mt-1 text-sm text-gray-900">
+                            {{if not .vehicle.financeEndDate.IsZero}}
+                            {{formatDate .vehicle.financeEndDate}}
+                            {{else}}
+                            -
+                            {{end}}
+                        </dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Monatliche Rate</dt>
+                        <dd class="mt-1 text-sm text-gray-900">
+                            {{if gt .vehicle.financeMonthlyRate 0}}
+                            {{formatCurrency .vehicle.financeMonthlyRate}}
+                            {{else}}
+                            -
+                            {{end}}
+                        </dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Zinssatz</dt>
+                        <dd class="mt-1 text-sm text-gray-900">
+                            {{if gt .vehicle.financeInterestRate 0}}
+                            {{printf "%.2f" .vehicle.financeInterestRate}}%
+                            {{else}}
+                            -
+                            {{end}}
+                        </dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Anzahlung</dt>
+                        <dd class="mt-1 text-sm text-gray-900">
+                            {{if gt .vehicle.financeDownPayment 0}}
+                            {{formatCurrency .vehicle.financeDownPayment}}
+                            {{else}}
+                            -
+                            {{end}}
+                        </dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Gesamtbetrag</dt>
+                        <dd class="mt-1 text-sm text-gray-900">
+                            {{if gt .vehicle.financeTotalAmount 0}}
+                            {{formatCurrency .vehicle.financeTotalAmount}}
+                            {{else}}
+                            -
+                            {{end}}
+                        </dd>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <dt class="text-sm font-medium text-gray-500">Finanzierungsbank</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{if .vehicle.financeBank}}{{.vehicle.financeBank}}{{else}}-{{end}}</dd>
+                    </div>
+                </dl>
+            </div>
+            {{end}}
+
+            {{if eq .vehicle.acquisitionType "leased"}}
+            <!-- Leasinginformationen -->
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <h4 class="text-base font-medium text-gray-900 mb-4">Leasingdetails</h4>
+                <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Vertragsbeginn</dt>
+                        <dd class="mt-1 text-sm text-gray-900">
+                            {{if not .vehicle.leaseStartDate.IsZero}}
+                            {{formatDate .vehicle.leaseStartDate}}
+                            {{else}}
+                            -
+                            {{end}}
+                        </dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Vertragsende</dt>
+                        <dd class="mt-1 text-sm text-gray-900">
+                            {{if not .vehicle.leaseEndDate.IsZero}}
+                            {{formatDate .vehicle.leaseEndDate}}
+                            {{else}}
+                            -
+                            {{end}}
+                        </dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Monatliche Rate</dt>
+                        <dd class="mt-1 text-sm text-gray-900">
+                            {{if gt .vehicle.leaseMonthlyRate 0}}
+                            {{formatCurrency .vehicle.leaseMonthlyRate}}
+                            {{else}}
+                            -
+                            {{end}}
+                        </dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Kilometer-Limit/Jahr</dt>
+                        <dd class="mt-1 text-sm text-gray-900">
+                            {{if gt .vehicle.leaseMileageLimit 0}}
+                            {{formatNumber .vehicle.leaseMileageLimit}} km
+                            {{else}}
+                            -
+                            {{end}}
+                        </dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Mehrkilometer-Kosten</dt>
+                        <dd class="mt-1 text-sm text-gray-900">
+                            {{if gt .vehicle.leaseExcessMileageCost 0}}
+                            {{formatCurrency .vehicle.leaseExcessMileageCost}}/km
+                            {{else}}
+                            -
+                            {{end}}
+                        </dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Restwert</dt>
+                        <dd class="mt-1 text-sm text-gray-900">
+                            {{if gt .vehicle.leaseResidualValue 0}}
+                            {{formatCurrency .vehicle.leaseResidualValue}}
+                            {{else}}
+                            -
+                            {{end}}
+                        </dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Leasinggesellschaft</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{if .vehicle.leaseCompany}}{{.vehicle.leaseCompany}}{{else}}-{{end}}</dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Vertragsnummer</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{if .vehicle.leaseContractNumber}}{{.vehicle.leaseContractNumber}}{{else}}-{{end}}</dd>
+                    </div>
+                </dl>
+            </div>
+            {{end}}
+
+            {{if eq .vehicle.acquisitionType ""}}
+            <div class="text-center py-12">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">Keine Finanzierungsinformationen</h3>
+                <p class="mt-1 text-sm text-gray-500">Die Erwerbsart wurde noch nicht festgelegt.</p>
+            </div>
+            {{end}}
+        </div>
+    </div>
+</div>
+{{ end }}

@@ -10,6 +10,7 @@ function initializeModals() {
     initializeUsageModal();
     initializeRegistrationModal();
     initializeVehicleEditModal();
+    initializeFinancingModal()
 
     // Modal-Schließen bei Klick außerhalb
     document.querySelectorAll('.fixed.z-10').forEach(modal => {
@@ -788,7 +789,186 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// Finanzierungs-Modal initialisieren
+// Finanzierungs-Modal initialisieren
+function initializeFinancingModal() {
+    const form = document.getElementById('financing-form');
+    const modal = document.getElementById('financing-modal');
+
+    if (form) {
+        form.removeEventListener('submit', handleFinancingSubmit);
+        form.addEventListener('submit', handleFinancingSubmit);
+    }
+
+    // Close Button
+    const closeBtn = document.querySelector('.close-financing-modal-btn');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', function() {
+            modal.classList.add('hidden');
+        });
+    }
+}
+
+async function handleFinancingSubmit(e) {
+    e.preventDefault();
+
+    const form = e.target;
+    const modal = document.getElementById('financing-modal');
+    const vehicleId = window.location.pathname.split('/').pop();
+    const formData = new FormData(form);
+
+    // Erwerbsart ermitteln
+    const acquisitionType = formData.get('acquisition-type');
+
+    try {
+        // Erst die aktuellen Fahrzeugdaten laden
+        const vehicleResponse = await fetch(`/api/vehicles/${vehicleId}`);
+        const vehicleData = await vehicleResponse.json();
+        const vehicle = vehicleData.vehicle;
+
+        // Alle Fahrzeugdaten mit den neuen Finanzierungsdaten zusammenführen
+        const data = {
+            ...vehicle,
+            acquisitionType: acquisitionType
+        };
+
+        // Je nach Erwerbsart die entsprechenden Felder setzen
+        if (acquisitionType === 'purchased') {
+            data.purchaseDate = formData.get('purchase-date');
+            data.purchasePrice = parseFloat(formData.get('purchase-price')) || 0;
+            data.purchaseVendor = formData.get('purchase-vendor');
+        } else if (acquisitionType === 'financed') {
+            data.financeStartDate = formData.get('finance-start-date');
+            data.financeEndDate = formData.get('finance-end-date');
+            data.financeMonthlyRate = parseFloat(formData.get('finance-monthly-rate')) || 0;
+            data.financeInterestRate = parseFloat(formData.get('finance-interest-rate')) || 0;
+            data.financeDownPayment = parseFloat(formData.get('finance-down-payment')) || 0;
+            data.financeTotalAmount = parseFloat(formData.get('finance-total-amount')) || 0;
+            data.financeBank = formData.get('finance-bank');
+        } else if (acquisitionType === 'leased') {
+            data.leaseStartDate = formData.get('lease-start-date');
+            data.leaseEndDate = formData.get('lease-end-date');
+            data.leaseMonthlyRate = parseFloat(formData.get('lease-monthly-rate')) || 0;
+            data.leaseMileageLimit = parseInt(formData.get('lease-mileage-limit')) || 0;
+            data.leaseExcessMileageCost = parseFloat(formData.get('lease-excess-mileage-cost')) || 0;
+            data.leaseCompany = formData.get('lease-company');
+            data.leaseContractNumber = formData.get('lease-contract-number');
+            data.leaseResidualValue = parseFloat(formData.get('lease-residual-value')) || 0;
+        }
+
+        const response = await fetch(`/api/vehicles/${vehicleId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        if (!response.ok) throw new Error('Fehler beim Aktualisieren');
+
+        showNotification('Finanzierungsdaten erfolgreich aktualisiert', 'success');
+        modal.classList.add('hidden');
+        setTimeout(() => window.location.reload(), 500);
+
+    } catch (error) {
+        console.error('Fehler:', error);
+        showNotification('Fehler beim Aktualisieren der Finanzierungsdaten', 'error');
+    }
+}
+
+// Modal öffnen Funktion - WICHTIG: Als globale Funktion definieren
+window.openEditFinancingModal = async function(vehicleId) {
+    const modal = document.getElementById('financing-modal');
+
+    try {
+        const response = await fetch(`/api/vehicles/${vehicleId}`);
+        const data = await response.json();
+        const vehicle = data.vehicle;
+
+        // Erwerbsart setzen
+        if (vehicle.acquisitionType) {
+            toggleFinancingFields(vehicle.acquisitionType);
+        }
+
+        // Felder mit Daten füllen
+        const setFieldValue = (id, value, isDate = false) => {
+            const element = document.getElementById(id);
+            if (element) {
+                if (isDate && value) {
+                    element.value = value.split('T')[0];
+                } else {
+                    element.value = value || '';
+                }
+            }
+        };
+
+        // Kaufdaten
+        setFieldValue('purchase-date', vehicle.purchaseDate, true);
+        setFieldValue('purchase-price', vehicle.purchasePrice);
+        setFieldValue('purchase-vendor', vehicle.purchaseVendor);
+
+        // Finanzierungsdaten
+        setFieldValue('finance-start-date', vehicle.financeStartDate, true);
+        setFieldValue('finance-end-date', vehicle.financeEndDate, true);
+        setFieldValue('finance-monthly-rate', vehicle.financeMonthlyRate);
+        setFieldValue('finance-interest-rate', vehicle.financeInterestRate);
+        setFieldValue('finance-down-payment', vehicle.financeDownPayment);
+        setFieldValue('finance-total-amount', vehicle.financeTotalAmount);
+        setFieldValue('finance-bank', vehicle.financeBank);
+
+        // Leasingdaten
+        setFieldValue('lease-start-date', vehicle.leaseStartDate, true);
+        setFieldValue('lease-end-date', vehicle.leaseEndDate, true);
+        setFieldValue('lease-monthly-rate', vehicle.leaseMonthlyRate);
+        setFieldValue('lease-mileage-limit', vehicle.leaseMileageLimit);
+        setFieldValue('lease-excess-mileage-cost', vehicle.leaseExcessMileageCost);
+        setFieldValue('lease-company', vehicle.leaseCompany);
+        setFieldValue('lease-contract-number', vehicle.leaseContractNumber);
+        setFieldValue('lease-residual-value', vehicle.leaseResidualValue);
+
+        if (modal) {
+            modal.classList.remove('hidden');
+        }
+    } catch (error) {
+        console.error('Fehler beim Laden der Fahrzeugdaten:', error);
+        alert('Fehler beim Laden der Fahrzeugdaten');
+    }
+};
+
+// Funktion zum Umschalten der Finanzierungsfelder - WICHTIG: Als globale Funktion
+window.toggleFinancingFields = function(type) {
+    // Alle Felder verstecken
+    document.querySelectorAll('.financing-fields').forEach(el => el.classList.add('hidden'));
+
+    // Radio Button Styles aktualisieren
+    document.querySelectorAll('input[name="acquisition-type"]').forEach(radio => {
+        const label = radio.parentElement;
+        const svg = label.querySelector('svg');
+        const border = label.querySelector('.absolute');
+
+        if (radio.value === type) {
+            radio.checked = true;
+            svg.classList.remove('hidden');
+            border.classList.add('border-indigo-500');
+        } else {
+            svg.classList.add('hidden');
+            border.classList.remove('border-indigo-500');
+        }
+    });
+
+    // Entsprechende Felder anzeigen
+    if (type === 'purchased') {
+        document.getElementById('purchase-fields').classList.remove('hidden');
+    } else if (type === 'financed') {
+        document.getElementById('finance-fields').classList.remove('hidden');
+    } else if (type === 'leased') {
+        document.getElementById('lease-fields').classList.remove('hidden');
+    }
+};
+
+
+
 // Initialisierung nur einmal beim Laden
 document.addEventListener('DOMContentLoaded', function() {
     initializeModals();
+    // In der initializeModals Funktion hinzufügen:
+    initializeFinancingModal();
 });

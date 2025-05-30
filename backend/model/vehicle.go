@@ -16,6 +16,9 @@ type FuelType string
 // InsuranceType repräsentiert den Versicherungstyp eines Fahrzeugs
 type InsuranceType string
 
+// AcquisitionType repräsentiert die Art des Fahrzeugerwerbs
+type AcquisitionType string
+
 const (
 	// Fahrzeugstatus
 	VehicleStatusAvailable   VehicleStatus = "available"
@@ -34,6 +37,11 @@ const (
 	InsuranceTypeLiability     InsuranceType = "Haftpflicht"
 	InsuranceTypePartial       InsuranceType = "Teilkasko"
 	InsuranceTypeComprehensive InsuranceType = "Vollkasko"
+
+	// Erwerbsarten
+	AcquisitionTypePurchased AcquisitionType = "purchased"
+	AcquisitionTypeFinanced  AcquisitionType = "financed"
+	AcquisitionTypeLeased    AcquisitionType = "leased"
 )
 
 // Vehicle repräsentiert ein Fahrzeug im System
@@ -76,6 +84,33 @@ type Vehicle struct {
 	MaxSpeed           int     `bson:"maxSpeed" json:"maxSpeed"`                     // Höchstgeschwindigkeit in km/h
 	TowingCapacity     int     `bson:"towingCapacity" json:"towingCapacity"`         // Zulässige Anhängelast in kg
 	SpecialFeatures    string  `bson:"specialFeatures" json:"specialFeatures"`       // Besonderheiten
+
+	// Finanzierungsinformationen
+	AcquisitionType AcquisitionType `bson:"acquisitionType" json:"acquisitionType"`
+
+	// Kauf-spezifische Felder
+	PurchaseDate   time.Time `bson:"purchaseDate" json:"purchaseDate"`
+	PurchasePrice  float64   `bson:"purchasePrice" json:"purchasePrice"`
+	PurchaseVendor string    `bson:"purchaseVendor" json:"purchaseVendor"`
+
+	// Finanzierungs-spezifische Felder
+	FinanceStartDate    time.Time `bson:"financeStartDate" json:"financeStartDate"`
+	FinanceEndDate      time.Time `bson:"financeEndDate" json:"financeEndDate"`
+	FinanceMonthlyRate  float64   `bson:"financeMonthlyRate" json:"financeMonthlyRate"`
+	FinanceInterestRate float64   `bson:"financeInterestRate" json:"financeInterestRate"`
+	FinanceDownPayment  float64   `bson:"financeDownPayment" json:"financeDownPayment"`
+	FinanceTotalAmount  float64   `bson:"financeTotalAmount" json:"financeTotalAmount"`
+	FinanceBank         string    `bson:"financeBank" json:"financeBank"`
+
+	// Leasing-spezifische Felder
+	LeaseStartDate         time.Time `bson:"leaseStartDate" json:"leaseStartDate"`
+	LeaseEndDate           time.Time `bson:"leaseEndDate" json:"leaseEndDate"`
+	LeaseMonthlyRate       float64   `bson:"leaseMonthlyRate" json:"leaseMonthlyRate"`
+	LeaseMileageLimit      int       `bson:"leaseMileageLimit" json:"leaseMileageLimit"`
+	LeaseExcessMileageCost float64   `bson:"leaseExcessMileageCost" json:"leaseExcessMileageCost"`
+	LeaseCompany           string    `bson:"leaseCompany" json:"leaseCompany"`
+	LeaseContractNumber    string    `bson:"leaseContractNumber" json:"leaseContractNumber"`
+	LeaseResidualValue     float64   `bson:"leaseResidualValue" json:"leaseResidualValue"`
 
 	CreatedAt time.Time `bson:"createdAt" json:"createdAt"`
 	UpdatedAt time.Time `bson:"updatedAt" json:"updatedAt"`
