@@ -130,12 +130,9 @@ func setupAuthorizedRoutes(group *gin.RouterGroup) {
 		user, _ := c.Get("user")
 		vehicleID := c.Param("id")
 
-		// Repositories initialisieren
+		// Repository initialisieren
 		vehicleRepo := repository.NewVehicleRepository()
 		driverRepo := repository.NewDriverRepository()
-		maintenanceRepo := repository.NewMaintenanceRepository()
-		usageRepo := repository.NewVehicleUsageRepository()
-		fuelCostRepo := repository.NewFuelCostRepository()
 
 		// Fahrzeugdaten laden
 		vehicle, err := vehicleRepo.FindByID(vehicleID)
@@ -183,7 +180,7 @@ func setupAuthorizedRoutes(group *gin.RouterGroup) {
 			"nextInspectionDate": vehicle.NextInspectionDate,
 		}
 
-		// Basis-Template-Daten
+		// Template-Daten
 		templateData := gin.H{
 			"title":      "Fahrzeugdetails",
 			"user":       user.(*model.User).FirstName + " " + user.(*model.User).LastName,
@@ -191,84 +188,6 @@ func setupAuthorizedRoutes(group *gin.RouterGroup) {
 			"vehicle":    vehicleData,
 			"driverName": driverName,
 			"tab":        tab,
-		}
-
-		// Tab-spezifische Daten laden
-		switch tab {
-		case "usage":
-			// Aktuelle Nutzung
-			activeUsage, _ := usageRepo.FindActiveUsage(vehicleID)
-			if activeUsage != nil && !activeUsage.DriverID.IsZero() {
-				driver, _ := driverRepo.FindByID(activeUsage.DriverID.Hex())
-				if driver != nil {
-					templateData["currentUsage"] = gin.H{
-						"driverName": driver.FirstName + " " + driver.LastName,
-						"startDate":  activeUsage.StartDate,
-						"endDate":    activeUsage.EndDate,
-						"purpose":    activeUsage.Purpose,
-						"department": activeUsage.Department,
-					}
-				}
-			}
-
-			// Nutzungshistorie
-			usageHistory, _ := usageRepo.FindByVehicle(vehicleID)
-			var usageList []gin.H
-			for _, usage := range usageHistory {
-				driverName := "Unbekannt"
-				if !usage.DriverID.IsZero() {
-					driver, _ := driverRepo.FindByID(usage.DriverID.Hex())
-					if driver != nil {
-						driverName = driver.FirstName + " " + driver.LastName
-					}
-				}
-				usageList = append(usageList, gin.H{
-					"startDate":    usage.StartDate,
-					"endDate":      usage.EndDate,
-					"driverName":   driverName,
-					"purpose":      usage.Purpose,
-					"startMileage": usage.StartMileage,
-					"endMileage":   usage.EndMileage,
-				})
-			}
-			if len(usageList) > 0 {
-				templateData["usageHistory"] = usageList
-			}
-
-		case "maintenance":
-			maintenanceEntries, _ := maintenanceRepo.FindByVehicle(vehicleID)
-			var maintenanceList []gin.H
-			for _, entry := range maintenanceEntries {
-				maintenanceList = append(maintenanceList, gin.H{
-					"date":     entry.Date,
-					"type":     entry.Type,
-					"mileage":  entry.Mileage,
-					"cost":     entry.Cost,
-					"workshop": entry.Workshop,
-					"notes":    entry.Notes,
-				})
-			}
-			if len(maintenanceList) > 0 {
-				templateData["maintenanceEntries"] = maintenanceList
-			}
-
-		case "fuel":
-			fuelCosts, _ := fuelCostRepo.FindByVehicle(vehicleID)
-			var fuelList []gin.H
-			for _, fuel := range fuelCosts {
-				fuelList = append(fuelList, gin.H{
-					"date":         fuel.Date,
-					"fuelType":     fuel.FuelType,
-					"amount":       fuel.Amount,
-					"pricePerUnit": fuel.PricePerUnit,
-					"totalCost":    fuel.TotalCost,
-					"mileage":      fuel.Mileage,
-					"location":     fuel.Location,
-				})
-			}
-			if len(fuelList) > 0 {
-				templateData["fuelCosts"] = fuelList
-			}
 		}
 
 		c.HTML(http.StatusOK, "vehicle/details.html", templateData)

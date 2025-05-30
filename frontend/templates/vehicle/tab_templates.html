@@ -1,0 +1,36 @@
+{{ define "vehicle/tab_templates" }}
+<!-- Basic Info Tab Template -->
+<template id="basic-info-template">
+    {{ template "vehicle/basic_info" . }}
+</template>
+
+<!-- Current Usage Tab Template -->
+<template id="current-usage-template">
+    {{ template "vehicle/current_usage" . }}
+</template>
+
+<!-- Usage History Tab Template -->
+<template id="usage-history-template">
+    {{ template "vehicle/usage_history" . }}
+</template>
+
+<!-- Maintenance Tab Template -->
+<template id="maintenance-template">
+    {{ template "vehicle/maintenance" . }}
+</template>
+
+<!-- Fuel Costs Tab Template -->
+<template id="fuel-costs-template">
+    {{ template "vehicle/fuel_costs" . }}
+</template>
+
+<!-- Registration Tab Template -->
+<template id="registration-insurance-template">
+    {{ template "vehicle/registration" . }}
+</template>
+
+<!-- Statistics Tab Template -->
+<template id="statistics-template">
+    {{ template "vehicle/statistics" . }}
+</template>
+{{ end }}

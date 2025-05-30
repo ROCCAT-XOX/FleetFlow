@@ -38,70 +38,73 @@
         </div>
     </div>
 
-    <!-- Tabs als Links -->
-    <div class="border-b border-gray-200 mb-6">
-        <nav class="-mb-px flex space-x-8">
-            <a href="?tab=basic" class="py-4 px-1 border-b-2 font-medium text-sm {{ if or (eq .tab "basic") (not .tab) }}border-blue-500 text-blue-600{{ else }}border-transparent text-gray-500 hover:text-gray-700{{ end }}">
-            Grunddaten
-            </a>
-            <a href="?tab=usage" class="py-4 px-1 border-b-2 font-medium text-sm {{ if eq .tab "usage" }}border-blue-500 text-blue-600{{ else }}border-transparent text-gray-500 hover:text-gray-700{{ end }}">
-            Nutzung
-            </a>
-            <a href="?tab=maintenance" class="py-4 px-1 border-b-2 font-medium text-sm {{ if eq .tab "maintenance" }}border-blue-500 text-blue-600{{ else }}border-transparent text-gray-500 hover:text-gray-700{{ end }}">
-            Wartung
-            </a>
-            <a href="?tab=fuel" class="py-4 px-1 border-b-2 font-medium text-sm {{ if eq .tab "fuel" }}border-blue-500 text-blue-600{{ else }}border-transparent text-gray-500 hover:text-gray-700{{ end }}">
-            Tankkosten
-            </a>
-            <a href="?tab=registration" class="py-4 px-1 border-b-2 font-medium text-sm {{ if eq .tab "registration" }}border-blue-500 text-blue-600{{ else }}border-transparent text-gray-500 hover:text-gray-700{{ end }}">
-            Zulassung
-            </a>
-        </nav>
-    </div>
+    <!-- Tab-Container für JavaScript -->
+    <div id="vehicle-tabs-container">
+        <!-- Tabs als Links -->
+        <div class="border-b border-gray-200 mb-6">
+            <nav class="-mb-px flex space-x-8">
+                <a href="?tab=basic" class="vehicle-tab-btn py-4 px-1 border-b-2 font-medium text-sm {{ if or (eq .tab "basic") (not .tab) }}border-blue-500 text-blue-600{{ else }}border-transparent text-gray-500 hover:text-gray-700{{ end }}" data-tab="basic-info">
+                Grunddaten
+                </a>
+                <a href="?tab=usage" class="vehicle-tab-btn py-4 px-1 border-b-2 font-medium text-sm {{ if eq .tab "usage" }}border-blue-500 text-blue-600{{ else }}border-transparent text-gray-500 hover:text-gray-700{{ end }}" data-tab="current-usage">
+                Nutzung
+                </a>
+                <a href="?tab=maintenance" class="vehicle-tab-btn py-4 px-1 border-b-2 font-medium text-sm {{ if eq .tab "maintenance" }}border-blue-500 text-blue-600{{ else }}border-transparent text-gray-500 hover:text-gray-700{{ end }}" data-tab="maintenance">
+                Wartung
+                </a>
+                <a href="?tab=fuel" class="vehicle-tab-btn py-4 px-1 border-b-2 font-medium text-sm {{ if eq .tab "fuel" }}border-blue-500 text-blue-600{{ else }}border-transparent text-gray-500 hover:text-gray-700{{ end }}" data-tab="fuel-costs">
+                Tankkosten
+                </a>
+                <a href="?tab=registration" class="vehicle-tab-btn py-4 px-1 border-b-2 font-medium text-sm {{ if eq .tab "registration" }}border-blue-500 text-blue-600{{ else }}border-transparent text-gray-500 hover:text-gray-700{{ end }}" data-tab="registration-insurance">
+                Zulassung
+                </a>
+                <a href="?tab=statistics" class="vehicle-tab-btn py-4 px-1 border-b-2 font-medium text-sm {{ if eq .tab "statistics" }}border-blue-500 text-blue-600{{ else }}border-transparent text-gray-500 hover:text-gray-700{{ end }}" data-tab="statistics">
+                Statistiken
+                </a>
+            </nav>
+        </div>
 
-    <!-- Tab Content -->
-    {{ if or (eq .tab "basic") (not .tab) }}
-    {{ template "vehicle/basic_info_static" . }}
-    {{ else if eq .tab "usage" }}
-    {{ template "vehicle/usage_static" . }}
-    {{ else if eq .tab "maintenance" }}
-    {{ template "vehicle/maintenance_static" . }}
-    {{ else if eq .tab "fuel" }}
-    {{ template "vehicle/fuel_static" . }}
-    {{ else if eq .tab "registration" }}
-    {{ template "vehicle/registration_static" . }}
-    {{ end }}
+        <!-- Tab Content (Dynamic) -->
+        <div id="tab-content">
+            <!-- Wird durch JavaScript geladen -->
+        </div>
+    </div>
 </main>
+
+<!-- Modals -->
+{{ template "vehicle/modals" . }}
+
+<!-- Scripts -->
+<script src="/static/js/car-manufacturers.js"></script>
+<script src="/static/js/vehicle-api.js"></script>
+<script src="/static/js/vehicle-modals.js"></script>
+<script src="/static/js/vehicle-statistics.js"></script>
+<script src="/static/js/vehicle-details.js"></script>
+
+<!-- ApexCharts für Statistiken -->
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
 <script>
     // Logo direkt beim Seitenladen setzen
     document.addEventListener('DOMContentLoaded', function() {
         const brandLogo = document.getElementById('brand-logo');
-
-        // Marke aus dem H1-Element extrahieren
         const header = document.querySelector('h1.text-2xl');
+
         if (header && brandLogo) {
-            const brand = header.textContent.split(' ')[0]; // Erstes Wort ist die Marke
-            console.log('Gefundene Marke:', brand);
+            const brand = header.textContent.split(' ')[0];
 
             if (brand) {
-                // Logo-Pfad setzen
-                const logoPath = `/assets/logo/${brand.toLowerCase()}.svg`;
-                console.log('Versuche Logo zu laden:', logoPath);
-
+                const logoPath = `/static/assets/logo/${brand.toLowerCase()}.svg`;
                 brandLogo.src = logoPath;
                 brandLogo.alt = brand;
 
                 brandLogo.onload = function() {
                     brandLogo.classList.remove('hidden');
-                    console.log('Logo erfolgreich geladen');
                 };
 
                 brandLogo.onerror = function() {
-                    console.log('SVG nicht gefunden, versuche PNG');
-                    brandLogo.src = `/assets/logo/${brand.toLowerCase()}.png`;
-
+                    brandLogo.src = `/static/assets/logo/${brand.toLowerCase()}.png`;
                     brandLogo.onerror = function() {
-                        console.log('Kein Logo gefunden');
                         brandLogo.classList.add('hidden');
                     };
                 };

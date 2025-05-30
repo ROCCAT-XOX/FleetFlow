@@ -130,72 +130,201 @@ window.openEditVehicleModal = async function(vehicleId) {
     modal.classList.remove('hidden');
 };
 
+// Modal: Wartung hinzufügen
 window.openAddMaintenanceModal = function(vehicleId) {
     const modal = document.getElementById('maintenance-modal');
     const form = document.getElementById('maintenance-form');
-    form.reset();
-    document.getElementById('maintenance-modal-title').textContent = 'Wartung/Inspektion hinzufügen';
+
+    if (!modal) {
+        console.error('Maintenance Modal nicht gefunden');
+        return;
+    }
+
+    if (form) {
+        form.reset();
+    }
+
+    const modalTitle = document.getElementById('maintenance-modal-title');
+    if (modalTitle) {
+        modalTitle.textContent = 'Wartung/Inspektion hinzufügen';
+    }
+
+    // Aktuelles Datum setzen
+    const dateInput = document.getElementById('maintenance-date');
+    if (dateInput) {
+        dateInput.value = new Date().toISOString().split('T')[0];
+    }
+
+    // VehicleId speichern für Submit
+    if (form) {
+        form.dataset.vehicleId = vehicleId;
+    }
+
     modal.classList.remove('hidden');
 };
 
+
+// Modal: Tankkosten hinzufügen
 window.openAddFuelCostModal = async function(vehicleId) {
     const modal = document.getElementById('vehicle-fuel-cost-modal');
     const form = document.getElementById('vehicle-fuel-cost-form');
-    form.reset();
+
+    if (!modal) {
+        console.error('Fuel Cost Modal nicht gefunden');
+        return;
+    }
+
+    if (form) {
+        form.reset();
+    }
 
     // Fahrzeug-ID setzen
-    document.getElementById('vehicle-fuel-vehicle-id').value = vehicleId;
+    const vehicleIdInput = document.getElementById('vehicle-fuel-vehicle-id');
+    if (vehicleIdInput) {
+        vehicleIdInput.value = vehicleId;
+    }
 
     // Fahrer laden
-    await loadDriversForSelect('vehicle-fuel-driver');
+    try {
+        const response = await fetch('/api/drivers');
+        const data = await response.json();
+        const select = document.getElementById('vehicle-fuel-driver');
+
+        if (select) {
+            // Erste Option beibehalten
+            select.innerHTML = '<option value="">Keinen Fahrer auswählen</option>';
+
+            // Fahrer hinzufügen
+            if (data.drivers) {
+                data.drivers.forEach(driver => {
+                    const option = document.createElement('option');
+                    option.value = driver.id;
+                    option.textContent = `${driver.firstName} ${driver.lastName}`;
+                    select.appendChild(option);
+                });
+            }
+        }
+    } catch (error) {
+        console.error('Fehler beim Laden der Fahrer:', error);
+    }
 
     // Aktuelles Datum setzen
-    document.getElementById('vehicle-fuel-date').value = new Date().toISOString().split('T')[0];
+    const dateInput = document.getElementById('vehicle-fuel-date');
+    if (dateInput) {
+        dateInput.value = new Date().toISOString().split('T')[0];
+    }
+
+    // VehicleId speichern für Submit
+    if (form) {
+        form.dataset.vehicleId = vehicleId;
+    }
 
     modal.classList.remove('hidden');
 };
 
+
+// Modal: Nutzung hinzufügen
 window.openAddUsageModal = async function(vehicleId) {
     const modal = document.getElementById('usage-modal');
     const form = document.getElementById('usage-form');
-    form.reset();
+
+    if (!modal) {
+        console.error('Usage Modal nicht gefunden');
+        return;
+    }
+
+    if (form) {
+        form.reset();
+    }
 
     // Fahrer laden
-    await loadDriversForSelect('driver');
+    try {
+        const response = await fetch('/api/drivers');
+        const data = await response.json();
+        const select = document.getElementById('driver');
+
+        if (select) {
+            select.innerHTML = '<option value="">Fahrer auswählen</option>';
+
+            if (data.drivers) {
+                data.drivers.forEach(driver => {
+                    const option = document.createElement('option');
+                    option.value = driver.id;
+                    option.textContent = `${driver.firstName} ${driver.lastName}`;
+                    select.appendChild(option);
+                });
+            }
+        }
+    } catch (error) {
+        console.error('Fehler beim Laden der Fahrer:', error);
+    }
 
     // Aktuelles Datum und Zeit setzen
     const now = new Date();
-    document.getElementById('start-date').value = now.toISOString().split('T')[0];
-    document.getElementById('start-time').value = now.toTimeString().slice(0, 5);
+    const startDateInput = document.getElementById('start-date');
+    const startTimeInput = document.getElementById('start-time');
+
+    if (startDateInput) {
+        startDateInput.value = now.toISOString().split('T')[0];
+    }
+    if (startTimeInput) {
+        startTimeInput.value = now.toTimeString().slice(0, 5);
+    }
+
+    // VehicleId speichern für Submit
+    if (form) {
+        form.dataset.vehicleId = vehicleId;
+    }
 
     modal.classList.remove('hidden');
 };
 
+// Modal: Zulassung bearbeiten
 window.openEditRegistrationModal = async function(vehicleId) {
     const modal = document.getElementById('registration-modal');
-    const response = await fetch(`/api/vehicles/${vehicleId}`);
-    const data = await response.json();
-    const vehicle = data.vehicle;
+    const form = document.getElementById('registration-form');
 
-    // Formular mit Daten füllen
-    if (vehicle.registrationDate) {
-        document.getElementById('registration-date').value = vehicle.registrationDate.split('T')[0];
+    if (!modal) {
+        console.error('Registration Modal nicht gefunden');
+        return;
     }
-    if (vehicle.registrationExpiry) {
-        document.getElementById('registration-expiry').value = vehicle.registrationExpiry.split('T')[0];
-    }
-    if (vehicle.nextInspectionDate) {
-        document.getElementById('next-inspection').value = vehicle.nextInspectionDate.split('T')[0];
-    }
-    document.getElementById('insurance-company').value = vehicle.insuranceCompany || '';
-    document.getElementById('insurance-number').value = vehicle.insuranceNumber || '';
-    document.getElementById('insurance-type').value = vehicle.insuranceType || '';
-    if (vehicle.insuranceExpiry) {
-        document.getElementById('insurance-expiry').value = vehicle.insuranceExpiry.split('T')[0];
-    }
-    document.getElementById('insurance-cost').value = vehicle.insuranceCost || '';
 
-    modal.classList.remove('hidden');
+    try {
+        const response = await fetch(`/api/vehicles/${vehicleId}`);
+        const data = await response.json();
+        const vehicle = data.vehicle;
+
+        // Formular mit Daten füllen
+        const setFieldValue = (id, value, isDate = false) => {
+            const element = document.getElementById(id);
+            if (element) {
+                if (isDate && value) {
+                    element.value = value.split('T')[0];
+                } else {
+                    element.value = value || '';
+                }
+            }
+        };
+
+        setFieldValue('registration-date', vehicle.registrationDate, true);
+        setFieldValue('registration-expiry', vehicle.registrationExpiry, true);
+        setFieldValue('next-inspection', vehicle.nextInspectionDate, true);
+        setFieldValue('insurance-company', vehicle.insuranceCompany);
+        setFieldValue('insurance-number', vehicle.insuranceNumber);
+        setFieldValue('insurance-type', vehicle.insuranceType);
+        setFieldValue('insurance-expiry', vehicle.insuranceExpiry, true);
+        setFieldValue('insurance-cost', vehicle.insuranceCost);
+
+        // VehicleId speichern für Submit
+        if (form) {
+            form.dataset.vehicleId = vehicleId;
+        }
+
+        modal.classList.remove('hidden');
+    } catch (error) {
+        console.error('Fehler beim Laden der Fahrzeugdaten:', error);
+        alert('Fehler beim Laden der Fahrzeugdaten');
+    }
 };
 
 // Hilfsfunktion zum Laden der Fahrer
@@ -224,48 +353,65 @@ async function loadDriversForSelect(selectId) {
     }
 }
 
+// Modal: Fahrzeug bearbeiten
 window.openEditVehicleModal = async function(vehicleId) {
     const modal = document.getElementById('edit-vehicle-modal');
-    const response = await fetch(`/api/vehicles/${vehicleId}`);
-    const data = await response.json();
-    const vehicle = data.vehicle;
+    if (!modal) {
+        console.error('Edit Vehicle Modal nicht gefunden');
+        return;
+    }
 
-    // Formular mit Daten füllen
-    // Grunddaten
-    document.getElementById('license_plate').value = vehicle.licensePlate || '';
-    document.getElementById('vehicle_brand').value = vehicle.brand || '';
-    document.getElementById('model').value = vehicle.model || '';
-    document.getElementById('year').value = vehicle.year || '';
-    document.getElementById('color').value = vehicle.color || '';
-    document.getElementById('vehicle_id').value = vehicle.vehicleId || '';
-    document.getElementById('vin').value = vehicle.vin || '';
-    document.getElementById('vehicle_type').value = vehicle.vehicleType || '';
-    document.getElementById('fuel_type').value = vehicle.fuelType || '';
-    document.getElementById('current_mileage').value = vehicle.mileage || '';
+    try {
+        const response = await fetch(`/api/vehicles/${vehicleId}`);
+        const data = await response.json();
+        const vehicle = data.vehicle;
 
-    // Technische Daten
-    document.getElementById('engine_displacement').value = vehicle.engineDisplacement || '';
-    document.getElementById('power_rating').value = vehicle.powerRating || '';
-    document.getElementById('number_of_axles').value = vehicle.numberOfAxles || '';
-    document.getElementById('tire_size').value = vehicle.tireSize || '';
-    document.getElementById('rim_type').value = vehicle.rimType || '';
-    document.getElementById('emission_class').value = vehicle.emissionClass || '';
-    document.getElementById('max_speed').value = vehicle.maxSpeed || '';
-    document.getElementById('towing_capacity').value = vehicle.towingCapacity || '';
+        // Formular-Elemente sicher abrufen
+        const setFieldValue = (id, value) => {
+            const element = document.getElementById(id);
+            if (element) element.value = value || '';
+        };
 
-    // Abmessungen & Gewichte
-    document.getElementById('length').value = vehicle.length || '';
-    document.getElementById('width').value = vehicle.width || '';
-    document.getElementById('height').value = vehicle.height || '';
-    document.getElementById('curb_weight').value = vehicle.curbWeight || '';
-    document.getElementById('gross_weight').value = vehicle.grossWeight || '';
-    document.getElementById('technical_max_weight').value = vehicle.technicalMaxWeight || '';
-    document.getElementById('special_features').value = vehicle.specialFeatures || '';
+        // Grunddaten
+        setFieldValue('license_plate', vehicle.licensePlate);
+        setFieldValue('vehicle_brand', vehicle.brand);
+        setFieldValue('model', vehicle.model);
+        setFieldValue('year', vehicle.year);
+        setFieldValue('color', vehicle.color);
+        setFieldValue('vehicle_id', vehicle.vehicleId);
+        setFieldValue('vin', vehicle.vin);
+        setFieldValue('vehicle_type', vehicle.vehicleType);
+        setFieldValue('fuel_type', vehicle.fuelType);
+        setFieldValue('current_mileage', vehicle.mileage);
 
-    // Tab-Funktionalität initialisieren
-    initializeModalTabs();
+        // Technische Daten
+        setFieldValue('engine_displacement', vehicle.engineDisplacement);
+        setFieldValue('power_rating', vehicle.powerRating);
+        setFieldValue('number_of_axles', vehicle.numberOfAxles);
+        setFieldValue('tire_size', vehicle.tireSize);
+        setFieldValue('rim_type', vehicle.rimType);
+        setFieldValue('emission_class', vehicle.emissionClass);
+        setFieldValue('max_speed', vehicle.maxSpeed);
+        setFieldValue('towing_capacity', vehicle.towingCapacity);
 
-    modal.classList.remove('hidden');
+        // Abmessungen & Gewichte
+        setFieldValue('length', vehicle.length);
+        setFieldValue('width', vehicle.width);
+        setFieldValue('height', vehicle.height);
+        setFieldValue('curb_weight', vehicle.curbWeight);
+        setFieldValue('gross_weight', vehicle.grossWeight);
+        setFieldValue('technical_max_weight', vehicle.technicalMaxWeight);
+        setFieldValue('special_features', vehicle.specialFeatures);
+
+        // Tab-Funktionalität initialisieren
+        initializeModalTabs();
+
+        // Modal anzeigen
+        modal.classList.remove('hidden');
+    } catch (error) {
+        console.error('Fehler beim Laden der Fahrzeugdaten:', error);
+        alert('Fehler beim Laden der Fahrzeugdaten');
+    }
 };
 
 // Tab-Funktionalität für Modal
@@ -289,7 +435,10 @@ function initializeModalTabs() {
             });
 
             // Gewählten Tab anzeigen
-            document.getElementById(`${targetTab}-tab`).classList.remove('hidden');
+            const targetContent = document.getElementById(`${targetTab}-tab`);
+            if (targetContent) {
+                targetContent.classList.remove('hidden');
+            }
 
             // Gewählten Button aktivieren
             button.classList.add('border-indigo-500', 'text-indigo-600', 'active');
@@ -297,6 +446,7 @@ function initializeModalTabs() {
         });
     });
 }
+
 
 // Fahrzeug bearbeiten Modal - Erweitere die Submit-Funktion
 function initializeVehicleEditModal() {
