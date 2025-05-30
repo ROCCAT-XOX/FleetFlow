@@ -3,6 +3,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"FleetDrive/backend/db"
@@ -150,11 +151,49 @@ func (r *DriverRepository) Update(driver *model.Driver) error {
 
 	driver.UpdatedAt = time.Now()
 
-	_, err := r.collection.UpdateOne(
+	// Debug-Ausgabe vor Update
+	fmt.Printf("=== DriverRepository.Update DEBUG ===\n")
+	fmt.Printf("Updating driver ID: %s\n", driver.ID.Hex())
+	fmt.Printf("AssignedVehicleID: %s\n", driver.AssignedVehicleID.Hex())
+	fmt.Printf("Status: %s\n", driver.Status)
+
+	// Explizites Update mit allen Feldern
+	updateDoc := bson.M{
+		"$set": bson.M{
+			"firstName":         driver.FirstName,
+			"lastName":          driver.LastName,
+			"email":             driver.Email,
+			"phone":             driver.Phone,
+			"status":            driver.Status,
+			"assignedVehicleId": driver.AssignedVehicleID,
+			"licenseClasses":    driver.LicenseClasses,
+			"notes":             driver.Notes,
+			"updatedAt":         driver.UpdatedAt,
+		},
+	}
+
+	result, err := r.collection.UpdateOne(
 		ctx,
 		bson.M{"_id": driver.ID},
-		bson.M{"$set": driver},
+		updateDoc,
 	)
+
+	if err != nil {
+		fmt.Printf("ERROR in UpdateOne: %v\n", err)
+		return err
+	}
+
+	fmt.Printf("Update result - MatchedCount: %d, ModifiedCount: %d\n", result.MatchedCount, result.ModifiedCount)
+
+	// Verification: Dokument nochmal laden
+	var verifyDriver model.Driver
+	verifyErr := r.collection.FindOne(ctx, bson.M{"_id": driver.ID}).Decode(&verifyDriver)
+	if verifyErr == nil {
+		fmt.Printf("VERIFICATION after update:\n")
+		fmt.Printf("  AssignedVehicleID: %s\n", verifyDriver.AssignedVehicleID.Hex())
+		fmt.Printf("  Status: %s\n", verifyDriver.Status)
+	}
+
 	return err
 }
 

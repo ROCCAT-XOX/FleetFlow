@@ -2,7 +2,9 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 
 	"FleetDrive/backend/model"
 	"FleetDrive/backend/repository"
@@ -57,6 +59,14 @@ func (h *DriverHandler) GetDrivers(c *gin.Context) {
 		return
 	}
 
+	// Debug-Ausgabe für jeden Fahrer
+	fmt.Printf("=== GetDrivers Debug ===\n")
+	for _, driver := range drivers {
+		fmt.Printf("Driver: %s %s (ID: %s)\n", driver.FirstName, driver.LastName, driver.ID.Hex())
+		fmt.Printf("  AssignedVehicleID: %s\n", driver.AssignedVehicleID.Hex())
+		fmt.Printf("  Status: %s\n", driver.Status)
+	}
+
 	// Fahrzeugdetails anreichern, falls vorhanden
 	type DriverWithVehicle struct {
 		*model.Driver
@@ -72,11 +82,21 @@ func (h *DriverHandler) GetDrivers(c *gin.Context) {
 			vehicle, err := h.vehicleRepo.FindByID(driver.AssignedVehicleID.Hex())
 			if err == nil {
 				dwd.VehicleName = vehicle.Brand + " " + vehicle.Model + " (" + vehicle.LicensePlate + ")"
+				fmt.Printf("  VehicleName: %s\n", dwd.VehicleName)
+			} else {
+				fmt.Printf("  Error loading vehicle: %v\n", err)
 			}
+		} else {
+			fmt.Printf("  No vehicle assigned\n")
 		}
 
 		result = append(result, dwd)
 	}
+
+	// Cache-Control Header setzen
+	c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
+	c.Header("Pragma", "no-cache")
+	c.Header("Expires", "0")
 
 	c.JSON(http.StatusOK, gin.H{"drivers": result})
 }
@@ -187,6 +207,9 @@ func (h *DriverHandler) UpdateDriver(c *gin.Context) {
 		return
 	}
 
+	// Debug-Ausgabe
+	fmt.Printf("UpdateDriver: DriverID=%s, AssignedVehicleID='%s'\n", id, req.AssignedVehicleID)
+
 	// Prüfen, ob ein anderer Fahrer mit der gleichen E-Mail-Adresse existiert
 	if req.Email != driver.Email {
 		existingDriver, _ := h.driverRepo.FindByEmail(req.Email)
@@ -245,6 +268,7 @@ func (h *DriverHandler) UpdateDriver(c *gin.Context) {
 		vehicle.Status = model.VehicleStatusInUse
 		h.vehicleRepo.Update(vehicle)
 	} else {
+		// Keine Fahrzeugzuweisung
 		driver.AssignedVehicleID = primitive.ObjectID{}
 	}
 
@@ -311,13 +335,19 @@ func (h *DriverHandler) AssignVehicle(c *gin.Context) {
 		return
 	}
 
-	// Wenn VehicleID leer ist, Zuweisung entfernen
-	if req.VehicleID == "" {
+	fmt.Printf("=== ASSIGN VEHICLE DEBUG ===\n")
+	fmt.Printf("DriverID: %s\n", driverID)
+	fmt.Printf("Requested VehicleID: '%s'\n", req.VehicleID)
+	fmt.Printf("VehicleID length: %d\n", len(req.VehicleID))
+
+	// WICHTIG: Explizite Behandlung von leerem String
+	if req.VehicleID == "" || strings.TrimSpace(req.VehicleID) == "" {
+		fmt.Printf("Empty VehicleID detected - calling unassignVehicle\n")
 		h.unassignVehicle(c, driver)
 		return
 	}
 
-	// Prüfen, ob das Fahrzeug existiert
+	// Rest der Funktion für Fahrzeugzuweisung...
 	vehicleID, err := primitive.ObjectIDFromHex(req.VehicleID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Ungültige Fahrzeug-ID"})
@@ -364,11 +394,7 @@ func (h *DriverHandler) AssignVehicle(c *gin.Context) {
 		return
 	}
 
-	// Antwort mit aktualisierten Daten
-	var vehicleName string
-	if !driver.AssignedVehicleID.IsZero() {
-		vehicleName = vehicle.Brand + " " + vehicle.Model + " (" + vehicle.LicensePlate + ")"
-	}
+	vehicleName := vehicle.Brand + " " + vehicle.Model + " (" + vehicle.LicensePlate + ")"
 
 	c.JSON(http.StatusOK, gin.H{
 		"driver":      driver,
@@ -379,23 +405,61 @@ func (h *DriverHandler) AssignVehicle(c *gin.Context) {
 
 // unassignVehicle entfernt die Fahrzeugzuweisung von einem Fahrer
 func (h *DriverHandler) unassignVehicle(c *gin.Context, driver *model.Driver) {
+	fmt.Printf("=== UNASSIGN VEHICLE DEBUG ===\n")
+	fmt.Printf("DriverID: %s\n", driver.ID.Hex())
+	fmt.Printf("Current AssignedVehicleID: %s\n", driver.AssignedVehicleID.Hex())
+	fmt.Printf("Driver Status: %s\n", driver.Status)
+
 	// Fahrzeug zurücksetzen, falls vorhanden
 	if !driver.AssignedVehicleID.IsZero() {
 		vehicle, err := h.vehicleRepo.FindByID(driver.AssignedVehicleID.Hex())
-		if err == nil && vehicle.CurrentDriverID == driver.ID {
-			vehicle.CurrentDriverID = primitive.ObjectID{}
-			vehicle.Status = model.VehicleStatusAvailable
-			h.vehicleRepo.Update(vehicle)
+		if err == nil {
+			fmt.Printf("Found vehicle: %s %s (%s)\n", vehicle.Brand, vehicle.Model, vehicle.LicensePlate)
+			fmt.Printf("Vehicle CurrentDriverID: %s\n", vehicle.CurrentDriverID.Hex())
+
+			if vehicle.CurrentDriverID == driver.ID {
+				fmt.Printf("Releasing vehicle...\n")
+
+				vehicle.CurrentDriverID = primitive.ObjectID{}
+				vehicle.Status = model.VehicleStatusAvailable
+
+				if updateErr := h.vehicleRepo.Update(vehicle); updateErr != nil {
+					fmt.Printf("ERROR updating vehicle: %v\n", updateErr)
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "Fehler beim Aktualisieren des Fahrzeugs"})
+					return
+				}
+				fmt.Printf("Vehicle updated successfully\n")
+			} else {
+				fmt.Printf("Vehicle not assigned to this driver (CurrentDriverID: %s vs DriverID: %s)\n",
+					vehicle.CurrentDriverID.Hex(), driver.ID.Hex())
+			}
+		} else {
+			fmt.Printf("ERROR finding vehicle: %v\n", err)
 		}
 	}
 
-	// Fahrer zurücksetzen
-	driver.AssignedVehicleID = primitive.ObjectID{}
+	// Fahrer zurücksetzen - WICHTIG: Neues ObjectID erstellen
+	fmt.Printf("Updating driver...\n")
+	fmt.Printf("Before: AssignedVehicleID=%s, Status=%s\n", driver.AssignedVehicleID.Hex(), driver.Status)
+
+	driver.AssignedVehicleID = primitive.NilObjectID
 	driver.Status = model.DriverStatusAvailable
 
+	fmt.Printf("After assignment: AssignedVehicleID=%s, Status=%s\n", driver.AssignedVehicleID.Hex(), driver.Status)
+
 	if err := h.driverRepo.Update(driver); err != nil {
+		fmt.Printf("ERROR updating driver: %v\n", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Fehler beim Aktualisieren des Fahrers"})
 		return
+	}
+
+	fmt.Printf("Driver updated successfully\n")
+
+	// Verification: Driver nochmal laden um zu prüfen
+	updatedDriver, verifyErr := h.driverRepo.FindByID(driver.ID.Hex())
+	if verifyErr == nil {
+		fmt.Printf("VERIFICATION - Updated driver AssignedVehicleID: %s\n", updatedDriver.AssignedVehicleID.Hex())
+		fmt.Printf("VERIFICATION - Updated driver Status: %s\n", updatedDriver.Status)
 	}
 
 	c.JSON(http.StatusOK, gin.H{
