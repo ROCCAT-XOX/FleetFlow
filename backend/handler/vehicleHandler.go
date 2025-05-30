@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"log"
 	"math/rand"
 	"net/http"
 	"time"
@@ -53,6 +54,66 @@ type CreateVehicleRequest struct {
 	SpecialFeatures    string  `json:"specialFeatures"`
 
 	// Finanzierungsfelder
+	AcquisitionType        model.AcquisitionType `json:"acquisitionType"`
+	PurchaseDate           string                `json:"purchaseDate"`
+	PurchasePrice          float64               `json:"purchasePrice"`
+	PurchaseVendor         string                `json:"purchaseVendor"`
+	FinanceStartDate       string                `json:"financeStartDate"`
+	FinanceEndDate         string                `json:"financeEndDate"`
+	FinanceMonthlyRate     float64               `json:"financeMonthlyRate"`
+	FinanceInterestRate    float64               `json:"financeInterestRate"`
+	FinanceDownPayment     float64               `json:"financeDownPayment"`
+	FinanceTotalAmount     float64               `json:"financeTotalAmount"`
+	FinanceBank            string                `json:"financeBank"`
+	LeaseStartDate         string                `json:"leaseStartDate"`
+	LeaseEndDate           string                `json:"leaseEndDate"`
+	LeaseMonthlyRate       float64               `json:"leaseMonthlyRate"`
+	LeaseMileageLimit      int                   `json:"leaseMileageLimit"`
+	LeaseExcessMileageCost float64               `json:"leaseExcessMileageCost"`
+	LeaseCompany           string                `json:"leaseCompany"`
+	LeaseContractNumber    string                `json:"leaseContractNumber"`
+	LeaseResidualValue     float64               `json:"leaseResidualValue"`
+}
+
+type UpdateVehicleRequest struct {
+	LicensePlate       string              `json:"licensePlate"`
+	Brand              string              `json:"brand"`
+	Model              string              `json:"model"`
+	Year               int                 `json:"year"`
+	Color              string              `json:"color"`
+	VehicleID          string              `json:"vehicleId"`
+	VIN                string              `json:"vin"`
+	FuelType           model.FuelType      `json:"fuelType"`
+	Mileage            int                 `json:"mileage"`
+	RegistrationDate   string              `json:"registrationDate"`
+	RegistrationExpiry string              `json:"registrationExpiry"`
+	InsuranceCompany   string              `json:"insuranceCompany"`
+	InsuranceNumber    string              `json:"insuranceNumber"`
+	InsuranceType      model.InsuranceType `json:"insuranceType"`
+	InsuranceExpiry    string              `json:"insuranceExpiry"`
+	InsuranceCost      float64             `json:"insuranceCost"`
+	NextInspectionDate string              `json:"nextInspectionDate"`
+	Status             model.VehicleStatus `json:"status"`
+
+	// Technische Felder
+	VehicleType        string  `json:"vehicleType"`
+	EngineDisplacement int     `json:"engineDisplacement"`
+	PowerRating        float64 `json:"powerRating"`
+	NumberOfAxles      int     `json:"numberOfAxles"`
+	TireSize           string  `json:"tireSize"`
+	RimType            string  `json:"rimType"`
+	GrossWeight        int     `json:"grossWeight"`
+	TechnicalMaxWeight int     `json:"technicalMaxWeight"`
+	Length             int     `json:"length"`
+	Width              int     `json:"width"`
+	Height             int     `json:"height"`
+	EmissionClass      string  `json:"emissionClass"`
+	CurbWeight         int     `json:"curbWeight"`
+	MaxSpeed           int     `json:"maxSpeed"`
+	TowingCapacity     int     `json:"towingCapacity"`
+	SpecialFeatures    string  `json:"specialFeatures"`
+
+	// Finanzierungsfelder (alle optional)
 	AcquisitionType        model.AcquisitionType `json:"acquisitionType"`
 	PurchaseDate           string                `json:"purchaseDate"`
 	PurchasePrice          float64               `json:"purchasePrice"`
@@ -380,14 +441,17 @@ func (h *VehicleHandler) UpdateVehicle(c *gin.Context) {
 		return
 	}
 
-	var req CreateVehicleRequest
+	var req UpdateVehicleRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Ungültige Anfrage: " + err.Error()})
 		return
 	}
 
+	// Debug: Request-Daten ausgeben
+	log.Printf("Received vehicle update request: %+v", req)
+
 	// Prüfen, ob ein anderes Fahrzeug mit dem gleichen Kennzeichen existiert
-	if req.LicensePlate != vehicle.LicensePlate {
+	if req.LicensePlate != "" && req.LicensePlate != vehicle.LicensePlate {
 		existingVehicle, _ := h.vehicleRepo.FindByLicensePlate(req.LicensePlate)
 		if existingVehicle != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Ein anderes Fahrzeug mit diesem Kennzeichen existiert bereits"})
@@ -403,54 +467,143 @@ func (h *VehicleHandler) UpdateVehicle(c *gin.Context) {
 	oldStatus := vehicle.Status
 	oldMileage := vehicle.Mileage
 
-	// Grunddaten aktualisieren
-	vehicle.LicensePlate = req.LicensePlate
-	vehicle.Brand = req.Brand
-	vehicle.Model = req.Model
-	vehicle.Year = req.Year
-	vehicle.Color = req.Color
-	vehicle.VIN = req.VIN
-	vehicle.FuelType = req.FuelType
-	vehicle.Mileage = req.Mileage
-	vehicle.InsuranceCompany = req.InsuranceCompany
-	vehicle.InsuranceNumber = req.InsuranceNumber
-	vehicle.InsuranceType = req.InsuranceType
-	vehicle.InsuranceCost = req.InsuranceCost
-	vehicle.Status = req.Status
+	// Grunddaten aktualisieren (nur wenn gesetzt)
+	if req.LicensePlate != "" {
+		vehicle.LicensePlate = req.LicensePlate
+	}
+	if req.Brand != "" {
+		vehicle.Brand = req.Brand
+	}
+	if req.Model != "" {
+		vehicle.Model = req.Model
+	}
+	if req.Year != 0 {
+		vehicle.Year = req.Year
+	}
+	if req.Color != "" {
+		vehicle.Color = req.Color
+	}
+	if req.VehicleID != "" {
+		vehicle.VehicleID = req.VehicleID
+	}
+	if req.VIN != "" {
+		vehicle.VIN = req.VIN
+	}
+	if req.FuelType != "" {
+		vehicle.FuelType = req.FuelType
+	}
+	if req.Mileage != 0 {
+		vehicle.Mileage = req.Mileage
+	}
+	if req.InsuranceCompany != "" {
+		vehicle.InsuranceCompany = req.InsuranceCompany
+	}
+	if req.InsuranceNumber != "" {
+		vehicle.InsuranceNumber = req.InsuranceNumber
+	}
+	if req.InsuranceType != "" {
+		vehicle.InsuranceType = req.InsuranceType
+	}
+	if req.InsuranceCost >= 0 { // Erlaubt auch 0 als gültigen Wert
+		vehicle.InsuranceCost = req.InsuranceCost
+	}
+	if req.Status != "" {
+		vehicle.Status = req.Status
+	}
 
 	// Technische Daten aktualisieren
-	vehicle.VehicleType = req.VehicleType
-	vehicle.EngineDisplacement = req.EngineDisplacement
-	vehicle.PowerRating = req.PowerRating
-	vehicle.NumberOfAxles = req.NumberOfAxles
-	vehicle.TireSize = req.TireSize
-	vehicle.RimType = req.RimType
-	vehicle.GrossWeight = req.GrossWeight
-	vehicle.TechnicalMaxWeight = req.TechnicalMaxWeight
-	vehicle.Length = req.Length
-	vehicle.Width = req.Width
-	vehicle.Height = req.Height
-	vehicle.EmissionClass = req.EmissionClass
-	vehicle.CurbWeight = req.CurbWeight
-	vehicle.MaxSpeed = req.MaxSpeed
-	vehicle.TowingCapacity = req.TowingCapacity
-	vehicle.SpecialFeatures = req.SpecialFeatures
+	if req.VehicleType != "" {
+		vehicle.VehicleType = req.VehicleType
+	}
+	if req.EngineDisplacement != 0 {
+		vehicle.EngineDisplacement = req.EngineDisplacement
+	}
+	if req.PowerRating != 0 {
+		vehicle.PowerRating = req.PowerRating
+	}
+	if req.NumberOfAxles != 0 {
+		vehicle.NumberOfAxles = req.NumberOfAxles
+	}
+	if req.TireSize != "" {
+		vehicle.TireSize = req.TireSize
+	}
+	if req.RimType != "" {
+		vehicle.RimType = req.RimType
+	}
+	if req.GrossWeight != 0 {
+		vehicle.GrossWeight = req.GrossWeight
+	}
+	if req.TechnicalMaxWeight != 0 {
+		vehicle.TechnicalMaxWeight = req.TechnicalMaxWeight
+	}
+	if req.Length != 0 {
+		vehicle.Length = req.Length
+	}
+	if req.Width != 0 {
+		vehicle.Width = req.Width
+	}
+	if req.Height != 0 {
+		vehicle.Height = req.Height
+	}
+	if req.EmissionClass != "" {
+		vehicle.EmissionClass = req.EmissionClass
+	}
+	if req.CurbWeight != 0 {
+		vehicle.CurbWeight = req.CurbWeight
+	}
+	if req.MaxSpeed != 0 {
+		vehicle.MaxSpeed = req.MaxSpeed
+	}
+	if req.TowingCapacity != 0 {
+		vehicle.TowingCapacity = req.TowingCapacity
+	}
+	if req.SpecialFeatures != "" {
+		vehicle.SpecialFeatures = req.SpecialFeatures
+	}
 
 	// Finanzierungsdaten aktualisieren
-	vehicle.AcquisitionType = req.AcquisitionType
-	vehicle.PurchasePrice = req.PurchasePrice
-	vehicle.PurchaseVendor = req.PurchaseVendor
-	vehicle.FinanceMonthlyRate = req.FinanceMonthlyRate
-	vehicle.FinanceInterestRate = req.FinanceInterestRate
-	vehicle.FinanceDownPayment = req.FinanceDownPayment
-	vehicle.FinanceTotalAmount = req.FinanceTotalAmount
-	vehicle.FinanceBank = req.FinanceBank
-	vehicle.LeaseMonthlyRate = req.LeaseMonthlyRate
-	vehicle.LeaseMileageLimit = req.LeaseMileageLimit
-	vehicle.LeaseExcessMileageCost = req.LeaseExcessMileageCost
-	vehicle.LeaseCompany = req.LeaseCompany
-	vehicle.LeaseContractNumber = req.LeaseContractNumber
-	vehicle.LeaseResidualValue = req.LeaseResidualValue
+	if req.AcquisitionType != "" {
+		vehicle.AcquisitionType = req.AcquisitionType
+	}
+	if req.PurchasePrice >= 0 {
+		vehicle.PurchasePrice = req.PurchasePrice
+	}
+	if req.PurchaseVendor != "" {
+		vehicle.PurchaseVendor = req.PurchaseVendor
+	}
+	if req.FinanceMonthlyRate >= 0 {
+		vehicle.FinanceMonthlyRate = req.FinanceMonthlyRate
+	}
+	if req.FinanceInterestRate >= 0 {
+		vehicle.FinanceInterestRate = req.FinanceInterestRate
+	}
+	if req.FinanceDownPayment >= 0 {
+		vehicle.FinanceDownPayment = req.FinanceDownPayment
+	}
+	if req.FinanceTotalAmount >= 0 {
+		vehicle.FinanceTotalAmount = req.FinanceTotalAmount
+	}
+	if req.FinanceBank != "" {
+		vehicle.FinanceBank = req.FinanceBank
+	}
+	if req.LeaseMonthlyRate >= 0 {
+		vehicle.LeaseMonthlyRate = req.LeaseMonthlyRate
+	}
+	if req.LeaseMileageLimit >= 0 {
+		vehicle.LeaseMileageLimit = req.LeaseMileageLimit
+	}
+	if req.LeaseExcessMileageCost >= 0 {
+		vehicle.LeaseExcessMileageCost = req.LeaseExcessMileageCost
+	}
+	if req.LeaseCompany != "" {
+		vehicle.LeaseCompany = req.LeaseCompany
+	}
+	if req.LeaseContractNumber != "" {
+		vehicle.LeaseContractNumber = req.LeaseContractNumber
+	}
+	if req.LeaseResidualValue >= 0 {
+		vehicle.LeaseResidualValue = req.LeaseResidualValue
+	}
 
 	// Datum parsen, wenn vorhanden
 	if req.RegistrationDate != "" {

@@ -809,6 +809,7 @@ function initializeFinancingModal() {
     }
 }
 
+
 async function handleFinancingSubmit(e) {
     e.preventDefault();
 
@@ -821,40 +822,36 @@ async function handleFinancingSubmit(e) {
     const acquisitionType = formData.get('acquisition-type');
 
     try {
-        // Erst die aktuellen Fahrzeugdaten laden
-        const vehicleResponse = await fetch(`/api/vehicles/${vehicleId}`);
-        const vehicleData = await vehicleResponse.json();
-        const vehicle = vehicleData.vehicle;
-
-        // Alle Fahrzeugdaten mit den neuen Finanzierungsdaten zusammenführen
+        // Nur die relevanten Finanzierungsdaten senden
         const data = {
-            ...vehicle,
             acquisitionType: acquisitionType
         };
 
         // Je nach Erwerbsart die entsprechenden Felder setzen
         if (acquisitionType === 'purchased') {
-            data.purchaseDate = formData.get('purchase-date');
+            data.purchaseDate = formData.get('purchase-date') || '';
             data.purchasePrice = parseFloat(formData.get('purchase-price')) || 0;
-            data.purchaseVendor = formData.get('purchase-vendor');
+            data.purchaseVendor = formData.get('purchase-vendor') || '';
         } else if (acquisitionType === 'financed') {
-            data.financeStartDate = formData.get('finance-start-date');
-            data.financeEndDate = formData.get('finance-end-date');
+            data.financeStartDate = formData.get('finance-start-date') || '';
+            data.financeEndDate = formData.get('finance-end-date') || '';
             data.financeMonthlyRate = parseFloat(formData.get('finance-monthly-rate')) || 0;
             data.financeInterestRate = parseFloat(formData.get('finance-interest-rate')) || 0;
             data.financeDownPayment = parseFloat(formData.get('finance-down-payment')) || 0;
             data.financeTotalAmount = parseFloat(formData.get('finance-total-amount')) || 0;
-            data.financeBank = formData.get('finance-bank');
+            data.financeBank = formData.get('finance-bank') || '';
         } else if (acquisitionType === 'leased') {
-            data.leaseStartDate = formData.get('lease-start-date');
-            data.leaseEndDate = formData.get('lease-end-date');
+            data.leaseStartDate = formData.get('lease-start-date') || '';
+            data.leaseEndDate = formData.get('lease-end-date') || '';
             data.leaseMonthlyRate = parseFloat(formData.get('lease-monthly-rate')) || 0;
             data.leaseMileageLimit = parseInt(formData.get('lease-mileage-limit')) || 0;
             data.leaseExcessMileageCost = parseFloat(formData.get('lease-excess-mileage-cost')) || 0;
-            data.leaseCompany = formData.get('lease-company');
-            data.leaseContractNumber = formData.get('lease-contract-number');
+            data.leaseCompany = formData.get('lease-company') || '';
+            data.leaseContractNumber = formData.get('lease-contract-number') || '';
             data.leaseResidualValue = parseFloat(formData.get('lease-residual-value')) || 0;
         }
+
+        console.log('Sending financing data:', data);
 
         const response = await fetch(`/api/vehicles/${vehicleId}`, {
             method: 'PUT',
@@ -862,15 +859,19 @@ async function handleFinancingSubmit(e) {
             body: JSON.stringify(data)
         });
 
-        if (!response.ok) throw new Error('Fehler beim Aktualisieren');
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Server error response:', errorText);
+            throw new Error(`Server responded with ${response.status}: ${errorText}`);
+        }
 
         showNotification('Finanzierungsdaten erfolgreich aktualisiert', 'success');
         modal.classList.add('hidden');
         setTimeout(() => window.location.reload(), 500);
 
     } catch (error) {
-        console.error('Fehler:', error);
-        showNotification('Fehler beim Aktualisieren der Finanzierungsdaten', 'error');
+        console.error('Fehler beim Aktualisieren der Finanzierungsdaten:', error);
+        showNotification('Fehler beim Aktualisieren der Finanzierungsdaten: ' + error.message, 'error');
     }
 }
 
