@@ -24,6 +24,12 @@ function savePeopleFlowCredentials() {
         return;
     }
 
+    // Button deaktivieren während des Tests
+    const button = event.target;
+    const originalText = button.textContent;
+    button.disabled = true;
+    button.textContent = 'Teste Verbindung...';
+
     const data = {
         baseUrl: baseUrl,
         username: username,
@@ -42,15 +48,19 @@ function savePeopleFlowCredentials() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                showIntegrationMessage('PeopleFlow-Integration erfolgreich eingerichtet', 'success', 'PeopleFlow');
+                showIntegrationMessage('PeopleFlow-Integration erfolgreich eingerichtet und getestet', 'success', 'PeopleFlow');
                 loadPeopleFlowStatus(); // Status neu laden
             } else {
-                showIntegrationMessage(data.message || 'Fehler beim Einrichten der Integration', 'error', 'PeopleFlow');
+                showIntegrationMessage(data.message || 'Verbindungstest fehlgeschlagen', 'error', 'PeopleFlow');
             }
         })
         .catch(error => {
             console.error('Error:', error);
             showIntegrationMessage('Netzwerkfehler beim Einrichten der Integration', 'error', 'PeopleFlow');
+        })
+        .finally(() => {
+            button.disabled = false;
+            button.textContent = originalText;
         });
 }
 

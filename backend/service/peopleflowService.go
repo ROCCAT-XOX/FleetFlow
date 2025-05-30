@@ -86,6 +86,57 @@ func NewPeopleFlowService() *PeopleFlowService {
 
 // SaveIntegrationConfig speichert die PeopleFlow-Integration-Konfiguration
 func (s *PeopleFlowService) SaveIntegrationConfig(baseURL, username, password string, autoSync bool, syncInterval int) error {
+	// WICHTIG: Erst die Verbindung testen, bevor wir speichern
+	// Test-API-Aufruf mit den neuen Credentials
+	url := fmt.Sprintf("%s/api/employees?limit=1", strings.TrimSuffix(baseURL, "/"))
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %v", err)
+	}
+
+	req.SetBasicAuth(username, password)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("connection failed - please check URL and network: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == 401 || resp.StatusCode == 403 {
+		return errors.New("authentication failed - please check username and password")
+	}
+
+	if resp.StatusCode == 404 {
+		return errors.New("API endpoint not found - please check the URL and API path")
+	}
+
+	if resp.StatusCode >= 500 {
+		return fmt.Errorf("server error (%d) - please try again later", resp.StatusCode)
+	}
+
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("unexpected response code: %d", resp.StatusCode)
+	}
+
+	// Versuche die Antwort zu parsen
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read response: %v", err)
+	}
+
+	var apiResponse PeopleFlowAPIResponse
+	err = json.Unmarshal(body, &apiResponse)
+	if err != nil {
+		return fmt.Errorf("invalid API response format - this does not appear to be a compatible PeopleFlow API: %v", err)
+	}
+
+	if !apiResponse.Success {
+		return fmt.Errorf("API returned error: %s", apiResponse.Message)
+	}
+
+	// Nur bei erfolgreichem Test speichern
 	// Passwort verschlüsseln
 	encryptedPassword, err := s.encryptPassword(password)
 	if err != nil {
@@ -109,6 +160,7 @@ func (s *PeopleFlowService) SaveIntegrationConfig(baseURL, username, password st
 	integration.AutoSync = autoSync
 	integration.SyncInterval = syncInterval
 	integration.IsActive = true
+	integration.FailedAttempts = 0
 
 	return s.Repo.SaveIntegration(integration)
 }
@@ -176,8 +228,18 @@ func (s *PeopleFlowService) SyncEmployees(syncType string) (*model.PeopleFlowSyn
 	if err != nil || integration == nil {
 		syncLog.Status = "error"
 		syncLog.ErrorMessage = "Keine PeopleFlow-Integration konfiguriert"
+		syncLog.EndTime = time.Now()
 		s.Repo.UpdateSyncLog(syncLog)
 		return syncLog, errors.New("keine PeopleFlow-Integration konfiguriert")
+	}
+
+	// Prüfen ob Integration aktiv ist
+	if !integration.IsActive {
+		syncLog.Status = "error"
+		syncLog.ErrorMessage = "PeopleFlow-Integration ist nicht aktiv"
+		syncLog.EndTime = time.Now()
+		s.Repo.UpdateSyncLog(syncLog)
+		return syncLog, errors.New("integration is not active")
 	}
 
 	// Passwort entschlüsseln
@@ -185,6 +247,7 @@ func (s *PeopleFlowService) SyncEmployees(syncType string) (*model.PeopleFlowSyn
 	if err != nil {
 		syncLog.Status = "error"
 		syncLog.ErrorMessage = "Failed to decrypt password"
+		syncLog.EndTime = time.Now()
 		s.Repo.UpdateSyncLog(syncLog)
 		return syncLog, err
 	}
@@ -194,6 +257,7 @@ func (s *PeopleFlowService) SyncEmployees(syncType string) (*model.PeopleFlowSyn
 	if err != nil {
 		syncLog.Status = "error"
 		syncLog.ErrorMessage = err.Error()
+		syncLog.EndTime = time.Now()
 		s.Repo.UpdateSyncLog(syncLog)
 		return syncLog, err
 	}
@@ -257,6 +321,17 @@ func (s *PeopleFlowService) SyncEmployees(syncType string) (*model.PeopleFlowSyn
 
 	s.Repo.UpdateIntegrationStatus(true, time.Now(), status, created+updated)
 	s.Repo.UpdateSyncLog(syncLog)
+
+	// Nach erfolgreicher Synchronisation automatisch alle aktiven als Fahrer anlegen
+	if syncLog.Status == "success" || syncLog.Status == "partial" {
+		err := s.SyncDriverEligibleEmployees()
+		if err != nil {
+			// Fehler loggen, aber Synchronisation nicht als fehlgeschlagen markieren
+			fmt.Printf("Warning: Failed to create drivers from employees: %v\n", err)
+			syncLog.Errors = append(syncLog.Errors, fmt.Sprintf("Warning: Failed to create drivers: %v", err))
+			s.Repo.UpdateSyncLog(syncLog)
+		}
+	}
 
 	return syncLog, nil
 }
@@ -505,4 +580,59 @@ func (s *PeopleFlowService) RemoveIntegration() error {
 	integration.BaseURL = ""
 
 	return s.Repo.SaveIntegration(integration)
+}
+
+// testConnectionWithCredentials testet die Verbindung mit spezifischen Credentials
+func (s *PeopleFlowService) testConnectionWithCredentials(baseURL, username, password string) error {
+	// Test-API-Aufruf mit nur 1 Mitarbeiter
+	url := fmt.Sprintf("%s/api/employees?limit=1", strings.TrimSuffix(baseURL, "/"))
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %v", err)
+	}
+
+	// Basic Auth setzen
+	req.SetBasicAuth(username, password)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("connection failed - please check URL and network: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == 401 || resp.StatusCode == 403 {
+		return errors.New("authentication failed - please check username and password")
+	}
+
+	if resp.StatusCode == 404 {
+		return errors.New("API endpoint not found - please check the URL and API path")
+	}
+
+	if resp.StatusCode >= 500 {
+		return fmt.Errorf("server error (%d) - please try again later", resp.StatusCode)
+	}
+
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("unexpected response code: %d", resp.StatusCode)
+	}
+
+	// Versuche die Antwort zu parsen um sicherzustellen, dass es eine gültige API ist
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read response: %v", err)
+	}
+
+	var apiResponse PeopleFlowAPIResponse
+	err = json.Unmarshal(body, &apiResponse)
+	if err != nil {
+		return fmt.Errorf("invalid API response format - this does not appear to be a compatible PeopleFlow API: %v", err)
+	}
+
+	if !apiResponse.Success {
+		return fmt.Errorf("API returned error: %s", apiResponse.Message)
+	}
+
+	return nil
 }

@@ -2,9 +2,11 @@
 package handler
 
 import (
+	"fmt" // Fehlender Import hinzufügen
 	"net/http"
 	"strconv"
 
+	"FleetDrive/backend/model" // Stelle sicher, dass model importiert ist
 	"FleetDrive/backend/service"
 
 	"github.com/gin-gonic/gin"
@@ -12,13 +14,13 @@ import (
 
 // PeopleFlowHandler verwaltet die PeopleFlow-Integration-Endpunkte
 type PeopleFlowHandler struct {
-	service *service.PeopleFlowService
+	service *service.PeopleFlowService // Zurück zum originalen Service
 }
 
 // NewPeopleFlowHandler erstellt einen neuen PeopleFlowHandler
 func NewPeopleFlowHandler() *PeopleFlowHandler {
 	return &PeopleFlowHandler{
-		service: service.NewPeopleFlowService(),
+		service: service.NewPeopleFlowService(), // Zurück zum originalen Service
 	}
 }
 
@@ -45,7 +47,7 @@ func (h *PeopleFlowHandler) SavePeopleFlowCredentials(c *gin.Context) {
 		req.SyncInterval = 5
 	}
 
-	// Konfiguration speichern
+	// Konfiguration speichern (testet automatisch die Verbindung)
 	err := h.service.SaveIntegrationConfig(
 		req.BaseURL,
 		req.Username,
@@ -55,16 +57,16 @@ func (h *PeopleFlowHandler) SavePeopleFlowCredentials(c *gin.Context) {
 	)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"message": "Fehler beim Speichern der Konfiguration: " + err.Error(),
+			"message": "Verbindungstest fehlgeschlagen: " + err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"message": "PeopleFlow-Integration erfolgreich konfiguriert",
+		"message": "PeopleFlow-Integration erfolgreich konfiguriert und getestet",
 	})
 }
 
@@ -120,7 +122,7 @@ func (h *PeopleFlowHandler) SyncPeopleFlowEmployees(c *gin.Context) {
 	// Antwort zusammenstellen
 	response := gin.H{
 		"success":            syncLog.Status == "success" || syncLog.Status == "partial",
-		"message":            h.getSyncMessage(syncLog),
+		"message":            h.getSyncMessage(syncLog), // Korrekte Typ-Übergabe
 		"employeesProcessed": syncLog.EmployeesProcessed,
 		"employeesCreated":   syncLog.EmployeesCreated,
 		"employeesUpdated":   syncLog.EmployeesUpdated,
@@ -180,7 +182,7 @@ func (h *PeopleFlowHandler) RemovePeopleFlowIntegration(c *gin.Context) {
 
 // GetPeopleFlowEmployees gibt alle synchronisierten PeopleFlow-Mitarbeiter zurück
 func (h *PeopleFlowHandler) GetPeopleFlowEmployees(c *gin.Context) {
-	repo := h.service.Repo // Geändert von h.service.repo zu h.service.Repo
+	repo := h.service.Repo
 
 	// Query-Parameter für Filterung
 	driverEligibleOnly := c.Query("driver_eligible") == "true"
@@ -220,7 +222,7 @@ func (h *PeopleFlowHandler) GetPeopleFlowSyncLogs(c *gin.Context) {
 		limit = 50 // Maximum 50 Logs
 	}
 
-	repo := h.service.Repo // Geändert von h.service.repo zu h.service.Repo
+	repo := h.service.Repo
 	logs, err := repo.FindRecentSyncLogs(limit)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -256,7 +258,7 @@ func (h *PeopleFlowHandler) UpdatePeopleFlowAutoSync(c *gin.Context) {
 		req.SyncInterval = 5
 	}
 
-	repo := h.service.Repo // Geändert von h.service.repo zu h.service.Repo
+	repo := h.service.Repo
 	integration, err := repo.GetIntegration()
 	if err != nil || integration == nil {
 		c.JSON(http.StatusNotFound, gin.H{
@@ -288,8 +290,14 @@ func (h *PeopleFlowHandler) UpdatePeopleFlowAutoSync(c *gin.Context) {
 // === Helper Methods ===
 
 // getSyncMessage generiert eine benutzerfreundliche Nachricht basierend auf dem Sync-Log
-func (h *PeopleFlowHandler) getSyncMessage(syncLog interface{}) string {
-	// Hier könnte man je nach syncLog.Status verschiedene Nachrichten zurückgeben
-	// Für jetzt eine vereinfachte Version:
-	return "Synchronisation abgeschlossen"
+func (h *PeopleFlowHandler) getSyncMessage(syncLog *model.PeopleFlowSyncLog) string {
+	if syncLog.Status == "success" {
+		return fmt.Sprintf("Synchronisation erfolgreich abgeschlossen. %d Mitarbeiter verarbeitet (%d neu, %d aktualisiert).",
+			syncLog.EmployeesProcessed, syncLog.EmployeesCreated, syncLog.EmployeesUpdated)
+	} else if syncLog.Status == "partial" {
+		return fmt.Sprintf("Synchronisation teilweise erfolgreich. %d von %d Mitarbeitern verarbeitet.",
+			syncLog.EmployeesProcessed-len(syncLog.Errors), syncLog.EmployeesProcessed)
+	} else {
+		return "Synchronisation fehlgeschlagen. Bitte prüfen Sie die Konfiguration."
+	}
 }
