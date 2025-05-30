@@ -772,6 +772,22 @@ function showNotification(message, type = 'info') {
     }, 3000);
 }
 
+// Kraftstoffart ändern - Einheit anpassen
+document.addEventListener('DOMContentLoaded', function() {
+    const fuelTypeSelect = document.getElementById('vehicle-fuel-type');
+    const fuelUnit = document.getElementById('fuel-unit');
+
+    if (fuelTypeSelect && fuelUnit) {
+        fuelTypeSelect.addEventListener('change', function() {
+            if (this.value === 'Elektro') {
+                fuelUnit.textContent = 'kWh';
+            } else {
+                fuelUnit.textContent = 'L';
+            }
+        });
+    }
+});
+
 // Initialisierung nur einmal beim Laden
 document.addEventListener('DOMContentLoaded', function() {
     initializeModals();

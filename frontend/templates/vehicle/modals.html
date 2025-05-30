@@ -624,4 +624,116 @@
         </div>
     </div>
 </div>
+
+<!-- Modal: Tankkosten hinzufügen/bearbeiten -->
+<div id="vehicle-fuel-cost-modal" class="fixed z-10 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <!-- Hintergrund-Overlay -->
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+
+        <!-- Zentriert den Modal-Inhalt -->
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+        <!-- Modal-Panel -->
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <form id="vehicle-fuel-cost-form">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="w-full">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="fuel-cost-modal-title">
+                                Tankkosten hinzufügen
+                            </h3>
+
+                            <div class="mt-4">
+                                <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                                    <div class="sm:col-span-3">
+                                        <label for="vehicle-fuel-date" class="block text-sm font-medium text-gray-700">Datum</label>
+                                        <input type="date" name="fuel-date" id="vehicle-fuel-date" required class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="vehicle-fuel-type" class="block text-sm font-medium text-gray-700">Kraftstoffart</label>
+                                        <select id="vehicle-fuel-type" name="fuel-type" required class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                            <option value="Benzin">Benzin</option>
+                                            <option value="Diesel">Diesel</option>
+                                            <option value="Elektro">Elektro</option>
+                                            <option value="Hybrid (Benzin/Elektro)">Hybrid (Benzin/Elektro)</option>
+                                            <option value="Hybrid (Diesel/Elektro)">Hybrid (Diesel/Elektro)</option>
+                                            <option value="Wasserstoff">Wasserstoff</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="vehicle-fuel-amount" class="block text-sm font-medium text-gray-700">Menge</label>
+                                        <div class="mt-1 relative rounded-md shadow-sm">
+                                            <input type="number" name="amount" id="vehicle-fuel-amount" step="0.01" required class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pr-12 sm:text-sm border-gray-300 rounded-md" placeholder="0.00">
+                                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                                <span class="text-gray-500 sm:text-sm" id="fuel-unit">L</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="vehicle-fuel-price-per-unit" class="block text-sm font-medium text-gray-700">Preis pro Einheit</label>
+                                        <div class="mt-1 relative rounded-md shadow-sm">
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <span class="text-gray-500 sm:text-sm">€</span>
+                                            </div>
+                                            <input type="number" name="price-per-unit" id="vehicle-fuel-price-per-unit" step="0.001" required class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md" placeholder="0.000">
+                                        </div>
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="vehicle-fuel-total-cost" class="block text-sm font-medium text-gray-700">Gesamtkosten</label>
+                                        <div class="mt-1 relative rounded-md shadow-sm">
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <span class="text-gray-500 sm:text-sm">€</span>
+                                            </div>
+                                            <input type="number" name="total-cost" id="vehicle-fuel-total-cost" step="0.01" readonly class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md bg-gray-100" placeholder="0.00">
+                                        </div>
+                                    </div>
+
+                                    <div class="sm:col-span-3">
+                                        <label for="vehicle-fuel-mileage" class="block text-sm font-medium text-gray-700">Kilometerstand</label>
+                                        <div class="mt-1 relative rounded-md shadow-sm">
+                                            <input type="number" name="mileage" id="vehicle-fuel-mileage" required class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pr-12 sm:text-sm border-gray-300 rounded-md" placeholder="0">
+                                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                                <span class="text-gray-500 sm:text-sm">km</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="sm:col-span-6">
+                                        <label for="vehicle-fuel-driver" class="block text-sm font-medium text-gray-700">Fahrer (optional)</label>
+                                        <select id="vehicle-fuel-driver" name="driver" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                            <option value="">Keinen Fahrer auswählen</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="sm:col-span-6">
+                                        <label for="vehicle-fuel-location" class="block text-sm font-medium text-gray-700">Tankstelle/Ort</label>
+                                        <input type="text" name="location" id="vehicle-fuel-location" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" placeholder="z.B. Shell Musterstadt">
+                                    </div>
+
+                                    <div class="sm:col-span-6">
+                                        <label for="vehicle-fuel-receipt-number" class="block text-sm font-medium text-gray-700">Belegnummer</label>
+                                        <input type="text" name="receipt-number" id="vehicle-fuel-receipt-number" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm">
+                        Speichern
+                    </button>
+                    <button type="button" class="close-modal-btn mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        Abbrechen
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 {{ end }}

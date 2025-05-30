@@ -25,11 +25,12 @@ type CreateVehicleRequest struct {
 	FuelType           model.FuelType      `json:"fuelType"`
 	Mileage            int                 `json:"mileage"`
 	RegistrationDate   string              `json:"registrationDate"`
-	RegistrationExpiry string              `json:"registrationExpiry"` // Neues Feld
+	RegistrationExpiry string              `json:"registrationExpiry"`
 	InsuranceCompany   string              `json:"insuranceCompany"`
 	InsuranceNumber    string              `json:"insuranceNumber"`
 	InsuranceType      model.InsuranceType `json:"insuranceType"`
-	InsuranceExpiry    string              `json:"insuranceExpiry"` // Neues Feld
+	InsuranceExpiry    string              `json:"insuranceExpiry"`
+	InsuranceCost      float64             `json:"insuranceCost"` // <-- Diese Zeile hinzufügen
 	NextInspectionDate string              `json:"nextInspectionDate"`
 	Status             model.VehicleStatus `json:"status"`
 }
@@ -204,6 +205,7 @@ func (h *VehicleHandler) CreateVehicle(c *gin.Context) {
 		InsuranceNumber:    req.InsuranceNumber,
 		InsuranceType:      req.InsuranceType,
 		InsuranceExpiry:    insuranceExpiry,
+		InsuranceCost:      req.InsuranceCost, // <-- Diese Zeile hinzufügen
 		NextInspectionDate: nextInspectionDate,
 		Status:             status,
 	}
@@ -287,6 +289,7 @@ func (h *VehicleHandler) UpdateVehicle(c *gin.Context) {
 	vehicle.InsuranceCompany = req.InsuranceCompany
 	vehicle.InsuranceNumber = req.InsuranceNumber
 	vehicle.InsuranceType = req.InsuranceType
+	vehicle.InsuranceCost = req.InsuranceCost // <-- Diese Zeile hinzufügen
 	vehicle.Status = req.Status
 
 	// Datum parsen, wenn vorhanden

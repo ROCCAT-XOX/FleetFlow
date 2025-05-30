@@ -31,25 +31,25 @@
                     {{range .fuelCosts}}
                     <tr>
                         <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
-                            {{formatDate .date}}
+                            {{formatDate .Date}}
                         </td>
                         <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                            {{.fuelType}}
+                            {{.FuelType}}
                         </td>
                         <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                            {{.amount}} {{if eq .fuelType "Elektro"}}kWh{{else}}L{{end}}
+                            {{.Amount}} {{if eq .FuelType "Elektro"}}kWh{{else}}L{{end}}
                         </td>
                         <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                            € {{printf "%.3f" .pricePerUnit}}
+                            € {{printf "%.3f" .PricePerUnit}}
                         </td>
                         <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                            {{formatCurrency .totalCost}}
+                            {{formatCurrency .TotalCost}}
                         </td>
                         <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                            {{if .mileage}}{{formatMileage .mileage}}{{else}}-{{end}}
+                            {{if .Mileage}}{{formatMileage .Mileage}}{{else}}-{{end}}
                         </td>
                         <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                            <button class="text-indigo-600 hover:text-indigo-900" onclick="editFuelCost('{{.id}}')">Bearbeiten</button>
+                            <button class="text-indigo-600 hover:text-indigo-900" onclick="editFuelCost('{{.ID.Hex}}')">Bearbeiten</button>
                         </td>
                     </tr>
                     {{end}}
