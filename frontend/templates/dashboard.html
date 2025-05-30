@@ -38,8 +38,8 @@
         </div>
 
         {{else}}
-        <!-- Dashboard Header mit erweiterten Statistiken -->
-        <div class="grid grid-cols-1 gap-6 mb-6 lg:grid-cols-6">
+        <!-- Dashboard Header mit Statistiken -->
+        <div class="grid grid-cols-1 gap-6 mb-6 lg:grid-cols-5">
             <!-- Fahrzeuge gesamt -->
             <div class="flex items-center p-4 bg-white rounded-lg shadow-md">
                 <div class="flex-shrink-0 mr-4">
@@ -101,7 +101,7 @@
                 </div>
             </div>
 
-            <!-- Neue Finanzierungskosten -->
+            <!-- Finanzierung + Leasing (kombiniert) -->
             <div class="flex items-center p-4 bg-white rounded-lg shadow-md">
                 <div class="flex-shrink-0 mr-4">
                     <div class="p-3 rounded-full bg-purple-100">
@@ -112,22 +112,7 @@
                 </div>
                 <div>
                     <span class="block text-2xl font-bold text-black">€ {{printf "%.0f" .totalFinancingCosts}}</span>
-                    <span class="block text-gray-500">Monatl. Finanzierung</span>
-                </div>
-            </div>
-
-            <!-- Durchschnittliche Kosten -->
-            <div class="flex items-center p-4 bg-white rounded-lg shadow-md">
-                <div class="flex-shrink-0 mr-4">
-                    <div class="p-3 rounded-full bg-indigo-100">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                        </svg>
-                    </div>
-                </div>
-                <div>
-                    <span class="block text-2xl font-bold text-black">€ {{printf "%.0f" .averageCostPerVehicle}}</span>
-                    <span class="block text-gray-500">Ø pro Fahrzeug</span>
+                    <span class="block text-gray-500">Monatl. Kosten</span>
                 </div>
             </div>
         </div>
@@ -188,7 +173,7 @@
                     </div>
                 </div>
 
-                <!-- Fahrzeugübersicht-Karte bleibt unverändert -->
+                <!-- Fahrzeugübersicht -->
                 <div class="bg-white rounded-xl shadow-md overflow-hidden">
                     <div class="flex items-center justify-between p-4 border-b border-gray-200">
                         <h3 class="text-lg font-semibold text-gray-800">Fahrzeugübersicht</h3>
@@ -205,7 +190,6 @@
                         </div>
                     </div>
                     <div class="p-4">
-                        <!-- Vehicle Grid Section - bleibt unverändert -->
                         <div id="vehicles-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                             {{range .recentVehicles}}
                             <div class="flex items-center bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors">
@@ -251,7 +235,7 @@
                     </div>
                 </div>
 
-                <!-- Kosten-Charts -->
+                <!-- Charts -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Monatliche Kosten -->
                     <div class="bg-white rounded-xl shadow-md overflow-hidden">
@@ -278,20 +262,20 @@
                     </div>
                 </div>
 
-                <!-- Flottenaktivität-Diagramm bleibt unverändert -->
+                <!-- Historische Kostenübersicht -->
                 <div class="bg-white rounded-xl shadow-md overflow-hidden">
                     <div class="p-4 border-b border-gray-200">
-                        <h3 class="text-lg font-semibold text-gray-800">Flottenaktivität (letzte 7 Tage)</h3>
+                        <h3 class="text-lg font-semibold text-gray-800">Historische Kostenübersicht (12 Monate)</h3>
                     </div>
                     <div class="p-4">
-                        <div class="relative h-64">
-                            <canvas id="fleetActivityChart"></canvas>
+                        <div class="relative h-80">
+                            <canvas id="historicalCostsChart"></canvas>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Rechte Spalte bleibt weitgehend unverändert -->
+            <!-- Rechte Spalte -->
             <div class="space-y-6">
                 <!-- Fahrerübersicht -->
                 <div class="bg-white rounded-xl shadow-md overflow-hidden">
@@ -339,10 +323,10 @@
                     </div>
                 </div>
 
-                <!-- Anstehende Wartungen -->
+                <!-- Anstehende Wartungen (nur nächster Monat) -->
                 <div class="bg-white rounded-xl shadow-md overflow-hidden">
                     <div class="flex items-center justify-between p-4 border-b border-gray-200">
-                        <h3 class="text-lg font-semibold text-gray-800">Anstehende Wartungen</h3>
+                        <h3 class="text-lg font-semibold text-gray-800">Wartungen nächster Monat</h3>
                         <a href="/maintenance" class="text-sm text-blue-600 hover:underline">Alle anzeigen</a>
                     </div>
                     <div class="p-4">
@@ -361,7 +345,7 @@
                             </li>
                             {{else}}
                             <li class="py-3 text-center text-gray-500">
-                                Keine anstehenden Wartungen
+                                Keine Wartungen im nächsten Monat
                             </li>
                             {{end}}
                         </ul>
@@ -428,65 +412,6 @@
             '#DEE7FD'  // Hellstes Blau
         ];
 
-        // Flottenaktivität-Diagramm bleibt unverändert
-        const fleetCtx = document.getElementById('fleetActivityChart')?.getContext('2d');
-        if (fleetCtx) {
-            const fleetActivityChart = new Chart(fleetCtx, {
-                type: 'line',
-                data: {
-                    labels: {{.fleetActivityLabels}},
-            datasets: [
-                {
-                    label: 'Fahrzeuge in Nutzung',
-                    data: {{.fleetActivityInUse}},
-            borderColor: chartColors[0],
-                backgroundColor: `${chartColors[0]}20`,
-                fill: true,
-                tension: 0.4,
-                borderRadius: 8
-        },
-            {
-                label: 'Fahrzeuge in Wartung',
-                    data: {{.fleetActivityMaintenance}},
-                borderColor: chartColors[2],
-                    backgroundColor: `${chartColors[2]}20`,
-                fill: true,
-                tension: 0.4,
-                borderDash: [5, 5],
-                borderRadius: 8
-            }
-        ]
-        },
-            options: {
-                responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                    tooltip: {
-                        mode: 'index',
-                            intersect: false
-                    },
-                    legend: {
-                        position: 'top',
-                    }
-                },
-                scales: {
-                    x: {
-                        grid: {
-                            display: false
-                        }
-                    },
-                    y: {
-                        beginAtZero: true,
-                            ticks: {
-                            stepSize: 1,
-                                precision: 0
-                        }
-                    }
-                }
-            }
-        });
-        }
-
         // Neues Diagramm: Monatliche Kosten (Wartung + Finanzierung)
         const monthlyCostsCtx = document.getElementById('monthlyCostsChart')?.getContext('2d');
         if (monthlyCostsCtx) {
@@ -544,7 +469,7 @@
         });
         }
 
-        // Kraftstoffkosten nach Fahrzeug bleibt weitgehend unverändert
+        // Kraftstoffkosten nach Fahrzeug
         const fuelCtx = document.getElementById('fuelCostsByVehicleChart')?.getContext('2d');
         if (fuelCtx) {
             const fuelLabels = {{.fuelCostVehicleLabels}} || [];
@@ -615,7 +540,89 @@
         });
         }
 
-        // Fahrzeugfilter bleibt unverändert
+        // Neues historisches Kostendiagramm
+        const historicalCtx = document.getElementById('historicalCostsChart')?.getContext('2d');
+        if (historicalCtx) {
+            const historicalCostsChart = new Chart(historicalCtx, {
+                type: 'line',
+                data: {
+                    labels: {{.historicalCostLabels}} || [],
+                datasets: [
+                {
+                    label: 'Wartungskosten',
+                    data: {{.historicalMaintenanceData}} || [],
+                borderColor: chartColors[0],
+                backgroundColor: `${chartColors[0]}20`,
+                fill: false,
+                tension: 0.4,
+                borderWidth: 3
+        },
+            {
+                label: 'Kraftstoffkosten',
+                    data: {{.historicalFuelData}} || [],
+                borderColor: chartColors[1],
+                backgroundColor: `${chartColors[1]}20`,
+                fill: false,
+                tension: 0.4,
+                borderWidth: 3
+            },
+            {
+                label: 'Leasingkosten',
+                    data: {{.historicalLeasingData}} || [],
+                borderColor: chartColors[2],
+                backgroundColor: `${chartColors[2]}20`,
+                fill: false,
+                tension: 0.4,
+                borderWidth: 3
+            },
+            {
+                label: 'Finanzierungskosten',
+                    data: {{.historicalFinancingData}} || [],
+                borderColor: chartColors[3],
+                backgroundColor: `${chartColors[3]}20`,
+                fill: false,
+                tension: 0.4,
+                borderWidth: 3
+            }
+        ]
+        },
+            options: {
+                responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                    tooltip: {
+                        mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': €' + context.parsed.y.toLocaleString();
+                            }
+                        }
+                    },
+                    legend: {
+                        position: 'top',
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                            ticks: {
+                            callback: function(value) {
+                                return '€ ' + value.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        }
+
+        // Fahrzeugfilter
         const vehicleFilter = document.getElementById('vehicle-filter');
         if (vehicleFilter) {
             vehicleFilter.addEventListener('change', function() {

@@ -92,23 +92,20 @@ func (h *DashboardHandler) GetCompleteDashboardData(c *gin.Context) {
 		recentDrivers = recentDrivers[:5]
 	}
 
-	// Anstehende Wartungen
-	upcomingMaintenance := h.getUpcomingMaintenanceList()
+	// Anstehende Wartungen (nur nächster Monat)
+	upcomingMaintenance := h.getUpcomingMaintenanceNextMonth()
 
 	// Letzte Aktivitäten
 	recentActivities := h.getRecentActivityList()
 
-	// Flottenaktivität für Chart (letzte 7 Tage)
-	fleetActivityData := h.getFleetActivityData()
-
 	// Kraftstoffkosten nach Fahrzeug
 	fuelCostData := h.getFuelCostsByVehicleData()
 
-	// Fahrzeugauslastung
-	utilizationData := []int64{availableVehicles, inUseVehicles, maintenanceVehicles}
-
 	// Wartungskosten der letzten 12 Monate
 	maintenanceCostData := h.getMaintenanceCostData()
+
+	// Neue historische Kostenübersicht
+	historicalCostData := h.getHistoricalCostData()
 
 	// Benutzerrolle aus Context
 	userRole := "admin" // Default
@@ -127,26 +124,22 @@ func (h *DashboardHandler) GetCompleteDashboardData(c *gin.Context) {
 	currentDate := time.Now().Format("Montag, 02. Januar 2006")
 
 	c.HTML(http.StatusOK, "dashboard.html", gin.H{
-		"title":                    "Dashboard",
-		"user":                     userName,
-		"userRole":                 userRole,
-		"currentDate":              currentDate,
-		"year":                     time.Now().Year(),
-		"totalVehicles":            totalVehicles,
-		"availableVehicles":        availableVehicles,
-		"inUseVehicles":            inUseVehicles,
-		"maintenanceVehicles":      maintenanceVehicles,
-		"recentVehicles":           recentVehicles,
-		"recentDrivers":            recentDrivers,
-		"upcomingMaintenance":      upcomingMaintenance,
-		"recentActivities":         recentActivities,
-		"fleetActivityLabels":      fleetActivityData.Labels,
-		"fleetActivityInUse":       fleetActivityData.InUse,
-		"fleetActivityMaintenance": fleetActivityData.Maintenance,
-		"fuelCostVehicleLabels":    fuelCostData.Labels,
-		"fuelCostVehicleData":      fuelCostData.Data,
-		"vehicleUtilizationData":   utilizationData,
-		// Neue Finanzierungsstatistiken
+		"title":                 "Dashboard",
+		"user":                  userName,
+		"userRole":              userRole,
+		"currentDate":           currentDate,
+		"year":                  time.Now().Year(),
+		"totalVehicles":         totalVehicles,
+		"availableVehicles":     availableVehicles,
+		"inUseVehicles":         inUseVehicles,
+		"maintenanceVehicles":   maintenanceVehicles,
+		"recentVehicles":        recentVehicles,
+		"recentDrivers":         recentDrivers,
+		"upcomingMaintenance":   upcomingMaintenance,
+		"recentActivities":      recentActivities,
+		"fuelCostVehicleLabels": fuelCostData.Labels,
+		"fuelCostVehicleData":   fuelCostData.Data,
+		// Finanzierungsstatistiken (kombiniert Finanzierung + Leasing)
 		"totalFinancingCosts":   financingStats.TotalMonthlyCosts,
 		"financingBreakdown":    financingStats.Breakdown,
 		"averageCostPerVehicle": financingStats.AverageCostPerVehicle,
@@ -155,6 +148,12 @@ func (h *DashboardHandler) GetCompleteDashboardData(c *gin.Context) {
 		"maintenanceCostLabels": maintenanceCostData.Labels,
 		"maintenanceCostData":   maintenanceCostData.Data,
 		"totalMaintenanceCosts": maintenanceCostData.Total,
+		// Neue historische Kostendaten
+		"historicalCostLabels":      historicalCostData.Labels,
+		"historicalMaintenanceData": historicalCostData.MaintenanceData,
+		"historicalFuelData":        historicalCostData.FuelData,
+		"historicalLeasingData":     historicalCostData.LeasingData,
+		"historicalFinancingData":   historicalCostData.FinancingData,
 	})
 }
 
@@ -261,15 +260,86 @@ func (h *DashboardHandler) getMaintenanceCostData() struct {
 	return result
 }
 
-// Hilfsmethoden für spezifische Daten
+// getHistoricalCostData berechnet historische Kosten für alle Kategorien
+func (h *DashboardHandler) getHistoricalCostData() struct {
+	Labels          []string
+	MaintenanceData []float64
+	FuelData        []float64
+	LeasingData     []float64
+	FinancingData   []float64
+} {
+	result := struct {
+		Labels          []string
+		MaintenanceData []float64
+		FuelData        []float64
+		LeasingData     []float64
+		FinancingData   []float64
+	}{}
 
-func (h *DashboardHandler) getUpcomingMaintenanceList() []gin.H {
+	vehicles, _ := h.vehicleRepo.FindAll()
+
+	// Leasing- und Finanzierungskosten berechnen
+	var totalLeasing, totalFinancing float64
+	for _, vehicle := range vehicles {
+		if vehicle.AcquisitionType == model.AcquisitionTypeLeased {
+			totalLeasing += vehicle.LeaseMonthlyRate
+		} else if vehicle.AcquisitionType == model.AcquisitionTypeFinanced {
+			totalFinancing += vehicle.FinanceMonthlyRate
+		}
+	}
+
+	// Letzten 12 Monate
+	now := time.Now()
+	for i := 11; i >= 0; i-- {
+		month := now.AddDate(0, -i, 0)
+		monthStr := month.Format("Jan 2006")
+		result.Labels = append(result.Labels, monthStr)
+
+		// Zeitraum für diesen Monat
+		startOfMonth := time.Date(month.Year(), month.Month(), 1, 0, 0, 0, 0, month.Location())
+		endOfMonth := startOfMonth.AddDate(0, 1, 0).Add(-time.Nanosecond)
+
+		// Wartungskosten
+		maintenanceEntries, _ := h.maintenanceRepo.FindAll()
+		var monthlyCostMaintenance float64
+		for _, entry := range maintenanceEntries {
+			if entry.Date.After(startOfMonth) && entry.Date.Before(endOfMonth) {
+				monthlyCostMaintenance += entry.Cost
+			}
+		}
+		result.MaintenanceData = append(result.MaintenanceData, monthlyCostMaintenance)
+
+		// Kraftstoffkosten
+		fuelCosts, _ := h.fuelCostRepo.FindByDateRange(startOfMonth, endOfMonth)
+		var monthlyCostFuel float64
+		for _, cost := range fuelCosts {
+			monthlyCostFuel += cost.TotalCost
+		}
+		result.FuelData = append(result.FuelData, monthlyCostFuel)
+
+		// Leasing- und Finanzierungskosten (monatlich konstant)
+		result.LeasingData = append(result.LeasingData, totalLeasing)
+		result.FinancingData = append(result.FinancingData, totalFinancing)
+	}
+
+	return result
+}
+
+// getUpcomingMaintenanceNextMonth gibt nur Wartungen des nächsten Monats zurück
+func (h *DashboardHandler) getUpcomingMaintenanceNextMonth() []gin.H {
 	vehicles, _ := h.vehicleRepo.FindAll()
 	now := time.Now()
+	nextMonth := now.AddDate(0, 1, 0)
+
+	// Zeitraum: ab heute bis Ende nächsten Monats
+	endOfNextMonth := time.Date(nextMonth.Year(), nextMonth.Month(), 1, 0, 0, 0, 0, nextMonth.Location()).AddDate(0, 1, 0).Add(-time.Nanosecond)
+
 	var upcoming []gin.H
 
 	for _, vehicle := range vehicles {
-		if !vehicle.NextInspectionDate.IsZero() && vehicle.NextInspectionDate.After(now) {
+		if !vehicle.NextInspectionDate.IsZero() &&
+			vehicle.NextInspectionDate.After(now) &&
+			vehicle.NextInspectionDate.Before(endOfNextMonth) {
 			upcoming = append(upcoming, gin.H{
 				"vehicleId":     vehicle.ID.Hex(),
 				"vehicleName":   vehicle.Brand + " " + vehicle.Model,
@@ -298,6 +368,8 @@ func (h *DashboardHandler) getUpcomingMaintenanceList() []gin.H {
 
 	return upcoming
 }
+
+// Hilfsmethoden für spezifische Daten
 
 func (h *DashboardHandler) getRecentActivityList() []gin.H {
 	var activities []gin.H
@@ -369,42 +441,6 @@ func (h *DashboardHandler) getRecentActivityList() []gin.H {
 	}
 
 	return activities
-}
-
-func (h *DashboardHandler) getFleetActivityData() struct {
-	Labels      []string
-	InUse       []int
-	Maintenance []int
-} {
-	result := struct {
-		Labels      []string
-		InUse       []int
-		Maintenance []int
-	}{}
-
-	// Letzte 7 Tage
-	for i := 6; i >= 0; i-- {
-		date := time.Now().AddDate(0, 0, -i)
-		dayName := h.getDayName(date)
-		result.Labels = append(result.Labels, dayName)
-
-		// Zähle Fahrzeuge in Nutzung an diesem Tag
-		nextDay := date.AddDate(0, 0, 1)
-		inUseCount, _ := h.usageRepo.CountActiveUsagesByDateRange(date, nextDay)
-		result.InUse = append(result.InUse, int(inUseCount))
-
-		// Zähle Fahrzeuge in Wartung (vereinfacht)
-		maintenanceCount := 0
-		vehicles, _ := h.vehicleRepo.FindByStatus(model.VehicleStatusMaintenance)
-		for _, v := range vehicles {
-			if v.UpdatedAt.Before(nextDay) && v.UpdatedAt.After(date.AddDate(0, 0, -1)) {
-				maintenanceCount++
-			}
-		}
-		result.Maintenance = append(result.Maintenance, maintenanceCount)
-	}
-
-	return result
 }
 
 func (h *DashboardHandler) getFuelCostsByVehicleData() struct {
@@ -500,11 +536,6 @@ func (h *DashboardHandler) formatTimeAgo(t time.Time) string {
 	}
 }
 
-func (h *DashboardHandler) getDayName(date time.Time) string {
-	days := []string{"So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"}
-	return days[date.Weekday()]
-}
-
 // API-Methoden
 
 // GetDashboardStats returns general statistics for the dashboard
@@ -551,53 +582,6 @@ func (h *DashboardHandler) GetFinancingStats(c *gin.Context) {
 
 	stats := h.calculateFinancingStatistics(vehicles)
 	c.JSON(http.StatusOK, stats)
-}
-
-// GetVehicleUsageStats liefert Daten für das Flottenaktivitäts-Chart
-func (h *DashboardHandler) GetVehicleUsageStats(c *gin.Context) {
-	// Daten für die letzten 7 Tage berechnen
-	endDate := time.Now()
-	startDate := endDate.AddDate(0, 0, -6) // 7 Tage inklusive heute
-
-	// Format für die Tagesdarstellung
-	dayFormat := "Mo"
-	if c.Query("format") == "full" {
-		dayFormat = "02.01."
-	}
-
-	// Daten für jeden Tag vorbereiten
-	var usageData []map[string]interface{}
-
-	for day := 0; day < 7; day++ {
-		date := startDate.AddDate(0, 0, day)
-		nextDay := date.AddDate(0, 0, 1)
-
-		// Anzahl der am Tag genutzten Fahrzeuge zählen
-		vehiclesInUse, err := h.usageRepo.CountActiveUsagesByDateRange(date, nextDay)
-		if err != nil {
-			vehiclesInUse = 0
-		}
-
-		// Anzahl der Fahrzeuge in Wartung zählen
-		vehiclesInMaintenance, err := h.vehicleRepo.CountByStatusAndDate(model.VehicleStatusMaintenance, date)
-		if err != nil {
-			vehiclesInMaintenance = 0
-		}
-
-		// Datenpunkt für den Tag erstellen
-		dayData := map[string]interface{}{
-			"day":              date.Format(dayFormat),
-			"date":             date.Format("2006-01-02"),
-			"inUseCount":       vehiclesInUse,
-			"maintenanceCount": vehiclesInMaintenance,
-		}
-
-		usageData = append(usageData, dayData)
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"usageData": usageData,
-	})
 }
 
 // GetFuelCostsByVehicle liefert Kraftstoffkosten gruppiert nach Fahrzeug

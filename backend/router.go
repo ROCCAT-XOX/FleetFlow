@@ -462,11 +462,11 @@ func setupAPIRoutes(api *gin.RouterGroup) {
 		activities.GET("/recent", dashboardHandler.GetRecentActivities)
 	}
 
-	// Dashboard-API
+	// Dashboard-API (reduzierte Routen)
 	dashboard := api.Group("/dashboard")
 	{
 		dashboard.GET("/stats", dashboardHandler.GetDashboardStats)
-		dashboard.GET("/vehicle-usage-stats", dashboardHandler.GetVehicleUsageStats)
 		dashboard.GET("/fuel-costs-by-vehicle", dashboardHandler.GetFuelCostsByVehicle)
+		// Entfernt: GetVehicleUsageStats da nicht mehr benötigt
 	}
 }
