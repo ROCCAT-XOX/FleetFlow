@@ -156,6 +156,7 @@ func (r *DriverRepository) Update(driver *model.Driver) error {
 	fmt.Printf("Updating driver ID: %s\n", driver.ID.Hex())
 	fmt.Printf("AssignedVehicleID: %s\n", driver.AssignedVehicleID.Hex())
 	fmt.Printf("Status: %s\n", driver.Status)
+	fmt.Printf("IsZero AssignedVehicleID: %v\n", driver.AssignedVehicleID.IsZero())
 
 	// Explizites Update mit allen Feldern
 	updateDoc := bson.M{
@@ -172,6 +173,8 @@ func (r *DriverRepository) Update(driver *model.Driver) error {
 		},
 	}
 
+	fmt.Printf("Update document: %+v\n", updateDoc)
+
 	result, err := r.collection.UpdateOne(
 		ctx,
 		bson.M{"_id": driver.ID},
@@ -185,6 +188,11 @@ func (r *DriverRepository) Update(driver *model.Driver) error {
 
 	fmt.Printf("Update result - MatchedCount: %d, ModifiedCount: %d\n", result.MatchedCount, result.ModifiedCount)
 
+	if result.MatchedCount == 0 {
+		fmt.Printf("WARNING: No document matched for update!\n")
+		return fmt.Errorf("no document found with ID %s", driver.ID.Hex())
+	}
+
 	// Verification: Dokument nochmal laden
 	var verifyDriver model.Driver
 	verifyErr := r.collection.FindOne(ctx, bson.M{"_id": driver.ID}).Decode(&verifyDriver)
@@ -192,9 +200,12 @@ func (r *DriverRepository) Update(driver *model.Driver) error {
 		fmt.Printf("VERIFICATION after update:\n")
 		fmt.Printf("  AssignedVehicleID: %s\n", verifyDriver.AssignedVehicleID.Hex())
 		fmt.Printf("  Status: %s\n", verifyDriver.Status)
+		fmt.Printf("  IsZero: %v\n", verifyDriver.AssignedVehicleID.IsZero())
+	} else {
+		fmt.Printf("ERROR in verification: %v\n", verifyErr)
 	}
 
-	return err
+	return nil
 }
 
 // Delete löscht einen Fahrer

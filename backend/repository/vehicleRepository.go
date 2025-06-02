@@ -3,6 +3,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"FleetDrive/backend/db"
@@ -109,11 +110,37 @@ func (r *VehicleRepository) Update(vehicle *model.Vehicle) error {
 
 	vehicle.UpdatedAt = time.Now()
 
-	_, err := r.collection.UpdateOne(
+	// Debug-Ausgabe
+	fmt.Printf("=== VehicleRepository.Update DEBUG ===\n")
+	fmt.Printf("Updating vehicle ID: %s\n", vehicle.ID.Hex())
+	fmt.Printf("Brand/Model: %s %s (%s)\n", vehicle.Brand, vehicle.Model, vehicle.LicensePlate)
+	fmt.Printf("CurrentDriverID: %s\n", vehicle.CurrentDriverID.Hex())
+	fmt.Printf("Status: %s\n", vehicle.Status)
+	fmt.Printf("IsZero CurrentDriverID: %v\n", vehicle.CurrentDriverID.IsZero())
+
+	result, err := r.collection.UpdateOne(
 		ctx,
 		bson.M{"_id": vehicle.ID},
 		bson.M{"$set": vehicle},
 	)
+
+	if err != nil {
+		fmt.Printf("ERROR updating vehicle: %v\n", err)
+		return err
+	}
+
+	fmt.Printf("Vehicle update result - MatchedCount: %d, ModifiedCount: %d\n", result.MatchedCount, result.ModifiedCount)
+
+	// Verification
+	var verifyVehicle model.Vehicle
+	verifyErr := r.collection.FindOne(ctx, bson.M{"_id": vehicle.ID}).Decode(&verifyVehicle)
+	if verifyErr == nil {
+		fmt.Printf("VEHICLE VERIFICATION after update:\n")
+		fmt.Printf("  CurrentDriverID: %s\n", verifyVehicle.CurrentDriverID.Hex())
+		fmt.Printf("  Status: %s\n", verifyVehicle.Status)
+		fmt.Printf("  IsZero: %v\n", verifyVehicle.CurrentDriverID.IsZero())
+	}
+
 	return err
 }
 

@@ -72,8 +72,14 @@ function initializeBrandDropdown() {
             });
         } else {
             console.error('carManufacturers ist nicht verfügbar!');
-            // Fallback: Nur grundlegende Marken hinzufügen
-            const basicBrands = ['Audi', 'BMW', 'Mercedes-Benz', 'Volkswagen', 'Ford', 'Toyota', 'Opel'];
+            // Korrigierter Fallback: Nur die gewünschten Marken
+            const basicBrands = [
+                'Audi', 'Bentley', 'BMW', 'Bugatti', 'BYD', 'Citroën', 'Cupra',
+                'Dacia', 'Ferrari', 'Fiat', 'Ford', 'Honda', 'Koenigsegg',
+                'Lamborghini', 'MAN', 'Mazda', 'McLaren', 'Mercedes-Benz',
+                'Opel', 'Porsche', 'Rolls-Royce', 'Scania', 'Seat', 'Skoda',
+                'Suzuki', 'Toyota', 'Volkswagen'
+            ];
             basicBrands.forEach(brand => {
                 const option = document.createElement('option');
                 option.value = brand;

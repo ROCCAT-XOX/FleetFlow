@@ -137,6 +137,7 @@ function loadVehiclesForDropdown(currentVehicleId = null) {
         });
 }
 
+
 // Fahrer rendern
 function renderDrivers(drivers) {
     const tbody = document.getElementById('drivers-table-body');
@@ -144,6 +145,9 @@ function renderDrivers(drivers) {
         console.error('Table body not found');
         return;
     }
+
+    console.log('=== renderDrivers Debug ===');
+    console.log('Total drivers to render:', drivers.length);
 
     tbody.innerHTML = '';
 
@@ -158,7 +162,15 @@ function renderDrivers(drivers) {
         return;
     }
 
-    drivers.forEach(driver => {
+    drivers.forEach((driver, index) => {
+        console.log(`Driver ${index + 1}:`, {
+            name: `${driver.firstName} ${driver.lastName}`,
+            id: driver.id,
+            status: driver.status,
+            assignedVehicleId: driver.assignedVehicleId,
+            vehicleName: driver.vehicleName
+        });
+
         const row = document.createElement('tr');
         row.dataset.status = driver.status;
 
@@ -167,6 +179,8 @@ function renderDrivers(drivers) {
         const vehicleInfo = driver.vehicleName ?
             `<span class="text-sm text-gray-900">${driver.vehicleName}</span>` :
             `<span class="text-sm text-gray-500">Kein Fahrzeug zugewiesen</span>`;
+
+        console.log(`Vehicle info for ${driver.firstName} ${driver.lastName}:`, vehicleInfo);
 
         const licenseClasses = driver.licenseClasses && driver.licenseClasses.length > 0 ?
             driver.licenseClasses.join(', ') : 'Keine';
@@ -230,6 +244,8 @@ function renderDrivers(drivers) {
 
         tbody.appendChild(row);
     });
+
+    console.log('renderDrivers completed');
 }
 
 // Status Badge
@@ -477,6 +493,18 @@ function assignVehicle() {
                     setTimeout(() => {
                         console.log('Second reload attempt...');
                         loadDrivers(true);
+
+                        // Zusätzlich: Fahrzeuge neu laden um Konsistenz zu prüfen
+                        console.log('Also checking vehicles for consistency...');
+                        fetch('/api/vehicles')
+                            .then(r => r.json())
+                            .then(vehicleData => {
+                                console.log('Current vehicle assignments:', vehicleData.vehicles.map(v => ({
+                                    vehicle: `${v.brand} ${v.model} (${v.licensePlate})`,
+                                    status: v.status,
+                                    driverName: v.driverName || 'None'
+                                })));
+                            });
                     }, 1000);
                 }, 200);
             } else if (data.error) {

@@ -449,6 +449,8 @@ func setupAPIRoutes(api *gin.RouterGroup) {
 		drivers.DELETE("/:id", middleware.AdminMiddleware(), driverHandler.DeleteDriver)
 		// Neue Route für Fahrzeugzuordnung
 		drivers.PUT("/:id/assign-vehicle", driverHandler.AssignVehicle)
+		// In setupAPIRoutes hinzufügen:
+		drivers.POST("/cleanup-assignments", middleware.AdminMiddleware(), driverHandler.CleanupInconsistentAssignments)
 	}
 
 	// Wartungs-API
