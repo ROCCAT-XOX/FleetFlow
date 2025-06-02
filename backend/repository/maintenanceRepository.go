@@ -3,6 +3,7 @@ package repository
 
 import (
 	"context"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"time"
 
 	"FleetDrive/backend/db"
@@ -147,4 +148,40 @@ func (r *MaintenanceRepository) Delete(id string) error {
 
 	_, err = r.collection.DeleteOne(ctx, bson.M{"_id": objID})
 	return err
+}
+
+func (r *MaintenanceRepository) FindByDateRange(startDate, endDate time.Time) ([]*model.Maintenance, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	var maintenances []*model.Maintenance
+
+	// Nach Datum absteigend sortieren (neueste zuerst)
+	opts := options.Find().SetSort(bson.D{{Key: "date", Value: -1}})
+
+	cursor, err := r.collection.Find(ctx, bson.M{
+		"date": bson.M{
+			"$gte": startDate,
+			"$lte": endDate,
+		},
+	}, opts)
+
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	for cursor.Next(ctx) {
+		var maintenance model.Maintenance
+		if err := cursor.Decode(&maintenance); err != nil {
+			return nil, err
+		}
+		maintenances = append(maintenances, &maintenance)
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+
+	return maintenances, nil
 }

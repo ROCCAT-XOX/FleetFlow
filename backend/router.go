@@ -350,11 +350,11 @@ func setupAuthorizedRoutes(group *gin.RouterGroup) {
 		})
 	})
 
-	// Berichte
+	// In setupAuthorizedRoutes hinzufügen:
 	group.GET("/reports", func(c *gin.Context) {
 		user, _ := c.Get("user")
 		c.HTML(http.StatusOK, "reports.html", gin.H{
-			"title": "Berichte",
+			"title": "Fahrzeug- und Fahrerstatistiken",
 			"user":  user.(*model.User).FirstName + " " + user.(*model.User).LastName,
 			"year":  currentYear,
 		})
@@ -406,6 +406,7 @@ func setupAPIRoutes(api *gin.RouterGroup) {
 	activityHandler := handler.NewActivityHandler()
 	profileHandler := handler.NewProfileHandler()
 	dashboardHandler := handler.NewDashboardHandler()
+	reportsHandler := handler.NewReportsHandler()
 
 	// Benutzer-API
 	users := api.Group("/users")
@@ -518,5 +519,13 @@ func setupAPIRoutes(api *gin.RouterGroup) {
 		peopleflow.GET("/employees", peopleflowHandler.GetPeopleFlowEmployees)
 		peopleflow.GET("/sync-logs", peopleflowHandler.GetPeopleFlowSyncLogs)
 		peopleflow.PUT("/auto-sync", middleware.AdminMiddleware(), peopleflowHandler.UpdatePeopleFlowAutoSync)
+	}
+
+	reports := api.Group("/reports")
+	{
+		reports.GET("/stats", reportsHandler.GetReportsStats)
+		reports.GET("/vehicle-ranking", reportsHandler.GetVehicleRanking)
+		reports.GET("/driver-ranking", reportsHandler.GetDriverRanking)
+		reports.GET("/cost-breakdown", reportsHandler.GetCostBreakdown)
 	}
 }

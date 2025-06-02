@@ -1,0 +1,318 @@
+{{ template "head" . }}
+<body class="h-full bg-gray-50">
+<!-- Navigation -->
+{{ template "navigation" . }}
+
+<!-- Main Content -->
+<main class="container mx-auto px-4 py-6 flex-grow">
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">Fahrzeug- und Fahrerstatistiken</h1>
+    <p class="mt-1 text-sm text-gray-500">Detaillierte Auswertungen zu Fahrzeugen, Fahrern, Kosten und Nutzung.</p>
+  </div>
+
+  <!-- Filter-Bereich -->
+  <div class="bg-white shadow rounded-lg mb-6">
+    <div class="px-4 py-5 sm:p-6">
+      <form id="stats-filter-form" class="space-y-6">
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <!-- Zeitraum-Filter -->
+          <div>
+            <label for="date-range" class="block text-sm font-medium text-gray-700">Zeitraum</label>
+            <div class="mt-1">
+              <select id="date-range" name="date-range" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                <option value="this-month" selected>Dieser Monat</option>
+                <option value="last-month">Letzter Monat</option>
+                <option value="this-quarter">Dieses Quartal</option>
+                <option value="last-quarter">Letztes Quartal</option>
+                <option value="this-year">Dieses Jahr</option>
+                <option value="custom">Benutzerdefiniert</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Benutzerdefinierter Zeitraum -->
+          <div class="sm:col-span-2 hidden" id="custom-date-range">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label for="start-date" class="block text-sm font-medium text-gray-700">Von</label>
+                <input type="date" name="start-date" id="start-date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+              </div>
+              <div>
+                <label for="end-date" class="block text-sm font-medium text-gray-700">Bis</label>
+                <input type="date" name="end-date" id="end-date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+              </div>
+            </div>
+          </div>
+
+          <!-- Fahrzeug-Filter -->
+          <div>
+            <label for="vehicle-filter" class="block text-sm font-medium text-gray-700">Fahrzeug</label>
+            <select id="vehicle-filter" name="vehicle" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+              <option value="">Alle Fahrzeuge</option>
+              <!-- Wird dynamisch gefüllt -->
+            </select>
+          </div>
+
+          <!-- Fahrer-Filter -->
+          <div>
+            <label for="driver-filter" class="block text-sm font-medium text-gray-700">Fahrer</label>
+            <select id="driver-filter" name="driver" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+              <option value="">Alle Fahrer</option>
+              <!-- Wird dynamisch gefüllt -->
+            </select>
+          </div>
+        </div>
+
+        <!-- Filter-Button -->
+        <div class="flex justify-end">
+          <button type="button" id="apply-filter" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+            <svg class="mr-2 -ml-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd" />
+            </svg>
+            Filter anwenden
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Übersichtskarten -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+    <!-- Gesamtfahrzeuge -->
+    <div class="bg-white overflow-hidden shadow rounded-lg">
+      <div class="px-4 py-5 sm:p-6">
+        <dl>
+          <dt class="text-sm font-medium text-gray-500 truncate">Gesamtfahrzeuge</dt>
+          <dd id="total-vehicles-card" class="mt-1 text-3xl font-semibold text-gray-900">0</dd>
+        </dl>
+      </div>
+    </div>
+
+    <!-- Gesamtkilometer -->
+    <div class="bg-white overflow-hidden shadow rounded-lg">
+      <div class="px-4 py-5 sm:p-6">
+        <dl>
+          <dt class="text-sm font-medium text-gray-500 truncate">Gesamtkilometer</dt>
+          <dd id="total-kilometers-card" class="mt-1 text-3xl font-semibold text-gray-900">0 km</dd>
+        </dl>
+      </div>
+    </div>
+
+    <!-- Tankkosten -->
+    <div class="bg-white overflow-hidden shadow rounded-lg">
+      <div class="px-4 py-5 sm:p-6">
+        <dl>
+          <dt class="text-sm font-medium text-gray-500 truncate">Tankkosten</dt>
+          <dd id="fuel-costs-card" class="mt-1 text-3xl font-semibold text-gray-900">€ 0</dd>
+        </dl>
+      </div>
+    </div>
+
+    <!-- Wartungskosten -->
+    <div class="bg-white overflow-hidden shadow rounded-lg">
+      <div class="px-4 py-5 sm:p-6">
+        <dl>
+          <dt class="text-sm font-medium text-gray-500 truncate">Wartungskosten</dt>
+          <dd id="maintenance-costs-card" class="mt-1 text-3xl font-semibold text-gray-900">€ 0</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hauptcontent mit Tabs -->
+  <div class="bg-white shadow rounded-lg">
+    <div class="border-b border-gray-200">
+      <nav class="flex -mb-px" aria-label="Tabs">
+        <button type="button" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 w-1/4 py-4 px-1 text-center border-b-2 font-medium text-sm active bg-indigo-100 text-indigo-700 border-indigo-500" data-tab="overview">
+          Übersicht
+        </button>
+        <button type="button" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 w-1/4 py-4 px-1 text-center border-b-2 font-medium text-sm" data-tab="vehicles">
+          Fahrzeuge
+        </button>
+        <button type="button" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 w-1/4 py-4 px-1 text-center border-b-2 font-medium text-sm" data-tab="drivers">
+          Fahrer
+        </button>
+        <button type="button" class="tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 w-1/4 py-4 px-1 text-center border-b-2 font-medium text-sm" data-tab="costs">
+          Kosten
+        </button>
+      </nav>
+    </div>
+
+    <!-- Tab-Inhalte -->
+    <!-- Übersichts-Tab -->
+    <div id="overview-tab" class="tab-content px-4 py-5 sm:p-6">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <!-- Fahrzeugnutzung nach Status -->
+        <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Fahrzeugnutzung nach Status</h3>
+          <div class="h-80">
+            <canvas id="vehicleStatusChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Kilometer nach Fahrzeug -->
+        <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Kilometer nach Fahrzeug</h3>
+          <div class="h-80">
+            <canvas id="vehicleKilometersChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Monatliche Kosten -->
+        <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Monatliche Kosten</h3>
+          <div class="h-80">
+            <canvas id="monthlyCostsChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Kraftstoffverbrauch -->
+        <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Kraftstoffverbrauch nach Typ</h3>
+          <div class="h-80">
+            <canvas id="fuelConsumptionChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fahrzeuge-Tab -->
+    <div id="vehicles-tab" class="tab-content px-4 py-5 sm:p-6 hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <!-- Fahrzeugauslastung -->
+        <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Fahrzeugauslastung</h3>
+          <div class="h-80">
+            <canvas id="vehicleUtilizationChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Wartungen nach Fahrzeug -->
+        <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Wartungen nach Fahrzeug</h3>
+          <div class="h-80">
+            <canvas id="vehicleMaintenanceChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fahrzeugranking -->
+      <div class="mt-6 bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Fahrzeug-Effizienzranking</h3>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+            <tr>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rang</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fahrzeug</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kilometerstand</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kraftstoffkosten</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kosten/km</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Auslastung</th>
+            </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200" id="vehicle-ranking-table-body">
+            <!-- Wird dynamisch gefüllt -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fahrer-Tab -->
+    <div id="drivers-tab" class="tab-content px-4 py-5 sm:p-6 hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <!-- Fahrer nach Kilometer -->
+        <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Fahrer nach gefahrenen Kilometern</h3>
+          <div class="h-80">
+            <canvas id="driverKilometersChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Fahrer-Status -->
+        <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Fahrer-Status Verteilung</h3>
+          <div class="h-80">
+            <canvas id="driverStatusChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fahrerranking -->
+      <div class="mt-6 bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Fahrer-Aktivitätsranking</h3>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+            <tr>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rang</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fahrer</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gefahrene Kilometer</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fahrten</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ø Kilometer/Fahrt</th>
+            </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200" id="driver-ranking-table-body">
+            <!-- Wird dynamisch gefüllt -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Kosten-Tab -->
+    <div id="costs-tab" class="tab-content px-4 py-5 sm:p-6 hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <!-- Kostenverteilung -->
+        <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Kostenverteilung</h3>
+          <div class="h-80">
+            <canvas id="costDistributionChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Monatliche Kostentabelle -->
+        <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Monatliche Kosten-Trends</h3>
+          <div class="h-80">
+            <canvas id="costTrendsChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Kostentabelle -->
+      <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Kostenaufstellung</h3>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+            <tr>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kategorie</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dieser Monat</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Letzter Monat</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Änderung</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jahr bis heute</th>
+            </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200" id="cost-breakdown-table-body">
+            <!-- Wird dynamisch gefüllt -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Footer -->
+{{ template "footer" . }}
+
+<!-- Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script src="/static/js/reports.js"></script>
+</body>
+</html>
