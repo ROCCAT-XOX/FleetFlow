@@ -6,10 +6,9 @@ import (
 	"FleetDrive/backend/repository"
 	"FleetDrive/backend/service"
 	"fmt"
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"net/http"
 )
 
 // DriverHandler repräsentiert den Handler für Fahrer-Operationen
@@ -282,10 +281,35 @@ func (h *DriverHandler) AssignVehicle(c *gin.Context) {
 		return
 	}
 
+	fmt.Printf("=== ASSIGN VEHICLE API CALL ===\n")
+	fmt.Printf("DriverID: %s\n", driverID)
+	fmt.Printf("VehicleID: '%s' (length: %d)\n", req.VehicleID, len(req.VehicleID))
+	fmt.Printf("Is empty: %v\n", req.VehicleID == "")
+
+	// Debug: Aktuelle Zuweisungen vor der Änderung
+	fmt.Printf("BEFORE assignment:\n")
+	h.assignmentService.DebugAllAssignments()
+
 	// Service für die Zuweisung verwenden
 	if err := h.assignmentService.AssignVehicleToDriver(driverID, req.VehicleID); err != nil {
+		fmt.Printf("ERROR in assignment: %v\n", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
+	}
+
+	// Debug: Zuweisungen nach der Änderung
+	fmt.Printf("AFTER assignment:\n")
+	h.assignmentService.DebugAllAssignments()
+
+	// Konsistenz prüfen
+	issues := h.assignmentService.ValidateAllAssignments()
+	if len(issues) > 0 {
+		fmt.Printf("CONSISTENCY ISSUES FOUND:\n")
+		for _, issue := range issues {
+			fmt.Printf("  - %s\n", issue)
+		}
+	} else {
+		fmt.Printf("All assignments are consistent\n")
 	}
 
 	// Aktualisierte Daten laden

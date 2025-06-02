@@ -451,6 +451,7 @@ function loadVehiclesForAssignModal(currentVehicleId = null) {
         });
 }
 
+
 // Fahrzeugzuordnung durchführen
 function assignVehicle() {
     const vehicleId = document.getElementById('vehicle-select').value;
@@ -460,9 +461,10 @@ function assignVehicle() {
     console.log('Current driver ID:', currentDriverId);
     console.log('Vehicle ID length:', vehicleId.length);
     console.log('Is empty string?', vehicleId === '');
+    console.log('Vehicle ID type:', typeof vehicleId);
 
     const requestBody = {
-        vehicleId: vehicleId || ""
+        vehicleId: vehicleId === "" ? "" : vehicleId
     };
 
     console.log('Request body:', JSON.stringify(requestBody));
@@ -484,27 +486,21 @@ function assignVehicle() {
                 showNotification(data.message, 'success');
                 closeAssignVehicleModal();
 
-                // Erzwungenes Reload mit mehreren Versuchen
+                // Mehrfache Reloads mit Verzögerung für Konsistenz
                 console.log('Reloading drivers with force...');
                 setTimeout(() => {
                     loadDrivers(true);
 
-                    // Nochmal nach 1 Sekunde versuchen
+                    // Zweiter Reload nach 1 Sekunde
                     setTimeout(() => {
                         console.log('Second reload attempt...');
                         loadDrivers(true);
 
-                        // Zusätzlich: Fahrzeuge neu laden um Konsistenz zu prüfen
-                        console.log('Also checking vehicles for consistency...');
-                        fetch('/api/vehicles')
-                            .then(r => r.json())
-                            .then(vehicleData => {
-                                console.log('Current vehicle assignments:', vehicleData.vehicles.map(v => ({
-                                    vehicle: `${v.brand} ${v.model} (${v.licensePlate})`,
-                                    status: v.status,
-                                    driverName: v.driverName || 'None'
-                                })));
-                            });
+                        // Dritter Reload nach weiteren 2 Sekunden
+                        setTimeout(() => {
+                            console.log('Final reload attempt...');
+                            loadDrivers(true);
+                        }, 2000);
                     }, 1000);
                 }, 200);
             } else if (data.error) {

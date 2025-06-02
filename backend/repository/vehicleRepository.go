@@ -118,30 +118,156 @@ func (r *VehicleRepository) Update(vehicle *model.Vehicle) error {
 	fmt.Printf("Status: %s\n", vehicle.Status)
 	fmt.Printf("IsZero CurrentDriverID: %v\n", vehicle.CurrentDriverID.IsZero())
 
+	// Zwei separate Updates - erst die normalen Felder, dann currentDriverId separat
+
+	// SCHRITT 1: Alle Felder außer currentDriverId updaten
+	updateDoc := bson.M{
+		"$set": bson.M{
+			"licensePlate":           vehicle.LicensePlate,
+			"brand":                  vehicle.Brand,
+			"model":                  vehicle.Model,
+			"year":                   vehicle.Year,
+			"color":                  vehicle.Color,
+			"vehicleId":              vehicle.VehicleID,
+			"vin":                    vehicle.VIN,
+			"fuelType":               vehicle.FuelType,
+			"mileage":                vehicle.Mileage,
+			"registrationDate":       vehicle.RegistrationDate,
+			"registrationExpiry":     vehicle.RegistrationExpiry,
+			"insuranceCompany":       vehicle.InsuranceCompany,
+			"insuranceNumber":        vehicle.InsuranceNumber,
+			"insuranceType":          vehicle.InsuranceType,
+			"insuranceExpiry":        vehicle.InsuranceExpiry,
+			"insuranceCost":          vehicle.InsuranceCost,
+			"nextInspectionDate":     vehicle.NextInspectionDate,
+			"status":                 vehicle.Status,
+			"vehicleType":            vehicle.VehicleType,
+			"engineDisplacement":     vehicle.EngineDisplacement,
+			"powerRating":            vehicle.PowerRating,
+			"numberOfAxles":          vehicle.NumberOfAxles,
+			"tireSize":               vehicle.TireSize,
+			"rimType":                vehicle.RimType,
+			"grossWeight":            vehicle.GrossWeight,
+			"technicalMaxWeight":     vehicle.TechnicalMaxWeight,
+			"length":                 vehicle.Length,
+			"width":                  vehicle.Width,
+			"height":                 vehicle.Height,
+			"emissionClass":          vehicle.EmissionClass,
+			"curbWeight":             vehicle.CurbWeight,
+			"maxSpeed":               vehicle.MaxSpeed,
+			"towingCapacity":         vehicle.TowingCapacity,
+			"specialFeatures":        vehicle.SpecialFeatures,
+			"acquisitionType":        vehicle.AcquisitionType,
+			"purchaseDate":           vehicle.PurchaseDate,
+			"purchasePrice":          vehicle.PurchasePrice,
+			"purchaseVendor":         vehicle.PurchaseVendor,
+			"financeStartDate":       vehicle.FinanceStartDate,
+			"financeEndDate":         vehicle.FinanceEndDate,
+			"financeMonthlyRate":     vehicle.FinanceMonthlyRate,
+			"financeInterestRate":    vehicle.FinanceInterestRate,
+			"financeDownPayment":     vehicle.FinanceDownPayment,
+			"financeTotalAmount":     vehicle.FinanceTotalAmount,
+			"financeBank":            vehicle.FinanceBank,
+			"leaseStartDate":         vehicle.LeaseStartDate,
+			"leaseEndDate":           vehicle.LeaseEndDate,
+			"leaseMonthlyRate":       vehicle.LeaseMonthlyRate,
+			"leaseMileageLimit":      vehicle.LeaseMileageLimit,
+			"leaseExcessMileageCost": vehicle.LeaseExcessMileageCost,
+			"leaseCompany":           vehicle.LeaseCompany,
+			"leaseContractNumber":    vehicle.LeaseContractNumber,
+			"leaseResidualValue":     vehicle.LeaseResidualValue,
+			"updatedAt":              vehicle.UpdatedAt,
+		},
+	}
+
+	// Erstes Update: Alle Felder außer currentDriverId
 	result, err := r.collection.UpdateOne(
 		ctx,
 		bson.M{"_id": vehicle.ID},
-		bson.M{"$set": vehicle},
+		updateDoc,
 	)
 
 	if err != nil {
-		fmt.Printf("ERROR updating vehicle: %v\n", err)
+		fmt.Printf("ERROR updating vehicle (step 1): %v\n", err)
 		return err
 	}
 
-	fmt.Printf("Vehicle update result - MatchedCount: %d, ModifiedCount: %d\n", result.MatchedCount, result.ModifiedCount)
+	fmt.Printf("Vehicle update step 1 result - MatchedCount: %d, ModifiedCount: %d\n", result.MatchedCount, result.ModifiedCount)
 
-	// Verification
-	var verifyVehicle model.Vehicle
-	verifyErr := r.collection.FindOne(ctx, bson.M{"_id": vehicle.ID}).Decode(&verifyVehicle)
-	if verifyErr == nil {
-		fmt.Printf("VEHICLE VERIFICATION after update:\n")
-		fmt.Printf("  CurrentDriverID: %s\n", verifyVehicle.CurrentDriverID.Hex())
-		fmt.Printf("  Status: %s\n", verifyVehicle.Status)
-		fmt.Printf("  IsZero: %v\n", verifyVehicle.CurrentDriverID.IsZero())
+	// SCHRITT 2: currentDriverId separat behandeln
+	var driverUpdateDoc bson.M
+	if vehicle.CurrentDriverID.IsZero() {
+		// Feld komplett entfernen
+		driverUpdateDoc = bson.M{
+			"$unset": bson.M{"currentDriverId": ""},
+		}
+		fmt.Printf("Using $unset for currentDriverId\n")
+	} else {
+		// Feld setzen
+		driverUpdateDoc = bson.M{
+			"$set": bson.M{"currentDriverId": vehicle.CurrentDriverID},
+		}
+		fmt.Printf("Using $set for currentDriverId: %s\n", vehicle.CurrentDriverID.Hex())
 	}
 
-	return err
+	// Zweites Update: nur currentDriverId
+	result2, err := r.collection.UpdateOne(
+		ctx,
+		bson.M{"_id": vehicle.ID},
+		driverUpdateDoc,
+	)
+
+	if err != nil {
+		fmt.Printf("ERROR updating vehicle currentDriverId (step 2): %v\n", err)
+		return err
+	}
+
+	fmt.Printf("Vehicle update step 2 result - MatchedCount: %d, ModifiedCount: %d\n", result2.MatchedCount, result2.ModifiedCount)
+
+	// Kurz warten für MongoDB Konsistenz
+	time.Sleep(200 * time.Millisecond)
+
+	// Verification mit mehreren Versuchen
+	for i := 0; i < 5; i++ {
+		var verifyVehicle model.Vehicle
+		verifyErr := r.collection.FindOne(ctx, bson.M{"_id": vehicle.ID}).Decode(&verifyVehicle)
+		if verifyErr == nil {
+			fmt.Printf("VEHICLE VERIFICATION attempt %d:\n", i+1)
+			fmt.Printf("  CurrentDriverID: %s\n", verifyVehicle.CurrentDriverID.Hex())
+			fmt.Printf("  Status: %s\n", verifyVehicle.Status)
+			fmt.Printf("  IsZero: %v\n", verifyVehicle.CurrentDriverID.IsZero())
+
+			// Erfolg prüfen
+			if vehicle.CurrentDriverID.IsZero() && verifyVehicle.CurrentDriverID.IsZero() {
+				fmt.Printf("✓ Verification successful: CurrentDriverID is properly cleared\n")
+				break
+			} else if !vehicle.CurrentDriverID.IsZero() && verifyVehicle.CurrentDriverID == vehicle.CurrentDriverID {
+				fmt.Printf("✓ Verification successful: CurrentDriverID is properly set\n")
+				break
+			} else if i == 4 {
+				fmt.Printf("✗ Verification failed after 5 attempts\n")
+				fmt.Printf("  Expected: %s (IsZero: %v)\n", vehicle.CurrentDriverID.Hex(), vehicle.CurrentDriverID.IsZero())
+				fmt.Printf("  Actual: %s (IsZero: %v)\n", verifyVehicle.CurrentDriverID.Hex(), verifyVehicle.CurrentDriverID.IsZero())
+			}
+		} else {
+			fmt.Printf("ERROR in verification attempt %d: %v\n", i+1, verifyErr)
+		}
+
+		if i < 4 {
+			time.Sleep(300 * time.Millisecond) // Länger warten zwischen Versuchen
+		}
+	}
+
+	return nil
+}
+
+// Hilfsfunktion zum Debugging
+func getMapKeys(m bson.M) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	return keys
 }
 
 // Delete löscht ein Fahrzeug
