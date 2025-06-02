@@ -157,20 +157,34 @@ func (r *FuelCostRepository) Delete(id string) error {
 	return err
 }
 
-// FindByDateRange findet alle Tankkosteneinträge in einem bestimmten Zeitraum
+// HasAnyFuelCosts prüft ob überhaupt Tankkosten-Einträge vorhanden sind
+
+func (r *FuelCostRepository) HasAnyFuelCosts() (bool, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	count, err := r.collection.CountDocuments(ctx, bson.M{})
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
+// FindByDateRange findet Tankkosten in einem bestimmten Zeitraum
 func (r *FuelCostRepository) FindByDateRange(startDate, endDate time.Time) ([]*model.FuelCost, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	var fuelCosts []*model.FuelCost
 
-	cursor, err := r.collection.Find(ctx, bson.M{
+	filter := bson.M{
 		"date": bson.M{
 			"$gte": startDate,
 			"$lte": endDate,
 		},
-	})
+	}
 
+	cursor, err := r.collection.Find(ctx, filter)
 	if err != nil {
 		return nil, err
 	}

@@ -1,4 +1,3 @@
-
 // Globale Variablen
 let reportsData = {};
 let charts = {};
@@ -69,6 +68,15 @@ function populateVehicleFilter(vehicles) {
     const select = document.getElementById('vehicle-filter');
     select.innerHTML = '<option value="">Alle Fahrzeuge</option>';
 
+    if (vehicles.length === 0) {
+        const option = document.createElement('option');
+        option.value = "";
+        option.textContent = "Keine Fahrzeuge verfügbar";
+        option.disabled = true;
+        select.appendChild(option);
+        return;
+    }
+
     vehicles.forEach(vehicle => {
         const option = document.createElement('option');
         option.value = vehicle.id;
@@ -81,6 +89,15 @@ function populateVehicleFilter(vehicles) {
 function populateDriverFilter(drivers) {
     const select = document.getElementById('driver-filter');
     select.innerHTML = '<option value="">Alle Fahrer</option>';
+
+    if (drivers.length === 0) {
+        const option = document.createElement('option');
+        option.value = "";
+        option.textContent = "Keine Fahrer verfügbar";
+        option.disabled = true;
+        select.appendChild(option);
+        return;
+    }
 
     drivers.forEach(driver => {
         const option = document.createElement('option');
@@ -105,8 +122,14 @@ async function loadReportsData() {
         // UI aktualisieren
         updateOverviewCards(statsData);
         updateCharts();
+        updateWarningBanner(statsData);
 
-        showNotification('Statistiken aktualisiert', 'success');
+        // Meldung anzeigen basierend auf verfügbaren Daten
+        if (!statsData.hasEnoughDataForAnalysis) {
+            showNotification('Zu wenige Daten für eine detaillierte Auswertung verfügbar', 'warning');
+        } else {
+            showNotification('Statistiken aktualisiert', 'success');
+        }
 
     } catch (error) {
         console.error('Error loading reports data:', error);
@@ -199,6 +222,28 @@ function updateOverviewCards(data) {
         '€ ' + (data.totalMaintenanceCosts || 0).toFixed(2);
 }
 
+// Warning-Banner aktualisieren
+function updateWarningBanner(data) {
+    const banner = document.getElementById('insufficient-data-banner');
+
+    if (!data.hasEnoughDataForAnalysis) {
+        banner.classList.remove('hidden');
+    } else {
+        banner.classList.add('hidden');
+    }
+}
+
+// Warning-Banner aktualisieren
+function updateWarningBanner(data) {
+    const banner = document.getElementById('insufficient-data-banner');
+
+    if (!data.hasEnoughDataForAnalysis) {
+        banner.classList.remove('hidden');
+    } else {
+        banner.classList.add('hidden');
+    }
+}
+
 // Tab wechseln
 function switchTab(targetTab) {
     // Alle Tabs verstecken
@@ -249,9 +294,10 @@ async function loadVehicleRanking() {
     try {
         const response = await fetch('/api/reports/vehicle-ranking');
         const data = await response.json();
-        renderVehicleRanking(data.vehicles || []);
+        renderVehicleRanking(data.vehicles || [], data.hasData, data.message);
     } catch (error) {
         console.error('Error loading vehicle ranking:', error);
+        renderVehicleRanking([], false, 'Fehler beim Laden der Fahrzeugdaten');
     }
 }
 
@@ -260,9 +306,10 @@ async function loadDriverRanking() {
     try {
         const response = await fetch('/api/reports/driver-ranking');
         const data = await response.json();
-        renderDriverRanking(data.drivers || []);
+        renderDriverRanking(data.drivers || [], data.hasData, data.message);
     } catch (error) {
         console.error('Error loading driver ranking:', error);
+        renderDriverRanking([], false, 'Fehler beim Laden der Fahrerdaten');
     }
 }
 
@@ -271,16 +318,35 @@ async function loadCostBreakdown() {
     try {
         const response = await fetch('/api/reports/cost-breakdown');
         const data = await response.json();
-        renderCostBreakdown(data.costBreakdown || []);
+        renderCostBreakdown(data.costBreakdown || [], data.hasData, data.message);
     } catch (error) {
         console.error('Error loading cost breakdown:', error);
+        renderCostBreakdown([], false, 'Fehler beim Laden der Kostendaten');
     }
 }
 
 // Fahrzeug-Ranking rendern
-function renderVehicleRanking(vehicles) {
+function renderVehicleRanking(vehicles, hasData, message) {
     const tbody = document.getElementById('vehicle-ranking-table-body');
     tbody.innerHTML = '';
+
+    if (!hasData || vehicles.length === 0) {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td colspan="6" class="px-6 py-8 text-center text-sm text-gray-500">
+                <div class="flex flex-col items-center">
+                    <svg class="w-12 h-12 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                        </path>
+                    </svg>
+                    <p>${message || 'Keine Fahrzeugdaten verfügbar'}</p>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(row);
+        return;
+    }
 
     vehicles.forEach((vehicle, index) => {
         const row = document.createElement('tr');
@@ -313,9 +379,27 @@ function renderVehicleRanking(vehicles) {
 }
 
 // Fahrer-Ranking rendern
-function renderDriverRanking(drivers) {
+function renderDriverRanking(drivers, hasData, message) {
     const tbody = document.getElementById('driver-ranking-table-body');
     tbody.innerHTML = '';
+
+    if (!hasData || drivers.length === 0) {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td colspan="6" class="px-6 py-8 text-center text-sm text-gray-500">
+                <div class="flex flex-col items-center">
+                    <svg class="w-12 h-12 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                              d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z">
+                        </path>
+                    </svg>
+                    <p>${message || 'Keine Fahrerdaten verfügbar'}</p>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(row);
+        return;
+    }
 
     drivers.forEach((driver, index) => {
         const statusBadge = getDriverStatusBadge(driver.status);
@@ -342,9 +426,27 @@ function renderDriverRanking(drivers) {
 }
 
 // Kostenaufstellung rendern
-function renderCostBreakdown(costData) {
+function renderCostBreakdown(costData, hasData, message) {
     const tbody = document.getElementById('cost-breakdown-table-body');
     tbody.innerHTML = '';
+
+    if (!hasData || costData.length === 0) {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td colspan="5" class="px-6 py-8 text-center text-sm text-gray-500">
+                <div class="flex flex-col items-center">
+                    <svg class="w-12 h-12 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                              d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                        </path>
+                    </svg>
+                    <p>${message || 'Keine Kostendaten verfügbar'}</p>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(row);
+        return;
+    }
 
     costData.forEach(item => {
         const changeClass = item.change > 0 ? 'text-red-600' :
@@ -376,6 +478,64 @@ function renderCostBreakdown(costData) {
 
 // Charts aktualisieren
 function updateCharts() {
+    // Prüfen ob genügend Daten vorhanden sind
+    if (!reportsData.hasEnoughDataForAnalysis) {
+        createEmptyCharts();
+    } else {
+        createDataCharts();
+    }
+}
+
+// Leere Charts mit Hinweismeldung erstellen
+function createEmptyCharts() {
+    createEmptyChart('vehicleStatusChart', 'Zu wenige Daten verfügbar');
+    createEmptyChart('vehicleKilometersChart', 'Zu wenige Daten verfügbar');
+    createEmptyChart('monthlyCostsChart', 'Zu wenige Daten verfügbar');
+    createEmptyChart('fuelConsumptionChart', 'Zu wenige Daten verfügbar');
+    createEmptyChart('vehicleUtilizationChart', 'Zu wenige Daten verfügbar');
+    createEmptyChart('vehicleMaintenanceChart', 'Zu wenige Daten verfügbar');
+    createEmptyChart('driverKilometersChart', 'Zu wenige Daten verfügbar');
+    createEmptyChart('driverStatusChart', 'Zu wenige Daten verfügbar');
+    createEmptyChart('costDistributionChart', 'Zu wenige Daten verfügbar');
+    createEmptyChart('costTrendsChart', 'Zu wenige Daten verfügbar');
+}
+
+// Leeres Chart mit Meldung erstellen
+function createEmptyChart(canvasId, message) {
+    const ctx = document.getElementById(canvasId);
+    if (!ctx) return;
+
+    if (charts[canvasId]) {
+        charts[canvasId].destroy();
+    }
+
+    charts[canvasId] = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: [message],
+            datasets: [{
+                data: [1],
+                backgroundColor: ['#E5E7EB'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    enabled: false
+                }
+            }
+        }
+    });
+}
+
+// Charts mit echten Daten erstellen
+function createDataCharts() {
     createVehicleStatusChart();
     createVehicleKilometersChart();
     createMonthlyCostsChart();
@@ -552,7 +712,8 @@ function showNotification(message, type = 'info') {
     notification.className = `fixed top-4 right-4 px-6 py-3 rounded-md shadow-lg z-50 ${
         type === 'success' ? 'bg-green-500 text-white' :
             type === 'error' ? 'bg-red-500 text-white' :
-                'bg-blue-500 text-white'
+                type === 'warning' ? 'bg-yellow-500 text-white' :
+                    'bg-blue-500 text-white'
     }`;
     notification.textContent = message;
     document.body.appendChild(notification);

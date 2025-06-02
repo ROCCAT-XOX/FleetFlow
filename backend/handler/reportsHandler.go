@@ -98,7 +98,7 @@ func (h *ReportsHandler) GetReportsStats(c *gin.Context) {
 		return
 	}
 
-	// Tankkosten laden
+	// Tankkosten laden (FindByDateRange existiert bereits)
 	fuelCosts, err := h.fuelCostRepo.FindByDateRange(startDate, endDate)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Fehler beim Laden der Tankkosten"})
@@ -122,6 +122,14 @@ func (h *ReportsHandler) GetReportsStats(c *gin.Context) {
 	// Statistiken berechnen
 	stats := h.calculateStats(vehicles, drivers, fuelCosts, maintenanceEntries, usageEntries, startDate, endDate, vehicleID, driverID)
 
+	// Zusätzliche Flags für leere Datensätze
+	stats["hasVehicles"] = len(vehicles) > 0
+	stats["hasDrivers"] = len(drivers) > 0
+	stats["hasFuelCosts"] = len(fuelCosts) > 0
+	stats["hasMaintenanceData"] = len(maintenanceEntries) > 0
+	stats["hasUsageData"] = len(usageEntries) > 0
+	stats["hasEnoughDataForAnalysis"] = len(vehicles) > 0 && (len(usageEntries) > 0 || len(fuelCosts) > 0)
+
 	c.JSON(http.StatusOK, stats)
 }
 
@@ -133,6 +141,17 @@ func (h *ReportsHandler) GetVehicleRanking(c *gin.Context) {
 		return
 	}
 
+	// Prüfen ob genügend Daten vorhanden sind
+	if len(vehicles) == 0 {
+		c.JSON(http.StatusOK, gin.H{
+			"vehicles": []VehicleStats{},
+			"hasData":  false,
+			"message":  "Keine Fahrzeuge verfügbar",
+		})
+		return
+	}
+
+	// Alle Tankkosten laden (nicht zeitgefiltert für Ranking)
 	fuelCosts, err := h.fuelCostRepo.FindAll()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Fehler beim Laden der Tankkosten"})
@@ -163,7 +182,18 @@ func (h *ReportsHandler) GetVehicleRanking(c *gin.Context) {
 		return vehicleStats[i].CostPerKm < vehicleStats[j].CostPerKm
 	})
 
-	c.JSON(http.StatusOK, gin.H{"vehicles": vehicleStats})
+	hasEnoughData := len(fuelCosts) > 0 || len(usageEntries) > 0
+
+	var message string
+	if !hasEnoughData {
+		message = "Zu wenige Daten für eine detaillierte Auswertung"
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"vehicles": vehicleStats,
+		"hasData":  hasEnoughData,
+		"message":  message,
+	})
 }
 
 // GetDriverRanking liefert das Fahrer-Ranking
@@ -171,6 +201,16 @@ func (h *ReportsHandler) GetDriverRanking(c *gin.Context) {
 	drivers, err := h.driverRepo.FindAll()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Fehler beim Laden der Fahrer"})
+		return
+	}
+
+	// Prüfen ob genügend Daten vorhanden sind
+	if len(drivers) == 0 {
+		c.JSON(http.StatusOK, gin.H{
+			"drivers": []DriverStats{},
+			"hasData": false,
+			"message": "Keine Fahrer verfügbar",
+		})
 		return
 	}
 
@@ -192,7 +232,18 @@ func (h *ReportsHandler) GetDriverRanking(c *gin.Context) {
 		return driverStats[i].TotalKilometers > driverStats[j].TotalKilometers
 	})
 
-	c.JSON(http.StatusOK, gin.H{"drivers": driverStats})
+	hasEnoughData := len(usageEntries) > 0
+
+	var message string
+	if !hasEnoughData {
+		message = "Zu wenige Daten für eine detaillierte Auswertung"
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"drivers": driverStats,
+		"hasData": hasEnoughData,
+		"message": message,
+	})
 }
 
 // GetCostBreakdown liefert die Kostenaufstellung
@@ -219,6 +270,9 @@ func (h *ReportsHandler) GetCostBreakdown(c *gin.Context) {
 	thisMonthMaintenance := h.getMaintenanceCostsByPeriod(thisMonthStart, thisMonthEnd)
 	lastMonthMaintenance := h.getMaintenanceCostsByPeriod(lastMonthStart, lastMonthEnd)
 	yearMaintenance := h.getMaintenanceCostsByPeriod(yearStart, now)
+
+	// Prüfen ob genügend Daten vorhanden sind
+	hasData := thisMonthFuel > 0 || lastMonthFuel > 0 || thisMonthMaintenance > 0 || lastMonthMaintenance > 0
 
 	// Änderungen berechnen
 	fuelChange := 0.0
@@ -255,7 +309,16 @@ func (h *ReportsHandler) GetCostBreakdown(c *gin.Context) {
 		},
 	}
 
-	c.JSON(http.StatusOK, gin.H{"costBreakdown": costBreakdown})
+	var message string
+	if !hasData {
+		message = "Keine Kostendaten verfügbar"
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"costBreakdown": costBreakdown,
+		"hasData":       hasData,
+		"message":       message,
+	})
 }
 
 // Hilfsfunktionen
@@ -385,6 +448,7 @@ func (h *ReportsHandler) calculateDriverStats(driver *model.Driver, usage []*mod
 }
 
 func (h *ReportsHandler) getFuelCostsByPeriod(start, end time.Time) float64 {
+	// FindByDateRange existiert bereits
 	fuelCosts, err := h.fuelCostRepo.FindByDateRange(start, end)
 	if err != nil {
 		return 0.0

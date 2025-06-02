@@ -48,6 +48,18 @@ func (r *VehicleRepository) FindAllWithLimit(limit int) ([]*model.Vehicle, error
 	return vehicles, nil
 }
 
+// Zusätzliche Methode um zu prüfen ob Fahrzeuge existieren
+func (r *VehicleRepository) HasAnyVehicles() (bool, error) {
+	ctx, cancel := r.getContext()
+	defer cancel()
+
+	count, err := r.collection.CountDocuments(ctx, bson.M{})
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
 // Add these methods to the DriverRepository
 
 func (r *DriverRepository) FindAllWithLimit(limit int) ([]*model.Driver, error) {
@@ -76,6 +88,18 @@ func (r *DriverRepository) FindAllWithLimit(limit int) ([]*model.Driver, error) 
 	}
 
 	return drivers, nil
+}
+
+// Zusätzliche Methode um zu prüfen ob Fahrer existieren
+func (r *DriverRepository) HasAnyDrivers() (bool, error) {
+	ctx, cancel := r.getContext()
+	defer cancel()
+
+	count, err := r.collection.CountDocuments(ctx, bson.M{})
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
 }
 
 // Add these methods to the MaintenanceRepository
@@ -145,6 +169,18 @@ func (r *MaintenanceRepository) FindRecentWithLimit(limit int) ([]*model.Mainten
 	return maintenanceEntries, nil
 }
 
+// Zusätzliche Methode um zu prüfen ob Wartungseinträge existieren
+func (r *MaintenanceRepository) HasAnyMaintenance() (bool, error) {
+	ctx, cancel := r.getContext()
+	defer cancel()
+
+	count, err := r.collection.CountDocuments(ctx, bson.M{})
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
 // Add these methods to the VehicleUsageRepository
 
 func (r *VehicleUsageRepository) FindRecentWithLimit(limit int) ([]*model.VehicleUsage, error) {
@@ -174,6 +210,29 @@ func (r *VehicleUsageRepository) FindRecentWithLimit(limit int) ([]*model.Vehicl
 	}
 
 	return usageEntries, nil
+}
+
+// Zusätzliche Methode um zu prüfen ob Nutzungseinträge existieren
+func (r *VehicleUsageRepository) HasAnyUsage() (bool, error) {
+	ctx, cancel := r.getContext()
+	defer cancel()
+
+	count, err := r.collection.CountDocuments(ctx, bson.M{})
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
+// Methode um aktive Nutzungen zu zählen
+func (r *VehicleUsageRepository) CountActiveUsage() (int64, error) {
+	ctx, cancel := r.getContext()
+	defer cancel()
+
+	count, err := r.collection.CountDocuments(ctx, bson.M{
+		"status": model.UsageStatusActive,
+	})
+	return count, err
 }
 
 // Add to existing repositories a helper method for context creation
