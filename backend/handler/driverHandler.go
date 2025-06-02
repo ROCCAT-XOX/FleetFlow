@@ -44,6 +44,26 @@ type AssignVehicleRequest struct {
 	VehicleID string `json:"vehicleId"`
 }
 
+// getUserIDFromContext extrahiert die User-ID aus dem Gin-Context
+func getUserIDFromContext(c *gin.Context) primitive.ObjectID {
+	userID, exists := c.Get("userId")
+	if !exists {
+		return primitive.ObjectID{} // Leere ObjectID falls nicht vorhanden
+	}
+
+	// Versuche verschiedene Typen
+	switch v := userID.(type) {
+	case string:
+		if objID, err := primitive.ObjectIDFromHex(v); err == nil {
+			return objID
+		}
+	case primitive.ObjectID:
+		return v
+	}
+
+	return primitive.ObjectID{} // Fallback
+}
+
 // GetDrivers behandelt die Anfrage, alle Fahrer abzurufen
 func (h *DriverHandler) GetDrivers(c *gin.Context) {
 	statusFilter := c.Query("status")
@@ -128,6 +148,9 @@ func (h *DriverHandler) CreateDriver(c *gin.Context) {
 		return
 	}
 
+	// User-ID aus Context extrahieren
+	assignedByUserID := getUserIDFromContext(c)
+
 	// Prüfen, ob ein Fahrer mit dieser E-Mail-Adresse bereits existiert
 	existingDriver, _ := h.driverRepo.FindByEmail(req.Email)
 	if existingDriver != nil {
@@ -160,7 +183,7 @@ func (h *DriverHandler) CreateDriver(c *gin.Context) {
 
 	// SAUBERE LÖSUNG: AssignmentService für Fahrzeugzuweisung verwenden
 	if req.AssignedVehicleID != "" {
-		if err := h.assignmentService.AssignVehicleToDriver(driver.ID.Hex(), req.AssignedVehicleID); err != nil {
+		if err := h.assignmentService.AssignVehicleToDriver(driver.ID.Hex(), req.AssignedVehicleID, assignedByUserID); err != nil {
 			// Bei Fehler den Fahrer wieder löschen (Rollback)
 			h.driverRepo.Delete(driver.ID.Hex())
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -174,6 +197,9 @@ func (h *DriverHandler) CreateDriver(c *gin.Context) {
 // UpdateDriver behandelt die Anfrage, einen Fahrer zu aktualisieren
 func (h *DriverHandler) UpdateDriver(c *gin.Context) {
 	id := c.Param("id")
+
+	// User-ID aus Context extrahieren
+	assignedByUserID := getUserIDFromContext(c)
 
 	// Fahrer aus der Datenbank abrufen
 	driver, err := h.driverRepo.FindByID(id)
@@ -222,7 +248,7 @@ func (h *DriverHandler) UpdateDriver(c *gin.Context) {
 	}
 
 	// SAUBERE LÖSUNG: AssignmentService für Fahrzeugzuweisung verwenden
-	if err := h.assignmentService.AssignVehicleToDriver(id, req.AssignedVehicleID); err != nil {
+	if err := h.assignmentService.AssignVehicleToDriver(id, req.AssignedVehicleID, assignedByUserID); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -243,6 +269,9 @@ func (h *DriverHandler) UpdateDriver(c *gin.Context) {
 func (h *DriverHandler) DeleteDriver(c *gin.Context) {
 	id := c.Param("id")
 
+	// User-ID aus Context extrahieren
+	assignedByUserID := getUserIDFromContext(c)
+
 	// Prüfen, ob der Fahrer existiert
 	driver, err := h.driverRepo.FindByID(id)
 	if err != nil {
@@ -252,13 +281,9 @@ func (h *DriverHandler) DeleteDriver(c *gin.Context) {
 
 	// Wenn dem Fahrer ein Fahrzeug zugewiesen ist, die Zuweisung aufheben
 	if !driver.AssignedVehicleID.IsZero() {
-		vehicle, err := h.vehicleRepo.FindByID(driver.AssignedVehicleID.Hex())
-		if err == nil && vehicle.CurrentDriverID == driver.ID {
-			vehicle.CurrentDriverID = primitive.ObjectID{}
-			if vehicle.Status == model.VehicleStatusInUse {
-				vehicle.Status = model.VehicleStatusAvailable
-			}
-			h.vehicleRepo.Update(vehicle)
+		// Verwende den AssignmentService für konsistente Historie
+		if err := h.assignmentService.UnassignVehicleFromDriver(id, assignedByUserID); err != nil {
+			fmt.Printf("Warning: Could not properly unassign vehicle: %v\n", err)
 		}
 	}
 
@@ -275,6 +300,9 @@ func (h *DriverHandler) DeleteDriver(c *gin.Context) {
 func (h *DriverHandler) AssignVehicle(c *gin.Context) {
 	driverID := c.Param("id")
 
+	// User-ID aus Context extrahieren
+	assignedByUserID := getUserIDFromContext(c)
+
 	var req AssignVehicleRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -284,14 +312,15 @@ func (h *DriverHandler) AssignVehicle(c *gin.Context) {
 	fmt.Printf("=== ASSIGN VEHICLE API CALL ===\n")
 	fmt.Printf("DriverID: %s\n", driverID)
 	fmt.Printf("VehicleID: '%s' (length: %d)\n", req.VehicleID, len(req.VehicleID))
+	fmt.Printf("AssignedBy: %s\n", assignedByUserID.Hex())
 	fmt.Printf("Is empty: %v\n", req.VehicleID == "")
 
 	// Debug: Aktuelle Zuweisungen vor der Änderung
 	fmt.Printf("BEFORE assignment:\n")
 	h.assignmentService.DebugAllAssignments()
 
-	// Service für die Zuweisung verwenden
-	if err := h.assignmentService.AssignVehicleToDriver(driverID, req.VehicleID); err != nil {
+	// Service für die Zuweisung verwenden (mit User-ID)
+	if err := h.assignmentService.AssignVehicleToDriver(driverID, req.VehicleID, assignedByUserID); err != nil {
 		fmt.Printf("ERROR in assignment: %v\n", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -338,9 +367,64 @@ func (h *DriverHandler) AssignVehicle(c *gin.Context) {
 	})
 }
 
+// GetDriverAssignmentHistory gibt die Zuweisungshistorie für einen Fahrer zurück
+func (h *DriverHandler) GetDriverAssignmentHistory(c *gin.Context) {
+	driverID := c.Param("id")
+
+	// Prüfen, ob der Fahrer existiert
+	driver, err := h.driverRepo.FindByID(driverID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Fahrer nicht gefunden"})
+		return
+	}
+
+	// Zuweisungshistorie laden
+	assignments, err := h.assignmentService.GetAssignmentHistory(driverID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Fehler beim Laden der Zuweisungshistorie"})
+		return
+	}
+
+	// Fahrzeug- und Benutzerdetails anreichern
+	type AssignmentWithDetails struct {
+		*model.VehicleAssignment
+		VehicleName    string `json:"vehicleName,omitempty"`
+		AssignedByName string `json:"assignedByName,omitempty"`
+	}
+
+	var enrichedAssignments []AssignmentWithDetails
+	for _, assignment := range assignments {
+		awd := AssignmentWithDetails{VehicleAssignment: assignment}
+
+		// Fahrzeugdetails laden
+		if !assignment.VehicleID.IsZero() {
+			vehicle, err := h.vehicleRepo.FindByID(assignment.VehicleID.Hex())
+			if err == nil {
+				awd.VehicleName = vehicle.Brand + " " + vehicle.Model + " (" + vehicle.LicensePlate + ")"
+			}
+		}
+
+		// Benutzerdetails laden (vereinfacht - könnte erweitert werden)
+		if !assignment.AssignedBy.IsZero() {
+			// Hier könnte man einen UserRepository-Aufruf machen
+			awd.AssignedByName = "System" // Fallback
+		}
+
+		enrichedAssignments = append(enrichedAssignments, awd)
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"driver":      driver,
+		"assignments": enrichedAssignments,
+	})
+}
+
 // CleanupInconsistentAssignments bereinigt inkonsistente Fahrzeugzuweisungen
 func (h *DriverHandler) CleanupInconsistentAssignments(c *gin.Context) {
 	fmt.Printf("=== CLEANUP INCONSISTENT ASSIGNMENTS ===\n")
+
+	// User-ID aus Context extrahieren
+	assignedByUserID := getUserIDFromContext(c)
 
 	// Alle Fahrer und Fahrzeuge laden
 	drivers, err := h.driverRepo.FindAll()
@@ -370,9 +454,7 @@ func (h *DriverHandler) CleanupInconsistentAssignments(c *gin.Context) {
 				issues = append(issues, issue)
 
 				// Fahrer bereinigen
-				currentDriver.AssignedVehicleID = primitive.ObjectID{}
-				currentDriver.Status = model.DriverStatusAvailable
-				h.driverRepo.Update(currentDriver)
+				h.assignmentService.UnassignVehicleFromDriver(currentDriver.ID.Hex(), assignedByUserID)
 				fixed++
 			} else if vehicle.CurrentDriverID != currentDriver.ID {
 				// Fahrzeug zeigt auf anderen/keinen Fahrer
@@ -381,12 +463,10 @@ func (h *DriverHandler) CleanupInconsistentAssignments(c *gin.Context) {
 				issues = append(issues, issue)
 
 				// Beide Seiten bereinigen
-				currentDriver.AssignedVehicleID = primitive.ObjectID{}
-				currentDriver.Status = model.DriverStatusAvailable
-				vehicle.CurrentDriverID = primitive.ObjectID{}
-				vehicle.Status = model.VehicleStatusAvailable
-				h.driverRepo.Update(currentDriver)
-				h.vehicleRepo.Update(vehicle)
+				h.assignmentService.UnassignVehicleFromDriver(currentDriver.ID.Hex(), assignedByUserID)
+				if !vehicle.CurrentDriverID.IsZero() {
+					h.assignmentService.UnassignVehicleFromDriver(vehicle.CurrentDriverID.Hex(), assignedByUserID)
+				}
 				fixed++
 			}
 		}

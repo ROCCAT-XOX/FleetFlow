@@ -10,19 +10,21 @@ import (
 )
 
 type AssignmentService struct {
-	vehicleRepo *repository.VehicleRepository
-	driverRepo  *repository.DriverRepository
+	vehicleRepo           *repository.VehicleRepository
+	driverRepo            *repository.DriverRepository
+	assignmentHistoryRepo *repository.VehicleAssignmentRepository
 }
 
 func NewAssignmentService() *AssignmentService {
 	return &AssignmentService{
-		vehicleRepo: repository.NewVehicleRepository(),
-		driverRepo:  repository.NewDriverRepository(),
+		vehicleRepo:           repository.NewVehicleRepository(),
+		driverRepo:            repository.NewDriverRepository(),
+		assignmentHistoryRepo: repository.NewVehicleAssignmentRepository(),
 	}
 }
 
 // AssignVehicleToDriver weist einem Fahrer ein Fahrzeug zu oder entfernt die Zuweisung
-func (s *AssignmentService) AssignVehicleToDriver(driverID, vehicleID string) error {
+func (s *AssignmentService) AssignVehicleToDriver(driverID, vehicleID string, assignedByUserID primitive.ObjectID) error {
 	fmt.Printf("=== ASSIGN VEHICLE TO DRIVER ===\n")
 	fmt.Printf("DriverID: %s, VehicleID: '%s'\n", driverID, vehicleID)
 
@@ -35,7 +37,7 @@ func (s *AssignmentService) AssignVehicleToDriver(driverID, vehicleID string) er
 	// Leere vehicleID = Zuweisung entfernen
 	if vehicleID == "" {
 		fmt.Printf("Removing vehicle assignment for driver %s %s\n", driver.FirstName, driver.LastName)
-		return s.UnassignVehicleFromDriver(driverID)
+		return s.UnassignVehicleFromDriver(driverID, assignedByUserID)
 	}
 
 	// Fahrzeug laden
@@ -61,7 +63,7 @@ func (s *AssignmentService) AssignVehicleToDriver(driverID, vehicleID string) er
 	}
 
 	// Alte Zuweisungen komplett bereinigen für beide Seiten
-	if err := s.cleanupAllAssignments(driver.ID.Hex(), vehicleID); err != nil {
+	if err := s.cleanupAllAssignments(driver.ID.Hex(), vehicleID, assignedByUserID); err != nil {
 		return fmt.Errorf("fehler beim Bereinigen alter Zuweisungen: %v", err)
 	}
 
@@ -86,18 +88,55 @@ func (s *AssignmentService) AssignVehicleToDriver(driverID, vehicleID string) er
 		return fmt.Errorf("fehler beim Aktualisieren des Fahrerstatus: %v", err)
 	}
 
+	// NEUE FUNKTION: Zuweisungshistorie erstellen
+	assignment := &model.VehicleAssignment{
+		DriverID:   driver.ID,
+		VehicleID:  vehicleObjID,
+		Type:       model.AssignmentTypeAssigned,
+		AssignedAt: time.Now(),
+		AssignedBy: assignedByUserID,
+		Notes:      fmt.Sprintf("Fahrzeug %s %s (%s) dem Fahrer %s %s zugewiesen", vehicle.Brand, vehicle.Model, vehicle.LicensePlate, driver.FirstName, driver.LastName),
+	}
+
+	if err := s.assignmentHistoryRepo.Create(assignment); err != nil {
+		fmt.Printf("Warning: Could not create assignment history: %v\n", err)
+	}
+
 	fmt.Printf("Successfully assigned vehicle %s %s to driver %s %s\n",
 		vehicle.Brand, vehicle.Model, driver.FirstName, driver.LastName)
 	return nil
 }
 
 // UnassignVehicleFromDriver entfernt die Fahrzeugzuweisung eines Fahrers komplett
-func (s *AssignmentService) UnassignVehicleFromDriver(driverID string) error {
+func (s *AssignmentService) UnassignVehicleFromDriver(driverID string, assignedByUserID primitive.ObjectID) error {
 	fmt.Printf("=== UNASSIGN VEHICLE FROM DRIVER %s ===\n", driverID)
 
 	driver, err := s.driverRepo.FindByID(driverID)
 	if err != nil {
 		return fmt.Errorf("fahrer nicht gefunden: %v", err)
+	}
+
+	// Aktuelle aktive Zuweisung in der Historie schließen
+	activeAssignment, err := s.assignmentHistoryRepo.FindActiveAssignmentByDriver(driverID)
+	if err == nil && activeAssignment != nil {
+		unassignedAt := time.Now()
+		if err := s.assignmentHistoryRepo.CloseAssignment(activeAssignment.ID, unassignedAt); err != nil {
+			fmt.Printf("Warning: Could not close assignment history: %v\n", err)
+		}
+
+		// Unassignment-Eintrag erstellen
+		unassignmentEntry := &model.VehicleAssignment{
+			DriverID:   driver.ID,
+			VehicleID:  activeAssignment.VehicleID,
+			Type:       model.AssignmentTypeUnassigned,
+			AssignedAt: unassignedAt,
+			AssignedBy: assignedByUserID,
+			Notes:      fmt.Sprintf("Fahrzeugzuweisung für Fahrer %s %s entfernt", driver.FirstName, driver.LastName),
+		}
+
+		if err := s.assignmentHistoryRepo.Create(unassignmentEntry); err != nil {
+			fmt.Printf("Warning: Could not create unassignment history: %v\n", err)
+		}
 	}
 
 	// SCHRITT 1: Alle Fahrzeuge durchsuchen und freigeben, die diesem Fahrer zugewiesen sind
@@ -115,8 +154,8 @@ func (s *AssignmentService) UnassignVehicleFromDriver(driverID string) error {
 				vehicle.Brand, vehicle.Model, vehicle.LicensePlate,
 				driver.FirstName, driver.LastName)
 
-			// Fahrzeug komplett freigeben - NULL ObjectID verwenden
-			vehicle.CurrentDriverID = primitive.NilObjectID // Verwende NilObjectID statt leere ObjectID
+			// Fahrzeug komplett freigeben
+			vehicle.CurrentDriverID = primitive.NilObjectID
 			vehicle.Status = model.VehicleStatusAvailable
 
 			if err := s.vehicleRepo.Update(vehicle); err != nil {
@@ -131,7 +170,7 @@ func (s *AssignmentService) UnassignVehicleFromDriver(driverID string) error {
 	}
 
 	// SCHRITT 2: Fahrer komplett zurücksetzen
-	driver.AssignedVehicleID = primitive.NilObjectID // Verwende NilObjectID statt leere ObjectID
+	driver.AssignedVehicleID = primitive.NilObjectID
 	driver.Status = model.DriverStatusAvailable
 	if err := s.driverRepo.Update(driver); err != nil {
 		return fmt.Errorf("fehler beim Zurücksetzen des Fahrers: %v", err)
@@ -140,37 +179,16 @@ func (s *AssignmentService) UnassignVehicleFromDriver(driverID string) error {
 	fmt.Printf("Successfully unassigned %d vehicles from driver %s %s\n",
 		vehiclesFreed, driver.FirstName, driver.LastName)
 
-	// Final verification mit Delay
-	time.Sleep(500 * time.Millisecond)
-
-	// Verificaton: Laden und prüfen
-	updatedDriver, err := s.driverRepo.FindByID(driverID)
-	if err == nil {
-		fmt.Printf("FINAL VERIFICATION - Driver %s: AssignedVehicleID=%s, IsZero=%v\n",
-			driverID, updatedDriver.AssignedVehicleID.Hex(), updatedDriver.AssignedVehicleID.IsZero())
-	}
-
-	// Verify vehicles
-	updatedVehicles, err := s.vehicleRepo.FindAll()
-	if err == nil {
-		for _, v := range updatedVehicles {
-			if v.CurrentDriverID == driverObjID {
-				fmt.Printf("WARNING: Vehicle %s %s still shows driver %s\n",
-					v.Brand, v.Model, driverID)
-			}
-		}
-	}
-
 	return nil
 }
 
 // cleanupAllAssignments bereinigt alle bestehenden Zuweisungen vor einer neuen Zuweisung
-func (s *AssignmentService) cleanupAllAssignments(driverID, newVehicleID string) error {
+func (s *AssignmentService) cleanupAllAssignments(driverID, newVehicleID string, assignedByUserID primitive.ObjectID) error {
 	fmt.Printf("=== CLEANUP ALL ASSIGNMENTS ===\n")
 	fmt.Printf("DriverID: %s, NewVehicleID: %s\n", driverID, newVehicleID)
 
 	// 1. Aktuellen Fahrer von allen Fahrzeugen entfernen
-	if err := s.UnassignVehicleFromDriver(driverID); err != nil {
+	if err := s.UnassignVehicleFromDriver(driverID, assignedByUserID); err != nil {
 		return err
 	}
 
@@ -185,7 +203,7 @@ func (s *AssignmentService) cleanupAllAssignments(driverID, newVehicleID string)
 			vehicle.Brand, vehicle.Model, vehicle.CurrentDriverID.Hex())
 
 		// Den anderen Fahrer auch bereinigen
-		if err := s.UnassignVehicleFromDriver(vehicle.CurrentDriverID.Hex()); err != nil {
+		if err := s.UnassignVehicleFromDriver(vehicle.CurrentDriverID.Hex(), assignedByUserID); err != nil {
 			fmt.Printf("WARNING: Could not free driver %s: %v\n", vehicle.CurrentDriverID.Hex(), err)
 		}
 	}
@@ -194,7 +212,17 @@ func (s *AssignmentService) cleanupAllAssignments(driverID, newVehicleID string)
 	return nil
 }
 
-// GetAssignedVehicle gibt das einem Fahrer zugewiesene Fahrzeug zurück
+// GetAssignmentHistory gibt die Zuweisungshistorie für einen Fahrer zurück
+func (s *AssignmentService) GetAssignmentHistory(driverID string) ([]*model.VehicleAssignment, error) {
+	return s.assignmentHistoryRepo.FindByDriverID(driverID)
+}
+
+// GetVehicleAssignmentHistory gibt die Zuweisungshistorie für ein Fahrzeug zurück
+func (s *AssignmentService) GetVehicleAssignmentHistory(vehicleID string) ([]*model.VehicleAssignment, error) {
+	return s.assignmentHistoryRepo.FindByVehicleID(vehicleID)
+}
+
+// Existing methods remain the same...
 func (s *AssignmentService) GetAssignedVehicle(driverID string) (*model.Vehicle, error) {
 	driverObjID, err := primitive.ObjectIDFromHex(driverID)
 	if err != nil {
@@ -212,10 +240,9 @@ func (s *AssignmentService) GetAssignedVehicle(driverID string) (*model.Vehicle,
 		}
 	}
 
-	return nil, nil // Kein Fahrzeug zugewiesen
+	return nil, nil
 }
 
-// GetAssignedDriver gibt den einem Fahrzeug zugewiesenen Fahrer zurück
 func (s *AssignmentService) GetAssignedDriver(vehicleID string) (*model.Driver, error) {
 	vehicle, err := s.vehicleRepo.FindByID(vehicleID)
 	if err != nil {
@@ -223,13 +250,12 @@ func (s *AssignmentService) GetAssignedDriver(vehicleID string) (*model.Driver, 
 	}
 
 	if vehicle.CurrentDriverID.IsZero() {
-		return nil, nil // Kein Fahrer zugewiesen
+		return nil, nil
 	}
 
 	return s.driverRepo.FindByID(vehicle.CurrentDriverID.Hex())
 }
 
-// DebugAllAssignments gibt alle aktuellen Zuweisungen aus
 func (s *AssignmentService) DebugAllAssignments() {
 	fmt.Printf("=== DEBUG ALL ASSIGNMENTS ===\n")
 
@@ -259,7 +285,6 @@ func (s *AssignmentService) DebugAllAssignments() {
 	fmt.Printf("=== END DEBUG ===\n")
 }
 
-// ValidateAllAssignments prüft die Konsistenz aller Zuweisungen
 func (s *AssignmentService) ValidateAllAssignments() []string {
 	var issues []string
 
