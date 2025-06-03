@@ -17,11 +17,11 @@
         </nav>
     </div>
 
-    <!-- Fahrzeug Header -->
-    <div class="bg-white shadow rounded-lg p-6 mb-6">
-        <div class="flex items-start justify-between gap-6">
-            <!-- Logo und Fahrzeuginfo -->
-            <div class="flex items-center gap-4 flex-1">
+    <!-- Header-Bereich: Fahrzeuginfo links, Bild rechts -->
+    <div class="flex items-start gap-6 mb-6">
+        <!-- Fahrzeug Header (Links) -->
+        <div class="bg-white shadow rounded-lg p-6 flex-1">
+            <div class="flex items-center gap-4">
                 <!-- Logo -->
                 <div class="flex-shrink-0">
                     <img id="brand-logo" class="h-12 w-auto"
@@ -46,9 +46,13 @@
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Fahrzeugbild - rechts positioniert -->
-            <div class="flex-shrink-0">
+        <!-- Fahrzeugbild (Rechts, separater Container) -->
+        <div class="flex-shrink-0">
+            <div class="bg-white shadow rounded-lg p-4">
+                <h3 class="text-sm font-medium text-gray-900 mb-3">Fahrzeugbild</h3>
+
                 <div class="relative">
                     <div id="vehicle-image-container"
                          class="w-32 h-32 rounded-lg overflow-hidden bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:border-gray-400 transition-colors shadow-sm"
@@ -80,7 +84,7 @@
                         </div>
                     </div>
 
-                    <!-- Bild-Overlay für Aktionen (wird nur bei vorhandenem Bild angezeigt) -->
+                    <!-- Bild-Overlay für Aktionen -->
                     <div id="image-overlay" class="absolute inset-0 bg-black bg-opacity-50 rounded-lg hidden items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
                         <div class="flex gap-2">
                             <button onclick="openVehicleImageUpload()"
@@ -114,11 +118,11 @@
                 <a href="?tab=fuel" class="vehicle-tab-btn py-4 px-1 border-b-2 font-medium text-sm {{ if eq .tab "fuel" }}border-blue-500 text-blue-600{{ else }}border-transparent text-gray-500 hover:text-gray-700{{ end }}">
                 Tankkosten
                 </a>
+                <a href="?tab=images" class="vehicle-tab-btn py-4 px-1 border-b-2 font-medium text-sm {{ if eq .tab "images" }}border-blue-500 text-blue-600{{ else }}border-transparent text-gray-500 hover:text-gray-700{{ end }}">
+                Bilder
+                </a>
                 <a href="?tab=documents" class="vehicle-tab-btn py-4 px-1 border-b-2 font-medium text-sm {{ if eq .tab "documents" }}border-blue-500 text-blue-600{{ else }}border-transparent text-gray-500 hover:text-gray-700{{ end }}">
-                Dokumente
-                {{if .documentCount}}
-                <span class="ml-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-indigo-600 rounded-full">{{.documentCount}}</span>
-                {{end}}
+                Unterlagen
                 </a>
                 <a href="?tab=financing" class="vehicle-tab-btn py-4 px-1 border-b-2 font-medium text-sm {{ if eq .tab "financing" }}border-blue-500 text-blue-600{{ else }}border-transparent text-gray-500 hover:text-gray-700{{ end }}">
                 Finanzierung
@@ -145,6 +149,8 @@
             {{ template "vehicle/maintenance" . }}
             {{ else if eq .tab "fuel" }}
             {{ template "vehicle/fuel_costs" . }}
+            {{ else if eq .tab "images" }}
+            {{ template "vehicle/images" . }}
             {{ else if eq .tab "documents" }}
             {{ template "vehicle/documents" . }}
             {{ else if eq .tab "registration" }}
@@ -171,37 +177,12 @@
 <script src="/static/js/vehicle-details.js"></script>
 <script src="/static/js/vehicle-documents.js"></script>
 <script src="/static/js/vehicle-image.js"></script>
+<script src="/static/js/vehicle-images.js"></script>
 
 <!-- ApexCharts für Statistiken -->
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 
 <script>
-    // Logo direkt beim Seitenladen setzen
-    document.addEventListener('DOMContentLoaded', function() {
-        const brandLogo = document.getElementById('brand-logo');
-        if (brandLogo) {
-            const brand = '{{ .vehicle.brand }}'.toLowerCase();
-            if (brand) {
-                const logoPath = `/static/assets/${brand}.svg`;
-                brandLogo.src = logoPath;
-                brandLogo.alt = '{{ .vehicle.brand }}';
-
-                brandLogo.onload = function() {
-                    brandLogo.classList.remove('hidden');
-                };
-
-                brandLogo.onerror = function() {
-                    brandLogo.src = `/static/assets/logo/${brand}.png`;
-                    brandLogo.onerror = function() {
-                        brandLogo.classList.add('hidden');
-                    };
-                };
-            }
-        }
-
-        // Fahrzeugbild laden
-        loadVehicleImage();
-    });
     // Initialisierung beim Seitenladen
     document.addEventListener('DOMContentLoaded', function() {
         console.log('Vehicle details page loaded');
@@ -227,16 +208,6 @@
                 };
             }
         }
-
-        // Fahrzeugbild laden - sicherstellen dass Funktion existiert
-        setTimeout(() => {
-            if (typeof window.loadVehicleImage === 'function') {
-                console.log('Loading vehicle image...');
-                window.loadVehicleImage();
-            } else {
-                console.warn('loadVehicleImage function not available yet');
-            }
-        }, 500);
     });
 </script>
 

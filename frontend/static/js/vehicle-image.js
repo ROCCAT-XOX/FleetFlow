@@ -11,10 +11,10 @@ document.addEventListener('DOMContentLoaded', function() {
         vehicleImageId = window.location.pathname.split('/').pop();
         console.log('Vehicle image module initialized for vehicle:', vehicleImageId);
 
-        // Kurz warten, damit alle DOM-Elemente geladen sind
+        // Fahrzeugbild-System initialisieren
         setTimeout(() => {
             initializeVehicleImage();
-        }, 200);
+        }, 100);
     }
 });
 
@@ -31,7 +31,7 @@ function initializeVehicleImage() {
     setupImageContainerHover();
 }
 
-// Fahrzeugbild laden
+// Fahrzeugbild laden - KORRIGIERT
 async function loadVehicleImage() {
     if (!vehicleImageId || isImageLoading) {
         console.log('Skipping image load:', !vehicleImageId ? 'no vehicle ID' : 'already loading');
@@ -40,7 +40,6 @@ async function loadVehicleImage() {
 
     const imageElement = document.getElementById('vehicle-image');
     const placeholder = document.getElementById('vehicle-image-placeholder');
-    const overlay = document.getElementById('image-overlay');
 
     // Prüfen ob Elemente existieren
     if (!imageElement || !placeholder) {
@@ -52,6 +51,7 @@ async function loadVehicleImage() {
     console.log('Loading vehicle image for ID:', vehicleImageId);
 
     try {
+        // KORRIGIERT: Bessere Error-Behandlung und Debugging
         const response = await fetch(`/api/vehicles/${vehicleImageId}/image`, {
             method: 'GET',
             headers: {
@@ -60,18 +60,27 @@ async function loadVehicleImage() {
         });
 
         console.log('Image API response status:', response.status);
+        console.log('Response headers:', Object.fromEntries(response.headers.entries()));
 
         if (response.ok) {
-            // Bild gefunden - Blob URL erstellen
-            const blob = await response.blob();
-            console.log('Image blob size:', blob.size, 'bytes');
+            const contentType = response.headers.get('content-type');
+            console.log('Content-Type:', contentType);
 
-            if (blob.size > 0) {
-                const imageUrl = URL.createObjectURL(blob);
-                console.log('Created image URL:', imageUrl);
-                showVehicleImage(imageUrl);
+            // Prüfen ob es wirklich ein Bild ist
+            if (contentType && contentType.startsWith('image/')) {
+                const blob = await response.blob();
+                console.log('Image blob size:', blob.size, 'bytes');
+
+                if (blob.size > 0) {
+                    const imageUrl = URL.createObjectURL(blob);
+                    console.log('Created image URL:', imageUrl);
+                    showVehicleImage(imageUrl);
+                } else {
+                    console.log('Empty blob received');
+                    showVehicleImagePlaceholder();
+                }
             } else {
-                console.log('Empty blob received');
+                console.log('Response is not an image, content-type:', contentType);
                 showVehicleImagePlaceholder();
             }
         } else if (response.status === 404) {
@@ -80,17 +89,20 @@ async function loadVehicleImage() {
             showVehicleImagePlaceholder();
         } else {
             console.warn('Unexpected response status:', response.status);
+            // Versuche trotzdem die Antwort zu lesen für Debugging
+            const text = await response.text();
+            console.log('Error response body:', text);
             showVehicleImagePlaceholder();
         }
     } catch (error) {
-        console.log('Error loading vehicle image (this is normal if no image exists):', error.message);
+        console.log('Error loading vehicle image:', error);
         showVehicleImagePlaceholder();
     } finally {
         isImageLoading = false;
     }
 }
 
-// Fahrzeugbild anzeigen
+// Fahrzeugbild anzeigen - KORRIGIERT
 function showVehicleImage(imageUrl) {
     console.log('Showing vehicle image:', imageUrl);
 
@@ -102,7 +114,7 @@ function showVehicleImage(imageUrl) {
     if (imageElement && placeholder && container) {
         // Bild laden und anzeigen
         imageElement.onload = function() {
-            console.log('Image loaded successfully');
+            console.log('Image loaded successfully, dimensions:', this.naturalWidth, 'x', this.naturalHeight);
             imageElement.classList.remove('hidden');
             placeholder.classList.add('hidden');
 
@@ -118,7 +130,7 @@ function showVehicleImage(imageUrl) {
         };
 
         imageElement.onerror = function() {
-            console.error('Failed to load image');
+            console.error('Failed to load image from URL:', imageUrl);
             showVehicleImagePlaceholder();
             // URL freigeben bei Fehler
             URL.revokeObjectURL(imageUrl);
@@ -167,7 +179,6 @@ function setupImageContainerHover() {
     if (!container || !overlay) return;
 
     container.addEventListener('mouseenter', function() {
-        // Nur wenn ein Bild vorhanden ist
         const imageElement = document.getElementById('vehicle-image');
         if (imageElement && !imageElement.classList.contains('hidden')) {
             overlay.style.opacity = '1';
@@ -190,7 +201,7 @@ function openVehicleImageUpload() {
     }
 }
 
-// Bildupload behandeln
+// Bildupload behandeln - KORRIGIERT
 async function handleVehicleImageUpload(event) {
     const file = event.target.files[0];
     if (!file) {
@@ -198,7 +209,7 @@ async function handleVehicleImageUpload(event) {
         return;
     }
 
-    console.log('Handling vehicle image upload:', file.name, 'Size:', file.size);
+    console.log('Handling vehicle image upload:', file.name, 'Size:', file.size, 'Type:', file.type);
 
     // Validierung
     if (!validateImageFile(file)) {
@@ -216,17 +227,24 @@ async function handleVehicleImageUpload(event) {
         formData.append('name', 'Fahrzeugbild');
         formData.append('notes', 'Hauptbild des Fahrzeugs');
 
-        console.log('Uploading image to API...');
+        console.log('Uploading image to API endpoint:', `/api/vehicles/${vehicleImageId}/documents`);
+
         const response = await fetch(`/api/vehicles/${vehicleImageId}/documents`, {
             method: 'POST',
             body: formData
         });
 
-        const result = await response.json();
+        let result;
+        try {
+            result = await response.json();
+        } catch (e) {
+            result = { error: 'Invalid JSON response' };
+        }
+
         console.log('Upload response:', response.status, result);
 
         if (!response.ok) {
-            throw new Error(result.error || 'Upload fehlgeschlagen');
+            throw new Error(result.error || `HTTP ${response.status}: Upload fehlgeschlagen`);
         }
 
         showImageNotification('Fahrzeugbild erfolgreich hochgeladen', 'success');
@@ -235,7 +253,7 @@ async function handleVehicleImageUpload(event) {
         setTimeout(() => {
             console.log('Reloading image after upload...');
             loadVehicleImage();
-        }, 1000);
+        }, 1500);
 
     } catch (error) {
         console.error('Image upload error:', error);
@@ -293,7 +311,7 @@ function showImageUploadProgress(show) {
     }
 }
 
-// Notification anzeigen (eigene Funktion um Konflikte zu vermeiden)
+// Notification anzeigen
 function showImageNotification(message, type = 'info') {
     console.log('Showing notification:', type, message);
 
@@ -342,7 +360,6 @@ function setupVehicleImageDragDrop() {
             const file = files[0];
             console.log('File dropped:', file.name);
             if (validateImageFile(file)) {
-                // Simuliere File-Input Event
                 const fakeEvent = {
                     target: {
                         files: [file],
@@ -355,31 +372,9 @@ function setupVehicleImageDragDrop() {
     });
 }
 
-// Keyboard-Unterstützung
-document.addEventListener('keydown', function(event) {
-    // Strg+I für Image Upload (nur auf Fahrzeugdetails-Seite)
-    if (event.ctrlKey && event.key === 'i' && window.location.pathname.includes('/vehicle-details/')) {
-        event.preventDefault();
-        openVehicleImageUpload();
-    }
-});
-
 // Globale Funktionen für HTML-Event-Handler
 window.openVehicleImageUpload = openVehicleImageUpload;
 window.handleVehicleImageUpload = handleVehicleImageUpload;
-
-// Funktion für das Template verfügbar machen
-window.loadVehicleImage = function() {
-    console.log('loadVehicleImage called from template');
-    // Kurz warten für DOM
-    setTimeout(() => {
-        if (vehicleImageId) {
-            loadVehicleImage();
-        } else {
-            console.warn('vehicleImageId not set yet');
-        }
-    }, 100);
-};
 
 // Cleanup-Funktion für Blob URLs
 window.addEventListener('beforeunload', function() {
