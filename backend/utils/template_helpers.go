@@ -98,6 +98,24 @@ func DriverStatusText(status string) string {
 	}
 }
 
+// DocumentTypeText gibt den deutschen Text für einen Dokumenttyp zurück
+func DocumentTypeText(docType string) string {
+	types := map[string]string{
+		"vehicle_registration": "Fahrzeugbrief",
+		"vehicle_license":      "Fahrzeugschein",
+		"inspection":           "HU/AU",
+		"insurance":            "Versicherung",
+		"invoice":              "Rechnung",
+		"warranty":             "Garantie",
+		"other":                "Sonstiges",
+	}
+
+	if text, ok := types[docType]; ok {
+		return text
+	}
+	return docType
+}
+
 // TemplateHelpers gibt eine Map mit Hilfsfunktionen für Templates zurück
 func TemplateHelpers() template.FuncMap {
 	return template.FuncMap{
@@ -274,5 +292,6 @@ func TemplateHelpers() template.FuncMap {
 		"not": func(a bool) bool {
 			return !a
 		},
+		"documentTypeText": DocumentTypeText,
 	}
 }

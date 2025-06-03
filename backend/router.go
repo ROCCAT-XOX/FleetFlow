@@ -1,4 +1,3 @@
-// backend/router.go
 package backend
 
 import (
@@ -167,6 +166,7 @@ func setupAuthorizedRoutes(group *gin.RouterGroup) {
 		maintenanceRepo := repository.NewMaintenanceRepository()
 		usageRepo := repository.NewVehicleUsageRepository()
 		fuelCostRepo := repository.NewFuelCostRepository()
+		documentRepo := repository.NewVehicleDocumentRepository() // NEU
 
 		// Fahrzeugdaten laden
 		vehicle, err := vehicleRepo.FindByID(vehicleID)
@@ -249,6 +249,10 @@ func setupAuthorizedRoutes(group *gin.RouterGroup) {
 		// Tankkosten laden
 		fuelCosts, _ := fuelCostRepo.FindByVehicle(vehicleID)
 
+		// Dokumente laden
+		documents, _ := documentRepo.FindByVehicle(vehicleID)
+		documentCount, _ := documentRepo.CountByVehicle(vehicleID)
+
 		// Tab aus Query Parameter
 		tab := c.DefaultQuery("tab", "basic")
 
@@ -326,6 +330,8 @@ func setupAuthorizedRoutes(group *gin.RouterGroup) {
 			"usageHistory":       enrichedUsageHistory,
 			"activeUsage":        activeUsage,
 			"fuelCosts":          fuelCosts,
+			"documents":          documents,
+			"documentCount":      documentCount,
 		}
 
 		c.HTML(http.StatusOK, "vehicle/details.html", templateData)
@@ -407,6 +413,7 @@ func setupAPIRoutes(api *gin.RouterGroup) {
 	profileHandler := handler.NewProfileHandler()
 	dashboardHandler := handler.NewDashboardHandler()
 	reportsHandler := handler.NewReportsHandler()
+	documentHandler := handler.NewVehicleDocumentHandler() // NEU
 
 	// Benutzer-API
 	users := api.Group("/users")
@@ -429,7 +436,7 @@ func setupAPIRoutes(api *gin.RouterGroup) {
 		profile.GET("/stats", profileHandler.GetProfileStats)
 	}
 
-	// Fahrzeug-API
+	// Fahrzeug-API (KORRIGIERT)
 	vehicles := api.Group("/vehicles")
 	{
 		vehicles.GET("", vehicleHandler.GetVehicles)
@@ -438,6 +445,18 @@ func setupAPIRoutes(api *gin.RouterGroup) {
 		vehicles.PUT("/:id", vehicleHandler.UpdateVehicle)
 		vehicles.PUT("/:id/basic-info", vehicleHandler.UpdateBasicInfo)
 		vehicles.DELETE("/:id", middleware.AdminMiddleware(), vehicleHandler.DeleteVehicle)
+
+		// Dokumente-Routen mit konsistenter Wildcard-Benennung
+		vehicles.POST("/:id/documents", documentHandler.UploadDocument)
+		vehicles.GET("/:id/documents", documentHandler.GetVehicleDocuments)
+	}
+
+	// Dokumente-API (separate Gruppe für dokumenten-spezifische Operationen)
+	documents := api.Group("/documents")
+	{
+		documents.GET("/:id/download", documentHandler.DownloadDocument)
+		documents.PUT("/:id", documentHandler.UpdateDocument)
+		documents.DELETE("/:id", documentHandler.DeleteDocument)
 	}
 
 	// Fahrer-API
@@ -448,9 +467,7 @@ func setupAPIRoutes(api *gin.RouterGroup) {
 		drivers.POST("", driverHandler.CreateDriver)
 		drivers.PUT("/:id", driverHandler.UpdateDriver)
 		drivers.DELETE("/:id", middleware.AdminMiddleware(), driverHandler.DeleteDriver)
-		// Neue Route für Fahrzeugzuordnung
 		drivers.PUT("/:id/assign-vehicle", driverHandler.AssignVehicle)
-		// In setupAPIRoutes hinzufügen:
 		drivers.POST("/cleanup-assignments", middleware.AdminMiddleware(), driverHandler.CleanupInconsistentAssignments)
 	}
 
@@ -498,14 +515,14 @@ func setupAPIRoutes(api *gin.RouterGroup) {
 		activities.GET("/recent", dashboardHandler.GetRecentActivities)
 	}
 
-	// Dashboard-API (reduzierte Routen)
+	// Dashboard-API
 	dashboard := api.Group("/dashboard")
 	{
 		dashboard.GET("/stats", dashboardHandler.GetDashboardStats)
 		dashboard.GET("/fuel-costs-by-vehicle", dashboardHandler.GetFuelCostsByVehicle)
-		// Entfernt: GetVehicleUsageStats da nicht mehr benötigt
 	}
 
+	// PeopleFlow Integration
 	peopleflow := api.Group("/integrations/peopleflow")
 	{
 		peopleflowHandler := handler.NewPeopleFlowHandler()
@@ -521,6 +538,7 @@ func setupAPIRoutes(api *gin.RouterGroup) {
 		peopleflow.PUT("/auto-sync", middleware.AdminMiddleware(), peopleflowHandler.UpdatePeopleFlowAutoSync)
 	}
 
+	// Reports API
 	reports := api.Group("/reports")
 	{
 		reports.GET("/stats", reportsHandler.GetReportsStats)

@@ -48,11 +48,11 @@ VOLUME ["/app/uploads"]
 ENV GIN_MODE=release \
     TZ=Europe/Berlin \
     PORT=8080 \
-    MONGODB_URI=mongodb://mongodb:27017/FleetFlow
+    MONGODB_URI=mongodb://mongodb:27017/FleetDrive
 
 
 # Port freigeben
 EXPOSE 8080
 
 # Startkommando
-CMD ["/app/FleetFlow"]
+CMD ["/app/FleetDrive"]

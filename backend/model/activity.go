@@ -23,6 +23,10 @@ const (
 	ActivityTypeMaintenancePerformed ActivityType = "maintenance-performed"
 	ActivityTypeFuelCostAdded        ActivityType = "fuel-cost-added"
 	// Weitere Aktivitätstypen nach Bedarf
+	// Dokument-Aktivitäten
+	ActivityTypeDocumentUploaded ActivityType = "document_uploaded"
+	ActivityTypeDocumentUpdated  ActivityType = "document_updated"
+	ActivityTypeDocumentDeleted  ActivityType = "document_deleted"
 )
 
 // Activity repräsentiert eine Aktivität im System
