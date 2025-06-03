@@ -449,6 +449,9 @@ func setupAPIRoutes(api *gin.RouterGroup) {
 		// Dokumente-Routen mit konsistenter Wildcard-Benennung
 		vehicles.POST("/:id/documents", documentHandler.UploadDocument)
 		vehicles.GET("/:id/documents", documentHandler.GetVehicleDocuments)
+
+		// Fahrzeugbild-Route
+		vehicles.GET("/:id/image", documentHandler.GetVehicleMainImage)
 	}
 
 	// Dokumente-API (separate Gruppe für dokumenten-spezifische Operationen)

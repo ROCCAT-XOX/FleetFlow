@@ -16,6 +16,7 @@ const (
 	DocumentTypeInsurance           DocumentType = "insurance"            // Versicherungsunterlagen
 	DocumentTypeInvoice             DocumentType = "invoice"              // Rechnungen
 	DocumentTypeWarranty            DocumentType = "warranty"             // Garantieunterlagen
+	DocumentTypeVehicleImage        DocumentType = "vehicle_image"        // Fahrzeugbilder
 	DocumentTypeOther               DocumentType = "other"                // Sonstige
 )
 
@@ -46,6 +47,7 @@ func DocumentTypeText(docType DocumentType) string {
 		DocumentTypeInsurance:           "Versicherung",
 		DocumentTypeInvoice:             "Rechnung",
 		DocumentTypeWarranty:            "Garantie",
+		DocumentTypeVehicleImage:        "Fahrzeugbild",
 		DocumentTypeOther:               "Sonstiges",
 	}
 

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -63,31 +64,57 @@ func (h *VehicleDocumentHandler) UploadDocument(c *gin.Context) {
 		return
 	}
 
-	// Erlaubte Dateitypen prüfen
-	allowedTypes := map[string]bool{
-		"application/pdf":    true,
-		"image/jpeg":         true,
-		"image/jpg":          true,
-		"image/png":          true,
-		"image/gif":          true,
-		"application/msword": true,
-		"application/vnd.openxmlformats-officedocument.wordprocessingml.document": true,
+	// Form-Parameter extrahieren
+	docType := model.DocumentType(c.PostForm("type"))
+
+	// Erlaubte Dateitypen je nach Dokumenttyp
+	var allowedTypes map[string]bool
+	if docType == model.DocumentTypeVehicleImage {
+		// Nur Bildformate für Fahrzeugbilder
+		allowedTypes = map[string]bool{
+			"image/jpeg": true,
+			"image/jpg":  true,
+			"image/png":  true,
+			"image/gif":  true,
+			"image/webp": true,
+		}
+	} else {
+		// Standard-Dokumenttypen
+		allowedTypes = map[string]bool{
+			"application/pdf":    true,
+			"image/jpeg":         true,
+			"image/jpg":          true,
+			"image/png":          true,
+			"image/gif":          true,
+			"application/msword": true,
+			"application/vnd.openxmlformats-officedocument.wordprocessingml.document": true,
+		}
 	}
 
 	contentType := header.Header.Get("Content-Type")
 	if contentType == "" {
 		// Content-Type aus Dateiendung ermitteln
-		if strings.HasSuffix(strings.ToLower(header.Filename), ".pdf") {
+		extension := strings.ToLower(filepath.Ext(header.Filename))
+		switch extension {
+		case ".pdf":
 			contentType = "application/pdf"
-		} else if strings.HasSuffix(strings.ToLower(header.Filename), ".jpg") || strings.HasSuffix(strings.ToLower(header.Filename), ".jpeg") {
+		case ".jpg", ".jpeg":
 			contentType = "image/jpeg"
-		} else if strings.HasSuffix(strings.ToLower(header.Filename), ".png") {
+		case ".png":
 			contentType = "image/png"
+		case ".gif":
+			contentType = "image/gif"
+		case ".webp":
+			contentType = "image/webp"
 		}
 	}
 
 	if !allowedTypes[contentType] {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Dateityp nicht erlaubt"})
+		if docType == model.DocumentTypeVehicleImage {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Nur Bildformate sind für Fahrzeugbilder erlaubt"})
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Dateityp nicht erlaubt"})
+		}
 		return
 	}
 
@@ -98,8 +125,6 @@ func (h *VehicleDocumentHandler) UploadDocument(c *gin.Context) {
 		return
 	}
 
-	// Form-Parameter extrahieren
-	docType := model.DocumentType(c.PostForm("type"))
 	name := c.PostForm("name")
 	notes := c.PostForm("notes")
 	expiryDateStr := c.PostForm("expiryDate")
@@ -109,12 +134,16 @@ func (h *VehicleDocumentHandler) UploadDocument(c *gin.Context) {
 		docType = model.DocumentTypeOther
 	}
 	if name == "" {
-		name = header.Filename
+		if docType == model.DocumentTypeVehicleImage {
+			name = "Fahrzeugbild"
+		} else {
+			name = header.Filename
+		}
 	}
 
-	// Ablaufdatum parsen
+	// Ablaufdatum parsen (nur für Nicht-Bilder)
 	var expiryDate *time.Time
-	if expiryDateStr != "" {
+	if docType != model.DocumentTypeVehicleImage && expiryDateStr != "" {
 		parsed, err := time.Parse("2006-01-02", expiryDateStr)
 		if err == nil {
 			expiryDate = &parsed
@@ -191,7 +220,7 @@ func (h *VehicleDocumentHandler) UploadDocument(c *gin.Context) {
 
 // GetVehicleDocuments gibt alle Dokumente für ein Fahrzeug zurück
 func (h *VehicleDocumentHandler) GetVehicleDocuments(c *gin.Context) {
-	vehicleID := c.Param("id") // GEÄNDERT von "vehicleId" zu "id"
+	vehicleID := c.Param("id")
 
 	documents, err := h.documentRepo.FindByVehicle(vehicleID)
 	if err != nil {
@@ -338,4 +367,32 @@ func (h *VehicleDocumentHandler) DeleteDocument(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Dokument erfolgreich gelöscht"})
+}
+
+// GetVehicleMainImage gibt das Hauptbild eines Fahrzeugs zurück
+func (h *VehicleDocumentHandler) GetVehicleMainImage(c *gin.Context) {
+	vehicleID := c.Param("id")
+
+	// Neuestes Fahrzeugbild finden
+	images, err := h.documentRepo.FindByVehicleAndType(vehicleID, model.DocumentTypeVehicleImage)
+	if err != nil || len(images) == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Kein Fahrzeugbild gefunden"})
+		return
+	}
+
+	// Das neueste Bild verwenden
+	image := images[0]
+
+	// Content-Type prüfen (nur Bilder erlauben)
+	if !strings.HasPrefix(image.ContentType, "image/") {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Datei ist kein Bild"})
+		return
+	}
+
+	// Cache-Header setzen
+	c.Header("Cache-Control", "public, max-age=3600")
+	c.Header("Content-Type", image.ContentType)
+
+	// Bild-Inhalt senden
+	c.Data(http.StatusOK, image.ContentType, image.Data)
 }
