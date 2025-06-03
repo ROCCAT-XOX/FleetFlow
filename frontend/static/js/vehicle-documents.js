@@ -1,4 +1,4 @@
-// frontend/static/js/vehicle-documents.js
+// frontend/static/js/vehicle-documents.js - KORRIGIERTE VERSION
 
 // Globale Variablen
 let currentVehicleId = null;
@@ -9,14 +9,31 @@ document.addEventListener('DOMContentLoaded', function() {
     // Nur initialisieren wenn wir auf der Fahrzeugdetails-Seite sind
     if (window.location.pathname.includes('/vehicle-details/')) {
         currentVehicleId = window.location.pathname.split('/').pop();
-        initializeDocuments();
+
+        // Prüfen ob documents-Tab aktiv ist (DOM-Elemente existieren)
+        const documentsTableBody = document.getElementById('documents-table-body');
+        if (documentsTableBody) {
+            initializeDocuments();
+        } else {
+            console.log('Documents tab nicht aktiv - keine Initialisierung');
+        }
     }
 });
 
 // Dokumentenverwaltung initialisieren
 function initializeDocuments() {
+    if (!isDocumentsTabAvailable()) {
+        console.log('Documents tab Elemente nicht verfügbar');
+        return;
+    }
+
     setupEventListeners();
     loadDocuments();
+}
+
+// Prüfen ob Documents-Tab verfügbar ist
+function isDocumentsTabAvailable() {
+    return document.getElementById('documents-table-body') !== null;
 }
 
 // Event-Listener einrichten
@@ -104,8 +121,10 @@ function setupDragAndDrop(dropZone) {
 
         if (files.length > 0) {
             const fileInput = document.getElementById('document-file');
-            fileInput.files = files;
-            handleFileSelect({ target: fileInput });
+            if (fileInput) {
+                fileInput.files = files;
+                handleFileSelect({ target: fileInput });
+            }
         }
     }
 }
@@ -120,13 +139,15 @@ function handleFileSelect(event) {
     const fileName = document.getElementById('selected-file-name');
     const fileSize = document.getElementById('selected-file-size');
 
-    fileName.textContent = file.name;
-    fileSize.textContent = formatFileSize(file.size);
-    fileInfo.classList.remove('hidden');
+    if (fileName && fileSize && fileInfo) {
+        fileName.textContent = file.name;
+        fileSize.textContent = formatFileSize(file.size);
+        fileInfo.classList.remove('hidden');
+    }
 
     // Automatisch Dokumentname setzen wenn leer
     const nameInput = document.getElementById('document-name');
-    if (!nameInput.value) {
+    if (nameInput && !nameInput.value) {
         nameInput.value = file.name.replace(/\.[^/.]+$/, ""); // Dateierweiterung entfernen
     }
 
@@ -193,7 +214,7 @@ function validateFile(file) {
 // Dokumentname-Vorschlag basierend auf Typ
 function updateDocumentNameSuggestion(type) {
     const nameInput = document.getElementById('document-name');
-    if (nameInput.value) return; // Nur wenn noch kein Name eingegeben
+    if (!nameInput || nameInput.value) return; // Nur wenn noch kein Name eingegeben
 
     const suggestions = {
         'vehicle_registration': 'Fahrzeugbrief',
@@ -216,9 +237,17 @@ function openUploadDocumentModal(vehicleId) {
     const modal = document.getElementById('upload-document-modal');
     const form = document.getElementById('upload-document-form');
 
+    if (!modal || !form) {
+        console.error('Upload modal Elemente nicht gefunden');
+        return;
+    }
+
     // Form zurücksetzen
     form.reset();
-    document.getElementById('selected-file-info').classList.add('hidden');
+    const selectedFileInfo = document.getElementById('selected-file-info');
+    if (selectedFileInfo) {
+        selectedFileInfo.classList.add('hidden');
+    }
 
     modal.classList.remove('hidden');
 }
@@ -226,24 +255,34 @@ function openUploadDocumentModal(vehicleId) {
 // Upload Modal schließen
 function closeUploadModal() {
     const modal = document.getElementById('upload-document-modal');
-    modal.classList.add('hidden');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
     resetUploadForm();
 }
 
 // Upload Form zurücksetzen
 function resetUploadForm() {
     const form = document.getElementById('upload-document-form');
-    form.reset();
-    document.getElementById('selected-file-info').classList.add('hidden');
+    if (form) {
+        form.reset();
+    }
+
+    const selectedFileInfo = document.getElementById('selected-file-info');
+    if (selectedFileInfo) {
+        selectedFileInfo.classList.add('hidden');
+    }
 
     // Button zurücksetzen
     const submitBtn = document.getElementById('upload-submit-btn');
     const btnText = document.getElementById('upload-btn-text');
     const spinner = document.getElementById('upload-spinner');
 
-    submitBtn.disabled = false;
-    btnText.textContent = 'Hochladen';
-    spinner.classList.add('hidden');
+    if (submitBtn && btnText && spinner) {
+        submitBtn.disabled = false;
+        btnText.textContent = 'Hochladen';
+        spinner.classList.add('hidden');
+    }
 }
 
 // Upload behandeln
@@ -253,7 +292,7 @@ async function handleUpload(event) {
     const form = event.target;
     const fileInput = document.getElementById('document-file');
 
-    if (!fileInput.files[0]) {
+    if (!fileInput || !fileInput.files[0]) {
         showNotification('Bitte wählen Sie eine Datei aus', 'error');
         return;
     }
@@ -267,9 +306,11 @@ async function handleUpload(event) {
     const btnText = document.getElementById('upload-btn-text');
     const spinner = document.getElementById('upload-spinner');
 
-    submitBtn.disabled = true;
-    btnText.textContent = '';
-    spinner.classList.remove('hidden');
+    if (submitBtn && btnText && spinner) {
+        submitBtn.disabled = true;
+        btnText.textContent = '';
+        spinner.classList.remove('hidden');
+    }
 
     try {
         const formData = new FormData(form);
@@ -299,7 +340,10 @@ async function handleUpload(event) {
 
 // Dokumente laden
 async function loadDocuments() {
-    if (!currentVehicleId) return;
+    if (!currentVehicleId || !isDocumentsTabAvailable()) {
+        console.log('Kann Dokumente nicht laden - Tab nicht verfügbar oder fehlende Vehicle ID');
+        return;
+    }
 
     try {
         const response = await fetch(`/api/vehicles/${currentVehicleId}/documents`);
@@ -322,8 +366,12 @@ async function loadDocuments() {
 // Dokumente rendern
 function renderDocuments() {
     const tbody = document.getElementById('documents-table-body');
-    const loadingRow = document.getElementById('documents-loading');
+    if (!tbody) {
+        console.error('documents-table-body Element nicht gefunden');
+        return;
+    }
 
+    const loadingRow = document.getElementById('documents-loading');
     if (loadingRow) {
         loadingRow.remove();
     }
@@ -443,19 +491,31 @@ function updateDocumentCounts() {
         }
     });
 
-    document.getElementById('vehicle-registration-count').textContent =
-        counts.vehicle_registration > 0 ? `${counts.vehicle_registration} Dokument(e)` : 'Keine Dokumente';
+    const vehicleRegElement = document.getElementById('vehicle-registration-count');
+    const vehicleLicenseElement = document.getElementById('vehicle-license-count');
+    const inspectionElement = document.getElementById('inspection-count');
 
-    document.getElementById('vehicle-license-count').textContent =
-        counts.vehicle_license > 0 ? `${counts.vehicle_license} Dokument(e)` : 'Keine Dokumente';
+    if (vehicleRegElement) {
+        vehicleRegElement.textContent = counts.vehicle_registration > 0 ? `${counts.vehicle_registration} Dokument(e)` : 'Keine Dokumente';
+    }
 
-    document.getElementById('inspection-count').textContent =
-        counts.inspection > 0 ? `${counts.inspection} Dokument(e)` : 'Keine Dokumente';
+    if (vehicleLicenseElement) {
+        vehicleLicenseElement.textContent = counts.vehicle_license > 0 ? `${counts.vehicle_license} Dokument(e)` : 'Keine Dokumente';
+    }
+
+    if (inspectionElement) {
+        inspectionElement.textContent = counts.inspection > 0 ? `${counts.inspection} Dokument(e)` : 'Keine Dokumente';
+    }
 }
 
 // Fehler beim Laden anzeigen
 function showDocumentLoadError() {
     const tbody = document.getElementById('documents-table-body');
+    if (!tbody) {
+        console.error('Kann Fehler nicht anzeigen - tbody Element nicht gefunden');
+        return;
+    }
+
     tbody.innerHTML = `
         <tr>
             <td colspan="6" class="py-8 text-center">
@@ -474,35 +534,49 @@ function showDocumentLoadError() {
     `;
 }
 
-// Edit Modal öffnen - KORRIGIERT: Variable umbenannt
+// Edit Modal öffnen
 window.editDocument = async function(documentId) {
     try {
-        // Dokument-Details aus aktueller Liste finden - KORRIGIERT: Variable umbenannt
+        // Dokument-Details aus aktueller Liste finden
         const documentData = currentDocuments.find(doc => doc.id === documentId);
         if (!documentData) {
             showNotification('Dokument nicht gefunden', 'error');
             return;
         }
 
+        // Modal-Elemente prüfen
+        const modal = document.getElementById('edit-document-modal');
+        const form = document.getElementById('edit-document-form');
+
+        if (!modal || !form) {
+            console.error('Edit modal Elemente nicht gefunden');
+            return;
+        }
+
         // Modal mit Daten füllen
-        document.getElementById('edit-document-type').value = documentData.type;
-        document.getElementById('edit-document-name').value = documentData.name;
-        document.getElementById('edit-document-notes').value = documentData.notes || '';
+        const typeSelect = document.getElementById('edit-document-type');
+        const nameInput = document.getElementById('edit-document-name');
+        const notesInput = document.getElementById('edit-document-notes');
+        const expiryInput = document.getElementById('edit-document-expiry');
+
+        if (typeSelect) typeSelect.value = documentData.type;
+        if (nameInput) nameInput.value = documentData.name;
+        if (notesInput) notesInput.value = documentData.notes || '';
 
         // Ablaufdatum setzen
-        if (documentData.expiryDate) {
-            const date = new Date(documentData.expiryDate);
-            document.getElementById('edit-document-expiry').value = date.toISOString().split('T')[0];
-        } else {
-            document.getElementById('edit-document-expiry').value = '';
+        if (expiryInput) {
+            if (documentData.expiryDate) {
+                const date = new Date(documentData.expiryDate);
+                expiryInput.value = date.toISOString().split('T')[0];
+            } else {
+                expiryInput.value = '';
+            }
         }
 
         // Dokument-ID für Update speichern
-        const form = document.getElementById('edit-document-form');
         form.dataset.documentId = documentId;
 
         // Modal öffnen
-        const modal = document.getElementById('edit-document-modal');
         modal.classList.remove('hidden');
 
     } catch (error) {
@@ -514,12 +588,16 @@ window.editDocument = async function(documentId) {
 // Edit Modal schließen
 function closeEditModal() {
     const modal = document.getElementById('edit-document-modal');
-    modal.classList.add('hidden');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
 
     // Form zurücksetzen
     const form = document.getElementById('edit-document-form');
-    form.reset();
-    delete form.dataset.documentId;
+    if (form) {
+        form.reset();
+        delete form.dataset.documentId;
+    }
 }
 
 // Edit behandeln
@@ -634,11 +712,19 @@ document.addEventListener('keydown', function(event) {
         const uploadModal = document.getElementById('upload-document-modal');
         const editModal = document.getElementById('edit-document-modal');
 
-        if (!uploadModal.classList.contains('hidden')) {
+        if (uploadModal && !uploadModal.classList.contains('hidden')) {
             closeUploadModal();
         }
-        if (!editModal.classList.contains('hidden')) {
+        if (editModal && !editModal.classList.contains('hidden')) {
             closeEditModal();
         }
     }
 });
+
+// Funktion für dynamisches Laden wenn Tab gewechselt wird
+window.initializeDocumentsIfAvailable = function() {
+    if (window.location.pathname.includes('/vehicle-details/') && isDocumentsTabAvailable()) {
+        currentVehicleId = window.location.pathname.split('/').pop();
+        initializeDocuments();
+    }
+};

@@ -1,33 +1,46 @@
 // frontend/static/js/vehicle-image.js - KORRIGIERTE VERSION
 
-// Globale Variablen für Bilder (andere Namen verwenden)
+// Globale Variablen für Bilder
 let vehicleImageId = null;
+let isImageLoading = false;
 
 // Initialisierung beim Laden der Seite
 document.addEventListener('DOMContentLoaded', function() {
     // Nur initialisieren wenn wir auf der Fahrzeugdetails-Seite sind
     if (window.location.pathname.includes('/vehicle-details/')) {
         vehicleImageId = window.location.pathname.split('/').pop();
+        console.log('Vehicle image module initialized for vehicle:', vehicleImageId);
 
         // Kurz warten, damit alle DOM-Elemente geladen sind
         setTimeout(() => {
             initializeVehicleImage();
-        }, 100);
+        }, 200);
     }
 });
 
 // Fahrzeugbild-System initialisieren
 function initializeVehicleImage() {
+    if (!vehicleImageId) {
+        console.error('Vehicle ID not available');
+        return;
+    }
+
+    console.log('Initializing vehicle image system...');
     loadVehicleImage();
     setupVehicleImageDragDrop();
+    setupImageContainerHover();
 }
 
 // Fahrzeugbild laden
 async function loadVehicleImage() {
-    if (!vehicleImageId) return;
+    if (!vehicleImageId || isImageLoading) {
+        console.log('Skipping image load:', !vehicleImageId ? 'no vehicle ID' : 'already loading');
+        return;
+    }
 
     const imageElement = document.getElementById('vehicle-image');
     const placeholder = document.getElementById('vehicle-image-placeholder');
+    const overlay = document.getElementById('image-overlay');
 
     // Prüfen ob Elemente existieren
     if (!imageElement || !placeholder) {
@@ -35,47 +48,94 @@ async function loadVehicleImage() {
         return;
     }
 
+    isImageLoading = true;
+    console.log('Loading vehicle image for ID:', vehicleImageId);
+
     try {
-        const response = await fetch(`/api/vehicles/${vehicleImageId}/image`);
+        const response = await fetch(`/api/vehicles/${vehicleImageId}/image`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'image/*'
+            }
+        });
+
+        console.log('Image API response status:', response.status);
 
         if (response.ok) {
             // Bild gefunden - Blob URL erstellen
             const blob = await response.blob();
-            const imageUrl = URL.createObjectURL(blob);
+            console.log('Image blob size:', blob.size, 'bytes');
 
-            showVehicleImage(imageUrl);
+            if (blob.size > 0) {
+                const imageUrl = URL.createObjectURL(blob);
+                console.log('Created image URL:', imageUrl);
+                showVehicleImage(imageUrl);
+            } else {
+                console.log('Empty blob received');
+                showVehicleImagePlaceholder();
+            }
+        } else if (response.status === 404) {
+            // Kein Bild gefunden - das ist normal
+            console.log('No vehicle image found (404) - showing placeholder');
+            showVehicleImagePlaceholder();
         } else {
-            // Kein Bild gefunden - Placeholder anzeigen
+            console.warn('Unexpected response status:', response.status);
             showVehicleImagePlaceholder();
         }
     } catch (error) {
-        console.log('Kein Fahrzeugbild vorhanden oder Fehler beim Laden:', error);
+        console.log('Error loading vehicle image (this is normal if no image exists):', error.message);
         showVehicleImagePlaceholder();
+    } finally {
+        isImageLoading = false;
     }
 }
 
 // Fahrzeugbild anzeigen
 function showVehicleImage(imageUrl) {
+    console.log('Showing vehicle image:', imageUrl);
+
     const imageElement = document.getElementById('vehicle-image');
     const placeholder = document.getElementById('vehicle-image-placeholder');
     const container = document.getElementById('vehicle-image-container');
+    const overlay = document.getElementById('image-overlay');
 
     if (imageElement && placeholder && container) {
-        imageElement.src = imageUrl;
-        imageElement.classList.remove('hidden');
-        placeholder.classList.add('hidden');
+        // Bild laden und anzeigen
+        imageElement.onload = function() {
+            console.log('Image loaded successfully');
+            imageElement.classList.remove('hidden');
+            placeholder.classList.add('hidden');
 
-        // Container-Style anpassen
-        container.classList.remove('border-dashed', 'border-gray-300');
-        container.classList.add('border-solid', 'border-gray-200');
+            // Container-Style anpassen
+            container.classList.remove('border-dashed', 'border-gray-300');
+            container.classList.add('border-solid', 'border-gray-200');
+
+            // Overlay für Hover-Effekt anzeigen
+            if (overlay) {
+                overlay.classList.remove('hidden');
+                overlay.classList.add('flex');
+            }
+        };
+
+        imageElement.onerror = function() {
+            console.error('Failed to load image');
+            showVehicleImagePlaceholder();
+            // URL freigeben bei Fehler
+            URL.revokeObjectURL(imageUrl);
+        };
+
+        imageElement.src = imageUrl;
     }
 }
 
 // Placeholder anzeigen
 function showVehicleImagePlaceholder() {
+    console.log('Showing vehicle image placeholder');
+
     const imageElement = document.getElementById('vehicle-image');
     const placeholder = document.getElementById('vehicle-image-placeholder');
     const container = document.getElementById('vehicle-image-container');
+    const overlay = document.getElementById('image-overlay');
 
     if (imageElement && placeholder && container) {
         imageElement.classList.add('hidden');
@@ -84,21 +144,61 @@ function showVehicleImagePlaceholder() {
         // Container-Style zurücksetzen
         container.classList.add('border-dashed', 'border-gray-300');
         container.classList.remove('border-solid', 'border-gray-200');
+
+        // Overlay verstecken
+        if (overlay) {
+            overlay.classList.add('hidden');
+            overlay.classList.remove('flex');
+        }
+
+        // Alte Blob URL freigeben falls vorhanden
+        if (imageElement.src && imageElement.src.startsWith('blob:')) {
+            URL.revokeObjectURL(imageElement.src);
+        }
+        imageElement.src = '';
     }
+}
+
+// Container Hover-Effekte einrichten
+function setupImageContainerHover() {
+    const container = document.getElementById('vehicle-image-container');
+    const overlay = document.getElementById('image-overlay');
+
+    if (!container || !overlay) return;
+
+    container.addEventListener('mouseenter', function() {
+        // Nur wenn ein Bild vorhanden ist
+        const imageElement = document.getElementById('vehicle-image');
+        if (imageElement && !imageElement.classList.contains('hidden')) {
+            overlay.style.opacity = '1';
+        }
+    });
+
+    container.addEventListener('mouseleave', function() {
+        overlay.style.opacity = '0';
+    });
 }
 
 // Upload-Dialog öffnen
 function openVehicleImageUpload() {
+    console.log('Opening vehicle image upload dialog');
     const fileInput = document.getElementById('vehicle-image-input');
     if (fileInput) {
         fileInput.click();
+    } else {
+        console.error('File input element not found');
     }
 }
 
 // Bildupload behandeln
 async function handleVehicleImageUpload(event) {
     const file = event.target.files[0];
-    if (!file) return;
+    if (!file) {
+        console.log('No file selected');
+        return;
+    }
+
+    console.log('Handling vehicle image upload:', file.name, 'Size:', file.size);
 
     // Validierung
     if (!validateImageFile(file)) {
@@ -116,12 +216,14 @@ async function handleVehicleImageUpload(event) {
         formData.append('name', 'Fahrzeugbild');
         formData.append('notes', 'Hauptbild des Fahrzeugs');
 
+        console.log('Uploading image to API...');
         const response = await fetch(`/api/vehicles/${vehicleImageId}/documents`, {
             method: 'POST',
             body: formData
         });
 
         const result = await response.json();
+        console.log('Upload response:', response.status, result);
 
         if (!response.ok) {
             throw new Error(result.error || 'Upload fehlgeschlagen');
@@ -129,10 +231,11 @@ async function handleVehicleImageUpload(event) {
 
         showImageNotification('Fahrzeugbild erfolgreich hochgeladen', 'success');
 
-        // Bild neu laden
+        // Kurz warten und dann Bild neu laden
         setTimeout(() => {
+            console.log('Reloading image after upload...');
             loadVehicleImage();
-        }, 500);
+        }, 1000);
 
     } catch (error) {
         console.error('Image upload error:', error);
@@ -166,6 +269,7 @@ function validateImageFile(file) {
         return false;
     }
 
+    console.log('Image file validation passed');
     return true;
 }
 
@@ -176,10 +280,12 @@ function showImageUploadProgress(show) {
 
     if (progressElement && container) {
         if (show) {
+            console.log('Showing upload progress');
             progressElement.classList.remove('hidden');
             progressElement.classList.add('flex');
             container.style.pointerEvents = 'none';
         } else {
+            console.log('Hiding upload progress');
             progressElement.classList.add('hidden');
             progressElement.classList.remove('flex');
             container.style.pointerEvents = 'auto';
@@ -189,6 +295,8 @@ function showImageUploadProgress(show) {
 
 // Notification anzeigen (eigene Funktion um Konflikte zu vermeiden)
 function showImageNotification(message, type = 'info') {
+    console.log('Showing notification:', type, message);
+
     const notification = document.createElement('div');
     notification.className = `fixed top-4 right-4 px-6 py-3 rounded-md shadow-lg z-50 ${
         type === 'success' ? 'bg-green-500 text-white' :
@@ -202,13 +310,18 @@ function showImageNotification(message, type = 'info') {
         if (notification.parentNode) {
             notification.remove();
         }
-    }, 3000);
+    }, 4000);
 }
 
 // Drag & Drop für Fahrzeugbild
 function setupVehicleImageDragDrop() {
     const container = document.getElementById('vehicle-image-container');
-    if (!container) return;
+    if (!container) {
+        console.log('No container found for drag&drop setup');
+        return;
+    }
+
+    console.log('Setting up drag & drop for vehicle image');
 
     container.addEventListener('dragover', function(e) {
         e.preventDefault();
@@ -227,6 +340,7 @@ function setupVehicleImageDragDrop() {
         const files = e.dataTransfer.files;
         if (files.length > 0) {
             const file = files[0];
+            console.log('File dropped:', file.name);
             if (validateImageFile(file)) {
                 // Simuliere File-Input Event
                 const fakeEvent = {
@@ -256,6 +370,21 @@ window.handleVehicleImageUpload = handleVehicleImageUpload;
 
 // Funktion für das Template verfügbar machen
 window.loadVehicleImage = function() {
+    console.log('loadVehicleImage called from template');
     // Kurz warten für DOM
-    setTimeout(loadVehicleImage, 100);
+    setTimeout(() => {
+        if (vehicleImageId) {
+            loadVehicleImage();
+        } else {
+            console.warn('vehicleImageId not set yet');
+        }
+    }, 100);
 };
+
+// Cleanup-Funktion für Blob URLs
+window.addEventListener('beforeunload', function() {
+    const imageElement = document.getElementById('vehicle-image');
+    if (imageElement && imageElement.src && imageElement.src.startsWith('blob:')) {
+        URL.revokeObjectURL(imageElement.src);
+    }
+});

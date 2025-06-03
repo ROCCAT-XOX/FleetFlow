@@ -19,53 +19,80 @@
 
     <!-- Fahrzeug Header -->
     <div class="bg-white shadow rounded-lg p-6 mb-6">
-        <div class="flex items-center justify-between gap-6">
+        <div class="flex items-start justify-between gap-6">
             <!-- Logo und Fahrzeuginfo -->
             <div class="flex items-center gap-4 flex-1">
                 <!-- Logo -->
-                <img id="brand-logo" class="h-12 w-auto flex-shrink-0"
-                     src="/static/assets/{{ .vehicle.brand | lower }}.svg"
-                     alt="{{ .vehicle.brand }}"
-                     onerror="this.style.display='none'">
+                <div class="flex-shrink-0">
+                    <img id="brand-logo" class="h-12 w-auto"
+                         src="/static/assets/{{ .vehicle.brand | lower }}.svg"
+                         alt="{{ .vehicle.brand }}"
+                         onerror="this.style.display='none'">
+                </div>
 
                 <!-- Fahrzeugdaten -->
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900">{{ .vehicle.brand }} {{ .vehicle.model }}</h1>
                     <p class="text-gray-500">{{ .vehicle.licensePlate }} • {{ .vehicle.year }}</p>
+                    <div class="mt-2">
+                        <span class="px-3 py-1 rounded-full text-sm font-semibold
+                        {{ if eq .vehicle.status "available" }}bg-green-100 text-green-800{{ end }}
+                        {{ if eq .vehicle.status "inuse" }}bg-yellow-100 text-yellow-800{{ end }}
+                        {{ if eq .vehicle.status "maintenance" }}bg-red-100 text-red-800{{ end }}">
+                        {{ if eq .vehicle.status "available" }}Verfügbar{{ end }}
+                        {{ if eq .vehicle.status "inuse" }}In Benutzung{{ end }}
+                        {{ if eq .vehicle.status "maintenance" }}In Wartung{{ end }}
+                        </span>
+                    </div>
                 </div>
             </div>
 
-            <!-- Fahrzeugbild und Status Container -->
-            <div class="flex items-center gap-4">
-                <!-- Fahrzeugbild -->
+            <!-- Fahrzeugbild - rechts positioniert -->
+            <div class="flex-shrink-0">
                 <div class="relative">
-                    <div id="vehicle-image-container" class="w-24 h-24 rounded-lg overflow-hidden bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:border-gray-400 transition-colors" onclick="openVehicleImageUpload()">
-                        <img id="vehicle-image" class="w-full h-full object-cover hidden" alt="Fahrzeugbild">
-                        <div id="vehicle-image-placeholder" class="text-center">
-                            <svg class="w-8 h-8 text-gray-400 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div id="vehicle-image-container"
+                         class="w-32 h-32 rounded-lg overflow-hidden bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:border-gray-400 transition-colors shadow-sm"
+                         onclick="openVehicleImageUpload()"
+                         title="Klicken Sie hier, um ein Fahrzeugbild hochzuladen">
+
+                        <!-- Fahrzeugbild -->
+                        <img id="vehicle-image"
+                             class="w-full h-full object-cover hidden"
+                             alt="Fahrzeugbild">
+
+                        <!-- Placeholder -->
+                        <div id="vehicle-image-placeholder" class="text-center p-4">
+                            <svg class="w-10 h-10 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                             </svg>
-                            <span class="text-xs text-gray-500">Bild hinzufügen</span>
+                            <span class="text-xs text-gray-500 block">Bild hinzufügen</span>
                         </div>
                     </div>
+
                     <!-- Upload-Fortschritt -->
                     <div id="image-upload-progress" class="absolute inset-0 bg-black bg-opacity-50 rounded-lg hidden items-center justify-center">
-                        <svg class="animate-spin h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
+                        <div class="text-center">
+                            <svg class="animate-spin h-8 w-8 text-white mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span class="text-white text-xs">Wird hochgeladen...</span>
+                        </div>
+                    </div>
+
+                    <!-- Bild-Overlay für Aktionen (wird nur bei vorhandenem Bild angezeigt) -->
+                    <div id="image-overlay" class="absolute inset-0 bg-black bg-opacity-50 rounded-lg hidden items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                        <div class="flex gap-2">
+                            <button onclick="openVehicleImageUpload()"
+                                    class="p-2 bg-white bg-opacity-20 rounded-full hover:bg-opacity-30 transition-colors"
+                                    title="Bild ändern">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
-
-                <!-- Status -->
-                <span class="px-3 py-1 rounded-full text-sm font-semibold flex-shrink-0
-            {{ if eq .vehicle.status "available" }}bg-green-100 text-green-800{{ end }}
-                {{ if eq .vehicle.status "inuse" }}bg-yellow-100 text-yellow-800{{ end }}
-                {{ if eq .vehicle.status "maintenance" }}bg-red-100 text-red-800{{ end }}">
-                {{ if eq .vehicle.status "available" }}Verfügbar{{ end }}
-                {{ if eq .vehicle.status "inuse" }}In Benutzung{{ end }}
-                {{ if eq .vehicle.status "maintenance" }}In Wartung{{ end }}
-                </span>
             </div>
         </div>
     </div>
@@ -175,8 +202,11 @@
         // Fahrzeugbild laden
         loadVehicleImage();
     });
-    // Logo und Fahrzeugbild beim Seitenladen setzen
+    // Initialisierung beim Seitenladen
     document.addEventListener('DOMContentLoaded', function() {
+        console.log('Vehicle details page loaded');
+
+        // Logo setzen
         const brandLogo = document.getElementById('brand-logo');
         if (brandLogo) {
             const brand = '{{ .vehicle.brand }}'.toLowerCase();
@@ -186,22 +216,27 @@
                 brandLogo.alt = '{{ .vehicle.brand }}';
 
                 brandLogo.onload = function() {
-                    brandLogo.classList.remove('hidden');
+                    brandLogo.style.display = 'block';
                 };
 
                 brandLogo.onerror = function() {
                     brandLogo.src = `/static/assets/logo/${brand}.png`;
                     brandLogo.onerror = function() {
-                        brandLogo.classList.add('hidden');
+                        brandLogo.style.display = 'none';
                     };
                 };
             }
         }
 
-        // Fahrzeugbild laden - sicher aufrufen
-        if (typeof window.loadVehicleImage === 'function') {
-            window.loadVehicleImage();
-        }
+        // Fahrzeugbild laden - sicherstellen dass Funktion existiert
+        setTimeout(() => {
+            if (typeof window.loadVehicleImage === 'function') {
+                console.log('Loading vehicle image...');
+                window.loadVehicleImage();
+            } else {
+                console.warn('loadVehicleImage function not available yet');
+            }
+        }, 500);
     });
 </script>
 
