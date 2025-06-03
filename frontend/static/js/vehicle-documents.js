@@ -70,27 +70,44 @@ function setupEventListeners() {
 
 // Drag & Drop Setup
 function setupDragAndDrop(dropZone) {
-    dropZone.addEventListener('dragover', function(e) {
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
+        document.body.addEventListener(eventName, preventDefaults, false);
+    });
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, highlight, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, unhighlight, false);
+    });
+
+    dropZone.addEventListener('drop', handleDrop, false);
+
+    function preventDefaults(e) {
         e.preventDefault();
+        e.stopPropagation();
+    }
+
+    function highlight(e) {
         dropZone.classList.add('border-indigo-500', 'bg-indigo-50');
-    });
+    }
 
-    dropZone.addEventListener('dragleave', function(e) {
-        e.preventDefault();
+    function unhighlight(e) {
         dropZone.classList.remove('border-indigo-500', 'bg-indigo-50');
-    });
+    }
 
-    dropZone.addEventListener('drop', function(e) {
-        e.preventDefault();
-        dropZone.classList.remove('border-indigo-500', 'bg-indigo-50');
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
 
-        const files = e.dataTransfer.files;
         if (files.length > 0) {
             const fileInput = document.getElementById('document-file');
             fileInput.files = files;
             handleFileSelect({ target: fileInput });
         }
-    });
+    }
 }
 
 // Datei-Auswahl behandeln
@@ -130,12 +147,13 @@ function validateFile(file) {
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     ];
 
+    // Größe prüfen
     if (file.size > maxSize) {
         showNotification('Datei ist zu groß. Maximum: 10MB', 'error');
         return false;
     }
 
-    // MIME-Type aus Dateiendung ermitteln wenn nötig
+    // MIME-Type prüfen oder aus Dateiendung ermitteln
     let mimeType = file.type;
     if (!mimeType) {
         const extension = file.name.split('.').pop().toLowerCase();
@@ -153,6 +171,19 @@ function validateFile(file) {
 
     if (!allowedTypes.includes(mimeType)) {
         showNotification('Dateityp nicht erlaubt. Erlaubt: PDF, JPG, PNG, GIF, DOC, DOCX', 'error');
+        return false;
+    }
+
+    // Dateiname-Validierung
+    if (file.name.length > 255) {
+        showNotification('Dateiname ist zu lang (max. 255 Zeichen)', 'error');
+        return false;
+    }
+
+    // Gefährliche Zeichen im Dateinamen prüfen
+    const dangerousChars = /[<>:"/\\|?*\x00-\x1f]/;
+    if (dangerousChars.test(file.name)) {
+        showNotification('Dateiname enthält nicht erlaubte Zeichen', 'error');
         return false;
     }
 
@@ -215,7 +246,7 @@ function resetUploadForm() {
     spinner.classList.add('hidden');
 }
 
-// Upload behandeln (URL angepasst)
+// Upload behandeln
 async function handleUpload(event) {
     event.preventDefault();
 
@@ -243,7 +274,6 @@ async function handleUpload(event) {
     try {
         const formData = new FormData(form);
 
-        // KORRIGIERTE URL - verwendet jetzt /api/vehicles/:id/documents
         const response = await fetch(`/api/vehicles/${currentVehicleId}/documents`, {
             method: 'POST',
             body: formData
@@ -272,7 +302,6 @@ async function loadDocuments() {
     if (!currentVehicleId) return;
 
     try {
-        // KORRIGIERTE URL - verwendet jetzt /api/vehicles/:id/documents
         const response = await fetch(`/api/vehicles/${currentVehicleId}/documents`);
         const data = await response.json();
 
@@ -445,89 +474,24 @@ function showDocumentLoadError() {
     `;
 }
 
-// Hilfsfunktionen
-function formatFileSize(bytes) {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-}
-
-function formatDate(dateString) {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('de-DE');
-}
-
-function showNotification(message, type = 'info') {
-    const notification = document.createElement('div');
-    notification.className = `fixed top-4 right-4 px-6 py-3 rounded-md shadow-lg z-50 ${
-        type === 'success' ? 'bg-green-500 text-white' :
-            type === 'error' ? 'bg-red-500 text-white' :
-                'bg-blue-500 text-white'
-    }`;
-    notification.textContent = message;
-    document.body.appendChild(notification);
-
-    setTimeout(() => {
-        notification.remove();
-    }, 3000);
-}
-
-// Globale Funktionen für HTML-Event-Handler
-window.openUploadDocumentModal = openUploadDocumentModal;
-
-window.downloadDocument = function(documentId) {
-    window.open(`/api/documents/${documentId}/download`, '_blank');
-};
-
-window.editDocument = function(documentId) {
-    // Implementierung folgt in nächstem Schritt
-    console.log('Edit document:', documentId);
-};
-
-window.deleteDocument = async function(documentId) {
-    if (!confirm('Möchten Sie dieses Dokument wirklich löschen?')) {
-        return;
-    }
-
-    try {
-        const response = await fetch(`/api/documents/${documentId}`, {
-            method: 'DELETE'
-        });
-
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Löschen fehlgeschlagen');
-        }
-
-        showNotification('Dokument erfolgreich gelöscht', 'success');
-        loadDocuments();
-
-    } catch (error) {
-        console.error('Delete error:', error);
-        showNotification('Fehler beim Löschen: ' + error.message, 'error');
-    }
-};
-
-// Edit Modal öffnen
+// Edit Modal öffnen - KORRIGIERT: Variable umbenannt
 window.editDocument = async function(documentId) {
     try {
-        // Dokument-Details aus aktueller Liste finden
-        const document = currentDocuments.find(doc => doc.id === documentId);
-        if (!document) {
+        // Dokument-Details aus aktueller Liste finden - KORRIGIERT: Variable umbenannt
+        const documentData = currentDocuments.find(doc => doc.id === documentId);
+        if (!documentData) {
             showNotification('Dokument nicht gefunden', 'error');
             return;
         }
 
         // Modal mit Daten füllen
-        document.getElementById('edit-document-type').value = document.type;
-        document.getElementById('edit-document-name').value = document.name;
-        document.getElementById('edit-document-notes').value = document.notes || '';
+        document.getElementById('edit-document-type').value = documentData.type;
+        document.getElementById('edit-document-name').value = documentData.name;
+        document.getElementById('edit-document-notes').value = documentData.notes || '';
 
         // Ablaufdatum setzen
-        if (document.expiryDate) {
-            const date = new Date(document.expiryDate);
+        if (documentData.expiryDate) {
+            const date = new Date(documentData.expiryDate);
             document.getElementById('edit-document-expiry').value = date.toISOString().split('T')[0];
         } else {
             document.getElementById('edit-document-expiry').value = '';
@@ -603,114 +567,65 @@ async function handleEdit(event) {
     }
 }
 
-// Drag & Drop für Upload verbessern
-function setupDragAndDrop(dropZone) {
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        dropZone.addEventListener(eventName, preventDefaults, false);
-        document.body.addEventListener(eventName, preventDefaults, false);
-    });
+// Hilfsfunktionen
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
 
-    ['dragenter', 'dragover'].forEach(eventName => {
-        dropZone.addEventListener(eventName, highlight, false);
-    });
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('de-DE');
+}
 
-    ['dragleave', 'drop'].forEach(eventName => {
-        dropZone.addEventListener(eventName, unhighlight, false);
-    });
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 px-6 py-3 rounded-md shadow-lg z-50 ${
+        type === 'success' ? 'bg-green-500 text-white' :
+            type === 'error' ? 'bg-red-500 text-white' :
+                'bg-blue-500 text-white'
+    }`;
+    notification.textContent = message;
+    document.body.appendChild(notification);
 
-    dropZone.addEventListener('drop', handleDrop, false);
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
 
-    function preventDefaults(e) {
-        e.preventDefault();
-        e.stopPropagation();
+// Globale Funktionen für HTML-Event-Handler
+window.openUploadDocumentModal = openUploadDocumentModal;
+
+window.downloadDocument = function(documentId) {
+    window.open(`/api/documents/${documentId}/download`, '_blank');
+};
+
+window.deleteDocument = async function(documentId) {
+    if (!confirm('Möchten Sie dieses Dokument wirklich löschen?')) {
+        return;
     }
 
-    function highlight(e) {
-        dropZone.classList.add('border-indigo-500', 'bg-indigo-50');
-    }
+    try {
+        const response = await fetch(`/api/documents/${documentId}`, {
+            method: 'DELETE'
+        });
 
-    function unhighlight(e) {
-        dropZone.classList.remove('border-indigo-500', 'bg-indigo-50');
-    }
-
-    function handleDrop(e) {
-        const dt = e.dataTransfer;
-        const files = dt.files;
-
-        if (files.length > 0) {
-            const fileInput = document.getElementById('document-file');
-            fileInput.files = files;
-            handleFileSelect({ target: fileInput });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Löschen fehlgeschlagen');
         }
+
+        showNotification('Dokument erfolgreich gelöscht', 'success');
+        loadDocuments();
+
+    } catch (error) {
+        console.error('Delete error:', error);
+        showNotification('Fehler beim Löschen: ' + error.message, 'error');
     }
-}
-
-// Erweiterte Datei-Validierung
-function validateFile(file) {
-    const maxSize = 10 * 1024 * 1024; // 10MB
-    const allowedTypes = [
-        'application/pdf',
-        'image/jpeg',
-        'image/jpg',
-        'image/png',
-        'image/gif',
-        'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    ];
-
-    // Größe prüfen
-    if (file.size > maxSize) {
-        showNotification('Datei ist zu groß. Maximum: 10MB', 'error');
-        return false;
-    }
-
-    // MIME-Type prüfen oder aus Dateiendung ermitteln
-    let mimeType = file.type;
-    if (!mimeType) {
-        const extension = file.name.split('.').pop().toLowerCase();
-        const mimeMap = {
-            'pdf': 'application/pdf',
-            'jpg': 'image/jpeg',
-            'jpeg': 'image/jpeg',
-            'png': 'image/png',
-            'gif': 'image/gif',
-            'doc': 'application/msword',
-            'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-        };
-        mimeType = mimeMap[extension];
-    }
-
-    if (!allowedTypes.includes(mimeType)) {
-        showNotification('Dateityp nicht erlaubt. Erlaubt: PDF, JPG, PNG, GIF, DOC, DOCX', 'error');
-        return false;
-    }
-
-    // Dateiname-Validierung
-    if (file.name.length > 255) {
-        showNotification('Dateiname ist zu lang (max. 255 Zeichen)', 'error');
-        return false;
-    }
-
-    // Gefährliche Zeichen im Dateinamen prüfen
-    const dangerousChars = /[<>:"/\\|?*\x00-\x1f]/;
-    if (dangerousChars.test(file.name)) {
-        showNotification('Dateiname enthält nicht erlaubte Zeichen', 'error');
-        return false;
-    }
-
-    return true;
-}
-
-// Dokument-Vorschau (für Bilder)
-function showDocumentPreview(doc) {
-    if (doc.contentType.startsWith('image/')) {
-        // Hier könnte eine Bildvorschau implementiert werden
-        window.open(`/api/documents/${doc.id}/download`, '_blank');
-    } else {
-        // Für andere Dateitypen: Download
-        window.open(`/api/documents/${doc.id}/download`, '_blank');
-    }
-}
+};
 
 // Tastatur-Navigation für Modals
 document.addEventListener('keydown', function(event) {
@@ -727,54 +642,3 @@ document.addEventListener('keydown', function(event) {
         }
     }
 });
-
-// Auto-Save für Formular-Entwürfe (optional)
-let autoSaveTimeout;
-function enableAutoSave() {
-    const inputs = document.querySelectorAll('#upload-document-form input, #upload-document-form select, #upload-document-form textarea');
-
-    inputs.forEach(input => {
-        input.addEventListener('input', function() {
-            clearTimeout(autoSaveTimeout);
-            autoSaveTimeout = setTimeout(() => {
-                saveFormDraft();
-            }, 2000);
-        });
-    });
-}
-
-function saveFormDraft() {
-    // Lokaler Speicher für Formular-Entwürfe (optional)
-    const form = document.getElementById('upload-document-form');
-    const formData = new FormData(form);
-    const draft = {};
-
-    for (let [key, value] of formData.entries()) {
-        if (key !== 'file') { // Datei nicht im Draft speichern
-            draft[key] = value;
-        }
-    }
-
-    localStorage.setItem('documentUploadDraft', JSON.stringify(draft));
-}
-
-function loadFormDraft() {
-    const draft = localStorage.getItem('documentUploadDraft');
-    if (!draft) return;
-
-    try {
-        const data = JSON.parse(draft);
-        Object.keys(data).forEach(key => {
-            const element = document.querySelector(`[name="${key}"]`);
-            if (element) {
-                element.value = data[key];
-            }
-        });
-    } catch (error) {
-        console.error('Error loading form draft:', error);
-    }
-}
-
-function clearFormDraft() {
-    localStorage.removeItem('documentUploadDraft');
-}
