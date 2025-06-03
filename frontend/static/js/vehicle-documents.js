@@ -1,4 +1,4 @@
-// frontend/static/js/vehicle-documents.js - KORRIGIERTE VERSION
+// frontend/static/js/vehicle-documents.js - NUR für Dokumente (keine Bilder)
 
 // Globale Variablen
 let currentVehicleId = null;
@@ -85,7 +85,7 @@ function setupEventListeners() {
     }
 }
 
-// Drag & Drop Setup
+// Drag & Drop Setup (nur für Dokumente)
 function setupDragAndDrop(dropZone) {
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
         dropZone.addEventListener(eventName, preventDefaults, false);
@@ -155,17 +155,18 @@ function handleFileSelect(event) {
     validateFile(file);
 }
 
-// Datei validieren
+// Datei validieren (nur Dokumente, keine Bilder)
 function validateFile(file) {
-    const maxSize = 10 * 1024 * 1024; // 10MB
+    const maxSize = 10 * 1024 * 1024; // 10MB für Dokumente
+
+    // Erlaubte Dokumenttypen (KEINE Bilder)
     const allowedTypes = [
         'application/pdf',
-        'image/jpeg',
-        'image/jpg',
-        'image/png',
-        'image/gif',
         'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'text/plain'
     ];
 
     // Größe prüfen
@@ -180,18 +181,17 @@ function validateFile(file) {
         const extension = file.name.split('.').pop().toLowerCase();
         const mimeMap = {
             'pdf': 'application/pdf',
-            'jpg': 'image/jpeg',
-            'jpeg': 'image/jpeg',
-            'png': 'image/png',
-            'gif': 'image/gif',
             'doc': 'application/msword',
-            'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'xls': 'application/vnd.ms-excel',
+            'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'txt': 'text/plain'
         };
         mimeType = mimeMap[extension];
     }
 
     if (!allowedTypes.includes(mimeType)) {
-        showNotification('Dateityp nicht erlaubt. Erlaubt: PDF, JPG, PNG, GIF, DOC, DOCX', 'error');
+        showNotification('Nur Dokumentformate sind erlaubt (PDF, DOC, DOCX, XLS, XLSX, TXT). Für Bilder nutzen Sie bitte den Bilder-Tab.', 'error');
         return false;
     }
 
@@ -315,6 +315,12 @@ async function handleUpload(event) {
     try {
         const formData = new FormData(form);
 
+        // Sicherstellen, dass es kein vehicle_image type ist
+        const docType = formData.get('type');
+        if (docType === 'vehicle_image') {
+            formData.set('type', 'other'); // Fallback falls versehentlich Bild-Typ gewählt
+        }
+
         const response = await fetch(`/api/vehicles/${currentVehicleId}/documents`, {
             method: 'POST',
             body: formData
@@ -338,7 +344,7 @@ async function handleUpload(event) {
     }
 }
 
-// Dokumente laden
+// Dokumente laden (nur Nicht-Bilder)
 async function loadDocuments() {
     if (!currentVehicleId || !isDocumentsTabAvailable()) {
         console.log('Kann Dokumente nicht laden - Tab nicht verfügbar oder fehlende Vehicle ID');
@@ -353,7 +359,8 @@ async function loadDocuments() {
             throw new Error(data.error || 'Fehler beim Laden der Dokumente');
         }
 
-        currentDocuments = data.documents || [];
+        // NUR Dokumente filtern (KEINE vehicle_image types)
+        currentDocuments = (data.documents || []).filter(doc => doc.type !== 'vehicle_image');
         renderDocuments();
         updateDocumentCounts();
 
@@ -388,6 +395,7 @@ function renderDocuments() {
                         </svg>
                         <h3 class="text-sm font-medium text-gray-900">Keine Dokumente vorhanden</h3>
                         <p class="text-sm text-gray-500 mt-1">Laden Sie das erste Dokument für dieses Fahrzeug hoch.</p>
+                        <p class="text-xs text-gray-400 mt-1">Für Bilder nutzen Sie bitte den Bilder-Tab.</p>
                         <button onclick="openUploadDocumentModal('${currentVehicleId}')" class="mt-3 inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
                             Dokument hochladen
                         </button>
@@ -462,27 +470,33 @@ function createDocumentRow(doc) {
     return row;
 }
 
-// Dokument-Icon basierend auf Content-Type
+// Dokument-Icon basierend auf Content-Type (keine Bilder)
 function getDocumentIcon(contentType) {
     const iconClass = "h-10 w-10 rounded-lg flex items-center justify-center";
 
     if (contentType.includes('pdf')) {
         return `<div class="${iconClass} bg-red-100"><svg class="h-6 w-6 text-red-600" fill="currentColor" viewBox="0 0 20 20"><path d="M4 18h12V6h-4V2H4v16zm-2 1V1h12l4 4v14H2z"/><path d="M9 13h2v2H9v-2zm0-8h2v6H9V5z"/></svg></div>`;
-    } else if (contentType.includes('image')) {
-        return `<div class="${iconClass} bg-green-100"><svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div>`;
     } else if (contentType.includes('word') || contentType.includes('document')) {
         return `<div class="${iconClass} bg-blue-100"><svg class="h-6 w-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20"><path d="M4 18h12V6h-4V2H4v16zm-2 1V1h12l4 4v14H2z"/></svg></div>`;
+    } else if (contentType.includes('excel') || contentType.includes('spreadsheet')) {
+        return `<div class="${iconClass} bg-green-100"><svg class="h-6 w-6 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path d="M4 18h12V6h-4V2H4v16zm-2 1V1h12l4 4v14H2z"/></svg></div>`;
+    } else if (contentType.includes('text')) {
+        return `<div class="${iconClass} bg-gray-100"><svg class="h-6 w-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg></div>`;
     } else {
         return `<div class="${iconClass} bg-gray-100"><svg class="h-6 w-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg></div>`;
     }
 }
 
-// Dokument-Zählungen aktualisieren
+// Dokument-Zählungen aktualisieren (nur für Dokumente)
 function updateDocumentCounts() {
     const counts = {
         'vehicle_registration': 0,
         'vehicle_license': 0,
-        'inspection': 0
+        'inspection': 0,
+        'insurance': 0,
+        'invoice': 0,
+        'warranty': 0,
+        'other': 0
     };
 
     currentDocuments.forEach(doc => {
@@ -491,47 +505,20 @@ function updateDocumentCounts() {
         }
     });
 
-    const vehicleRegElement = document.getElementById('vehicle-registration-count');
-    const vehicleLicenseElement = document.getElementById('vehicle-license-count');
-    const inspectionElement = document.getElementById('inspection-count');
+    // Update UI elements
+    const elements = {
+        'vehicle-registration-count': counts.vehicle_registration,
+        'vehicle-license-count': counts.vehicle_license,
+        'inspection-count': counts.inspection
+    };
 
-    if (vehicleRegElement) {
-        vehicleRegElement.textContent = counts.vehicle_registration > 0 ? `${counts.vehicle_registration} Dokument(e)` : 'Keine Dokumente';
-    }
-
-    if (vehicleLicenseElement) {
-        vehicleLicenseElement.textContent = counts.vehicle_license > 0 ? `${counts.vehicle_license} Dokument(e)` : 'Keine Dokumente';
-    }
-
-    if (inspectionElement) {
-        inspectionElement.textContent = counts.inspection > 0 ? `${counts.inspection} Dokument(e)` : 'Keine Dokumente';
-    }
-}
-
-// Fehler beim Laden anzeigen
-function showDocumentLoadError() {
-    const tbody = document.getElementById('documents-table-body');
-    if (!tbody) {
-        console.error('Kann Fehler nicht anzeigen - tbody Element nicht gefunden');
-        return;
-    }
-
-    tbody.innerHTML = `
-        <tr>
-            <td colspan="6" class="py-8 text-center">
-                <div class="flex flex-col items-center">
-                    <svg class="w-12 h-12 text-red-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <h3 class="text-sm font-medium text-gray-900">Fehler beim Laden</h3>
-                    <p class="text-sm text-gray-500 mt-1">Die Dokumente konnten nicht geladen werden.</p>
-                    <button onclick="loadDocuments()" class="mt-3 inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
-                        Erneut versuchen
-                    </button>
-                </div>
-            </td>
-        </tr>
-    `;
+    Object.keys(elements).forEach(elementId => {
+        const element = document.getElementById(elementId);
+        if (element) {
+            const count = elements[elementId];
+            element.textContent = count > 0 ? `${count} Dokument(e)` : 'Keine Dokumente';
+        }
+    });
 }
 
 // Edit Modal öffnen
@@ -620,6 +607,11 @@ async function handleEdit(event) {
         expiryDate: formData.get('expiryDate')
     };
 
+    // Sicherstellen, dass es kein Bild-Typ ist
+    if (data.type === 'vehicle_image') {
+        data.type = 'other';
+    }
+
     try {
         const response = await fetch(`/api/documents/${documentId}`, {
             method: 'PUT',
@@ -643,6 +635,32 @@ async function handleEdit(event) {
         console.error('Update error:', error);
         showNotification('Fehler beim Aktualisieren: ' + error.message, 'error');
     }
+}
+
+// Fehler beim Laden anzeigen
+function showDocumentLoadError() {
+    const tbody = document.getElementById('documents-table-body');
+    if (!tbody) {
+        console.error('Kann Fehler nicht anzeigen - tbody Element nicht gefunden');
+        return;
+    }
+
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="6" class="py-8 text-center">
+                <div class="flex flex-col items-center">
+                    <svg class="w-12 h-12 text-red-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <h3 class="text-sm font-medium text-gray-900">Fehler beim Laden</h3>
+                    <p class="text-sm text-gray-500 mt-1">Die Dokumente konnten nicht geladen werden.</p>
+                    <button onclick="loadDocuments()" class="mt-3 inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                        Erneut versuchen
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `;
 }
 
 // Hilfsfunktionen
