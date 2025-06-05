@@ -85,7 +85,9 @@ func (h *DriverHandler) GetDrivers(c *gin.Context) {
 	type DriverWithVehicle struct {
 		*model.Driver
 		VehicleName       string `json:"vehicleName,omitempty"`
-		AssignedVehicleId string `json:"assignedVehicleId,omitempty"` // Für Frontend-Kompatibilität
+		AssignedVehicleId string `json:"assignedVehicleId,omitempty"`
+		HasLicense        bool   `json:"hasLicense"`
+		LicenseExpired    bool   `json:"licenseExpired"`
 	}
 
 	var result []DriverWithVehicle
@@ -97,6 +99,17 @@ func (h *DriverHandler) GetDrivers(c *gin.Context) {
 		if err == nil && vehicle != nil {
 			dwd.VehicleName = vehicle.Brand + " " + vehicle.Model + " (" + vehicle.LicensePlate + ")"
 			dwd.AssignedVehicleId = vehicle.ID.Hex()
+		}
+
+		// Führerschein-Status prüfen
+		driverDocRepo := repository.NewDriverDocumentRepository()
+		licenses, err := driverDocRepo.FindByDriverAndType(driver.ID.Hex(), model.DriverDocumentTypeLicense)
+		if err == nil && len(licenses) > 0 {
+			dwd.HasLicense = true
+			// Prüfen ob abgelaufen
+			if licenses[0].IsExpired() {
+				dwd.LicenseExpired = true
+			}
 		}
 
 		result = append(result, dwd)

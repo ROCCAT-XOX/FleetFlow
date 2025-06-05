@@ -116,6 +116,22 @@ func DocumentTypeText(docType string) string {
 	return docType
 }
 
+// DriverDocumentTypeText gibt den deutschen Text für einen Fahrerdokumenttyp zurück
+func DriverDocumentTypeText(docType string) string {
+	types := map[string]string{
+		"driver_license":       "Führerschein",
+		"medical_certificate":  "Ärztliches Attest",
+		"training_certificate": "Schulungszertifikat",
+		"identification":       "Ausweis",
+		"other":                "Sonstiges",
+	}
+
+	if text, ok := types[docType]; ok {
+		return text
+	}
+	return docType
+}
+
 // TemplateHelpers gibt eine Map mit Hilfsfunktionen für Templates zurück
 func TemplateHelpers() template.FuncMap {
 	return template.FuncMap{
@@ -273,14 +289,15 @@ func TemplateHelpers() template.FuncMap {
 		"hasSuffix": func(s, suffix string) bool {
 			return strings.HasSuffix(s, suffix)
 		},
-		"lower":      strings.ToLower,
-		"upper":      strings.ToUpper,
-		"title":      strings.Title,
-		"trim":       strings.TrimSpace,
-		"split":      strings.Split,
-		"join":       strings.Join,
-		"replace":    strings.Replace,
-		"replaceAll": strings.ReplaceAll,
+		"lower":                  strings.ToLower,
+		"upper":                  strings.ToUpper,
+		"title":                  strings.Title,
+		"trim":                   strings.TrimSpace,
+		"split":                  strings.Split,
+		"join":                   strings.Join,
+		"replace":                strings.Replace,
+		"replaceAll":             strings.ReplaceAll,
+		"driverDocumentTypeText": DriverDocumentTypeText,
 
 		// Logische Operatoren
 		"and": func(a, b bool) bool {

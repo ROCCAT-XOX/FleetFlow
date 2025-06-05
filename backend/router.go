@@ -413,7 +413,8 @@ func setupAPIRoutes(api *gin.RouterGroup) {
 	profileHandler := handler.NewProfileHandler()
 	dashboardHandler := handler.NewDashboardHandler()
 	reportsHandler := handler.NewReportsHandler()
-	documentHandler := handler.NewVehicleDocumentHandler() // NEU
+	documentHandler := handler.NewVehicleDocumentHandler()
+	driverDocumentHandler := handler.NewDriverDocumentHandler()
 
 	// Benutzer-API
 	users := api.Group("/users")
@@ -472,6 +473,9 @@ func setupAPIRoutes(api *gin.RouterGroup) {
 		drivers.DELETE("/:id", middleware.AdminMiddleware(), driverHandler.DeleteDriver)
 		drivers.PUT("/:id/assign-vehicle", driverHandler.AssignVehicle)
 		drivers.POST("/cleanup-assignments", middleware.AdminMiddleware(), driverHandler.CleanupInconsistentAssignments)
+		drivers.POST("/:id/documents", driverDocumentHandler.UploadDocument)
+		drivers.GET("/:id/documents", driverDocumentHandler.GetDriverDocuments)
+		drivers.GET("/:id/license", driverDocumentHandler.GetDriverLicense)
 	}
 
 	// Wartungs-API
@@ -516,6 +520,15 @@ func setupAPIRoutes(api *gin.RouterGroup) {
 		activities.GET("/vehicle/:vehicleId", activityHandler.GetVehicleActivities)
 		activities.GET("/driver/:driverId", activityHandler.GetDriverActivities)
 		activities.GET("/recent", dashboardHandler.GetRecentActivities)
+	}
+
+	// Driver Documents
+	driverDocuments := api.Group("/driver-documents")
+	{
+		driverDocuments.GET("/:docId/download", driverDocumentHandler.DownloadDocument)
+		driverDocuments.GET("/:docId/view", driverDocumentHandler.ViewDocument)
+		driverDocuments.PUT("/:docId", driverDocumentHandler.UpdateDocument)
+		driverDocuments.DELETE("/:docId", driverDocumentHandler.DeleteDocument)
 	}
 
 	// Dashboard-API

@@ -214,8 +214,40 @@ function renderDrivers(drivers) {
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                 ${licenseClasses}
             </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 h-10 w-10">
+                        <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                            <span class="text-sm font-medium text-indigo-800">
+                                ${getInitials(driver.firstName, driver.lastName)}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <div class="text-sm font-medium text-gray-900 flex items-center">
+                            ${driver.firstName} ${driver.lastName}
+                            ${driver.hasLicense ?
+                        driver.licenseExpired ?
+                            '<svg class="ml-2 h-4 w-4 text-red-500" fill="currentColor" viewBox="0 0 20 20" title="Führerschein abgelaufen"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>' :
+                            '<svg class="ml-2 h-4 w-4 text-green-500" fill="currentColor" viewBox="0 0 20 20" title="Führerschein vorhanden"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>'
+                        : '<svg class="ml-2 h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20" title="Kein Führerschein hinterlegt"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg>'
+                    }
+                        </div>
+                        <div class="text-sm text-gray-500">
+                            ${driver.email}
+                        </div>
+                    </div>
+                </div>
+            </td>
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <div class="flex items-center justify-end space-x-2">
+                    <button onclick="openDocumentsModal('${driver.id}')" 
+                            class="text-gray-600 hover:text-gray-900 p-1 rounded hover:bg-gray-50"
+                            title="Dokumente">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                    </button>
                     <button onclick="openAssignVehicleModal('${driver.id}')" 
                             class="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50"
                             title="Fahrzeug zuweisen">
@@ -553,4 +585,212 @@ function showNotification(message, type = 'info') {
     setTimeout(() => {
         notification.remove();
     }, 3000);
+}
+
+// === DRIVER DOCUMENTS FUNCTIONS ===
+
+let currentDocumentDriverId = null;
+
+// Dokumente Modal öffnen
+function openDocumentsModal(driverId) {
+    currentDocumentDriverId = driverId;
+
+    // Fahrer-Info laden
+    fetch(`/api/drivers/${driverId}`)
+        .then(response => response.json())
+        .then(data => {
+            const driver = data.driver;
+            const modalTitle = document.querySelector('#documents-modal h3');
+            modalTitle.textContent = `Dokumente für ${driver.firstName} ${driver.lastName}`;
+
+            // Dokumente laden
+            loadDriverDocuments(driverId);
+        });
+
+    document.getElementById('documents-modal').classList.remove('hidden');
+}
+
+// Dokumente Modal schließen
+function closeDocumentsModal() {
+    document.getElementById('documents-modal').classList.add('hidden');
+    currentDocumentDriverId = null;
+}
+
+// Upload Form öffnen
+function openUploadDocumentForm() {
+    document.getElementById('document-upload-form').reset();
+    toggleLicenseFields(); // Führerschein-Felder initial anzeigen
+    document.getElementById('document-upload-modal').classList.remove('hidden');
+}
+
+// Upload Form schließen
+function closeUploadDocumentForm() {
+    document.getElementById('document-upload-modal').classList.add('hidden');
+}
+
+// Führerschein-spezifische Felder ein-/ausblenden
+function toggleLicenseFields() {
+    const docType = document.getElementById('doc-type').value;
+    const licenseFields = document.getElementById('license-fields');
+
+    if (docType === 'driver_license') {
+        licenseFields.style.display = 'block';
+    } else {
+        licenseFields.style.display = 'none';
+    }
+}
+
+// Fahrerdokumente laden
+function loadDriverDocuments(driverId) {
+    fetch(`/api/drivers/${driverId}/documents`)
+        .then(response => response.json())
+        .then(data => {
+            renderDocuments(data.documents || []);
+        })
+        .catch(error => {
+            console.error('Error loading documents:', error);
+            showNotification('Fehler beim Laden der Dokumente', 'error');
+        });
+}
+
+// Dokumente rendern
+function renderDocuments(documents) {
+    const container = document.getElementById('documents-list');
+
+    if (documents.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-8 text-gray-500">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <p class="mt-2">Keine Dokumente vorhanden</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = documents.map(doc => {
+        const expiryBadge = doc.isExpired ?
+            '<span class="ml-2 px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Abgelaufen</span>' :
+            doc.isExpiring ?
+                '<span class="ml-2 px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Läuft bald ab</span>' : '';
+
+        const iconClass = doc.contentType.startsWith('image/') ? 'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z' :
+            'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z';
+
+        return `
+            <div class="bg-gray-50 rounded-lg p-4 flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="flex-shrink-0">
+                        <svg class="h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${iconClass}" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-900">
+                            ${doc.name}
+                            ${expiryBadge}
+                        </h4>
+                        <p class="text-sm text-gray-500">${doc.typeText} • ${doc.fileName}</p>
+                        ${doc.licenseNumber ? `<p class="text-xs text-gray-500">Nr.: ${doc.licenseNumber}</p>` : ''}
+                        ${doc.expiryDate ? `<p class="text-xs text-gray-500">Gültig bis: ${formatDate(doc.expiryDate)}</p>` : ''}
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button onclick="viewDocument('${doc.id}')" 
+                            class="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50"
+                            title="Ansehen">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                        </svg>
+                    </button>
+                    <button onclick="downloadDocument('${doc.id}')" 
+                            class="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50"
+                            title="Herunterladen">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                    </button>
+                    <button onclick="deleteDocument('${doc.id}')" 
+                            class="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
+                            title="Löschen">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Dokument ansehen
+function viewDocument(documentId) {
+    window.open(`/api/driver-documents/${documentId}/view`, '_blank');
+}
+
+// Dokument herunterladen
+function downloadDocument(documentId) {
+    window.location.href = `/api/driver-documents/${documentId}/download`;
+}
+
+// Dokument löschen
+function deleteDocument(documentId) {
+    if (!confirm('Möchten Sie dieses Dokument wirklich löschen?')) {
+        return;
+    }
+
+    fetch(`/api/driver-documents/${documentId}`, {
+        method: 'DELETE'
+    })
+        .then(response => response.json())
+        .then(data => {
+            showNotification('Dokument erfolgreich gelöscht', 'success');
+            loadDriverDocuments(currentDocumentDriverId);
+        })
+        .catch(error => {
+            console.error('Error deleting document:', error);
+            showNotification('Fehler beim Löschen des Dokuments', 'error');
+        });
+}
+
+// Datum formatieren
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('de-DE');
+}
+
+// Event Listener für Upload Form
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadForm = document.getElementById('document-upload-form');
+    if (uploadForm) {
+        uploadForm.addEventListener('submit', handleDocumentUpload);
+    }
+});
+
+// Dokument Upload Handler
+function handleDocumentUpload(e) {
+    e.preventDefault();
+
+    const formData = new FormData(e.target);
+
+    fetch(`/api/drivers/${currentDocumentDriverId}/documents`, {
+        method: 'POST',
+        body: formData
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.document) {
+                showNotification('Dokument erfolgreich hochgeladen', 'success');
+                closeUploadDocumentForm();
+                loadDriverDocuments(currentDocumentDriverId);
+            } else {
+                throw new Error(data.error || 'Unbekannter Fehler');
+            }
+        })
+        .catch(error => {
+            console.error('Error uploading document:', error);
+            showNotification('Fehler beim Hochladen: ' + error.message, 'error');
+        });
 }

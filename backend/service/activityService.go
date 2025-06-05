@@ -40,7 +40,7 @@ func (s *ActivityService) LogVehicleActivity(
 	return s.activityRepo.Create(activity)
 }
 
-// LogDriverActivity protokolliert eine fahrerbezogene Aktivität
+// LogDriverActivity protokolliert eine Aktivität für einen Fahrer
 func (s *ActivityService) LogDriverActivity(
 	activityType model.ActivityType,
 	userID primitive.ObjectID,
@@ -53,9 +53,10 @@ func (s *ActivityService) LogDriverActivity(
 		Timestamp:   time.Now(),
 		UserID:      userID,
 		DriverID:    driverID,
-		Description: description,
 		Details:     details,
+		Description: description,
 	}
+
 	return s.activityRepo.Create(activity)
 }
 
