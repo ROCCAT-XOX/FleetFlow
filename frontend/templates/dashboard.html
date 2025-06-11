@@ -192,7 +192,7 @@
                     <div class="p-4">
                         <div id="vehicles-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                             {{range .recentVehicles}}
-                            <div class="flex items-center bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors">
+                            <a href="/vehicle-details/{{.ID.Hex}}" class="flex items-center bg-gray-50 rounded-lg p-3 hover:bg-gray-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
                                 <!-- Brand Logo -->
                                 <div class="flex-shrink-0 mr-3">
                                     <img src="/static/assets/{{.Brand | lower}}.svg"
@@ -204,7 +204,7 @@
                                 <!-- Vehicle Info -->
                                 <div class="flex-grow min-w-0">
                                     <div class="flex items-center justify-between">
-                                        <h4 class="text-sm font-medium text-gray-900 truncate">{{.Brand}} {{.Model}}</h4>
+                                        <h4 class="text-sm font-medium text-gray-900 truncate group-hover:text-blue-600 transition-colors">{{.Brand}} {{.Model}}</h4>
                                         <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
                             {{if eq .Status "available"}}bg-green-100 text-green-800
                                         {{else if eq .Status "inuse"}}bg-yellow-100 text-yellow-800
@@ -219,13 +219,13 @@
                                     <p class="text-xs text-gray-500 mt-0.5">{{.LicensePlate}}</p>
                                 </div>
 
-                                <!-- Link -->
-                                <a href="/vehicle-details/{{.ID}}" class="ml-2 flex-shrink-0">
-                                    <svg class="h-4 w-4 text-gray-400 hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <!-- Arrow Icon -->
+                                <div class="ml-2 flex-shrink-0">
+                                    <svg class="h-4 w-4 text-gray-400 group-hover:text-blue-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                                     </svg>
-                                </a>
-                            </div>
+                                </div>
+                            </a>
                             {{else}}
                             <div class="col-span-full p-4 text-center text-gray-500">
                                 Keine Fahrzeuge gefunden

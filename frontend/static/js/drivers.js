@@ -28,6 +28,12 @@ function setupEventListeners() {
         assignBtn.addEventListener('click', assignVehicle);
     }
 
+    // Upload Form Submit
+    const uploadForm = document.getElementById('document-upload-form');
+    if (uploadForm) {
+        uploadForm.addEventListener('submit', handleDocumentUpload);
+    }
+
     // Modal Click Outside
     document.getElementById('driver-modal').addEventListener('click', function(e) {
         if (e.target === this) {
@@ -196,8 +202,14 @@ function renderDrivers(drivers) {
                         </div>
                     </div>
                     <div class="ml-4">
-                        <div class="text-sm font-medium text-gray-900">
+                        <div class="text-sm font-medium text-gray-900 flex items-center">
                             ${driver.firstName} ${driver.lastName}
+                            ${driver.hasLicense ?
+                        driver.licenseExpired ?
+                            '<svg class="ml-2 h-4 w-4 text-red-500" fill="currentColor" viewBox="0 0 20 20" title="Führerschein abgelaufen"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>' :
+                            '<svg class="ml-2 h-4 w-4 text-green-500" fill="currentColor" viewBox="0 0 20 20" title="Führerschein vorhanden"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>'
+                        : '<svg class="ml-2 h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20" title="Kein Führerschein hinterlegt"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg>'
+                    }
                         </div>
                         <div class="text-sm text-gray-500">
                             ${driver.email}
@@ -213,31 +225,6 @@ function renderDrivers(drivers) {
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                 ${licenseClasses}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0 h-10 w-10">
-                        <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
-                            <span class="text-sm font-medium text-indigo-800">
-                                ${getInitials(driver.firstName, driver.lastName)}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="ml-4">
-                        <div class="text-sm font-medium text-gray-900 flex items-center">
-                            ${driver.firstName} ${driver.lastName}
-                            ${driver.hasLicense ?
-                        driver.licenseExpired ?
-                            '<svg class="ml-2 h-4 w-4 text-red-500" fill="currentColor" viewBox="0 0 20 20" title="Führerschein abgelaufen"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>' :
-                            '<svg class="ml-2 h-4 w-4 text-green-500" fill="currentColor" viewBox="0 0 20 20" title="Führerschein vorhanden"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>'
-                        : '<svg class="ml-2 h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20" title="Kein Führerschein hinterlegt"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg>'
-                    }
-                        </div>
-                        <div class="text-sm text-gray-500">
-                            ${driver.email}
-                        </div>
-                    </div>
-                </div>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <div class="flex items-center justify-end space-x-2">
@@ -761,13 +748,6 @@ function formatDate(dateString) {
     return date.toLocaleDateString('de-DE');
 }
 
-// Event Listener für Upload Form
-document.addEventListener('DOMContentLoaded', function() {
-    const uploadForm = document.getElementById('document-upload-form');
-    if (uploadForm) {
-        uploadForm.addEventListener('submit', handleDocumentUpload);
-    }
-});
 
 // Dokument Upload Handler
 function handleDocumentUpload(e) {

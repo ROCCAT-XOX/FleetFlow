@@ -1,0 +1,59 @@
+{{ define "error.html" }}
+{{ template "head" .}}
+<body class="bg-gray-50 min-h-screen flex flex-col">
+{{ template "navigation" .}}
+
+<main class="container mx-auto px-4 py-6 flex-grow flex items-center justify-center">
+    <div class="max-w-md w-full">
+        <!-- Error Card -->
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+            <!-- Error Icon -->
+            <div class="bg-red-50 p-6 text-center">
+                <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100">
+                    <svg class="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                </div>
+                <h1 class="mt-4 text-xl font-semibold text-gray-900">{{ if .title }}{{ .title }}{{ else }}Fehler{{ end }}</h1>
+            </div>
+
+            <!-- Error Message -->
+            <div class="p-6">
+                <p class="text-gray-600 text-center mb-6">
+                    {{ if .error }}{{ .error }}{{ else }}Ein unbekannter Fehler ist aufgetreten.{{ end }}
+                </p>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button onclick="history.back()" 
+                            class="flex-1 inline-flex justify-center items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <svg class="-ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                        Zurück
+                    </button>
+                    <a href="/dashboard" 
+                       class="flex-1 inline-flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <svg class="-ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                        </svg>
+                        Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Help -->
+        <div class="mt-6 text-center">
+            <p class="text-sm text-gray-500">
+                Wenn das Problem weiterhin besteht, wenden Sie sich an den 
+                <a href="mailto:support@fleetflow.com" class="text-indigo-600 hover:text-indigo-500">Support</a>.
+            </p>
+        </div>
+    </div>
+</main>
+
+{{ template "footer" .}}
+</body>
+</html>
+{{ end }}
