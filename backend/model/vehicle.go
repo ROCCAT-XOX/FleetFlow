@@ -55,6 +55,7 @@ type Vehicle struct {
 	Color              string             `bson:"color" json:"color"`
 	VehicleID          string             `bson:"vehicleId" json:"vehicleId"`
 	VIN                string             `bson:"vin" json:"vin"`
+	CardNumber         string             `bson:"cardNumber" json:"cardNumber"`
 	FuelType           FuelType           `bson:"fuelType" json:"fuelType"`
 	Mileage            int                `bson:"mileage" json:"mileage"`
 	RegistrationDate   time.Time          `bson:"registrationDate" json:"registrationDate"`

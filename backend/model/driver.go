@@ -40,6 +40,7 @@ type Driver struct {
 	ID                primitive.ObjectID `bson:"_id,omitempty" json:"id"`
 	FirstName         string             `bson:"firstName" json:"firstName"`
 	LastName          string             `bson:"lastName" json:"lastName"`
+	DriverNumber      string             `bson:"driverNumber" json:"driverNumber"`
 	Email             string             `bson:"email" json:"email"`
 	Phone             string             `bson:"phone" json:"phone"`
 	Status            DriverStatus       `bson:"status" json:"status"`

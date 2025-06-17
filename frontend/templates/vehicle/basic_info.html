@@ -39,6 +39,10 @@
                     <dd class="mt-1 text-sm text-gray-900">{{if .vehicle.vin}}{{.vehicle.vin}}{{else}}-{{end}}</dd>
                 </div>
                 <div class="sm:col-span-1">
+                    <dt class="text-sm font-medium text-gray-500">Kartennummer</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{if .vehicle.cardNumber}}{{.vehicle.cardNumber}}{{else}}-{{end}}</dd>
+                </div>
+                <div class="sm:col-span-1">
                     <dt class="text-sm font-medium text-gray-500">Art des Fahrzeugs</dt>
                     <dd class="mt-1 text-sm text-gray-900">{{if .vehicle.vehicleType}}{{.vehicle.vehicleType}}{{else}}-{{end}}</dd>
                 </div>

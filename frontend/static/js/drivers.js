@@ -214,6 +214,7 @@ function renderDrivers(drivers) {
                         <div class="text-sm text-gray-500">
                             ${driver.email}
                         </div>
+                        ${driver.driverNumber ? `<div class="text-xs text-gray-400">Fahrer-Nr: ${driver.driverNumber}</div>` : ''}
                     </div>
                 </div>
             </td>
@@ -327,6 +328,7 @@ function openEditDriverModal(driverId) {
             // Formular füllen
             document.getElementById('driver-firstName').value = driver.firstName || '';
             document.getElementById('driver-lastName').value = driver.lastName || '';
+            document.getElementById('driver-driverNumber').value = driver.driverNumber || '';
             document.getElementById('driver-email').value = driver.email || '';
             document.getElementById('driver-phone').value = driver.phone || '';
             document.getElementById('driver-status').value = driver.status || 'available';
@@ -370,6 +372,7 @@ function handleDriverSubmit(e) {
     const driverData = {
         firstName: formData.get('firstName'),
         lastName: formData.get('lastName'),
+        driverNumber: formData.get('driverNumber'),
         email: formData.get('email'),
         phone: formData.get('phone'),
         status: formData.get('status'),

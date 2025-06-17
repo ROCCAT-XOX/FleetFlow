@@ -366,6 +366,7 @@ async function handleVehicleEditSubmit(e) {
         color: formData.get('color'),
         vehicleId: formData.get('vehicle_id'),
         vin: formData.get('vin'),
+        cardNumber: formData.get('card_number'),
         vehicleType: formData.get('vehicle_type'),
         fuelType: formData.get('fuel_type'),
         mileage: parseInt(formData.get('current_mileage')) || 0,
@@ -721,6 +722,7 @@ window.openEditVehicleModal = async function(vehicleId) {
         setFieldValue('color', vehicle.color);
         setFieldValue('vehicle_id', vehicle.vehicleId);
         setFieldValue('vin', vehicle.vin);
+        setFieldValue('card_number', vehicle.cardNumber);
         setFieldValue('vehicle_type', vehicle.vehicleType);
         setFieldValue('fuel_type', vehicle.fuelType);
         setFieldValue('current_mileage', vehicle.mileage);
