@@ -60,9 +60,11 @@
                 <span class="px-4 py-2 rounded-full text-sm font-semibold
                 {{ if eq .vehicle.status "available" }}bg-green-100 text-green-800{{ end }}
                 {{ if eq .vehicle.status "inuse" }}bg-yellow-100 text-yellow-800{{ end }}
+                {{ if eq .vehicle.status "reserved" }}bg-blue-100 text-blue-800{{ end }}
                 {{ if eq .vehicle.status "maintenance" }}bg-red-100 text-red-800{{ end }}">
                 {{ if eq .vehicle.status "available" }}Verfügbar{{ end }}
                 {{ if eq .vehicle.status "inuse" }}In Benutzung{{ end }}
+                {{ if eq .vehicle.status "reserved" }}Reserviert{{ end }}
                 {{ if eq .vehicle.status "maintenance" }}In Wartung{{ end }}
                 </span>
             </div>
@@ -193,7 +195,265 @@
         if (currentTab === 'images' && typeof VehicleGallery !== 'undefined') {
             setTimeout(() => VehicleGallery.initialize(), 100);
         }
+
+        // Wartungs-Warnungen prüfen wenn auf Wartungs-Tab
+        if (currentTab === 'maintenance') {
+            checkMaintenanceWarnings('{{ .vehicleId }}');
+        }
+        
+        // Ablauf-Warnungen prüfen wenn auf Zulassungs-Tab
+        if (currentTab === 'registration') {
+            checkExpirationWarnings('{{ .vehicleId }}');
+        }
     });
+
+    // Wartungs-Warnungen prüfen
+    async function checkMaintenanceWarnings(vehicleId) {
+        try {
+            // Fahrzeugdaten laden
+            const vehicleResponse = await fetch(`/api/vehicles/${vehicleId}`);
+            const vehicleData = await vehicleResponse.json();
+            const vehicle = vehicleData.vehicle || vehicleData;
+            
+            // Wartungseinträge laden
+            const maintenanceResponse = await fetch(`/api/maintenance/vehicle/${vehicleId}`);
+            const maintenanceData = await maintenanceResponse.json();
+            const maintenanceEntries = maintenanceData.maintenanceEntries || [];
+            
+            const warnings = [];
+            const currentMileage = vehicle.mileage || 0;
+            const currentDate = new Date();
+            
+            // Beispiel-Wartungsintervalle (können später konfigurierbar gemacht werden)
+            const maintenanceIntervals = {
+                'oil_change': { km: 15000, months: 12, name: 'Ölwechsel' },
+                'inspection': { km: 20000, months: 24, name: 'Hauptuntersuchung (TÜV)' },
+                'service': { km: 10000, months: 12, name: 'Inspektion' },
+                'brake_check': { km: 40000, months: 24, name: 'Bremsenprüfung' }
+            };
+            
+            // Prüfe für jeden Wartungstyp
+            for (const [type, interval] of Object.entries(maintenanceIntervals)) {
+                const lastMaintenance = maintenanceEntries
+                    .filter(entry => entry.type === type)
+                    .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+                
+                if (!lastMaintenance) {
+                    // Keine Wartung dieses Typs vorhanden
+                    warnings.push({
+                        type: 'warning',
+                        message: `${interval.name}: Noch keine Wartung dokumentiert`,
+                        severity: 'medium'
+                    });
+                } else {
+                    const lastMaintenanceDate = new Date(lastMaintenance.date);
+                    const lastMaintenanceMileage = lastMaintenance.mileage || 0;
+                    
+                    // Prüfe Kilometerstand
+                    const kmSinceLastMaintenance = currentMileage - lastMaintenanceMileage;
+                    if (kmSinceLastMaintenance >= interval.km) {
+                        const overdueKm = kmSinceLastMaintenance - interval.km;
+                        warnings.push({
+                            type: 'error',
+                            message: `${interval.name}: Überfällig um ${overdueKm.toLocaleString()} km (letzte Wartung bei ${lastMaintenanceMileage.toLocaleString()} km)`,
+                            severity: 'high'
+                        });
+                    } else if (kmSinceLastMaintenance >= interval.km * 0.9) {
+                        const remainingKm = interval.km - kmSinceLastMaintenance;
+                        warnings.push({
+                            type: 'warning',
+                            message: `${interval.name}: Fällig in ${remainingKm.toLocaleString()} km`,
+                            severity: 'medium'
+                        });
+                    }
+                    
+                    // Prüfe Zeitintervall
+                    const monthsSinceLastMaintenance = (currentDate - lastMaintenanceDate) / (1000 * 60 * 60 * 24 * 30.44);
+                    if (monthsSinceLastMaintenance >= interval.months) {
+                        const overdueMonths = Math.floor(monthsSinceLastMaintenance - interval.months);
+                        warnings.push({
+                            type: 'error',
+                            message: `${interval.name}: Zeitlich überfällig um ${overdueMonths} Monat(e) (letzte Wartung: ${lastMaintenanceDate.toLocaleDateString('de-DE')})`,
+                            severity: 'high'
+                        });
+                    } else if (monthsSinceLastMaintenance >= interval.months * 0.9) {
+                        const remainingMonths = Math.ceil(interval.months - monthsSinceLastMaintenance);
+                        warnings.push({
+                            type: 'warning',
+                            message: `${interval.name}: Fällig in ${remainingMonths} Monat(en)`,
+                            severity: 'medium'
+                        });
+                    }
+                }
+            }
+            
+            // Warnungen anzeigen
+            displayMaintenanceWarnings(warnings);
+            
+        } catch (error) {
+            console.error('Fehler beim Prüfen der Wartungs-Warnungen:', error);
+        }
+    }
+    
+    // Wartungs-Warnungen anzeigen
+    function displayMaintenanceWarnings(warnings) {
+        const warningsContainer = document.getElementById('maintenance-warnings');
+        if (!warningsContainer) return;
+        
+        warningsContainer.innerHTML = '';
+        
+        if (warnings.length === 0) {
+            warningsContainer.style.display = 'none';
+            return;
+        }
+        
+        warningsContainer.style.display = 'block';
+        
+        warnings.forEach(warning => {
+            const warningDiv = document.createElement('div');
+            warningDiv.className = `mb-2 p-3 rounded-md ${
+                warning.type === 'error' ? 'bg-red-50 border border-red-200' : 'bg-yellow-50 border border-yellow-200'
+            }`;
+            
+            warningDiv.innerHTML = `
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 ${warning.type === 'error' ? 'text-red-400' : 'text-yellow-400'}" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium ${warning.type === 'error' ? 'text-red-800' : 'text-yellow-800'}">
+                            ${warning.message}
+                        </p>
+                    </div>
+                </div>
+            `;
+            
+            warningsContainer.appendChild(warningDiv);
+        });
+    }
+    
+    // Ablauf-Warnungen prüfen (TÜV, Versicherung, Zulassung)
+    async function checkExpirationWarnings(vehicleId) {
+        try {
+            // Fahrzeugdaten laden
+            const vehicleResponse = await fetch(`/api/vehicles/${vehicleId}`);
+            const vehicleData = await vehicleResponse.json();
+            const vehicle = vehicleData.vehicle || vehicleData;
+            
+            const warnings = [];
+            const currentDate = new Date();
+            
+            // Ablaufprüfungen
+            const expirationChecks = [
+                {
+                    date: vehicle.nextInspectionDate,
+                    name: 'TÜV/HU',
+                    urgentDays: 30,
+                    warningDays: 60
+                },
+                {
+                    date: vehicle.insuranceExpiry,
+                    name: 'Versicherung',
+                    urgentDays: 30,
+                    warningDays: 90
+                },
+                {
+                    date: vehicle.registrationExpiry,
+                    name: 'Zulassung',
+                    urgentDays: 30,
+                    warningDays: 60
+                }
+            ];
+            
+            expirationChecks.forEach(check => {
+                if (!check.date) {
+                    warnings.push({
+                        type: 'warning',
+                        message: `${check.name}: Kein Ablaufdatum hinterlegt`,
+                        severity: 'medium'
+                    });
+                    return;
+                }
+                
+                const expirationDate = new Date(check.date);
+                const daysUntilExpiration = Math.ceil((expirationDate - currentDate) / (1000 * 60 * 60 * 24));
+                
+                if (daysUntilExpiration < 0) {
+                    // Bereits abgelaufen
+                    const daysOverdue = Math.abs(daysUntilExpiration);
+                    warnings.push({
+                        type: 'error',
+                        message: `${check.name}: Abgelaufen seit ${daysOverdue} Tag(en) (${expirationDate.toLocaleDateString('de-DE')})`,
+                        severity: 'high'
+                    });
+                } else if (daysUntilExpiration <= check.urgentDays) {
+                    // Läuft bald ab (dringend)
+                    warnings.push({
+                        type: 'error',
+                        message: `${check.name}: Läuft in ${daysUntilExpiration} Tag(en) ab (${expirationDate.toLocaleDateString('de-DE')})`,
+                        severity: 'high'
+                    });
+                } else if (daysUntilExpiration <= check.warningDays) {
+                    // Läuft in nächster Zeit ab (Warnung)
+                    warnings.push({
+                        type: 'warning',
+                        message: `${check.name}: Läuft in ${daysUntilExpiration} Tag(en) ab (${expirationDate.toLocaleDateString('de-DE')})`,
+                        severity: 'medium'
+                    });
+                }
+            });
+            
+            // Warnungen anzeigen
+            displayExpirationWarnings(warnings);
+            
+        } catch (error) {
+            console.error('Fehler beim Prüfen der Ablauf-Warnungen:', error);
+        }
+    }
+    
+    // Ablauf-Warnungen anzeigen
+    function displayExpirationWarnings(warnings) {
+        const warningsContainer = document.getElementById('expiration-warnings');
+        if (!warningsContainer) return;
+        
+        warningsContainer.innerHTML = '';
+        
+        if (warnings.length === 0) {
+            warningsContainer.style.display = 'none';
+            return;
+        }
+        
+        warningsContainer.style.display = 'block';
+        
+        warnings.forEach(warning => {
+            const warningDiv = document.createElement('div');
+            warningDiv.className = `mb-2 p-3 rounded-md ${
+                warning.type === 'error' ? 'bg-red-50 border border-red-200' : 'bg-yellow-50 border border-yellow-200'
+            }`;
+            
+            warningDiv.innerHTML = `
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 ${warning.type === 'error' ? 'text-red-400' : 'text-yellow-400'}" fill="currentColor" viewBox="0 0 20 20">
+                            ${warning.type === 'error' ? 
+                                '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />' :
+                                '<path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />'
+                            }
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium ${warning.type === 'error' ? 'text-red-800' : 'text-yellow-800'}">
+                            ${warning.message}
+                        </p>
+                    </div>
+                </div>
+            `;
+            
+            warningsContainer.appendChild(warningDiv);
+        });
+    }
 </script>
 
 {{ template "footer" .}}

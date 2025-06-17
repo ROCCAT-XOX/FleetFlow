@@ -35,6 +35,18 @@ document.addEventListener('DOMContentLoaded', function() {
     // Verfügbare Fahrzeuge prüfen wenn Zeitraum geändert wird
     startTimeInput.addEventListener('change', checkAvailableVehicles);
     endTimeInput.addEventListener('change', checkAvailableVehicles);
+    
+    // Konfliktprüfung wenn Fahrzeug oder Zeitraum geändert wird
+    vehicleSelect.addEventListener('change', checkReservationConflicts);
+    startTimeInput.addEventListener('change', checkReservationConflicts);
+    endTimeInput.addEventListener('change', checkReservationConflicts);
+    
+    // Kompatibilitätsprüfung wenn Fahrer oder Fahrzeug geändert wird
+    const driverSelect = document.getElementById('driver-select');
+    if (driverSelect && vehicleSelect) {
+        driverSelect.addEventListener('change', checkReservationDriverCompatibility);
+        vehicleSelect.addEventListener('change', checkReservationDriverCompatibility);
+    }
 
     // Modal schließen bei Klick außerhalb
     reservationModal.addEventListener('click', function(e) {
@@ -80,6 +92,9 @@ document.addEventListener('DOMContentLoaded', function() {
         currentReservationId = reservationId;
         const modalTitle = document.getElementById('modal-title');
         const submitBtn = reservationForm.querySelector('button[type="submit"]');
+
+        // Alte Warnungen entfernen
+        clearConflictWarnings();
 
         if (reservationId && reservationId !== null) {
             modalTitle.textContent = 'Reservierung bearbeiten';
@@ -377,7 +392,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Status-Text ermitteln
     function getStatusText(status) {
         switch (status) {
-            case 'pending': return 'Ausstehend';
+            case 'pending': return 'Reservierung';
             case 'active': return 'Aktiv';
             case 'completed': return 'Abgeschlossen';
             case 'cancelled': return 'Storniert';
@@ -512,10 +527,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 const reservation = reservations.find(r => r.id === reservationId);
                 
                 if (reservation) {
-                    // Formular mit Daten füllen
-                    document.getElementById('vehicle-select').value = reservation.vehicleId;
-                    document.getElementById('driver-select').value = reservation.driverId;
-                    
                     // Zeitwerte für datetime-local ohne UTC-Konvertierung setzen
                     const startDate = new Date(reservation.startTime);
                     const endDate = new Date(reservation.endTime);
@@ -534,6 +545,45 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('end-time').value = formatForDatetimeLocal(endDate);
                     document.getElementById('purpose').value = reservation.purpose || '';
                     document.getElementById('notes').value = reservation.notes || '';
+                    
+                    // Fahrzeug- und Fahrer-Auswahl setzen (mit Verzögerung damit die Optionen geladen sind)
+                    setTimeout(() => {
+                        const vehicleSelect = document.getElementById('vehicle-select');
+                        const driverSelect = document.getElementById('driver-select');
+                        
+                        // Verschiedene mögliche Feldnamen prüfen
+                        const vehicleId = reservation.vehicleId || reservation.vehicleID || (reservation.vehicle && reservation.vehicle.id);
+                        const driverId = reservation.driverId || reservation.driverID || (reservation.driver && reservation.driver.id);
+                        
+                        console.log('Setting vehicle ID:', vehicleId, 'Driver ID:', driverId);
+                        console.log('Available vehicle options:', Array.from(vehicleSelect.options).map(o => ({value: o.value, text: o.text})));
+                        console.log('Available driver options:', Array.from(driverSelect.options).map(o => ({value: o.value, text: o.text})));
+                        
+                        if (vehicleSelect && vehicleId) {
+                            vehicleSelect.value = vehicleId;
+                            // Falls die direkte Zuweisung nicht funktioniert, Option suchen
+                            if (vehicleSelect.value !== vehicleId) {
+                                for (let option of vehicleSelect.options) {
+                                    if (option.value === vehicleId) {
+                                        option.selected = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        if (driverSelect && driverId) {
+                            driverSelect.value = driverId;
+                            // Falls die direkte Zuweisung nicht funktioniert, Option suchen
+                            if (driverSelect.value !== driverId) {
+                                for (let option of driverSelect.options) {
+                                    if (option.value === driverId) {
+                                        option.selected = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }, 100);
                 } else {
                     console.error('Reservation not found with ID:', reservationId);
                     showNotification('Reservierung nicht gefunden', 'error');
@@ -934,6 +984,288 @@ Status: ${getStatusText(reservation.status)}`;
             }
         }
     };
+
+    // Konfliktprüfung für Reservierungen
+    async function checkReservationConflicts() {
+        const vehicleId = vehicleSelect.value;
+        const startTime = startTimeInput.value;
+        const endTime = endTimeInput.value;
+
+        // Entferne vorherige Warnungen
+        clearConflictWarnings();
+
+        if (!vehicleId || !startTime || !endTime) {
+            return;
+        }
+
+        try {
+            const excludeId = currentReservationId ? `&excludeId=${currentReservationId}` : '';
+            const response = await fetch(`/api/reservations/check-conflict?vehicleId=${vehicleId}&startTime=${startTime}&endTime=${endTime}${excludeId}`);
+            
+            if (response.ok) {
+                const conflictData = await response.json();
+                
+                if (conflictData.hasConflict) {
+                    showConflictWarning(conflictData.message, conflictData.conflictingReservations);
+                }
+            }
+        } catch (error) {
+            console.error('Fehler bei Konfliktprüfung:', error);
+        }
+    }
+
+    // Zeigt Konfliktwarnung an
+    function showConflictWarning(message, conflicts) {
+        // Erstelle Warnung-Element
+        const warningDiv = document.createElement('div');
+        warningDiv.id = 'conflict-warning';
+        warningDiv.className = 'mt-4 p-4 border border-yellow-400 bg-yellow-50 rounded-md';
+        
+        let conflictList = '';
+        if (conflicts && conflicts.length > 0) {
+            conflictList = '<ul class="mt-2 list-disc list-inside text-sm">';
+            conflicts.forEach(conflict => {
+                const startDate = new Date(conflict.startTime).toLocaleString('de-DE');
+                const endDate = new Date(conflict.endTime).toLocaleString('de-DE');
+                conflictList += `<li>Reservierung vom ${startDate} bis ${endDate}</li>`;
+            });
+            conflictList += '</ul>';
+        }
+
+        warningDiv.innerHTML = `
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-yellow-800">
+                        Reservierungskonflikt
+                    </h3>
+                    <div class="mt-2 text-sm text-yellow-700">
+                        <p>${message}</p>
+                        ${conflictList}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Füge Warnung nach dem Endzeit-Feld hinzu
+        endTimeInput.parentNode.parentNode.appendChild(warningDiv);
+    }
+
+    // Entfernt Konfliktwarnung
+    function clearConflictWarnings() {
+        const existingWarning = document.getElementById('conflict-warning');
+        if (existingWarning) {
+            existingWarning.remove();
+        }
+    }
+
+    // Fahrer-Fahrzeug-Kompatibilität prüfen für Reservierungen
+    async function checkReservationDriverCompatibility() {
+        const vehicleId = vehicleSelect.value;
+        const driverId = document.getElementById('driver-select').value;
+        
+        if (!vehicleId || !driverId) {
+            // Entferne Warnung wenn kein Fahrer oder Fahrzeug ausgewählt
+            clearCompatibilityWarnings();
+            return;
+        }
+        
+        try {
+            // Fahrzeug- und Fahrerdaten parallel laden
+            const [vehicleResponse, driverResponse] = await Promise.all([
+                fetch(`/api/vehicles/${vehicleId}`),
+                fetch(`/api/drivers/${driverId}`)
+            ]);
+            
+            const vehicleData = await vehicleResponse.json();
+            const driverData = await driverResponse.json();
+            
+            const vehicle = vehicleData.vehicle || vehicleData;
+            const driver = driverData.driver || driverData;
+            
+            // Kompatibilität prüfen
+            const compatibility = checkDriverVehicleCompatibilityReservation(
+                driver.licenseClasses || [], 
+                vehicle
+            );
+            
+            // Vorherige Warnung entfernen
+            clearCompatibilityWarnings();
+            
+            // Neue Warnung anzeigen falls nötig
+            if (!compatibility.compatible || compatibility.warning) {
+                showReservationCompatibilityWarning(compatibility.message, !compatibility.compatible);
+            }
+            
+        } catch (error) {
+            console.error('Fehler bei Reservierungs-Kompatibilitätsprüfung:', error);
+        }
+    }
+    
+    // Kompatibilitätsprüfung für Reservierungen (verwendet dieselbe Logik wie vehicle-modals.js)
+    function checkDriverVehicleCompatibilityReservation(driverLicenseClasses, vehicle) {
+        if (!vehicle || !driverLicenseClasses || driverLicenseClasses.length === 0) {
+            return {
+                compatible: false,
+                message: 'Fahrzeugdaten oder Führerscheinklassen nicht verfügbar'
+            };
+        }
+        
+        const requiredLicenses = determineRequiredLicenseClassesReservation(vehicle);
+        
+        if (!requiredLicenses.length) {
+            return {
+                compatible: true,
+                message: 'Führerscheinanforderungen konnten nicht bestimmt werden - manuelle Prüfung erforderlich',
+                warning: true
+            };
+        }
+        
+        // Prüfe ob der Fahrer mindestens eine der erforderlichen Klassen hat
+        const compatibleLicenses = driverLicenseClasses.filter(license => 
+            requiredLicenses.includes(license)
+        );
+        
+        if (compatibleLicenses.length === 0) {
+            return {
+                compatible: false,
+                message: `Fahrer benötigt eine der folgenden Führerscheinklassen: ${requiredLicenses.join(', ')}. Vorhanden: ${driverLicenseClasses.join(', ')}`
+            };
+        }
+        
+        return {
+            compatible: true,
+            message: `Fahrer ist berechtigt (${compatibleLicenses.join(', ')})`
+        };
+    }
+    
+    // Bestimme erforderliche Führerscheinklassen für Reservierungen (gleiche Logik wie vehicle-modals.js)
+    function determineRequiredLicenseClassesReservation(vehicle) {
+        const requiredLicenses = [];
+        const grossWeight = vehicle.grossWeight || 0;
+        const technicalMaxWeight = vehicle.technicalMaxWeight || grossWeight;
+        const powerRating = vehicle.powerRating || 0; // kW
+        const vehicleType = vehicle.vehicleType || '';
+        const towingCapacity = vehicle.towingCapacity || 0;
+        
+        // Motorräder und Mopeds
+        if (vehicleType.toLowerCase().includes('motorrad') || vehicleType.toLowerCase().includes('roller')) {
+            if (powerRating <= 11) { // bis 11 kW (ca. 15 PS)
+                requiredLicenses.push('A1');
+            }
+            if (powerRating <= 35) { // bis 35 kW (ca. 48 PS)
+                requiredLicenses.push('A2');
+            }
+            requiredLicenses.push('A'); // unbeschränkt
+            return requiredLicenses;
+        }
+        
+        if (vehicleType.toLowerCase().includes('moped')) {
+            requiredLicenses.push('AM', 'A1', 'A2', 'A', 'B');
+            return requiredLicenses;
+        }
+        
+        // Busse
+        if (vehicleType.toLowerCase().includes('bus')) {
+            if (technicalMaxWeight <= 7500) { // bis 7,5t
+                requiredLicenses.push('D1');
+                if (towingCapacity > 750) {
+                    requiredLicenses.push('D1E');
+                }
+            }
+            requiredLicenses.push('D'); // über 7,5t oder mehr als 16 Sitzplätze
+            if (towingCapacity > 750) {
+                requiredLicenses.push('DE');
+            }
+            return requiredLicenses;
+        }
+        
+        // LKW und schwere Fahrzeuge
+        if (technicalMaxWeight > 7500 || vehicleType.toLowerCase().includes('lkw')) {
+            requiredLicenses.push('C'); // über 7,5t
+            if (towingCapacity > 750) {
+                requiredLicenses.push('CE');
+            }
+            return requiredLicenses;
+        }
+        
+        // Mittelschwere Fahrzeuge (3,5t - 7,5t)
+        if (technicalMaxWeight > 3500) {
+            requiredLicenses.push('C1'); // 3,5t - 7,5t
+            if (towingCapacity > 750) {
+                requiredLicenses.push('C1E');
+            }
+            // C und CE berechtigen auch für kleinere Fahrzeuge
+            requiredLicenses.push('C', 'CE');
+            return requiredLicenses;
+        }
+        
+        // PKW und leichte Fahrzeuge (bis 3,5t)
+        if (technicalMaxWeight <= 3500) {
+            requiredLicenses.push('B'); // Basis PKW-Führerschein
+            
+            // Mit schwerem Anhänger
+            if (towingCapacity > 750) {
+                const totalWeight = technicalMaxWeight + towingCapacity;
+                if (totalWeight > 3500) {
+                    requiredLicenses.push('BE');
+                }
+            }
+            
+            // Höhere Klassen berechtigen auch
+            requiredLicenses.push('C1', 'C1E', 'C', 'CE', 'D1', 'D1E', 'D', 'DE');
+            return requiredLicenses;
+        }
+        
+        // Fallback für unbekannte Fahrzeuge
+        requiredLicenses.push('B');
+        return requiredLicenses;
+    }
+    
+    // Kompatibilitäts-Warnung für Reservierungen anzeigen
+    function showReservationCompatibilityWarning(message, isError = false) {
+        const warningDiv = document.createElement('div');
+        warningDiv.id = 'reservation-compatibility-warning';
+        warningDiv.className = `mt-4 p-4 border rounded-md ${
+            isError ? 'border-red-400 bg-red-50' : 'border-yellow-400 bg-yellow-50'
+        }`;
+        
+        warningDiv.innerHTML = `
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 ${isError ? 'text-red-400' : 'text-yellow-400'}" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium ${isError ? 'text-red-800' : 'text-yellow-800'}">
+                        ${isError ? 'Führerschein-Inkompatibilität' : 'Führerschein-Hinweis'}
+                    </h3>
+                    <div class="mt-2 text-sm ${isError ? 'text-red-700' : 'text-yellow-700'}">
+                        <p>${message}</p>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Warnung nach dem Fahrer-Select einfügen
+        const driverSelect = document.getElementById('driver-select');
+        if (driverSelect) {
+            driverSelect.parentNode.parentNode.appendChild(warningDiv);
+        }
+    }
+    
+    // Kompatibilitäts-Warnungen entfernen
+    function clearCompatibilityWarnings() {
+        const existingWarning = document.getElementById('reservation-compatibility-warning');
+        if (existingWarning) {
+            existingWarning.remove();
+        }
+    }
 
     // Initiale Datenladung
     reloadReservations();

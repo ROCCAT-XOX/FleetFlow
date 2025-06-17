@@ -273,6 +273,7 @@ function getStatusBadge(status) {
     const statusConfig = {
         'available': { text: 'Verfügbar', class: 'bg-green-100 text-green-800' },
         'onduty': { text: 'Im Dienst', class: 'bg-blue-100 text-blue-800' },
+        'reserved': { text: 'Reserviert', class: 'bg-yellow-100 text-yellow-800' },
         'offduty': { text: 'Außer Dienst', class: 'bg-gray-100 text-gray-800' }
     };
 

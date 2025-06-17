@@ -424,3 +424,50 @@ func (h *ReservationHandler) GetAvailableVehicles(c *gin.Context) {
 
 	c.JSON(http.StatusOK, availableVehicles)
 }
+
+// CheckReservationConflict prüft auf Reservierungskonflikte
+func (h *ReservationHandler) CheckReservationConflict(c *gin.Context) {
+	vehicleID := c.Query("vehicleId")
+	startTimeStr := c.Query("startTime")
+	endTimeStr := c.Query("endTime")
+	excludeID := c.Query("excludeId")
+
+	if vehicleID == "" || startTimeStr == "" || endTimeStr == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Fahrzeug-ID, Start- und Endzeit sind erforderlich"})
+		return
+	}
+
+	// Zeitstempel parsen (als lokale Zeit in Europa/Berlin)
+	loc, err := time.LoadLocation("Europe/Berlin")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Timezone-Fehler"})
+		return
+	}
+
+	startTime, err := time.ParseInLocation("2006-01-02T15:04", startTimeStr, loc)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Ungültiges Startzeit-Format"})
+		return
+	}
+
+	endTime, err := time.ParseInLocation("2006-01-02T15:04", endTimeStr, loc)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Ungültiges Endzeit-Format"})
+		return
+	}
+
+	// Konfliktprüfung
+	var excludeIDPtr *string
+	if excludeID != "" {
+		excludeIDPtr = &excludeID
+	}
+
+	repo := repository.NewVehicleReservationRepository()
+	conflictDetails, err := repo.CheckConflictDetails(vehicleID, startTime, endTime, excludeIDPtr)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, conflictDetails)
+}

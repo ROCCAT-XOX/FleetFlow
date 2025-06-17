@@ -579,5 +579,6 @@ func setupAPIRoutes(api *gin.RouterGroup) {
 		reservations.GET("/vehicle/:vehicleId", reservationHandler.GetReservationsByVehicle)
 		reservations.GET("/driver/:driverId", reservationHandler.GetReservationsByDriver)
 		reservations.GET("/available-vehicles", reservationHandler.GetAvailableVehicles)
+		reservations.GET("/check-conflict", reservationHandler.CheckReservationConflict)
 	}
 }

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"FleetDrive/backend/db"
@@ -166,6 +167,75 @@ func (r *VehicleReservationRepository) CheckConflict(vehicleID string, startTime
 	}
 
 	return count > 0, nil
+}
+
+// ConflictDetails enthält detaillierte Informationen über Reservierungskonflikte
+type ConflictDetails struct {
+	HasConflict         bool                         `json:"hasConflict"`
+	ConflictingReservations []model.VehicleReservation `json:"conflictingReservations"`
+	Message             string                       `json:"message"`
+}
+
+// CheckConflictDetails prüft auf Konflikte und liefert detaillierte Informationen
+func (r *VehicleReservationRepository) CheckConflictDetails(vehicleID string, startTime, endTime time.Time, excludeID *string) (*ConflictDetails, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	objectID, err := primitive.ObjectIDFromHex(vehicleID)
+	if err != nil {
+		return nil, err
+	}
+
+	filter := bson.M{
+		"vehicleId": objectID,
+		"status": bson.M{
+			"$in": []string{string(model.ReservationStatusPending), string(model.ReservationStatusActive)},
+		},
+		"$or": []bson.M{
+			{
+				"startTime": bson.M{"$lt": endTime},
+				"endTime":   bson.M{"$gt": startTime},
+			},
+		},
+	}
+
+	// Ausschließen einer bestimmten ID (für Updates)
+	if excludeID != nil {
+		excludeObjectID, err := primitive.ObjectIDFromHex(*excludeID)
+		if err != nil {
+			return nil, err
+		}
+		filter["_id"] = bson.M{"$ne": excludeObjectID}
+	}
+
+	cursor, err := r.collection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var conflicts []model.VehicleReservation
+	if err := cursor.All(ctx, &conflicts); err != nil {
+		return nil, err
+	}
+
+	result := &ConflictDetails{
+		HasConflict:             len(conflicts) > 0,
+		ConflictingReservations: conflicts,
+	}
+
+	if result.HasConflict {
+		if len(conflicts) == 1 {
+			conflict := conflicts[0]
+			result.Message = fmt.Sprintf("Konflikt mit bestehender Reservierung vom %s bis %s",
+				conflict.StartTime.Format("02.01.2006 15:04"),
+				conflict.EndTime.Format("02.01.2006 15:04"))
+		} else {
+			result.Message = fmt.Sprintf("Konflikt mit %d bestehenden Reservierungen", len(conflicts))
+		}
+	}
+
+	return result, nil
 }
 
 // FindActiveReservations findet alle aktiven Reservierungen
