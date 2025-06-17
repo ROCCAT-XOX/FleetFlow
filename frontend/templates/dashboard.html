@@ -39,7 +39,7 @@
 
         {{else}}
         <!-- Dashboard Header mit Statistiken -->
-        <div class="grid grid-cols-1 gap-6 mb-6 lg:grid-cols-5">
+        <div class="grid grid-cols-1 gap-6 mb-6 lg:grid-cols-7">
             <!-- Fahrzeuge gesamt -->
             <div class="flex items-center p-4 bg-white rounded-lg shadow-md">
                 <div class="flex-shrink-0 mr-4">
@@ -101,6 +101,21 @@
                 </div>
             </div>
 
+            <!-- Reserviert -->
+            <div class="flex items-center p-4 bg-white rounded-lg shadow-md">
+                <div class="flex-shrink-0 mr-4">
+                    <div class="p-3 rounded-full bg-blue-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                </div>
+                <div>
+                    <span class="block text-2xl font-bold text-black">{{.reservedVehicles}}</span>
+                    <span class="block text-gray-500">Reserviert</span>
+                </div>
+            </div>
+
             <!-- Finanzierung + Leasing (kombiniert) -->
             <div class="flex items-center p-4 bg-white rounded-lg shadow-md">
                 <div class="flex-shrink-0 mr-4">
@@ -113,6 +128,21 @@
                 <div>
                     <span class="block text-2xl font-bold text-black">€ {{printf "%.0f" .totalFinancingCosts}}</span>
                     <span class="block text-gray-500">Monatl. Kosten</span>
+                </div>
+            </div>
+
+            <!-- Aktive Fahrer -->
+            <div class="flex items-center p-4 bg-white rounded-lg shadow-md">
+                <div class="flex-shrink-0 mr-4">
+                    <div class="p-3 rounded-full bg-indigo-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                    </div>
+                </div>
+                <div>
+                    <span class="block text-2xl font-bold text-black">{{.activeDrivers}}</span>
+                    <span class="block text-gray-500">Aktive Fahrer</span>
                 </div>
             </div>
         </div>
@@ -238,27 +268,69 @@
                 </div>
 
                 <!-- Charts -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Monatliche Kosten -->
-                    <div class="bg-white rounded-xl shadow-md overflow-hidden">
-                        <div class="p-4 border-b border-gray-200">
-                            <h3 class="text-lg font-semibold text-gray-800">Monatliche Kosten</h3>
+                <div class="space-y-6">
+                    <!-- Obere Reihe: Große Charts -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Monatliche Kosten (größer) -->
+                        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                            <div class="p-4 border-b border-gray-200">
+                                <h3 class="text-lg font-semibold text-gray-800">Monatliche Kosten</h3>
+                            </div>
+                            <div class="p-4">
+                                <div class="relative h-80">
+                                    <canvas id="monthlyCostsChart"></canvas>
+                                </div>
+                            </div>
                         </div>
-                        <div class="p-4">
-                            <div class="relative h-72">
-                                <canvas id="monthlyCostsChart"></canvas>
+
+                        <!-- Kraftstoffkosten nach Fahrzeug (größer) -->
+                        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                            <div class="p-4 border-b border-gray-200">
+                                <h3 class="text-lg font-semibold text-gray-800">Top 5 Kraftstoffkosten</h3>
+                            </div>
+                            <div class="p-4">
+                                <div class="relative h-80">
+                                    <canvas id="fuelCostsByVehicleChart"></canvas>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Kraftstoffkosten nach Fahrzeug -->
-                    <div class="bg-white rounded-xl shadow-md overflow-hidden">
-                        <div class="p-4 border-b border-gray-200">
-                            <h3 class="text-lg font-semibold text-gray-800">Kraftstoffkosten nach Fahrzeug</h3>
+                    <!-- Untere Reihe: Kleinere Charts -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Fahrzeugstatus-Verteilung -->
+                        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                            <div class="p-4 border-b border-gray-200">
+                                <h3 class="text-lg font-semibold text-gray-800">Fahrzeugstatus</h3>
+                            </div>
+                            <div class="p-4">
+                                <div class="relative h-64">
+                                    <canvas id="vehicleStatusChart"></canvas>
+                                </div>
+                            </div>
                         </div>
-                        <div class="p-4">
-                            <div class="relative h-72">
-                                <canvas id="fuelCostsByVehicleChart"></canvas>
+
+                        <!-- Fahrzeugtypen-Verteilung -->
+                        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                            <div class="p-4 border-b border-gray-200">
+                                <h3 class="text-lg font-semibold text-gray-800">Fahrzeugtypen</h3>
+                            </div>
+                            <div class="p-4">
+                                <div class="relative h-64">
+                                    <canvas id="vehicleTypesChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Fahrer-Status -->
+                        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                            <div class="p-4 border-b border-gray-200">
+                                <h3 class="text-lg font-semibold text-gray-800">Fahrer-Status</h3>
+                            </div>
+                            <div class="p-4">
+                                <div class="relative h-64">
+                                    <canvas id="driverStatusChart"></canvas>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -414,7 +486,67 @@
             '#DEE7FD'  // Hellstes Blau
         ];
 
-        // Neues Diagramm: Monatliche Kosten (Wartung + Finanzierung)
+        // Fahrzeugstatus-Verteilung Chart
+        const vehicleStatusCtx = document.getElementById('vehicleStatusChart')?.getContext('2d');
+        if (vehicleStatusCtx) {
+            const statusLabels = {{.vehicleStatusLabels}} || ['Verfügbar', 'In Nutzung', 'In Wartung', 'Reserviert'];
+            const statusData = {{.vehicleStatusData}} || [0, 0, 0, 0];
+            
+            // Prüfen ob Daten vorhanden sind
+            const hasStatusData = statusData.some(value => value > 0);
+            
+            if (hasStatusData) {
+                const vehicleStatusChart = new Chart(vehicleStatusCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: statusLabels,
+                        datasets: [{
+                            data: statusData,
+                            backgroundColor: [
+                                '#10B981', // Verfügbar - Grün
+                                '#F59E0B', // In Nutzung - Gelb
+                                '#EF4444', // In Wartung - Rot
+                                '#3B82F6'  // Reserviert - Blau
+                            ],
+                            borderWidth: 2,
+                            borderColor: '#ffffff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    padding: 20,
+                                    usePointStyle: true
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label || '';
+                                        const value = context.parsed;
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = ((value / total) * 100).toFixed(1);
+                                        return `${label}: ${value} (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            } else {
+                // Leeres Chart mit Hinweismeldung
+                vehicleStatusCtx.font = '16px Arial';
+                vehicleStatusCtx.fillStyle = '#9CA3AF';
+                vehicleStatusCtx.textAlign = 'center';
+                vehicleStatusCtx.fillText('Keine Daten verfügbar', vehicleStatusCtx.canvas.width / 2, vehicleStatusCtx.canvas.height / 2);
+            }
+        }
+
+        // Monatliche Kosten (Wartung + Finanzierung)
         const monthlyCostsCtx = document.getElementById('monthlyCostsChart')?.getContext('2d');
         if (monthlyCostsCtx) {
             const monthlyCostsChart = new Chart(monthlyCostsCtx, {
@@ -475,17 +607,21 @@
         const fuelCtx = document.getElementById('fuelCostsByVehicleChart')?.getContext('2d');
         if (fuelCtx) {
             const fuelLabels = {{.fuelCostVehicleLabels}} || [];
-            const fuelColors = Array.isArray(fuelLabels)
-                ? fuelLabels.map((_, index) => chartColors[index % chartColors.length])
-                : [];
+            const fuelData = {{.fuelCostVehicleData}} || [];
+            
+            // Prüfen ob Daten vorhanden sind
+            const hasFuelData = fuelLabels.length > 0 && fuelData.some(value => value > 0);
+            
+            if (hasFuelData) {
+                const fuelColors = fuelLabels.map((_, index) => chartColors[index % chartColors.length]);
 
-            const fuelCostsChart = new Chart(fuelCtx, {
+                const fuelCostsChart = new Chart(fuelCtx, {
                 type: 'bar',
                 data: {
                     labels: fuelLabels,
                     datasets: [{
                         label: 'Kraftstoffkosten (€)',
-                        data: {{.fuelCostVehicleData}} || [],
+                        data: fuelData,
                 backgroundColor: fuelColors,
                 borderColor: fuelColors.map(color => color.replace(/(.*)/, '$1DD')),
                 borderWidth: 1,
@@ -540,52 +676,192 @@
                 }
             }
         });
+            } else {
+                // Leeres Chart mit Hinweismeldung
+                fuelCtx.font = '16px Arial';
+                fuelCtx.fillStyle = '#9CA3AF';
+                fuelCtx.textAlign = 'center';
+                fuelCtx.fillText('Keine Kraftstoffkosten verfügbar', fuelCtx.canvas.width / 2, fuelCtx.canvas.height / 2);
+            }
         }
 
-        // Neues historisches Kostendiagramm
+        // Fahrzeugtypen-Verteilung Chart
+        const vehicleTypesCtx = document.getElementById('vehicleTypesChart')?.getContext('2d');
+        if (vehicleTypesCtx) {
+            const typesLabels = {{.vehicleTypesLabels}} || [];
+            const typesData = {{.vehicleTypesData}} || [];
+            
+            // Prüfen ob Daten vorhanden sind
+            const hasTypesData = typesLabels.length > 0 && typesData.some(value => value > 0);
+            
+            if (hasTypesData) {
+                // Farben für verschiedene Fahrzeugtypen
+                const typeColors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4'];
+                
+                const vehicleTypesChart = new Chart(vehicleTypesCtx, {
+                    type: 'pie',
+                    data: {
+                        labels: typesLabels,
+                        datasets: [{
+                            data: typesData,
+                            backgroundColor: typeColors.slice(0, typesLabels.length),
+                            borderWidth: 2,
+                            borderColor: '#ffffff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    padding: 15,
+                                    usePointStyle: true
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label || '';
+                                        const value = context.parsed;
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = ((value / total) * 100).toFixed(1);
+                                        return `${label}: ${value} (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            } else {
+                // Leeres Chart mit Hinweismeldung
+                vehicleTypesCtx.font = '16px Arial';
+                vehicleTypesCtx.fillStyle = '#9CA3AF';
+                vehicleTypesCtx.textAlign = 'center';
+                vehicleTypesCtx.fillText('Keine Fahrzeugtypen verfügbar', vehicleTypesCtx.canvas.width / 2, vehicleTypesCtx.canvas.height / 2);
+            }
+        }
+
+        // Fahrer-Status Chart
+        const driverStatusCtx = document.getElementById('driverStatusChart')?.getContext('2d');
+        if (driverStatusCtx) {
+            const driverLabels = {{.driverStatusLabels}} || [];
+            const driverData = {{.driverStatusData}} || [];
+            
+            // Prüfen ob Daten vorhanden sind
+            const hasDriverData = driverLabels.length > 0 && driverData.some(value => value > 0);
+            
+            if (hasDriverData) {
+                const driverStatusChart = new Chart(driverStatusCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: driverLabels,
+                        datasets: [{
+                            data: driverData,
+                            backgroundColor: [
+                                '#10B981', // Verfügbar - Grün
+                                '#3B82F6', // Im Dienst - Blau
+                                '#6B7280', // Außer Dienst - Grau
+                                '#F59E0B'  // Reserviert - Gelb
+                            ],
+                            borderWidth: 2,
+                            borderColor: '#ffffff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    padding: 15,
+                                    usePointStyle: true
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label || '';
+                                        const value = context.parsed;
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = ((value / total) * 100).toFixed(1);
+                                        return `${label}: ${value} (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            } else {
+                // Leeres Chart mit Hinweismeldung
+                driverStatusCtx.font = '16px Arial';
+                driverStatusCtx.fillStyle = '#9CA3AF';
+                driverStatusCtx.textAlign = 'center';
+                driverStatusCtx.fillText('Keine Fahrer verfügbar', driverStatusCtx.canvas.width / 2, driverStatusCtx.canvas.height / 2);
+            }
+        }
+
+        // Historisches Kostendiagramm
         const historicalCtx = document.getElementById('historicalCostsChart')?.getContext('2d');
         if (historicalCtx) {
-            const historicalCostsChart = new Chart(historicalCtx, {
-                type: 'line',
-                data: {
-                    labels: {{.historicalCostLabels}} || [],
+            const historicalLabels = {{.historicalCostLabels}} || [];
+            const historicalMaintenanceData = {{.historicalMaintenanceData}} || [];
+            const historicalFuelData = {{.historicalFuelData}} || [];
+            const historicalLeasingData = {{.historicalLeasingData}} || [];
+            const historicalFinancingData = {{.historicalFinancingData}} || [];
+            
+            // Prüfen ob Daten vorhanden sind
+            const hasHistoricalData = historicalLabels.length > 0 && (
+                historicalMaintenanceData.some(value => value > 0) ||
+                historicalFuelData.some(value => value > 0) ||
+                historicalLeasingData.some(value => value > 0) ||
+                historicalFinancingData.some(value => value > 0)
+            );
+            
+            if (hasHistoricalData) {
+                const historicalCostsChart = new Chart(historicalCtx, {
+                    type: 'line',
+                    data: {
+                        labels: historicalLabels,
                 datasets: [
                 {
                     label: 'Wartungskosten',
-                    data: {{.historicalMaintenanceData}} || [],
-                borderColor: chartColors[0],
-                backgroundColor: `${chartColors[0]}20`,
-                fill: false,
-                tension: 0.4,
-                borderWidth: 3
-        },
-            {
-                label: 'Kraftstoffkosten',
-                    data: {{.historicalFuelData}} || [],
-                borderColor: chartColors[1],
-                backgroundColor: `${chartColors[1]}20`,
-                fill: false,
-                tension: 0.4,
-                borderWidth: 3
-            },
-            {
-                label: 'Leasingkosten',
-                    data: {{.historicalLeasingData}} || [],
-                borderColor: chartColors[2],
-                backgroundColor: `${chartColors[2]}20`,
-                fill: false,
-                tension: 0.4,
-                borderWidth: 3
-            },
-            {
-                label: 'Finanzierungskosten',
-                    data: {{.historicalFinancingData}} || [],
-                borderColor: chartColors[3],
-                backgroundColor: `${chartColors[3]}20`,
-                fill: false,
-                tension: 0.4,
-                borderWidth: 3
-            }
+                    data: historicalMaintenanceData,
+                    borderColor: chartColors[0],
+                    backgroundColor: `${chartColors[0]}20`,
+                    fill: false,
+                    tension: 0.4,
+                    borderWidth: 3
+                },
+                {
+                    label: 'Kraftstoffkosten',
+                    data: historicalFuelData,
+                    borderColor: chartColors[1],
+                    backgroundColor: `${chartColors[1]}20`,
+                    fill: false,
+                    tension: 0.4,
+                    borderWidth: 3
+                },
+                {
+                    label: 'Leasingkosten',
+                    data: historicalLeasingData,
+                    borderColor: chartColors[2],
+                    backgroundColor: `${chartColors[2]}20`,
+                    fill: false,
+                    tension: 0.4,
+                    borderWidth: 3
+                },
+                {
+                    label: 'Finanzierungskosten',
+                    data: historicalFinancingData,
+                    borderColor: chartColors[3],
+                    backgroundColor: `${chartColors[3]}20`,
+                    fill: false,
+                    tension: 0.4,
+                    borderWidth: 3
+                }
         ]
         },
             options: {
@@ -622,6 +898,13 @@
                 }
             }
         });
+            } else {
+                // Leeres Chart mit Hinweismeldung
+                historicalCtx.font = '16px Arial';
+                historicalCtx.fillStyle = '#9CA3AF';
+                historicalCtx.textAlign = 'center';
+                historicalCtx.fillText('Keine historischen Kostendaten verfügbar', historicalCtx.canvas.width / 2, historicalCtx.canvas.height / 2);
+            }
         }
 
         // Fahrzeugfilter

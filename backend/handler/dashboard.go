@@ -62,7 +62,7 @@ type ExpiringContract struct {
 func (h *DashboardHandler) GetCompleteDashboardData(c *gin.Context) {
 	// Basisstatistiken
 	vehicles, _ := h.vehicleRepo.FindAll()
-	var totalVehicles, availableVehicles, inUseVehicles, maintenanceVehicles int64
+	var totalVehicles, availableVehicles, inUseVehicles, maintenanceVehicles, reservedVehicles int64
 
 	totalVehicles = int64(len(vehicles))
 	for _, v := range vehicles {
@@ -73,6 +73,8 @@ func (h *DashboardHandler) GetCompleteDashboardData(c *gin.Context) {
 			inUseVehicles++
 		case model.VehicleStatusMaintenance:
 			maintenanceVehicles++
+		case model.VehicleStatusReserved:
+			reservedVehicles++
 		}
 	}
 
@@ -85,11 +87,19 @@ func (h *DashboardHandler) GetCompleteDashboardData(c *gin.Context) {
 		recentVehicles = recentVehicles[:6]
 	}
 
-	// Letzte Fahrer (max 5)
+	// Fahrer-Statistiken
 	drivers, _ := h.driverRepo.FindAll()
 	recentDrivers := drivers
 	if len(recentDrivers) > 5 {
 		recentDrivers = recentDrivers[:5]
+	}
+
+	// Aktive Fahrer zählen (verfügbar oder im Dienst)
+	var activeDrivers int64
+	for _, driver := range drivers {
+		if driver.Status == model.DriverStatusAvailable || driver.Status == model.DriverStatusOnDuty {
+			activeDrivers++
+		}
 	}
 
 	// Anstehende Wartungen (nur nächster Monat)
@@ -98,14 +108,23 @@ func (h *DashboardHandler) GetCompleteDashboardData(c *gin.Context) {
 	// Letzte Aktivitäten
 	recentActivities := h.getRecentActivityList()
 
-	// Kraftstoffkosten nach Fahrzeug
+	// Kraftstoffkosten nach Fahrzeug (Top 5)
 	fuelCostData := h.getFuelCostsByVehicleData()
 
 	// Wartungskosten der letzten 12 Monate
 	maintenanceCostData := h.getMaintenanceCostData()
 
-	// Neue historische Kostenübersicht
+	// Historische Kostenübersicht (12 Monate)
 	historicalCostData := h.getHistoricalCostData()
+
+	// Fahrzeugstatus-Verteilung für Dashboard-Charts
+	vehicleStatusData := h.getVehicleStatusDistribution(vehicles)
+
+	// Fahrzeugtypen-Verteilung
+	vehicleTypesData := h.getVehicleTypesDistribution(vehicles)
+
+	// Fahrer-Status-Verteilung
+	driverStatusData := h.getDriverStatusDistribution(drivers)
 
 	// Benutzerrolle aus Context
 	userRole := "admin" // Default
@@ -133,6 +152,9 @@ func (h *DashboardHandler) GetCompleteDashboardData(c *gin.Context) {
 		"availableVehicles":     availableVehicles,
 		"inUseVehicles":         inUseVehicles,
 		"maintenanceVehicles":   maintenanceVehicles,
+		"reservedVehicles":      reservedVehicles,
+		"activeDrivers":         activeDrivers,
+		"totalDrivers":          int64(len(drivers)),
 		"recentVehicles":        recentVehicles,
 		"recentDrivers":         recentDrivers,
 		"upcomingMaintenance":   upcomingMaintenance,
@@ -154,6 +176,14 @@ func (h *DashboardHandler) GetCompleteDashboardData(c *gin.Context) {
 		"historicalFuelData":        historicalCostData.FuelData,
 		"historicalLeasingData":     historicalCostData.LeasingData,
 		"historicalFinancingData":   historicalCostData.FinancingData,
+		// Zusätzliche Chart-Daten
+		"vehicleStatusLabels":       vehicleStatusData.Labels,
+		"vehicleStatusData":         vehicleStatusData.Data,
+		"totalActiveVehicles":       vehicleStatusData.Total,
+		"vehicleTypesLabels":        vehicleTypesData.Labels,
+		"vehicleTypesData":          vehicleTypesData.Data,
+		"driverStatusLabels":        driverStatusData.Labels,
+		"driverStatusData":          driverStatusData.Data,
 	})
 }
 
@@ -461,13 +491,15 @@ func (h *DashboardHandler) getFuelCostsByVehicleData() struct {
 
 	for _, cost := range fuelCosts {
 		vehicleID := cost.VehicleID.Hex()
-		vehicleCosts[vehicleID] += cost.TotalCost
-
-		if _, exists := vehicleNames[vehicleID]; !exists {
-			if vehicle, err := h.vehicleRepo.FindByID(vehicleID); err == nil {
+		
+		// Prüfen ob das Fahrzeug noch existiert
+		if vehicle, err := h.vehicleRepo.FindByID(vehicleID); err == nil {
+			vehicleCosts[vehicleID] += cost.TotalCost
+			if _, exists := vehicleNames[vehicleID]; !exists {
 				vehicleNames[vehicleID] = vehicle.Brand + " " + vehicle.Model
 			}
 		}
+		// Wenn das Fahrzeug nicht existiert, ignorieren wir die Kosten
 	}
 
 	// Top 5 Fahrzeuge nach Kosten
@@ -509,6 +541,102 @@ func (h *DashboardHandler) getFuelCostsByVehicleData() struct {
 	return result
 }
 
+// getVehicleStatusDistribution berechnet die Fahrzeugstatus-Verteilung für Charts
+func (h *DashboardHandler) getVehicleStatusDistribution(vehicles []*model.Vehicle) struct {
+	Labels []string
+	Data   []int
+	Total  int
+} {
+	result := struct {
+		Labels []string
+		Data   []int
+		Total  int
+	}{
+		Labels: []string{"Verfügbar", "In Nutzung", "In Wartung", "Reserviert"},
+		Data:   []int{0, 0, 0, 0},
+		Total:  len(vehicles),
+	}
+
+	for _, vehicle := range vehicles {
+		switch vehicle.Status {
+		case model.VehicleStatusAvailable:
+			result.Data[0]++
+		case model.VehicleStatusInUse:
+			result.Data[1]++
+		case model.VehicleStatusMaintenance:
+			result.Data[2]++
+		case model.VehicleStatusReserved:
+			result.Data[3]++
+		}
+	}
+
+	return result
+}
+
+// getVehicleTypesDistribution berechnet die Fahrzeugtypen-Verteilung für Charts
+func (h *DashboardHandler) getVehicleTypesDistribution(vehicles []*model.Vehicle) struct {
+	Labels []string
+	Data   []int
+	Total  int
+} {
+	typeCount := make(map[string]int)
+	
+	for _, vehicle := range vehicles {
+		if vehicle.VehicleType != "" {
+			typeCount[string(vehicle.VehicleType)]++
+		} else {
+			typeCount["Unbekannt"]++
+		}
+	}
+
+	result := struct {
+		Labels []string
+		Data   []int
+		Total  int
+	}{
+		Total: len(vehicles),
+	}
+
+	for vehicleType, count := range typeCount {
+		result.Labels = append(result.Labels, vehicleType)
+		result.Data = append(result.Data, count)
+	}
+
+	return result
+}
+
+// getDriverStatusDistribution berechnet die Fahrer-Status-Verteilung für Charts
+func (h *DashboardHandler) getDriverStatusDistribution(drivers []*model.Driver) struct {
+	Labels []string
+	Data   []int
+	Total  int
+} {
+	result := struct {
+		Labels []string
+		Data   []int
+		Total  int
+	}{
+		Labels: []string{"Verfügbar", "Im Dienst", "Außer Dienst", "Reserviert"},
+		Data:   []int{0, 0, 0, 0},
+		Total:  len(drivers),
+	}
+
+	for _, driver := range drivers {
+		switch driver.Status {
+		case model.DriverStatusAvailable:
+			result.Data[0]++
+		case model.DriverStatusOnDuty:
+			result.Data[1]++
+		case model.DriverStatusOffDuty:
+			result.Data[2]++
+		case model.DriverStatusReserved:
+			result.Data[3]++
+		}
+	}
+
+	return result
+}
+
 // Hilfsmethoden
 func (h *DashboardHandler) formatTimeAgo(t time.Time) string {
 	duration := time.Since(t)
@@ -545,6 +673,9 @@ func (h *DashboardHandler) GetDashboardStats(c *gin.Context) {
 		AvailableVehicles   int64 `json:"availableVehicles"`
 		MaintenanceVehicles int64 `json:"maintenanceVehicles"`
 		InUseVehicles       int64 `json:"inUseVehicles"`
+		ReservedVehicles    int64 `json:"reservedVehicles"`
+		TotalDrivers        int64 `json:"totalDrivers"`
+		ActiveDrivers       int64 `json:"activeDrivers"`
 	}{}
 
 	// Get all vehicles
@@ -566,6 +697,23 @@ func (h *DashboardHandler) GetDashboardStats(c *gin.Context) {
 			stats.MaintenanceVehicles++
 		case model.VehicleStatusInUse:
 			stats.InUseVehicles++
+		case model.VehicleStatusReserved:
+			stats.ReservedVehicles++
+		}
+	}
+
+	// Get all drivers
+	drivers, err := h.driverRepo.FindAll()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Fehler beim Abrufen der Fahrer"})
+		return
+	}
+
+	// Count total and active drivers
+	stats.TotalDrivers = int64(len(drivers))
+	for _, driver := range drivers {
+		if driver.Status == model.DriverStatusAvailable || driver.Status == model.DriverStatusOnDuty {
+			stats.ActiveDrivers++
 		}
 	}
 
@@ -610,11 +758,14 @@ func (h *DashboardHandler) GetFuelCostsByVehicle(c *gin.Context) {
 		return
 	}
 
-	// Kosten nach Fahrzeug gruppieren
+	// Kosten nach Fahrzeug gruppieren (nur existierende Fahrzeuge)
 	vehicleCosts := make(map[string]float64)
 	for _, cost := range fuelCosts {
 		vehicleID := cost.VehicleID.Hex()
-		vehicleCosts[vehicleID] += cost.TotalCost
+		// Prüfen ob das Fahrzeug noch existiert
+		if _, exists := vehicleNames[vehicleID]; exists {
+			vehicleCosts[vehicleID] += cost.TotalCost
+		}
 	}
 
 	// Daten für das Chart vorbereiten

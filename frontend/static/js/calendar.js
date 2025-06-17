@@ -99,6 +99,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // Kalender-Grid leeren
         calendarGrid.innerHTML = '';
         
+        // Grid erstellen und Tage sammeln
+        const days = [];
+        
         // 6 Wochen rendern (42 Tage)
         for (let i = 0; i < 42; i++) {
             const cellDate = new Date(startDate);
@@ -106,13 +109,19 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const dayElement = createDayElement(cellDate, month);
             calendarGrid.appendChild(dayElement);
+            days.push({element: dayElement, date: cellDate});
         }
+        
+        // Durchgängige Reservierungs-Balken rendern
+        renderReservationBars(days, month);
     }
 
     // Tag-Element erstellen
     function createDayElement(date, currentMonth) {
         const dayElement = document.createElement('div');
-        dayElement.className = 'calendar-day bg-white p-2 border border-gray-100';
+        dayElement.className = 'calendar-day bg-white border border-gray-100 relative';
+        dayElement.style.position = 'relative';
+        dayElement.style.overflow = 'visible';
         
         const isCurrentMonth = date.getMonth() === currentMonth;
         const isToday = isDateToday(date);
@@ -125,20 +134,183 @@ document.addEventListener('DOMContentLoaded', function() {
             dayElement.classList.add('today');
         }
         
+        // Container für Tag-Inhalt
+        const dayContent = document.createElement('div');
+        dayContent.className = 'p-2 h-full';
+        
         // Tag-Nummer
         const dayNumber = document.createElement('div');
         dayNumber.className = 'text-sm font-medium text-gray-900 mb-1';
         dayNumber.textContent = date.getDate();
-        dayElement.appendChild(dayNumber);
+        dayContent.appendChild(dayNumber);
         
-        // Reservierungen für diesen Tag
-        const dayReservations = getReservationsForDate(date);
-        dayReservations.forEach(reservation => {
-            const reservationElement = createReservationElement(reservation);
-            dayElement.appendChild(reservationElement);
-        });
+        // Container für Reservierungs-Balken
+        const reservationContainer = document.createElement('div');
+        reservationContainer.className = 'reservation-container';
+        reservationContainer.style.position = 'relative';
+        reservationContainer.style.zIndex = '10';
+        dayContent.appendChild(reservationContainer);
+        
+        dayElement.appendChild(dayContent);
+        
+        // Datum als Data-Attribut speichern für spätere Verwendung
+        dayElement.dataset.date = date.toISOString().split('T')[0];
         
         return dayElement;
+    }
+
+    // Durchgängige Reservierungs-Balken rendern
+    function renderReservationBars(days, currentMonth) {
+        // Reservierungen nach Startdatum sortieren
+        const sortedReservations = [...reservations].sort((a, b) => 
+            new Date(a.startTime) - new Date(b.startTime)
+        );
+        
+        // Ebenen für überlappende Reservierungen verwalten
+        const reservationLevels = [];
+        
+        sortedReservations.forEach(reservation => {
+            const startDate = new Date(reservation.startTime);
+            const endDate = new Date(reservation.endTime);
+            
+            // Nur Reservierungen anzeigen, die im sichtbaren Zeitraum liegen
+            const firstVisibleDay = days[0].date;
+            const lastVisibleDay = days[days.length - 1].date;
+            
+            if (endDate >= firstVisibleDay && startDate <= lastVisibleDay) {
+                // Freie Ebene finden
+                let level = 0;
+                while (level < reservationLevels.length && 
+                       reservationLevels[level].some(r => 
+                           new Date(r.endTime) > startDate && new Date(r.startTime) < endDate
+                       )) {
+                    level++;
+                }
+                
+                // Ebene erweitern falls nötig
+                if (level >= reservationLevels.length) {
+                    reservationLevels.push([]);
+                }
+                
+                // Reservierung zur Ebene hinzufügen
+                reservationLevels[level].push(reservation);
+                
+                // Balken erstellen
+                createReservationBar(reservation, days, level);
+            }
+        });
+    }
+
+    // Einzelnen Reservierungs-Balken erstellen
+    function createReservationBar(reservation, days, level) {
+        const startDate = new Date(reservation.startTime);
+        const endDate = new Date(reservation.endTime);
+        
+        // Start- und End-Index im Kalender finden
+        let startIndex = -1;
+        let endIndex = -1;
+        
+        days.forEach((day, index) => {
+            const dayStart = new Date(day.date);
+            dayStart.setHours(0, 0, 0, 0);
+            const dayEnd = new Date(day.date);
+            dayEnd.setHours(23, 59, 59, 999);
+            
+            if (startDate <= dayEnd && startIndex === -1) {
+                startIndex = index;
+            }
+            if (endDate >= dayStart) {
+                endIndex = index;
+            }
+        });
+        
+        if (startIndex === -1 || endIndex === -1) return;
+        
+        // Berechne Balken-Dimensionen
+        const startDayElement = days[startIndex].element;
+        const endDayElement = days[endIndex].element;
+        
+        // Zeile und Spalte im Grid berechnen
+        const startRow = Math.floor(startIndex / 7);
+        const endRow = Math.floor(endIndex / 7);
+        const startCol = startIndex % 7;
+        const endCol = endIndex % 7;
+        
+        // Wenn sich der Balken über mehrere Zeilen erstreckt, aufteilen
+        for (let row = startRow; row <= endRow; row++) {
+            const rowStartCol = (row === startRow) ? startCol : 0;
+            const rowEndCol = (row === endRow) ? endCol : 6;
+            
+            // Balken für diese Zeile erstellen
+            const bar = document.createElement('div');
+            bar.className = 'reservation-bar';
+            bar.style.position = 'absolute';
+            bar.style.height = '18px';
+            bar.style.borderRadius = '4px';
+            bar.style.fontSize = '11px';
+            bar.style.lineHeight = '18px';
+            bar.style.paddingLeft = '4px';
+            bar.style.paddingRight = '4px';
+            bar.style.cursor = 'pointer';
+            bar.style.zIndex = '20';
+            bar.style.top = `${30 + (level * 20)}px`;
+            bar.style.overflow = 'hidden';
+            bar.style.whiteSpace = 'nowrap';
+            bar.style.textOverflow = 'ellipsis';
+            
+            // Status-spezifische Farben
+            const statusColors = {
+                'pending': { bg: '#fef3c7', text: '#92400e', border: '#f59e0b' },
+                'active': { bg: '#d1fae5', text: '#065f46', border: '#10b981' },
+                'completed': { bg: '#f3f4f6', text: '#374151', border: '#6b7280' },
+                'cancelled': { bg: '#fee2e2', text: '#991b1b', border: '#ef4444' }
+            };
+            
+            const colors = statusColors[reservation.status] || statusColors['pending'];
+            bar.style.backgroundColor = colors.bg;
+            bar.style.color = colors.text;
+            bar.style.border = `1px solid ${colors.border}`;
+            
+            // Position und Breite berechnen
+            const startDayIndex = row * 7 + rowStartCol;
+            const endDayIndex = row * 7 + rowEndCol;
+            const width = ((rowEndCol - rowStartCol + 1) * 100 / 7);
+            const left = (rowStartCol * 100 / 7);
+            
+            bar.style.left = `${left}%`;
+            bar.style.width = `${width}%`;
+            
+            // Text für den Balken
+            const vehicleName = reservation.vehicle ? 
+                `${reservation.vehicle.brand} ${reservation.vehicle.model}` : 'Unbekannt';
+            const driverName = reservation.driver ? 
+                `${reservation.driver.firstName} ${reservation.driver.lastName}` : 'Unbekannt';
+            
+            // Zeige nur relevante Informationen je nach Balkenbreite
+            if (width > 20) {
+                bar.textContent = `${vehicleName} - ${driverName}`;
+            } else if (width > 14) {
+                bar.textContent = vehicleName;
+            } else {
+                bar.textContent = '●';
+                bar.style.textAlign = 'center';
+                bar.style.paddingLeft = '0';
+            }
+            
+            // Tooltip
+            const startTime = new Date(reservation.startTime);
+            const endTime = new Date(reservation.endTime);
+            bar.title = `${vehicleName} - ${driverName}\n${formatDateTime(startTime)} - ${formatDateTime(endTime)}`;
+            
+            // Click-Handler für Details
+            bar.addEventListener('click', (e) => {
+                e.stopPropagation();
+                showReservationDetails(reservation);
+            });
+            
+            // Balken zum Grid hinzufügen
+            calendarGrid.appendChild(bar);
+        }
     }
 
     // Reservierungs-Element erstellen
@@ -170,19 +342,11 @@ document.addEventListener('DOMContentLoaded', function() {
         return element;
     }
 
-    // Reservierungen für ein bestimmtes Datum abrufen
+    // Reservierungen für ein bestimmtes Datum abrufen (für alte Ansichten)
     function getReservationsForDate(date) {
-        return reservations.filter(reservation => {
-            const startDate = new Date(reservation.startTime);
-            const endDate = new Date(reservation.endTime);
-            
-            // Prüfen ob Reservierung an diesem Tag beginnt oder läuft
-            return (
-                isSameDay(startDate, date) || 
-                isSameDay(endDate, date) ||
-                (startDate < date && endDate > date)
-            );
-        });
+        // Für Monatsansicht werden keine Einzelelemente mehr angezeigt
+        // da wir Balken verwenden
+        return [];
     }
 
     // Wochenansicht rendern
@@ -424,7 +588,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function getStatusText(status) {
         switch (status) {
-            case 'pending': return 'Ausstehend';
+            case 'pending': return 'Reservierung';
             case 'active': return 'Aktiv';
             case 'completed': return 'Abgeschlossen';
             case 'cancelled': return 'Storniert';

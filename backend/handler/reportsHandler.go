@@ -122,6 +122,9 @@ func (h *ReportsHandler) GetReportsStats(c *gin.Context) {
 	// Statistiken berechnen
 	stats := h.calculateStats(vehicles, drivers, fuelCosts, maintenanceEntries, usageEntries, startDate, endDate, vehicleID, driverID)
 
+	// Chart-Daten berechnen
+	chartData := h.calculateChartData(vehicles, drivers, fuelCosts, maintenanceEntries, usageEntries, startDate, endDate)
+
 	// Zusätzliche Flags für leere Datensätze
 	stats["hasVehicles"] = len(vehicles) > 0
 	stats["hasDrivers"] = len(drivers) > 0
@@ -129,6 +132,11 @@ func (h *ReportsHandler) GetReportsStats(c *gin.Context) {
 	stats["hasMaintenanceData"] = len(maintenanceEntries) > 0
 	stats["hasUsageData"] = len(usageEntries) > 0
 	stats["hasEnoughDataForAnalysis"] = len(vehicles) > 0 && (len(usageEntries) > 0 || len(fuelCosts) > 0)
+	
+	// Chart-Daten hinzufügen
+	for key, value := range chartData {
+		stats[key] = value
+	}
 
 	c.JSON(http.StatusOK, stats)
 }
@@ -304,7 +312,7 @@ func (h *ReportsHandler) GetCostBreakdown(c *gin.Context) {
 			"category":   "Gesamt",
 			"thisMonth":  thisMonthFuel + thisMonthMaintenance,
 			"lastMonth":  lastMonthFuel + lastMonthMaintenance,
-			"change":     0.0, // Wird später berechnet
+			"change":     calculateTotalChange(thisMonthFuel+thisMonthMaintenance, lastMonthFuel+lastMonthMaintenance),
 			"yearToDate": yearFuel + yearMaintenance,
 		},
 	}
@@ -349,13 +357,24 @@ func (h *ReportsHandler) calculateStats(vehicles []*model.Vehicle, drivers []*mo
 		}
 	}
 
+	// Finanzierungskosten berechnen (monatliche Raten)
+	totalFinancingCosts := 0.0
+	for _, vehicle := range vehicles {
+		if vehicle.AcquisitionType == model.AcquisitionTypeFinanced {
+			totalFinancingCosts += vehicle.FinanceMonthlyRate
+		} else if vehicle.AcquisitionType == model.AcquisitionTypeLeased {
+			totalFinancingCosts += vehicle.LeaseMonthlyRate
+		}
+	}
+
 	return gin.H{
 		"totalVehicles":         totalVehicles,
 		"totalDrivers":          totalDrivers,
 		"totalKilometers":       totalKilometers,
 		"totalFuelCosts":        totalFuelCosts,
 		"totalMaintenanceCosts": totalMaintenanceCosts,
-		"totalCosts":            totalFuelCosts + totalMaintenanceCosts,
+		"totalFinancingCosts":   totalFinancingCosts,
+		"totalCosts":            totalFuelCosts + totalMaintenanceCosts + totalFinancingCosts,
 	}
 }
 
@@ -474,4 +493,120 @@ func (h *ReportsHandler) getMaintenanceCostsByPeriod(start, end time.Time) float
 		}
 	}
 	return total
+}
+
+// calculateChartData berechnet Daten für Charts
+func (h *ReportsHandler) calculateChartData(vehicles []*model.Vehicle, drivers []*model.Driver, fuelCosts []*model.FuelCost, maintenance []*model.Maintenance, usage []*model.VehicleUsage, startDate, endDate time.Time) map[string]interface{} {
+	chartData := make(map[string]interface{})
+
+	// Fahrzeugstatus-Verteilung
+	statusCounts := map[string]int{"available": 0, "inuse": 0, "maintenance": 0, "reserved": 0}
+	for _, vehicle := range vehicles {
+		if count, exists := statusCounts[string(vehicle.Status)]; exists {
+			statusCounts[string(vehicle.Status)] = count + 1
+		}
+	}
+	
+	chartData["vehicleStatusLabels"] = []string{"Verfügbar", "In Nutzung", "In Wartung", "Reserviert"}
+	chartData["vehicleStatusData"] = []int{
+		statusCounts["available"], 
+		statusCounts["inuse"], 
+		statusCounts["maintenance"], 
+		statusCounts["reserved"],
+	}
+
+	// Fahrzeug-Kilometer (Top 10)
+	vehicleKmLabels := []string{}
+	vehicleKmData := []int{}
+	for i, vehicle := range vehicles {
+		if i >= 10 { // Nur Top 10
+			break
+		}
+		vehicleKmLabels = append(vehicleKmLabels, vehicle.Brand+" "+vehicle.Model)
+		vehicleKmData = append(vehicleKmData, vehicle.Mileage)
+	}
+	chartData["vehicleKilometersLabels"] = vehicleKmLabels
+	chartData["vehicleKilometersData"] = vehicleKmData
+
+	// Kraftstofftypen-Verteilung
+	fuelTypeCount := make(map[string]int)
+	for _, vehicle := range vehicles {
+		if vehicle.FuelType != "" {
+			fuelTypeCount[string(vehicle.FuelType)]++
+		}
+	}
+	
+	fuelLabels := []string{}
+	fuelData := []int{}
+	for fuelType, count := range fuelTypeCount {
+		fuelLabels = append(fuelLabels, fuelType)
+		fuelData = append(fuelData, count)
+	}
+	chartData["fuelTypeLabels"] = fuelLabels
+	chartData["fuelTypeData"] = fuelData
+
+	// Monatliche Kosten (letzte 6 Monate)
+	monthlyLabels := []string{}
+	monthlyFuelData := []float64{}
+	monthlyMaintenanceData := []float64{}
+	
+	now := time.Now()
+	for i := 5; i >= 0; i-- {
+		month := now.AddDate(0, -i, 0)
+		monthStart := time.Date(month.Year(), month.Month(), 1, 0, 0, 0, 0, month.Location())
+		monthEnd := monthStart.AddDate(0, 1, -1)
+		
+		monthlyLabels = append(monthlyLabels, month.Format("Jan"))
+		
+		// Kraftstoffkosten für den Monat
+		monthFuelCost := 0.0
+		for _, cost := range fuelCosts {
+			if cost.Date.After(monthStart) && cost.Date.Before(monthEnd.AddDate(0, 0, 1)) {
+				monthFuelCost += cost.TotalCost
+			}
+		}
+		monthlyFuelData = append(monthlyFuelData, monthFuelCost)
+		
+		// Wartungskosten für den Monat
+		monthMaintenanceCost := 0.0
+		for _, m := range maintenance {
+			if m.Date.After(monthStart) && m.Date.Before(monthEnd.AddDate(0, 0, 1)) {
+				monthMaintenanceCost += m.Cost
+			}
+		}
+		monthlyMaintenanceData = append(monthlyMaintenanceData, monthMaintenanceCost)
+	}
+	
+	chartData["monthlyLabels"] = monthlyLabels
+	chartData["monthlyFuelData"] = monthlyFuelData
+	chartData["monthlyMaintenanceData"] = monthlyMaintenanceData
+
+	// Fahrer-Status-Verteilung
+	driverStatusCounts := map[string]int{"available": 0, "onduty": 0, "offduty": 0, "reserved": 0}
+	for _, driver := range drivers {
+		if count, exists := driverStatusCounts[string(driver.Status)]; exists {
+			driverStatusCounts[string(driver.Status)] = count + 1
+		}
+	}
+	
+	chartData["driverStatusLabels"] = []string{"Verfügbar", "Im Dienst", "Außer Dienst", "Reserviert"}
+	chartData["driverStatusData"] = []int{
+		driverStatusCounts["available"], 
+		driverStatusCounts["onduty"], 
+		driverStatusCounts["offduty"], 
+		driverStatusCounts["reserved"],
+	}
+
+	return chartData
+}
+
+// calculateTotalChange berechnet die prozentuale Änderung
+func calculateTotalChange(current, previous float64) float64 {
+	if previous == 0 {
+		if current > 0 {
+			return 100.0 // 100% Anstieg wenn vorher 0
+		}
+		return 0.0
+	}
+	return ((current - previous) / previous) * 100
 }

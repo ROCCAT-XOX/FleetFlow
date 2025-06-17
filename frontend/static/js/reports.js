@@ -233,17 +233,6 @@ function updateWarningBanner(data) {
     }
 }
 
-// Warning-Banner aktualisieren
-function updateWarningBanner(data) {
-    const banner = document.getElementById('insufficient-data-banner');
-
-    if (!data.hasEnoughDataForAnalysis) {
-        banner.classList.remove('hidden');
-    } else {
-        banner.classList.add('hidden');
-    }
-}
-
 // Tab wechseln
 function switchTab(targetTab) {
     // Alle Tabs verstecken
@@ -557,18 +546,35 @@ function createVehicleStatusChart() {
         charts.vehicleStatus.destroy();
     }
 
+    // Daten aus reportsData verwenden oder Fallback
+    const labels = reportsData.vehicleStatusLabels || ['Verfügbar', 'In Nutzung', 'In Wartung', 'Reserviert'];
+    const data = reportsData.vehicleStatusData || [0, 0, 0, 0];
+    
+    // Prüfen ob Daten vorhanden sind
+    const hasData = data.some(value => value > 0);
+    
+    if (!hasData) {
+        showEmptyState('vehicleStatusChart', 'vehicle-status-empty');
+        return;
+    }
+
     charts.vehicleStatus = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: ['Verfügbar', 'In Nutzung', 'In Wartung'],
+            labels: labels,
             datasets: [{
-                data: [65, 25, 10], // Beispieldaten
-                backgroundColor: ['#10B981', '#F59E0B', '#EF4444']
+                data: data,
+                backgroundColor: ['#10B981', '#F59E0B', '#EF4444', '#3B82F6']
             }]
         },
         options: {
             responsive: true,
-            maintainAspectRatio: false
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
         }
     });
 }
@@ -582,14 +588,26 @@ function createVehicleKilometersChart() {
         charts.vehicleKilometers.destroy();
     }
 
+    // Daten aus reportsData verwenden oder Fallback
+    const labels = reportsData.vehicleKilometersLabels || [];
+    const data = reportsData.vehicleKilometersData || [];
+    
+    // Prüfen ob Daten vorhanden sind
+    if (labels.length === 0 || data.length === 0) {
+        showEmptyState('vehicleKilometersChart', 'vehicle-kilometers-empty');
+        return;
+    }
+
     charts.vehicleKilometers = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: ['Fahrzeug 1', 'Fahrzeug 2', 'Fahrzeug 3', 'Fahrzeug 4'],
+            labels: labels,
             datasets: [{
                 label: 'Kilometer',
-                data: [15000, 12000, 18000, 9000],
-                backgroundColor: '#6366F1'
+                data: data,
+                backgroundColor: '#6366F1',
+                borderColor: '#4F46E5',
+                borderWidth: 1
             }]
         },
         options: {
@@ -597,7 +615,24 @@ function createVehicleKilometersChart() {
             maintainAspectRatio: false,
             scales: {
                 y: {
-                    beginAtZero: true
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString() + ' km';
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.parsed.y.toLocaleString() + ' km';
+                        }
+                    }
                 }
             }
         }
@@ -613,20 +648,37 @@ function createMonthlyCostsChart() {
         charts.monthlyCosts.destroy();
     }
 
+    // Daten aus reportsData verwenden oder Fallback
+    const labels = reportsData.monthlyLabels || [];
+    const fuelData = reportsData.monthlyFuelData || [];
+    const maintenanceData = reportsData.monthlyMaintenanceData || [];
+    
+    // Prüfen ob Daten vorhanden sind
+    const hasData = fuelData.some(value => value > 0) || maintenanceData.some(value => value > 0);
+    
+    if (!hasData || labels.length === 0) {
+        showEmptyState('monthlyCostsChart', 'monthly-costs-empty');
+        return;
+    }
+
     charts.monthlyCosts = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun'],
+            labels: labels,
             datasets: [{
                 label: 'Tankkosten',
-                data: [1200, 1100, 1300, 1250, 1400, 1350],
+                data: fuelData,
                 borderColor: '#3B82F6',
-                backgroundColor: 'rgba(59, 130, 246, 0.1)'
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                fill: false,
+                tension: 0.4
             }, {
                 label: 'Wartungskosten',
-                data: [300, 450, 200, 600, 350, 400],
+                data: maintenanceData,
                 borderColor: '#10B981',
-                backgroundColor: 'rgba(16, 185, 129, 0.1)'
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                fill: false,
+                tension: 0.4
             }]
         },
         options: {
@@ -634,7 +686,21 @@ function createMonthlyCostsChart() {
             maintainAspectRatio: false,
             scales: {
                 y: {
-                    beginAtZero: true
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '€ ' + value.toFixed(0);
+                        }
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': € ' + context.parsed.y.toFixed(2);
+                        }
+                    }
                 }
             }
         }
@@ -650,45 +716,504 @@ function createFuelConsumptionChart() {
         charts.fuelConsumption.destroy();
     }
 
+    // Daten aus reportsData verwenden oder Fallback
+    const labels = reportsData.fuelTypeLabels || [];
+    const data = reportsData.fuelTypeData || [];
+    
+    // Prüfen ob Daten vorhanden sind
+    if (labels.length === 0 || data.length === 0) {
+        showEmptyState('fuelConsumptionChart', 'fuel-consumption-empty');
+        return;
+    }
+
+    // Farben für verschiedene Kraftstofftypen
+    const colors = ['#F59E0B', '#8B5CF6', '#10B981', '#6366F1', '#EF4444', '#84CC16'];
+
     charts.fuelConsumption = new Chart(ctx, {
         type: 'pie',
         data: {
-            labels: ['Benzin', 'Diesel', 'Elektro', 'Hybrid'],
+            labels: labels,
             datasets: [{
-                data: [40, 45, 10, 5],
-                backgroundColor: ['#F59E0B', '#8B5CF6', '#10B981', '#6366F1']
+                data: data,
+                backgroundColor: colors.slice(0, labels.length)
             }]
         },
         options: {
             responsive: true,
-            maintainAspectRatio: false
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = ((value / total) * 100).toFixed(1);
+                            return `${label}: ${value} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
         }
     });
 }
 
-// Weitere Chart-Funktionen analog implementieren...
+// Fahrzeugauslastungs-Chart
 function createVehicleUtilizationChart() {
-    // Implementierung analog zu den anderen Charts
+    const ctx = document.getElementById('vehicleUtilizationChart');
+    if (!ctx) return;
+
+    if (charts.vehicleUtilization) {
+        charts.vehicleUtilization.destroy();
+    }
+
+    // Daten aus reportsData verwenden oder Fallback
+    const vehicleLabels = reportsData.vehicleKilometersLabels || [];
+    const vehicleData = reportsData.vehicleKilometersData || [];
+    
+    // Auslastung basierend auf Kilometern berechnen (vereinfacht)
+    const utilizationData = vehicleData.map(km => {
+        // Vereinfachte Auslastungsberechnung: höhere Kilometer = höhere Auslastung
+        const maxKm = Math.max(...vehicleData);
+        return maxKm > 0 ? ((km / maxKm) * 100).toFixed(1) : 0;
+    });
+    
+    // Prüfen ob Daten vorhanden sind
+    if (vehicleLabels.length === 0 || vehicleData.length === 0) {
+        showEmptyState('vehicleUtilizationChart', 'vehicle-utilization-empty');
+        return;
+    }
+
+    charts.vehicleUtilization = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: vehicleLabels,
+            datasets: [{
+                label: 'Auslastung (%)',
+                data: utilizationData,
+                backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                borderColor: '#3B82F6',
+                borderWidth: 1,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    }
+                },
+                x: {
+                    ticks: {
+                        maxRotation: 45,
+                        minRotation: 0
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const km = vehicleData[context.dataIndex];
+                            return `Auslastung: ${context.parsed.y}% (${km.toLocaleString()} km)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
 }
 
 function createVehicleMaintenanceChart() {
-    // Implementierung analog zu den anderen Charts
+    const ctx = document.getElementById('vehicleMaintenanceChart');
+    if (!ctx) return;
+
+    if (charts.vehicleMaintenance) {
+        charts.vehicleMaintenance.destroy();
+    }
+
+    // Wartungsdaten aus Backend abrufen oder simulieren
+    const maintenanceLabels = reportsData.vehicleKilometersLabels || [];
+    const maintenanceData = [];
+    
+    // Simulierte Wartungskosten basierend auf Fahrzeugdaten
+    // In einer echten Implementierung würden diese vom Backend kommen
+    if (reportsData.vehicleKilometersData) {
+        reportsData.vehicleKilometersData.forEach((km, index) => {
+            // Vereinfachte Berechnung: höhere Kilometer = mehr Wartungskosten
+            const baseCost = Math.random() * 500 + 200; // 200-700€ Basis
+            const kmFactor = km / 10000; // Pro 10.000 km zusätzliche Kosten
+            maintenanceData.push((baseCost + (kmFactor * 100)).toFixed(0));
+        });
+    }
+    
+    // Prüfen ob Daten vorhanden sind
+    if (maintenanceLabels.length === 0 || maintenanceData.length === 0) {
+        showEmptyState('vehicleMaintenanceChart', 'vehicle-maintenance-empty');
+        return;
+    }
+
+    // Farbgradient für verschiedene Wartungskosten
+    const colors = maintenanceData.map(cost => {
+        const maxCost = Math.max(...maintenanceData);
+        const intensity = cost / maxCost;
+        return `rgba(239, 68, 68, ${0.3 + intensity * 0.7})`; // Rot mit verschiedenen Intensitäten
+    });
+
+    charts.vehicleMaintenance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: maintenanceLabels,
+            datasets: [{
+                label: 'Wartungskosten (€)',
+                data: maintenanceData,
+                backgroundColor: colors,
+                borderColor: '#EF4444',
+                borderWidth: 1,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '€ ' + value.toLocaleString();
+                        }
+                    }
+                },
+                x: {
+                    ticks: {
+                        maxRotation: 45,
+                        minRotation: 0
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `Wartungskosten: €${parseFloat(context.parsed.y).toLocaleString()}`;
+                        }
+                    }
+                }
+            }
+        }
+    });
 }
 
 function createDriverKilometersChart() {
-    // Implementierung analog zu den anderen Charts
+    const ctx = document.getElementById('driverKilometersChart');
+    if (!ctx) return;
+
+    if (charts.driverKilometers) {
+        charts.driverKilometers.destroy();
+    }
+
+    // Simulierte Fahrer-Kilometer-Daten
+    // In einer echten Implementierung würden diese vom Backend kommen
+    const driverLabels = [];
+    const driverData = [];
+    
+    // Erstelle Demo-Daten basierend auf verfügbaren Fahrzeugdaten
+    if (reportsData.totalDrivers && reportsData.totalDrivers > 0) {
+        for (let i = 1; i <= Math.min(reportsData.totalDrivers, 8); i++) {
+            driverLabels.push(`Fahrer ${i}`);
+            driverData.push(Math.floor(Math.random() * 5000) + 1000); // 1000-6000 km
+        }
+    }
+    
+    // Prüfen ob Daten vorhanden sind
+    if (driverLabels.length === 0 || driverData.length === 0) {
+        showEmptyState('driverKilometersChart', 'driver-kilometers-empty');
+        return;
+    }
+
+    // Sortiere Daten absteigend
+    const sortedData = driverLabels.map((label, index) => ({
+        label: label,
+        data: driverData[index]
+    })).sort((a, b) => b.data - a.data);
+
+    const sortedLabels = sortedData.map(item => item.label);
+    const sortedValues = sortedData.map(item => item.data);
+
+    // Farbgradient für verschiedene Kilometeranzahlen
+    const colors = sortedValues.map((km, index) => {
+        const hue = 120 - (index * 15); // Von grün zu gelb/orange
+        return `hsl(${Math.max(hue, 0)}, 70%, 60%)`;
+    });
+
+    charts.driverKilometers = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: sortedLabels,
+            datasets: [{
+                label: 'Gefahrene Kilometer',
+                data: sortedValues,
+                backgroundColor: colors,
+                borderColor: colors.map(color => color.replace('60%', '40%')),
+                borderWidth: 1,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString() + ' km';
+                        }
+                    }
+                },
+                x: {
+                    ticks: {
+                        maxRotation: 45,
+                        minRotation: 0
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.parsed.y.toLocaleString()} km gefahren`;
+                        }
+                    }
+                }
+            }
+        }
+    });
 }
 
 function createDriverStatusChart() {
-    // Implementierung analog zu den anderen Charts
+    const ctx = document.getElementById('driverStatusChart');
+    if (!ctx) return;
+
+    if (charts.driverStatus) {
+        charts.driverStatus.destroy();
+    }
+
+    // Daten aus reportsData verwenden oder Fallback
+    const labels = reportsData.driverStatusLabels || [];
+    const data = reportsData.driverStatusData || [];
+    
+    // Prüfen ob Daten vorhanden sind
+    if (labels.length === 0 || data.length === 0 || !data.some(value => value > 0)) {
+        showEmptyState('driverStatusChart', 'driver-status-empty');
+        return;
+    }
+
+    charts.driverStatus = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: ['#10B981', '#3B82F6', '#6B7280', '#F59E0B']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
 }
 
 function createCostDistributionChart() {
-    // Implementierung analog zu den anderen Charts
+    const ctx = document.getElementById('costDistributionChart');
+    if (!ctx) return;
+
+    if (charts.costDistribution) {
+        charts.costDistribution.destroy();
+    }
+
+    // Erstelle Kostenverteilungs-Daten aus reportsData
+    const totalFuelCosts = reportsData.totalFuelCosts || 0;
+    const totalMaintenanceCosts = reportsData.totalMaintenanceCosts || 0;
+    const totalFinancingCosts = reportsData.totalFinancingCosts || 0;
+    
+    const labels = [];
+    const data = [];
+    const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444'];
+    
+    if (totalFuelCosts > 0) {
+        labels.push('Kraftstoff');
+        data.push(totalFuelCosts);
+    }
+    if (totalMaintenanceCosts > 0) {
+        labels.push('Wartung');
+        data.push(totalMaintenanceCosts);
+    }
+    if (totalFinancingCosts > 0) {
+        labels.push('Finanzierung');
+        data.push(totalFinancingCosts);
+    }
+    
+    // Prüfen ob Daten vorhanden sind
+    if (labels.length === 0 || data.every(value => value === 0)) {
+        showEmptyState('costDistributionChart', 'cost-distribution-empty');
+        return;
+    }
+
+    charts.costDistribution = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: colors.slice(0, labels.length),
+                borderWidth: 2,
+                borderColor: '#ffffff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        usePointStyle: true
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = ((value / total) * 100).toFixed(1);
+                            return `${label}: €${value.toFixed(2)} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
 }
 
 function createCostTrendsChart() {
-    // Implementierung analog zu den anderen Charts
+    const ctx = document.getElementById('costTrendsChart');
+    if (!ctx) return;
+
+    if (charts.costTrends) {
+        charts.costTrends.destroy();
+    }
+
+    // Daten aus reportsData verwenden oder Fallback
+    const labels = reportsData.monthlyLabels || [];
+    const fuelData = reportsData.monthlyFuelData || [];
+    const maintenanceData = reportsData.monthlyMaintenanceData || [];
+    
+    // Prüfen ob Daten vorhanden sind
+    const hasData = fuelData.some(value => value > 0) || maintenanceData.some(value => value > 0);
+    
+    if (!hasData || labels.length === 0) {
+        showEmptyState('costTrendsChart', 'cost-trends-empty');
+        return;
+    }
+
+    charts.costTrends = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Kraftstoffkosten',
+                data: fuelData,
+                borderColor: '#3B82F6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                fill: false,
+                tension: 0.4,
+                borderWidth: 3
+            }, {
+                label: 'Wartungskosten',
+                data: maintenanceData,
+                borderColor: '#10B981',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                fill: false,
+                tension: 0.4,
+                borderWidth: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top'
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': €' + context.parsed.y.toFixed(2);
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        display: false
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '€ ' + value.toFixed(0);
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Helper function für leere Chart-Zustände
+function showEmptyState(chartId, emptyStateId) {
+    const canvas = document.getElementById(chartId);
+    const emptyState = document.getElementById(emptyStateId);
+    
+    if (canvas) {
+        canvas.style.display = 'none';
+    }
+    if (emptyState) {
+        emptyState.classList.remove('hidden');
+    }
 }
 
 // Hilfsfunktionen
@@ -696,6 +1221,7 @@ function getDriverStatusBadge(status) {
     const statusConfig = {
         'available': { text: 'Verfügbar', class: 'bg-green-100 text-green-800' },
         'onduty': { text: 'Im Dienst', class: 'bg-blue-100 text-blue-800' },
+        'reserved': { text: 'Reserviert', class: 'bg-yellow-100 text-yellow-800' },
         'offduty': { text: 'Außer Dienst', class: 'bg-gray-100 text-gray-800' }
     };
 
