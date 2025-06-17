@@ -137,7 +137,7 @@ frontend/
 
 ### Database
 - **Connection**: `mongodb://localhost:27017`
-- **Database**: `fleetdrive`
+- **Database**: `FleetFlow`
 - **File Storage**: MongoDB GridFS
 
 ### Server

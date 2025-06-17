@@ -55,7 +55,7 @@ func ConnectDB() error {
 
 // GetCollection gibt eine Kollektion aus der Datenbank zurück
 func GetCollection(collectionName string) *mongo.Collection {
-	return DBClient.Database("fleetdrive").Collection(collectionName)
+	return DBClient.Database("FleetFlow").Collection(collectionName)
 }
 
 // DisconnectDB trennt die Verbindung zur MongoDB

@@ -75,7 +75,7 @@ The application uses MongoDB with the following connection:
 const mongoURI = "mongodb://localhost:27017"
 ```
 
-The database name is "fleetdrive" with collections matching the model entities.
+The database name is "FleetFlow" with collections matching the model entities.
 
 ## Server Configuration
 
