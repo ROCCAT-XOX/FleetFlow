@@ -1,0 +1,372 @@
+{{ template "head" . }}
+<body class="h-full bg-gray-50">
+<!-- Navigation einfügen -->
+{{ template "navigation" . }}
+
+<!-- Hauptinhalt -->
+<main class="py-10">
+    <div class="px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="sm:flex sm:items-center">
+            <div class="sm:flex-auto">
+                <h1 class="text-2xl font-semibold text-gray-900">Fahrzeug-Reservierungen</h1>
+                <p class="mt-2 text-sm text-gray-700">
+                    Verwalten Sie Fahrzeug-Reservierungen. Erstellen Sie neue Reservierungen, bearbeiten Sie bestehende oder verfolgen Sie deren Status.
+                </p>
+            </div>
+            <div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none flex gap-2">
+                <button type="button" id="toggle-view-btn" class="block rounded-md bg-gray-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-gray-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-600">
+                    <svg class="-ml-0.5 mr-1.5 h-5 w-5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    Kalender
+                </button>
+                <button type="button" id="add-reservation-btn" class="block rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                    <svg class="-ml-0.5 mr-1.5 h-5 w-5 inline" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" />
+                    </svg>
+                    Reservierung erstellen
+                </button>
+            </div>
+        </div>
+
+        <!-- Such- und Filterbereich -->
+        <div class="mt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex-1 max-w-lg">
+                <label for="search" class="sr-only">Reservierungen suchen</label>
+                <div class="relative">
+                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                        <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <input id="search" name="search" class="block w-full rounded-md border-0 py-1.5 pl-10 pr-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" placeholder="Nach Fahrzeug, Fahrer oder Zweck suchen..." type="search">
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <select id="status-filter" class="rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                    <option value="">Alle Status</option>
+                    <option value="pending">Ausstehend</option>
+                    <option value="active">Aktiv</option>
+                    <option value="completed">Abgeschlossen</option>
+                    <option value="cancelled">Storniert</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Listenansicht -->
+        <div id="list-view" class="view-container">
+            <!-- Reservierungstabelle -->
+            <div class="mt-8 flow-root">
+            <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+                    <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+                        <table class="min-w-full divide-y divide-gray-300">
+                            <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Fahrzeug</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Fahrer</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Zeitraum</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Zweck</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Status</th>
+                                <th scope="col" class="relative px-6 py-3"><span class="sr-only">Aktionen</span></th>
+                            </tr>
+                            </thead>
+                            <tbody id="reservations-table-body" class="divide-y divide-gray-200 bg-white">
+                            <!-- Reservierungsdaten werden hier dynamisch eingefügt -->
+                            {{range .reservations}}
+                            <tr data-id="{{.ID}}">
+                                <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
+                                    <div class="flex items-center">
+                                        <div class="h-10 w-10 flex-shrink-0">
+                                            <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                                                <svg class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V7M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/>
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-gray-900">
+                                                {{if .Vehicle}}{{.Vehicle.Brand}} {{.Vehicle.Model}}{{else}}Unbekannt{{end}}
+                                            </div>
+                                            <div class="text-sm text-gray-500">
+                                                {{if .Vehicle}}{{.Vehicle.LicensePlate}}{{else}}--{{end}}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
+                                    <div class="text-sm font-medium text-gray-900">
+                                        {{if .Driver}}{{.Driver.FirstName}} {{.Driver.LastName}}{{else}}Unbekannt{{end}}
+                                    </div>
+                                    <div class="text-sm text-gray-500">
+                                        {{if .Driver}}{{.Driver.Email}}{{else}}--{{end}}
+                                    </div>
+                                </td>
+                                <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
+                                    <div class="text-sm font-medium text-gray-900">
+                                        {{.StartTime.Format "02.01.2006 15:04"}}
+                                    </div>
+                                    <div class="text-sm text-gray-500">
+                                        bis {{.EndTime.Format "02.01.2006 15:04"}}
+                                    </div>
+                                </td>
+                                <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
+                                    <div class="text-sm text-gray-900">{{.Purpose}}</div>
+                                    {{if .Notes}}<div class="text-sm text-gray-500">{{.Notes}}</div>{{end}}
+                                </td>
+                                <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
+                                    <span class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium 
+                                        {{if eq .Status "pending"}}bg-yellow-100 text-yellow-800{{end}}
+                                        {{if eq .Status "active"}}bg-green-100 text-green-800{{end}}
+                                        {{if eq .Status "completed"}}bg-gray-100 text-gray-800{{end}}
+                                        {{if eq .Status "cancelled"}}bg-red-100 text-red-800{{end}}">
+                                        {{if eq .Status "pending"}}Ausstehend{{end}}
+                                        {{if eq .Status "active"}}Aktiv{{end}}
+                                        {{if eq .Status "completed"}}Abgeschlossen{{end}}
+                                        {{if eq .Status "cancelled"}}Storniert{{end}}
+                                    </span>
+                                </td>
+                                <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                                    <div class="flex items-center justify-end gap-2">
+                                        {{if eq .Status "pending"}}
+                                        <button type="button" onclick="editReservation('{{.ID}}')" class="text-indigo-600 hover:text-indigo-900">
+                                            Bearbeiten
+                                        </button>
+                                        {{end}}
+                                        {{if eq .Status "active"}}
+                                        <button type="button" onclick="completeReservation('{{.ID}}')" class="text-green-600 hover:text-green-900">
+                                            Abschließen
+                                        </button>
+                                        {{end}}
+                                        {{if or (eq .Status "pending") (eq .Status "active")}}
+                                        <button type="button" onclick="cancelReservation('{{.ID}}')" class="text-red-600 hover:text-red-900">
+                                            Stornieren
+                                        </button>
+                                        {{end}}
+                                    </div>
+                                </td>
+                            </tr>
+                            {{end}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            </div>
+        </div>
+
+        <!-- Kalender-Ansicht -->
+        <div id="calendar-view" class="view-container hidden">
+            <!-- Kalender-Navigation -->
+            <div class="mt-8 flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <button type="button" id="prev-month" class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+                    <h2 id="current-month" class="text-lg font-semibold text-gray-900"></h2>
+                    <button type="button" id="next-month" class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="button" id="today-btn" class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                        Heute
+                    </button>
+                    <select id="view-mode" class="rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                        <option value="month">Monat</option>
+                        <option value="week">Woche</option>
+                        <option value="day">Tag</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Legende -->
+            <div class="mt-4 flex items-center gap-6 text-sm">
+                <div class="flex items-center gap-2">
+                    <div class="w-3 h-3 bg-yellow-400 rounded-full"></div>
+                    <span>Ausstehend</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <span>Aktiv</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="w-3 h-3 bg-gray-400 rounded-full"></div>
+                    <span>Abgeschlossen</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="w-3 h-3 bg-red-400 rounded-full"></div>
+                    <span>Storniert</span>
+                </div>
+            </div>
+
+            <!-- Kalender-Container -->
+            <div id="calendar-container" class="mt-8">
+                <!-- Monatsansicht -->
+                <div id="month-view" class="calendar-view">
+                    <div class="bg-white shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+                        <!-- Wochentag-Header -->
+                        <div class="grid grid-cols-7 gap-px border-b border-gray-200 bg-gray-50">
+                            <div class="py-2 px-3 text-center text-xs font-semibold text-gray-900">Mo</div>
+                            <div class="py-2 px-3 text-center text-xs font-semibold text-gray-900">Di</div>
+                            <div class="py-2 px-3 text-center text-xs font-semibold text-gray-900">Mi</div>
+                            <div class="py-2 px-3 text-center text-xs font-semibold text-gray-900">Do</div>
+                            <div class="py-2 px-3 text-center text-xs font-semibold text-gray-900">Fr</div>
+                            <div class="py-2 px-3 text-center text-xs font-semibold text-gray-900">Sa</div>
+                            <div class="py-2 px-3 text-center text-xs font-semibold text-gray-900">So</div>
+                        </div>
+                        <!-- Kalender-Grid -->
+                        <div id="calendar-grid" class="grid grid-cols-7 gap-px bg-gray-200">
+                            <!-- Kalender-Tage werden hier dynamisch eingefügt -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wochenansicht -->
+                <div id="week-view" class="calendar-view hidden">
+                    <div class="bg-white shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+                        <div id="week-header" class="grid grid-cols-8 gap-px border-b border-gray-200 bg-gray-50">
+                            <div class="py-2 px-3 text-center text-xs font-semibold text-gray-900">Zeit</div>
+                            <!-- Wochentage werden hier dynamisch eingefügt -->
+                        </div>
+                        <div id="week-grid" class="grid grid-cols-8 gap-px bg-gray-200 min-h-96">
+                            <!-- Stunden-Grid wird hier dynamisch eingefügt -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tagesansicht -->
+                <div id="day-view" class="calendar-view hidden">
+                    <div class="bg-white shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+                        <div class="border-b border-gray-200 bg-gray-50 py-2 px-3">
+                            <h3 id="day-title" class="text-lg font-semibold text-gray-900"></h3>
+                        </div>
+                        <div id="day-grid" class="divide-y divide-gray-200">
+                            <!-- Stunden werden hier dynamisch eingefügt -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Modal für Reservierung hinzufügen/bearbeiten -->
+<div id="reservation-modal" class="fixed inset-0 z-10 overflow-y-auto hidden">
+    <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+        <div class="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl sm:p-6">
+            <div>
+                <div class="mt-3 text-center sm:mt-5">
+                    <h3 id="modal-title" class="text-base font-semibold leading-6 text-gray-900">Neue Reservierung</h3>
+                </div>
+            </div>
+            <form id="reservation-form" class="mt-6">
+                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                    <!-- Fahrzeug auswählen -->
+                    <div class="sm:col-span-2">
+                        <label for="vehicle-select" class="block text-sm font-medium leading-6 text-gray-900">Fahrzeug *</label>
+                        <div class="mt-2">
+                            <select id="vehicle-select" name="vehicleId" required class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                <option value="">Fahrzeug auswählen</option>
+                                {{range .vehicles}}
+                                <option value="{{.ID.Hex}}">{{.Brand}} {{.Model}} ({{.LicensePlate}})</option>
+                                {{end}}
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Fahrer auswählen -->
+                    <div class="sm:col-span-2">
+                        <label for="driver-select" class="block text-sm font-medium leading-6 text-gray-900">Fahrer *</label>
+                        <div class="mt-2">
+                            <select id="driver-select" name="driverId" required class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                <option value="">Fahrer auswählen</option>
+                                {{range .drivers}}
+                                <option value="{{.ID.Hex}}">{{.FirstName}} {{.LastName}}</option>
+                                {{end}}
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Startzeit -->
+                    <div>
+                        <label for="start-time" class="block text-sm font-medium leading-6 text-gray-900">Startzeit *</label>
+                        <div class="mt-2">
+                            <input type="datetime-local" id="start-time" name="startTime" required class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                        </div>
+                    </div>
+
+                    <!-- Endzeit -->
+                    <div>
+                        <label for="end-time" class="block text-sm font-medium leading-6 text-gray-900">Endzeit *</label>
+                        <div class="mt-2">
+                            <input type="datetime-local" id="end-time" name="endTime" required class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                        </div>
+                    </div>
+
+                    <!-- Zweck -->
+                    <div class="sm:col-span-2">
+                        <label for="purpose" class="block text-sm font-medium leading-6 text-gray-900">Zweck</label>
+                        <div class="mt-2">
+                            <input type="text" id="purpose" name="purpose" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" placeholder="Zweck der Reservierung">
+                        </div>
+                    </div>
+
+                    <!-- Notizen -->
+                    <div class="sm:col-span-2">
+                        <label for="notes" class="block text-sm font-medium leading-6 text-gray-900">Notizen</label>
+                        <div class="mt-2">
+                            <textarea id="notes" name="notes" rows="3" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" placeholder="Zusätzliche Notizen..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6 flex items-center justify-end gap-3">
+                    <button type="button" id="cancel-btn" class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                        Abbrechen
+                    </button>
+                    <button type="submit" class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                        Reservierung erstellen
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Verfügbare Fahrzeuge Modal -->
+<div id="available-vehicles-modal" class="fixed inset-0 z-10 overflow-y-auto hidden">
+    <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+        <div class="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+            <div>
+                <div class="mt-3 text-center sm:mt-5">
+                    <h3 class="text-base font-semibold leading-6 text-gray-900">Verfügbare Fahrzeuge</h3>
+                </div>
+            </div>
+            <div class="mt-4">
+                <div id="available-vehicles-list" class="space-y-2">
+                    <!-- Verfügbare Fahrzeuge werden hier dynamisch eingefügt -->
+                </div>
+            </div>
+            <div class="mt-6">
+                <button type="button" id="close-available-vehicles-btn" class="w-full rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                    Schließen
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript für Reservierungen -->
+<script src="/static/js/reservations.js"></script>
+
+{{ template "footer" . }}
+</body>
+</html>

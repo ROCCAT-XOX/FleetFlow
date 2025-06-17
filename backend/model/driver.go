@@ -18,6 +18,7 @@ const (
 	DriverStatusAvailable DriverStatus = "available"
 	DriverStatusOnDuty    DriverStatus = "onduty"
 	DriverStatusOffDuty   DriverStatus = "offduty"
+	DriverStatusReserved  DriverStatus = "reserved"
 
 	// Führerscheinklassen
 	LicenseClassA   LicenseClass = "A"

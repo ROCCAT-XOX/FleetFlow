@@ -4,14 +4,22 @@ package db
 import (
 	"context"
 	"log"
+	"os"
 	"time"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// MongoDB Connection-URI
-const mongoURI = "mongodb://localhost:27017"
+// getMongoURI gibt die MongoDB-URI basierend auf der Umgebung zurück
+func getMongoURI() string {
+	env := os.Getenv("ENV")
+	if env == "production" {
+		return "mongodb://mongodb:27017"
+	}
+	// Development (default)
+	return "mongodb://localhost:27017"
+}
 
 // DBClient ist der shared MongoDB-Client
 var DBClient *mongo.Client
@@ -21,6 +29,10 @@ func ConnectDB() error {
 	// Verbindungskontext mit Timeout
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+
+	// Dynamische URI basierend auf Umgebung
+	mongoURI := getMongoURI()
+	log.Printf("Verbindung zu MongoDB: %s", mongoURI)
 
 	// Verbindung zur MongoDB herstellen
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(mongoURI))

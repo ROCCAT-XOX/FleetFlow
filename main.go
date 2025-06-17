@@ -3,6 +3,7 @@ package main
 import (
 	"FleetDrive/backend/db"
 	"FleetDrive/backend/repository"
+	"FleetDrive/backend/service"
 	"FleetDrive/backend/utils"
 	"html/template"
 	"log"
@@ -33,6 +34,10 @@ func main() {
 	} else {
 		log.Println("Admin-Benutzer wurde überprüft/erstellt")
 	}
+
+	// Reservierungs-Scheduler starten (überprüft alle 5 Minuten)
+	scheduler := service.NewReservationScheduler()
+	scheduler.Start(5)
 
 	// Initialize router
 	router := setupRouter()

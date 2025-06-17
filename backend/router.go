@@ -398,6 +398,10 @@ func setupAuthorizedRoutes(group *gin.RouterGroup) {
 			"year":  currentYear,
 		})
 	})
+
+	// Reservierungen (mit integriertem Kalender)
+	reservationHandler := handler.NewReservationHandler()
+	group.GET("/reservations", reservationHandler.ShowReservationsPage)
 }
 
 // setupAPIRoutes konfiguriert die API-Routen
@@ -415,6 +419,7 @@ func setupAPIRoutes(api *gin.RouterGroup) {
 	reportsHandler := handler.NewReportsHandler()
 	documentHandler := handler.NewVehicleDocumentHandler()
 	driverDocumentHandler := handler.NewDriverDocumentHandler()
+	reservationHandler := handler.NewReservationHandler()
 
 	// Benutzer-API
 	users := api.Group("/users")
@@ -561,5 +566,18 @@ func setupAPIRoutes(api *gin.RouterGroup) {
 		reports.GET("/vehicle-ranking", reportsHandler.GetVehicleRanking)
 		reports.GET("/driver-ranking", reportsHandler.GetDriverRanking)
 		reports.GET("/cost-breakdown", reportsHandler.GetCostBreakdown)
+	}
+
+	// Reservations API
+	reservations := api.Group("/reservations")
+	{
+		reservations.GET("", reservationHandler.GetReservations)
+		reservations.POST("", reservationHandler.CreateReservation)
+		reservations.PUT("/:id", reservationHandler.UpdateReservation)
+		reservations.DELETE("/:id", reservationHandler.CancelReservation)
+		reservations.POST("/:id/complete", reservationHandler.CompleteReservation)
+		reservations.GET("/vehicle/:vehicleId", reservationHandler.GetReservationsByVehicle)
+		reservations.GET("/driver/:driverId", reservationHandler.GetReservationsByDriver)
+		reservations.GET("/available-vehicles", reservationHandler.GetAvailableVehicles)
 	}
 }

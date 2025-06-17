@@ -24,6 +24,7 @@ const (
 	VehicleStatusAvailable   VehicleStatus = "available"
 	VehicleStatusInUse       VehicleStatus = "inuse"
 	VehicleStatusMaintenance VehicleStatus = "maintenance"
+	VehicleStatusReserved    VehicleStatus = "reserved"
 
 	// Kraftstofftypen
 	FuelTypeGasoline     FuelType = "Benzin"

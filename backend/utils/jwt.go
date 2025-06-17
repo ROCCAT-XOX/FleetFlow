@@ -2,7 +2,9 @@
 package utils
 
 import (
+	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"time"
 )
 
@@ -57,4 +59,27 @@ func ValidateJWT(tokenString string) (*Claims, error) {
 	}
 
 	return nil, jwt.ErrSignatureInvalid
+}
+
+// ExtractUserIDFromToken extrahiert die Benutzer-ID aus dem JWT-Token im Gin-Kontext
+func ExtractUserIDFromToken(c *gin.Context) (primitive.ObjectID, error) {
+	// Token aus dem Cookie extrahieren
+	tokenString, err := c.Cookie("token")
+	if err != nil {
+		return primitive.NilObjectID, err
+	}
+
+	// Token validieren
+	claims, err := ValidateJWT(tokenString)
+	if err != nil {
+		return primitive.NilObjectID, err
+	}
+
+	// UserID in ObjectID konvertieren
+	userID, err := primitive.ObjectIDFromHex(claims.UserID)
+	if err != nil {
+		return primitive.NilObjectID, err
+	}
+
+	return userID, nil
 }

@@ -104,6 +104,27 @@ func (s *ActivityService) LogUsageActivity(
 	return s.activityRepo.Create(activity)
 }
 
+// LogActivity protokolliert eine allgemeine Aktivität
+func (s *ActivityService) LogActivity(
+	activityType string,
+	description string,
+	userID primitive.ObjectID,
+	vehicleID *primitive.ObjectID,
+) error {
+	activity := &model.Activity{
+		Type:        model.ActivityType(activityType),
+		Timestamp:   time.Now(),
+		UserID:      userID,
+		Description: description,
+	}
+
+	if vehicleID != nil {
+		activity.VehicleID = *vehicleID
+	}
+
+	return s.activityRepo.Create(activity)
+}
+
 // GetUserIDFromContext hilft, die Benutzer-ID aus dem Gin-Kontext zu extrahieren
 func GetUserIDFromContext(userIDStr interface{}) (primitive.ObjectID, error) {
 	if userIDStr == nil {
