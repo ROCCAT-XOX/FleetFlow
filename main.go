@@ -35,9 +35,9 @@ func main() {
 		log.Println("Admin-Benutzer wurde überprüft/erstellt")
 	}
 
-	// Reservierungs-Scheduler starten (überprüft alle 5 Minuten)
+	// Reservierungs-Scheduler starten (überprüft alle 1 Minute für bessere Reaktionszeit)
 	scheduler := service.NewReservationScheduler()
-	scheduler.Start(5)
+	scheduler.Start(1)
 
 	// Initialize router
 	router := setupRouter()

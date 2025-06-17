@@ -75,7 +75,7 @@
                             <tbody id="reservations-table-body" class="divide-y divide-gray-200 bg-white">
                             <!-- Reservierungsdaten werden hier dynamisch eingefügt -->
                             {{range .reservations}}
-                            <tr data-id="{{.ID}}">
+                            <tr data-id="{{.ID}}" data-status="{{.Status}}">
                                 <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
                                     <div class="flex items-center">
                                         <div class="h-10 w-10 flex-shrink-0">
@@ -105,10 +105,10 @@
                                 </td>
                                 <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
                                     <div class="text-sm font-medium text-gray-900">
-                                        {{.StartTime.Format "02.01.2006 15:04"}}
+                                        {{formatReservationTime .StartTime}}
                                     </div>
                                     <div class="text-sm text-gray-500">
-                                        bis {{.EndTime.Format "02.01.2006 15:04"}}
+                                        bis {{formatReservationTime .EndTime}}
                                     </div>
                                 </td>
                                 <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-900">

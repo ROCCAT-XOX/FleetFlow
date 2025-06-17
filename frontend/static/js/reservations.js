@@ -303,6 +303,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function createReservationRow(reservation) {
         const row = document.createElement('tr');
         row.dataset.id = reservation.id;
+        row.dataset.status = reservation.status; // Store status for filtering
 
         const statusClass = getStatusClass(reservation.status);
         const statusText = getStatusText(reservation.status);
@@ -405,11 +406,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Datum und Zeit formatieren
     function formatDateTime(dateTimeString) {
+        // Parse the timezone-aware timestamp directly
         const date = new Date(dateTimeString);
+        
         return date.toLocaleString('de-DE', {
             day: '2-digit',
             month: '2-digit',
             year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
+    // Nur Zeit formatieren (für Kalender)
+    function formatTimeOnly(dateTimeString) {
+        // Parse the timezone-aware timestamp directly
+        const date = new Date(dateTimeString);
+        
+        return date.toLocaleTimeString('de-DE', {
             hour: '2-digit',
             minute: '2-digit'
         });
@@ -456,10 +470,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            const statusBadge = row.querySelector('.inline-flex');
-            if (statusBadge) {
-                const hasStatus = statusBadge.classList.contains(getStatusClass(filterValue));
-                row.style.display = hasStatus ? '' : 'none';
+            // Verwende das data-status Attribut für die Filterung
+            const rowStatus = row.dataset.status;
+            if (rowStatus === filterValue) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
             }
         });
     }
@@ -499,8 +515,23 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Formular mit Daten füllen
                     document.getElementById('vehicle-select').value = reservation.vehicleId;
                     document.getElementById('driver-select').value = reservation.driverId;
-                    document.getElementById('start-time').value = new Date(reservation.startTime).toISOString().slice(0, 16);
-                    document.getElementById('end-time').value = new Date(reservation.endTime).toISOString().slice(0, 16);
+                    
+                    // Zeitwerte für datetime-local ohne UTC-Konvertierung setzen
+                    const startDate = new Date(reservation.startTime);
+                    const endDate = new Date(reservation.endTime);
+                    
+                    // Format: YYYY-MM-DDTHH:mm (lokale Zeit ohne UTC-Konvertierung)
+                    const formatForDatetimeLocal = (date) => {
+                        const year = date.getFullYear();
+                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                        const day = String(date.getDate()).padStart(2, '0');
+                        const hours = String(date.getHours()).padStart(2, '0');
+                        const minutes = String(date.getMinutes()).padStart(2, '0');
+                        return `${year}-${month}-${day}T${hours}:${minutes}`;
+                    };
+                    
+                    document.getElementById('start-time').value = formatForDatetimeLocal(startDate);
+                    document.getElementById('end-time').value = formatForDatetimeLocal(endDate);
                     document.getElementById('purpose').value = reservation.purpose || '';
                     document.getElementById('notes').value = reservation.notes || '';
                 } else {
@@ -725,7 +756,8 @@ document.addEventListener('DOMContentLoaded', function() {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
-            day: 'numeric'
+            day: 'numeric',
+            timeZone: 'Europe/Berlin'
         });
 
         grid.innerHTML = '';
@@ -761,6 +793,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function getReservationsForDate(date) {
         return reservationsData.filter(reservation => {
+            // Nur aktive und ausstehende Reservierungen im Kalender anzeigen
+            if (reservation.status !== 'active' && reservation.status !== 'pending') {
+                return false;
+            }
+            
             const startDate = new Date(reservation.startTime);
             const endDate = new Date(reservation.endTime);
             
@@ -781,6 +818,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function getReservationsForHour(date) {
         return reservationsData.filter(reservation => {
+            // Nur aktive und ausstehende Reservierungen im Kalender anzeigen
+            if (reservation.status !== 'active' && reservation.status !== 'pending') {
+                return false;
+            }
+            
             const startDate = new Date(reservation.startTime);
             const endDate = new Date(reservation.endTime);
             
@@ -816,7 +858,7 @@ document.addEventListener('DOMContentLoaded', function() {
             element.innerHTML = `
                 <div class="font-medium">${reservation.vehicle ? `${reservation.vehicle.brand} ${reservation.vehicle.model}` : 'Vehicle'}</div>
                 <div>${reservation.driver ? `${reservation.driver.firstName} ${reservation.driver.lastName}` : 'Driver'}</div>
-                <div>${new Date(reservation.startTime).toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit'})} - ${new Date(reservation.endTime).toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit'})}</div>
+                <div>${formatTimeOnly(reservation.startTime)} - ${formatTimeOnly(reservation.endTime)}</div>
             `;
         }
 

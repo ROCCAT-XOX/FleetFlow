@@ -157,14 +157,20 @@ func (h *ReservationHandler) CreateReservation(c *gin.Context) {
 		return
 	}
 
-	// Zeitstempel parsen
-	startTime, err := time.Parse("2006-01-02T15:04", req.StartTime)
+	// Zeitstempel parsen (als lokale Zeit in Europa/Berlin)
+	loc, err := time.LoadLocation("Europe/Berlin")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Timezone-Fehler"})
+		return
+	}
+
+	startTime, err := time.ParseInLocation("2006-01-02T15:04", req.StartTime, loc)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Ungültiges Startzeit-Format"})
 		return
 	}
 
-	endTime, err := time.Parse("2006-01-02T15:04", req.EndTime)
+	endTime, err := time.ParseInLocation("2006-01-02T15:04", req.EndTime, loc)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Ungültiges Endzeit-Format"})
 		return
@@ -206,14 +212,20 @@ func (h *ReservationHandler) UpdateReservation(c *gin.Context) {
 		return
 	}
 
-	// Zeitstempel parsen
-	startTime, err := time.Parse("2006-01-02T15:04", req.StartTime)
+	// Zeitstempel parsen (als lokale Zeit in Europa/Berlin)
+	loc, err := time.LoadLocation("Europe/Berlin")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Timezone-Fehler"})
+		return
+	}
+
+	startTime, err := time.ParseInLocation("2006-01-02T15:04", req.StartTime, loc)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Ungültiges Startzeit-Format"})
 		return
 	}
 
-	endTime, err := time.Parse("2006-01-02T15:04", req.EndTime)
+	endTime, err := time.ParseInLocation("2006-01-02T15:04", req.EndTime, loc)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Ungültiges Endzeit-Format"})
 		return
@@ -359,13 +371,20 @@ func (h *ReservationHandler) GetAvailableVehicles(c *gin.Context) {
 		return
 	}
 
-	startTime, err := time.Parse("2006-01-02T15:04", startTimeStr)
+	// Zeitstempel parsen (als lokale Zeit in Europa/Berlin)
+	loc, err := time.LoadLocation("Europe/Berlin")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Timezone-Fehler"})
+		return
+	}
+
+	startTime, err := time.ParseInLocation("2006-01-02T15:04", startTimeStr, loc)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Ungültiges Startzeit-Format"})
 		return
 	}
 
-	endTime, err := time.Parse("2006-01-02T15:04", endTimeStr)
+	endTime, err := time.ParseInLocation("2006-01-02T15:04", endTimeStr, loc)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Ungültiges Endzeit-Format"})
 		return

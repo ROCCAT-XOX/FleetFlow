@@ -108,14 +108,16 @@ func (s *ReservationService) CreateReservation(vehicleID, driverID string, start
 		return nil, fmt.Errorf("fehler beim erstellen der reservierung: %v", err)
 	}
 
-	// Prüfen ob Reservierung sofort aktiviert werden sollte (startet in den nächsten 10 Minuten)
+	// Prüfen ob Reservierung sofort aktiviert werden sollte (nur wenn Startzeit bereits erreicht ist)
 	now := time.Now()
-	if startTime.Before(now.Add(10 * time.Minute)) {
-		// Reservierung sofort aktivieren
+	if now.After(startTime) || now.Equal(startTime) {
+		// Reservierung sofort aktivieren - Startzeit ist bereits erreicht
 		err = s.ActivateReservation(reservation.ID.Hex())
 		if err != nil {
 			// Log Warnung aber nicht als Fehler behandeln
 			fmt.Printf("Warnung: Reservierung konnte nicht automatisch aktiviert werden: %v\n", err)
+		} else {
+			fmt.Printf("Reservierung %s wurde sofort aktiviert (Startzeit: %v, Jetzt: %v)\n", reservation.ID.Hex(), startTime, now)
 		}
 	}
 

@@ -155,15 +155,16 @@ func TemplateHelpers() template.FuncMap {
 			}
 		},
 		"formatDateTime": func(date interface{}) string {
+			loc, _ := time.LoadLocation("Europe/Berlin")
 			switch v := date.(type) {
 			case time.Time:
-				return v.Format("02.01.2006, 15:04 Uhr")
+				return v.In(loc).Format("02.01.2006, 15:04 Uhr")
 			case string:
 				if t, err := time.Parse(time.RFC3339, v); err == nil {
-					return t.Format("02.01.2006, 15:04 Uhr")
+					return t.In(loc).Format("02.01.2006, 15:04 Uhr")
 				}
 				if t, err := time.Parse("2006-01-02T15:04:05Z", v); err == nil {
-					return t.Format("02.01.2006, 15:04 Uhr")
+					return t.In(loc).Format("02.01.2006, 15:04 Uhr")
 				}
 				return v
 			default:
@@ -171,15 +172,16 @@ func TemplateHelpers() template.FuncMap {
 			}
 		},
 		"formatTime": func(date interface{}) string {
+			loc, _ := time.LoadLocation("Europe/Berlin")
 			switch v := date.(type) {
 			case time.Time:
-				return v.Format("15:04")
+				return v.In(loc).Format("15:04")
 			case string:
 				if t, err := time.Parse(time.RFC3339, v); err == nil {
-					return t.Format("15:04")
+					return t.In(loc).Format("15:04")
 				}
 				if t, err := time.Parse("2006-01-02T15:04:05Z", v); err == nil {
-					return t.Format("15:04")
+					return t.In(loc).Format("15:04")
 				}
 				return v
 			default:
@@ -310,5 +312,11 @@ func TemplateHelpers() template.FuncMap {
 			return !a
 		},
 		"documentTypeText": DocumentTypeText,
+		
+		// Spezielle Zeitformatierung für Reservierungen
+		"formatReservationTime": func(date time.Time) string {
+			loc, _ := time.LoadLocation("Europe/Berlin")
+			return date.In(loc).Format("02.01.2006 15:04")
+		},
 	}
 }
