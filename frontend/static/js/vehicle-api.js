@@ -123,7 +123,6 @@ async function updateRegistrationInfo(vehicleId, formData) {
         const data = {
             ...vehicle,
             registrationDate: formData.get('registration-date'),
-            registrationExpiry: formData.get('registration-expiry'),
             nextInspectionDate: formData.get('next-inspection'),
             insuranceCompany: formData.get('insurance-company'),
             insuranceNumber: formData.get('insurance-number'),

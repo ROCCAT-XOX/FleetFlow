@@ -59,7 +59,6 @@ type Vehicle struct {
 	FuelType           FuelType           `bson:"fuelType" json:"fuelType"`
 	Mileage            int                `bson:"mileage" json:"mileage"`
 	RegistrationDate   time.Time          `bson:"registrationDate" json:"registrationDate"`
-	RegistrationExpiry time.Time          `bson:"registrationExpiry" json:"registrationExpiry"`
 	InsuranceCompany   string             `bson:"insuranceCompany" json:"insuranceCompany"`
 	InsuranceNumber    string             `bson:"insuranceNumber" json:"insuranceNumber"`
 	InsuranceType      InsuranceType      `bson:"insuranceType" json:"insuranceType"`

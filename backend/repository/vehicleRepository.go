@@ -133,7 +133,6 @@ func (r *VehicleRepository) Update(vehicle *model.Vehicle) error {
 			"fuelType":               vehicle.FuelType,
 			"mileage":                vehicle.Mileage,
 			"registrationDate":       vehicle.RegistrationDate,
-			"registrationExpiry":     vehicle.RegistrationExpiry,
 			"insuranceCompany":       vehicle.InsuranceCompany,
 			"insuranceNumber":        vehicle.InsuranceNumber,
 			"insuranceType":          vehicle.InsuranceType,

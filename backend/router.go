@@ -270,7 +270,6 @@ func setupAuthorizedRoutes(group *gin.RouterGroup) {
 			"mileage":            vehicle.Mileage,
 			"status":             vehicle.Status,
 			"registrationDate":   vehicle.RegistrationDate,
-			"registrationExpiry": vehicle.RegistrationExpiry,
 			"insuranceCompany":   vehicle.InsuranceCompany,
 			"insuranceNumber":    vehicle.InsuranceNumber,
 			"insuranceType":      vehicle.InsuranceType,

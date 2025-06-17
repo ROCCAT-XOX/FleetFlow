@@ -561,7 +561,6 @@ async function handleRegistrationSubmit(e) {
         // Nur die spezifischen Zulassungsdaten senden
         const data = {
             registrationDate: formData.get('registration-date'),
-            registrationExpiry: formData.get('registration-expiry'),
             nextInspectionDate: formData.get('next-inspection'),
             insuranceCompany: formData.get('insurance-company'),
             insuranceNumber: formData.get('insurance-number'),
@@ -860,7 +859,6 @@ window.openEditRegistrationModal = async function(vehicleId) {
         };
 
         setFieldValue('registration-date', vehicle.registrationDate, true);
-        setFieldValue('registration-expiry', vehicle.registrationExpiry, true);
         setFieldValue('next-inspection', vehicle.nextInspectionDate, true);
         setFieldValue('insurance-company', vehicle.insuranceCompany);
         setFieldValue('insurance-number', vehicle.insuranceNumber);
