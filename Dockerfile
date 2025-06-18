@@ -48,7 +48,7 @@ VOLUME ["/app/uploads"]
 ENV GIN_MODE=release \
     TZ=Europe/Berlin \
     PORT=8080 \
-    MONGODB_URI=mongodb://mongodb:27017/FleetDrive
+    ENV=production
 
 
 # Port freigeben

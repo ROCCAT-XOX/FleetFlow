@@ -23,6 +23,7 @@ type CreateVehicleRequest struct {
 	Color              string              `json:"color"`
 	VehicleID          string              `json:"vehicleId"`
 	VIN                string              `json:"vin"`
+	CardNumber         string              `json:"cardNumber"`
 	FuelType           model.FuelType      `json:"fuelType"`
 	Mileage            int                 `json:"mileage"`
 	RegistrationDate   string              `json:"registrationDate"`
@@ -82,6 +83,7 @@ type UpdateVehicleRequest struct {
 	Color              string              `json:"color"`
 	VehicleID          string              `json:"vehicleId"`
 	VIN                string              `json:"vin"`
+	CardNumber         string              `json:"cardNumber"`
 	FuelType           model.FuelType      `json:"fuelType"`
 	Mileage            int                 `json:"mileage"`
 	RegistrationDate   string              `json:"registrationDate"`
@@ -202,6 +204,9 @@ func (h *VehicleHandler) GetVehicle(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Fahrzeug nicht gefunden"})
 		return
 	}
+
+	// Debug: CardNumber beim GetVehicle
+	log.Printf("GetVehicle DEBUG: Vehicle ID=%s, CardNumber='%s'", id, vehicle.CardNumber)
 
 	// Fahrerdetails anreichern, falls vorhanden
 	var driverName string
@@ -335,6 +340,7 @@ func (h *VehicleHandler) CreateVehicle(c *gin.Context) {
 		Color:              req.Color,
 		VehicleID:          vehicleID,
 		VIN:                req.VIN,
+		CardNumber:         req.CardNumber,
 		FuelType:           req.FuelType,
 		Mileage:            req.Mileage,
 		RegistrationDate:   registrationDate,
@@ -477,6 +483,9 @@ func (h *VehicleHandler) UpdateVehicle(c *gin.Context) {
 	}
 	if req.VIN != "" {
 		vehicle.VIN = req.VIN
+	}
+	if req.CardNumber != "" {
+		vehicle.CardNumber = req.CardNumber
 	}
 	if req.FuelType != "" {
 		vehicle.FuelType = req.FuelType
@@ -723,6 +732,7 @@ func (h *VehicleHandler) UpdateBasicInfo(c *gin.Context) {
 		Color        string         `json:"color"`
 		VehicleID    string         `json:"vehicleId"`
 		VIN          string         `json:"vin"`
+		CardNumber   string         `json:"cardNumber"`
 		FuelType     model.FuelType `json:"fuelType"`
 		Mileage      int            `json:"mileage"`
 
@@ -750,6 +760,9 @@ func (h *VehicleHandler) UpdateBasicInfo(c *gin.Context) {
 		return
 	}
 
+	// Debug: Request-Daten ausgeben
+	log.Printf("UpdateBasicInfo received data: CardNumber='%s', LicensePlate='%s', Brand='%s'", req.CardNumber, req.LicensePlate, req.Brand)
+
 	// Prüfen, ob ein anderes Fahrzeug mit dem gleichen Kennzeichen existiert
 	if req.LicensePlate != vehicle.LicensePlate {
 		existingVehicle, _ := h.vehicleRepo.FindByLicensePlate(req.LicensePlate)
@@ -775,8 +788,12 @@ func (h *VehicleHandler) UpdateBasicInfo(c *gin.Context) {
 	vehicle.Color = req.Color
 	vehicle.VehicleID = req.VehicleID
 	vehicle.VIN = req.VIN
+	vehicle.CardNumber = req.CardNumber
 	vehicle.FuelType = req.FuelType
 	vehicle.Mileage = req.Mileage
+
+	// Debug: Vor Update
+	log.Printf("BEFORE UPDATE: Vehicle CardNumber='%s'", vehicle.CardNumber)
 
 	// Neue technische Felder aktualisieren
 	vehicle.VehicleType = req.VehicleType
@@ -798,8 +815,18 @@ func (h *VehicleHandler) UpdateBasicInfo(c *gin.Context) {
 
 	// Fahrzeug in der Datenbank aktualisieren
 	if err := h.vehicleRepo.Update(vehicle); err != nil {
+		log.Printf("ERROR updating vehicle: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Fehler beim Aktualisieren des Fahrzeugs"})
 		return
+	}
+
+	// Debug: Nach Update - Fahrzeug erneut aus DB laden
+	log.Printf("DEBUG: Attempting to reload vehicle with ID: %s", id)
+	updatedVehicle, err := h.vehicleRepo.FindByID(id)
+	if err == nil {
+		log.Printf("AFTER UPDATE: DB CardNumber='%s'", updatedVehicle.CardNumber)
+	} else {
+		log.Printf("ERROR reloading vehicle: %v", err)
 	}
 
 	// Aktivität protokollieren mit dem ActivityService

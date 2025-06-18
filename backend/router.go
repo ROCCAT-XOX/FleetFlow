@@ -266,6 +266,7 @@ func setupAuthorizedRoutes(group *gin.RouterGroup) {
 			"color":              vehicle.Color,
 			"vehicleId":          vehicle.VehicleID,
 			"vin":                vehicle.VIN,
+			"cardNumber":         vehicle.CardNumber,
 			"fuelType":           vehicle.FuelType,
 			"mileage":            vehicle.Mileage,
 			"status":             vehicle.Status,

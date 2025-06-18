@@ -114,6 +114,7 @@ func (r *VehicleRepository) Update(vehicle *model.Vehicle) error {
 	fmt.Printf("=== VehicleRepository.Update DEBUG ===\n")
 	fmt.Printf("Updating vehicle ID: %s\n", vehicle.ID.Hex())
 	fmt.Printf("Brand/Model: %s %s (%s)\n", vehicle.Brand, vehicle.Model, vehicle.LicensePlate)
+	fmt.Printf("CardNumber: '%s'\n", vehicle.CardNumber)
 	fmt.Printf("CurrentDriverID: %s\n", vehicle.CurrentDriverID.Hex())
 	fmt.Printf("Status: %s\n", vehicle.Status)
 	fmt.Printf("IsZero CurrentDriverID: %v\n", vehicle.CurrentDriverID.IsZero())
@@ -130,6 +131,7 @@ func (r *VehicleRepository) Update(vehicle *model.Vehicle) error {
 			"color":                  vehicle.Color,
 			"vehicleId":              vehicle.VehicleID,
 			"vin":                    vehicle.VIN,
+			"cardNumber":             vehicle.CardNumber,
 			"fuelType":               vehicle.FuelType,
 			"mileage":                vehicle.Mileage,
 			"registrationDate":       vehicle.RegistrationDate,
