@@ -422,7 +422,7 @@ func (h *ReportsHandler) calculateVehicleStats(vehicle *model.Vehicle, fuelCosts
 
 	return VehicleStats{
 		ID:               vehicleID,
-		Name:             vehicle.Brand + " " + vehicle.Model,
+		Name:             vehicle.LicensePlate,
 		LicensePlate:     vehicle.LicensePlate,
 		Brand:            vehicle.Brand,
 		Model:            vehicle.Model,
@@ -522,7 +522,7 @@ func (h *ReportsHandler) calculateChartData(vehicles []*model.Vehicle, drivers [
 		if i >= 10 { // Nur Top 10
 			break
 		}
-		vehicleKmLabels = append(vehicleKmLabels, vehicle.Brand+" "+vehicle.Model)
+		vehicleKmLabels = append(vehicleKmLabels, vehicle.LicensePlate)
 		vehicleKmData = append(vehicleKmData, vehicle.Mileage)
 	}
 	chartData["vehicleKilometersLabels"] = vehicleKmLabels
@@ -596,6 +596,24 @@ func (h *ReportsHandler) calculateChartData(vehicles []*model.Vehicle, drivers [
 		driverStatusCounts["offduty"], 
 		driverStatusCounts["reserved"],
 	}
+
+	// Fahrer-Kilometer-Daten für Charts
+	var driverStats []DriverStats
+	for _, driver := range drivers {
+		stats := h.calculateDriverStats(driver, usage)
+		driverStats = append(driverStats, stats)
+	}
+	
+	// Nach Kilometern sortieren (absteigend) und nur Top 8 nehmen
+	sort.Slice(driverStats, func(i, j int) bool {
+		return driverStats[i].TotalKilometers > driverStats[j].TotalKilometers
+	})
+	
+	if len(driverStats) > 8 {
+		driverStats = driverStats[:8]
+	}
+	
+	chartData["drivers"] = driverStats
 
 	return chartData
 }
