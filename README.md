@@ -82,7 +82,7 @@ The application will be available at `http://localhost:8080`
 ### Build Docker Image
 ```bash
 # Build the Docker image
-docker build -t fleetflow:latest .
+
 ```
 
 ### Save Docker Image
