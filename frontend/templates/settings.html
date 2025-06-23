@@ -644,7 +644,7 @@
                     </svg>
                 </button>
             </div>
-            <form id="addUserForm" action="/users/add" method="POST" class="px-6 py-4">
+            <form id="addUserForm" onsubmit="submitAddUserForm(event)" class="px-6 py-4">
                 <div class="space-y-4">
                     <div>
                         <label for="firstName" class="block text-sm font-medium text-gray-700">Vorname</label>
@@ -690,6 +690,9 @@
 
 <!-- PeopleFlow JavaScript einbinden -->
 <script src="/static/js/peopleflow.js"></script>
+
+<!-- Settings JavaScript einbinden -->
+<script src="/static/js/settings.js"></script>
 
 <!-- Bestehende Scripts erweitern -->
 <script>
