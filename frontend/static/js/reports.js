@@ -295,9 +295,19 @@ async function loadDriverRanking() {
     try {
         const response = await fetch('/api/reports/driver-ranking');
         const data = await response.json();
+        
+        // Fahrer-Daten für Charts speichern
+        reportsData.drivers = data.drivers || [];
+        reportsData.hasDriverData = data.hasData;
+        
         renderDriverRanking(data.drivers || [], data.hasData, data.message);
+        
+        // Charts aktualisieren mit neuen Fahrer-Daten
+        createDriverKilometersChart();
     } catch (error) {
         console.error('Error loading driver ranking:', error);
+        reportsData.drivers = [];
+        reportsData.hasDriverData = false;
         renderDriverRanking([], false, 'Fehler beim Laden der Fahrerdaten');
     }
 }
@@ -929,17 +939,18 @@ function createDriverKilometersChart() {
         charts.driverKilometers.destroy();
     }
 
-    // Simulierte Fahrer-Kilometer-Daten
-    // In einer echten Implementierung würden diese vom Backend kommen
+    // Echte Fahrer-Kilometer-Daten vom Backend verwenden
     const driverLabels = [];
     const driverData = [];
     
-    // Erstelle Demo-Daten basierend auf verfügbaren Fahrzeugdaten
-    if (reportsData.totalDrivers && reportsData.totalDrivers > 0) {
-        for (let i = 1; i <= Math.min(reportsData.totalDrivers, 8); i++) {
-            driverLabels.push(`Fahrer ${i}`);
-            driverData.push(Math.floor(Math.random() * 5000) + 1000); // 1000-6000 km
-        }
+    // Verwende echte Fahrer-Daten falls verfügbar
+    if (reportsData.drivers && reportsData.drivers.length > 0) {
+        // Top 8 Fahrer nach Kilometern nehmen
+        const topDrivers = reportsData.drivers.slice(0, 8);
+        topDrivers.forEach(driver => {
+            driverLabels.push(driver.name);  // Verwende echten Namen
+            driverData.push(driver.totalKilometers);
+        });
     }
     
     // Prüfen ob Daten vorhanden sind

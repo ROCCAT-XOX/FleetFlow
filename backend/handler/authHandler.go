@@ -135,5 +135,6 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 		true,
 	)
 
-	c.JSON(http.StatusOK, gin.H{"message": "Erfolgreich abgemeldet"})
+	// Nach erfolgreichem Logout zum Login umleiten
+	c.Redirect(http.StatusFound, "/login")
 }

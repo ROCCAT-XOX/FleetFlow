@@ -2,33 +2,41 @@
 package handler
 
 import (
+	"crypto/rand"
+	"fmt"
+	"math/big"
 	"net/http"
 
 	"FleetDrive/backend/model"
 	"FleetDrive/backend/repository"
+	"FleetDrive/backend/service"
 	"github.com/gin-gonic/gin"
 )
 
 // UserHandler repräsentiert den Handler für Benutzer-Operationen
 type UserHandler struct {
-	userRepo *repository.UserRepository
+	userRepo     *repository.UserRepository
+	emailService *service.EmailService
 }
 
 // NewUserHandler erstellt einen neuen UserHandler
 func NewUserHandler() *UserHandler {
 	return &UserHandler{
-		userRepo: repository.NewUserRepository(),
+		userRepo:     repository.NewUserRepository(),
+		emailService: service.NewEmailService(),
 	}
 }
 
 // CreateUserRequest repräsentiert die Anfrage zum Erstellen eines Benutzers
 type CreateUserRequest struct {
-	FirstName string           `json:"firstName" binding:"required"`
-	LastName  string           `json:"lastName" binding:"required"`
-	Email     string           `json:"email" binding:"required,email"`
-	Password  string           `json:"password" binding:"required,min=6"`
-	Role      model.UserRole   `json:"role"`   // Geändert von string zu model.UserRole
-	Status    model.UserStatus `json:"status"` // Geändert von string zu model.UserStatus
+	FirstName    string           `json:"firstName" binding:"required"`
+	LastName     string           `json:"lastName" binding:"required"`
+	Email        string           `json:"email" binding:"required,email"`
+	Password     string           `json:"password"`
+	Role         model.UserRole   `json:"role"`   // Geändert von string zu model.UserRole
+	Status       model.UserStatus `json:"status"` // Geändert von string zu model.UserStatus
+	SendEmail    bool             `json:"sendEmail"`    // Ob E-Mail gesendet werden soll
+	GeneratePass bool             `json:"generatePass"` // Ob Passwort generiert werden soll
 }
 
 // GetUsers behandelt die Anfrage, alle Benutzer abzurufen
@@ -106,12 +114,27 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 		status = model.StatusActive
 	}
 
+	// Passwort verarbeiten
+	password := req.Password
+	var tempPassword string
+	
+	if req.GeneratePass || password == "" {
+		// Temporäres Passwort generieren
+		generatedPassword, err := h.generateTemporaryPassword()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Fehler beim Generieren des Passworts"})
+			return
+		}
+		password = generatedPassword
+		tempPassword = generatedPassword
+	}
+
 	// Neuen Benutzer erstellen
 	user := &model.User{
 		FirstName: req.FirstName,
 		LastName:  req.LastName,
 		Email:     req.Email,
-		Password:  req.Password,
+		Password:  password,
 		Role:      role,   // Direkt verwenden, da es bereits den richtigen Typ hat
 		Status:    status, // Direkt verwenden, da es bereits den richtigen Typ hat
 	}
@@ -122,8 +145,17 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 		return
 	}
 
-	// Passwort aus der Antwort entfernen
-	c.JSON(http.StatusCreated, gin.H{
+	// E-Mail-Benachrichtigung senden, wenn gewünscht
+	if req.SendEmail && tempPassword != "" {
+		err := h.emailService.SendUserCreatedEmail(user, tempPassword)
+		if err != nil {
+			// E-Mail-Fehler protokollieren, aber Benutzer-Erstellung nicht fehlschlagen lassen
+			fmt.Printf("Fehler beim Senden der Begrüßungs-E-Mail für %s: %v\n", user.Email, err)
+		}
+	}
+
+	// Antwort zusammenstellen
+	response := gin.H{
 		"user": gin.H{
 			"id":        user.ID.Hex(),
 			"firstName": user.FirstName,
@@ -133,7 +165,31 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 			"status":    user.Status,
 			"createdAt": user.CreatedAt,
 		},
-	})
+	}
+
+	// Temporäres Passwort nur bei manueller Erstellung zurückgeben (nicht bei E-Mail-Versand)
+	if tempPassword != "" && !req.SendEmail {
+		response["tempPassword"] = tempPassword
+	}
+
+	c.JSON(http.StatusCreated, response)
+}
+
+// generateTemporaryPassword generiert ein sicheres temporäres Passwort
+func (h *UserHandler) generateTemporaryPassword() (string, error) {
+	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*"
+	const length = 12
+
+	password := make([]byte, length)
+	for i := range password {
+		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(charset))))
+		if err != nil {
+			return "", err
+		}
+		password[i] = charset[num.Int64()]
+	}
+
+	return string(password), nil
 }
 
 // UpdateUserRequest repräsentiert die Anfrage zum Aktualisieren eines Benutzers

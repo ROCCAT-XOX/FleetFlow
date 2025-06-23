@@ -496,7 +496,7 @@ func (h *DashboardHandler) getFuelCostsByVehicleData() struct {
 		if vehicle, err := h.vehicleRepo.FindByID(vehicleID); err == nil {
 			vehicleCosts[vehicleID] += cost.TotalCost
 			if _, exists := vehicleNames[vehicleID]; !exists {
-				vehicleNames[vehicleID] = vehicle.Brand + " " + vehicle.Model
+				vehicleNames[vehicleID] = vehicle.LicensePlate
 			}
 		}
 		// Wenn das Fahrzeug nicht existiert, ignorieren wir die Kosten

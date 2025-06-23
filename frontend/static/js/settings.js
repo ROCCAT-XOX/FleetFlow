@@ -1,6 +1,13 @@
 // Settings Page JavaScript
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Settings page loaded');
+    
+    // Load SMTP configuration if email tab is available
+    if (document.getElementById('email-tab')) {
+        loadSMTPConfig();
+        loadEmailLogs();
+        setupSMTPEventListeners();
+    }
 });
 
 // Modal handling functions
@@ -39,7 +46,9 @@ function submitAddUserForm(event) {
         email: formData.get('email'),
         password: formData.get('password'),
         role: formData.get('role') || 'user',
-        status: 'active'
+        status: 'active',
+        generatePass: document.getElementById('generatePassword') ? document.getElementById('generatePassword').checked : false,
+        sendEmail: document.getElementById('sendEmail') ? document.getElementById('sendEmail').checked : false
     };
     
     // Show loading state
@@ -400,3 +409,230 @@ document.addEventListener('keydown', function(event) {
         });
     }
 });
+
+// SMTP Configuration Functions
+
+function setupSMTPEventListeners() {
+    const smtpForm = document.getElementById('smtp-config-form');
+    if (smtpForm) {
+        smtpForm.addEventListener('submit', handleSMTPConfigSave);
+    }
+}
+
+function loadSMTPConfig() {
+    fetch('/api/smtp/config')
+        .then(response => response.json())
+        .then(data => {
+            if (data.config) {
+                populateSMTPForm(data.config);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading SMTP config:', error);
+        });
+}
+
+function populateSMTPForm(config) {
+    document.getElementById('smtp-host').value = config.host || '';
+    document.getElementById('smtp-port').value = config.port || 587;
+    document.getElementById('smtp-username').value = config.username || '';
+    document.getElementById('smtp-from-name').value = config.fromName || '';
+    document.getElementById('smtp-from-email').value = config.fromEmail || '';
+    document.getElementById('smtp-use-tls').checked = config.useTLS || false;
+    document.getElementById('smtp-use-ssl').checked = config.useSSL || false;
+    document.getElementById('smtp-is-active').checked = config.isActive || false;
+}
+
+function handleSMTPConfigSave(event) {
+    event.preventDefault();
+    
+    const formData = new FormData(event.target);
+    const config = {
+        host: formData.get('smtp-host'),
+        port: parseInt(formData.get('smtp-port')),
+        username: formData.get('smtp-username'),
+        password: formData.get('smtp-password'),
+        fromName: formData.get('smtp-from-name'),
+        fromEmail: formData.get('smtp-from-email'),
+        useTLS: document.getElementById('smtp-use-tls').checked,
+        useSSL: document.getElementById('smtp-use-ssl').checked,
+        isActive: document.getElementById('smtp-is-active').checked
+    };
+    
+    const submitBtn = event.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'Wird gespeichert...';
+    submitBtn.disabled = true;
+    
+    fetch('/api/smtp/config', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(config)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            showNotification(data.error, 'error');
+        } else {
+            showNotification('SMTP-Konfiguration erfolgreich gespeichert!', 'success');
+            loadEmailLogs(); // Reload logs after config change
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Fehler beim Speichern der SMTP-Konfiguration', 'error');
+    })
+    .finally(() => {
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+    });
+}
+
+function testSMTPConfig() {
+    const config = {
+        host: document.getElementById('smtp-host').value,
+        port: parseInt(document.getElementById('smtp-port').value),
+        username: document.getElementById('smtp-username').value,
+        password: document.getElementById('smtp-password').value,
+        fromName: document.getElementById('smtp-from-name').value,
+        fromEmail: document.getElementById('smtp-from-email').value,
+        useTLS: document.getElementById('smtp-use-tls').checked,
+        useSSL: document.getElementById('smtp-use-ssl').checked,
+        testEmail: prompt('Bitte geben Sie eine E-Mail-Adresse für den Test ein:')
+    };
+    
+    if (!config.testEmail) {
+        showNotification('Test-E-Mail-Adresse ist erforderlich', 'warning');
+        return;
+    }
+    
+    if (!config.host || !config.port || !config.fromEmail) {
+        showNotification('Bitte füllen Sie alle erforderlichen Felder aus', 'warning');
+        return;
+    }
+    
+    fetch('/api/smtp/test', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(config)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            showNotification(data.error, 'error');
+        } else {
+            showNotification(data.message, 'success');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Fehler beim Testen der SMTP-Konfiguration', 'error');
+    });
+}
+
+function loadEmailLogs() {
+    fetch('/api/smtp/logs?limit=20&offset=0')
+        .then(response => response.json())
+        .then(data => {
+            renderEmailLogs(data.logs || []);
+        })
+        .catch(error => {
+            console.error('Error loading email logs:', error);
+            renderEmailLogsError();
+        });
+}
+
+function renderEmailLogs(logs) {
+    const tableBody = document.getElementById('email-logs-table');
+    if (!tableBody) return;
+    
+    if (logs.length === 0) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="4" class="py-8 text-center text-gray-500">
+                    <div class="flex flex-col items-center">
+                        <svg class="w-12 h-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                        <p>Noch keine E-Mails versendet</p>
+                    </div>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tableBody.innerHTML = logs.map(log => `
+        <tr class="hover:bg-gray-50">
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                ${log.to}
+            </td>
+            <td class="px-6 py-4 text-sm text-gray-900">
+                <div class="max-w-xs truncate">${log.subject}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <span class="inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${getEmailStatusClass(log.status)}">
+                    ${getEmailStatusText(log.status)}
+                </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                ${log.sentAt ? formatDateTime(log.sentAt) : '-'}
+            </td>
+        </tr>
+    `).join('');
+}
+
+function renderEmailLogsError() {
+    const tableBody = document.getElementById('email-logs-table');
+    if (tableBody) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="4" class="py-8 text-center text-red-500">
+                    <div class="flex flex-col items-center">
+                        <svg class="w-12 h-12 text-red-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <p>Fehler beim Laden der E-Mail-Logs</p>
+                        <button onclick="loadEmailLogs()" class="mt-2 inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200">
+                            Erneut versuchen
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }
+}
+
+function getEmailStatusClass(status) {
+    switch (status) {
+        case 'sent': return 'bg-green-100 text-green-800';
+        case 'failed': return 'bg-red-100 text-red-800';
+        case 'pending': return 'bg-yellow-100 text-yellow-800';
+        default: return 'bg-gray-100 text-gray-800';
+    }
+}
+
+function getEmailStatusText(status) {
+    switch (status) {
+        case 'sent': return 'Gesendet';
+        case 'failed': return 'Fehlgeschlagen';
+        case 'pending': return 'Ausstehend';
+        default: return status || 'Unbekannt';
+    }
+}
+
+function formatDateTime(dateString) {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('de-DE', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}

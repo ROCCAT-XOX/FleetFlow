@@ -1,11 +1,12 @@
 {{ template "head" .}}
-<body class="bg-gray-50">
+<body class="bg-gray-50 min-h-screen">
 {{ template "navigation" .}}
 
 <!-- Hauptinhalt -->
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div class="mb-6">
-        <nav class="flex" aria-label="Breadcrumb">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <!-- Header -->
+    <div class="mb-10">
+        <nav class="flex mb-4" aria-label="Breadcrumb">
             <ol class="inline-flex items-center space-x-1 md:space-x-3">
                 <li class="inline-flex items-center">
                     <a href="/dashboard" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600">
@@ -25,222 +26,343 @@
                 </li>
             </ol>
         </nav>
-        <h1 class="text-2xl font-bold text-gray-900 mt-4">Mein Profil</h1>
-        <p class="mt-1 text-sm text-gray-500">Verwalten Sie Ihre persönlichen Informationen und Einstellungen</p>
+        
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Mein Profil</h1>
+                <p class="mt-2 text-sm text-gray-600">Verwalten Sie Ihre persönlichen Informationen und Einstellungen</p>
+            </div>
+            <div class="flex space-x-3">
+                <button type="button" onclick="openProfileModal()" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <svg class="-ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                    Profil bearbeiten
+                </button>
+            </div>
+        </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Seitenleiste -->
-        <div class="lg:col-span-1">
-            <!-- Profilbild und schnelle Infos -->
-            <div class="bg-white overflow-hidden shadow rounded-lg">
-                <div class="p-6">
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <!-- Seitenleiste mit Profil-Übersicht -->
+        <div class="lg:col-span-1 space-y-8">
+            <!-- Profilkarte -->
+            <div class="bg-white overflow-hidden shadow-sm rounded-xl border border-gray-100">
+                <div class="p-8">
                     <div class="flex flex-col items-center">
-                        <img class="size-24 rounded-full border-4 border-white shadow-lg" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="Profilbild">
-                        <h2 class="mt-4 text-xl font-bold text-gray-900">{{.profile.FirstName}} {{.profile.LastName}}</h2>
-                        <p class="text-sm text-gray-500">{{.profile.Email}}</p>
+                        <!-- Avatar -->
+                        <div class="relative group">
+                            <!-- Profilbild oder Initialen -->
+                            <div id="profile-picture-container" class="relative">
+                                <img id="profile-picture" src="" alt="Profilbild" class="w-32 h-32 rounded-full object-cover shadow-lg border-4 border-white hidden">
+                                <div id="user-avatar" class="w-32 h-32 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-lg border-4 border-white" data-firstname="{{.profile.FirstName}}" data-lastname="{{.profile.LastName}}">
+                                    <!-- Initialen werden per JavaScript gesetzt -->
+                                </div>
+                            </div>
+                            
+                            <!-- Upload/Delete Buttons (erscheinen bei Hover) -->
+                            <div class="absolute inset-0 bg-black bg-opacity-60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div class="flex space-x-2">
+                                    <button onclick="triggerProfilePictureUpload()" class="p-2 bg-indigo-500 rounded-full hover:bg-indigo-600 transition-colors" title="Profilbild hochladen">
+                                        <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        </svg>
+                                    </button>
+                                    <button id="delete-picture-btn" onclick="deleteProfilePicture()" class="p-2 bg-red-500 rounded-full hover:bg-red-600 transition-colors hidden" title="Profilbild löschen">
+                                        <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Hidden File Input -->
+                            <input type="file" id="profile-picture-input" accept="image/*" class="hidden" onchange="handleProfilePictureUpload(event)">
+                            
+                            <!-- Status Indicator -->
+                            <div class="absolute -bottom-1 -right-1 w-8 h-8 bg-green-400 border-4 border-white rounded-full flex items-center justify-center">
+                                <div class="w-3 h-3 bg-green-600 rounded-full"></div>
+                            </div>
+                        </div>
+                        
+                        <h2 class="mt-6 text-xl font-bold text-gray-900">{{.profile.FirstName}} {{.profile.LastName}}</h2>
+                        <p class="mt-2 text-sm text-gray-500">{{.profile.Email}}</p>
+                        
+                        <!-- Rolle Badge -->
                         {{if eq .profile.Role "admin"}}
-                        <span class="mt-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
+                        <span class="mt-3 px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
+                            <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M9.243 3.03a1 1 0 01.727 1.213L9.53 6h2.94l.56-2.243a1 1 0 111.94.486L14.53 6H17a1 1 0 110 2h-2.97l-1 4H15a1 1 0 110 2h-2.47l-.56 2.242a1 1 0 11-1.94-.485L10.47 14H7.53l-.56 2.242a1 1 0 11-1.94-.485L5.47 14H3a1 1 0 110-2h2.97l1-4H5a1 1 0 110-2h2.47l.56-2.243a1 1 0 011.213-.727zM9.03 8l-1 4h2.94l1-4H9.03z" clip-rule="evenodd"/>
+                            </svg>
                             Administrator
                         </span>
                         {{else if eq .profile.Role "manager"}}
-                        <span class="mt-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                        <span class="mt-3 px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                            <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"/>
+                            </svg>
                             Manager
                         </span>
                         {{else}}
-                        <span class="mt-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                            Benutzer
+                        <span class="mt-3 px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                            <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                            </svg>
+                            Fahrer
                         </span>
                         {{end}}
                     </div>
                 </div>
             </div>
 
-            <!-- Aktivitätsübersicht -->
-            <div class="mt-6 bg-white overflow-hidden shadow rounded-lg">
-                <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
-                    <h3 class="text-lg leading-6 font-medium text-gray-900">Meine Aktivität</h3>
-                </div>
-                <div class="px-4 py-5 sm:p-6">
-                    <dl class="space-y-4">
-                        <div class="flex justify-between">
-                            <dt class="text-sm font-medium text-gray-500">Gebuchte Fahrten</dt>
-                            <dd class="text-sm text-gray-900 font-semibold">{{or .stats.bookedRides 0}}</dd>
+            <!-- Schnelle Statistiken -->
+            <div class="bg-white overflow-hidden shadow-sm rounded-xl border border-gray-100">
+                <div class="p-8">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 mb-6">Meine Statistiken</h3>
+                    <dl class="space-y-6">
+                        <div class="flex items-center justify-between">
+                            <dt class="flex items-center text-sm font-medium text-gray-500">
+                                <svg class="w-4 h-4 mr-2 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
+                                </svg>
+                                Aktive Buchungen
+                            </dt>
+                            <dd class="text-sm text-gray-900 font-semibold" id="stats-bookings">0</dd>
                         </div>
-                        <div class="flex justify-between">
-                            <dt class="text-sm font-medium text-gray-500">Aktive Fahrzeuge</dt>
-                            <dd class="text-sm text-gray-900 font-semibold">{{or .stats.activeVehicles 0}}</dd>
+                        <div class="flex items-center justify-between">
+                            <dt class="flex items-center text-sm font-medium text-gray-500">
+                                <svg class="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"/>
+                                    <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1V8a1 1 0 00-1-1h-3z"/>
+                                </svg>
+                                Zugewiesene Fahrzeuge
+                            </dt>
+                            <dd class="text-sm text-gray-900 font-semibold" id="stats-vehicles">0</dd>
                         </div>
-                        <div class="flex justify-between">
-                            <dt class="text-sm font-medium text-gray-500">Offene Tankmeldungen</dt>
-                            <dd class="text-sm text-gray-900 font-semibold">{{or .stats.pendingFuelReports 0}}</dd>
+                        <div class="flex items-center justify-between">
+                            <dt class="flex items-center text-sm font-medium text-gray-500">
+                                <svg class="w-4 h-4 mr-2 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h4a1 1 0 010 2H6.414l2.293 2.293a1 1 0 01-1.414 1.414L5 6.414V8a1 1 0 01-2 0V4zm9 1a1 1 0 010-2h4a1 1 0 011 1v4a1 1 0 01-2 0V6.414l-2.293 2.293a1 1 0 11-1.414-1.414L13.586 5H12zm-9 7a1 1 0 012 0v1.586l2.293-2.293a1 1 0 111.414 1.414L6.414 15H8a1 1 0 010 2H4a1 1 0 01-1-1v-4zm13-1a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 010-2h1.586l-2.293-2.293a1 1 0 111.414-1.414L15.586 13H14a1 1 0 01-1-1z" clip-rule="evenodd"/>
+                                </svg>
+                                Gefahrene Kilometer
+                            </dt>
+                            <dd class="text-sm text-gray-900 font-semibold" id="stats-kilometers">0 km</dd>
                         </div>
-                        <div class="flex justify-between">
-                            <dt class="text-sm font-medium text-gray-500">Mitglied seit</dt>
-                            <dd class="text-sm text-gray-900">{{.profile.CreatedAt.Format "02.01.2006"}}</dd>
+                        <div class="flex items-center justify-between">
+                            <dt class="flex items-center text-sm font-medium text-gray-500">
+                                <svg class="w-4 h-4 mr-2 text-purple-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
+                                </svg>
+                                Mitglied seit
+                            </dt>
+                            <dd class="text-sm text-gray-900 font-semibold">{{.profile.CreatedAt.Format "01/2006"}}</dd>
                         </div>
                     </dl>
+                </div>
+            </div>
+
+            <!-- Schnellaktionen -->
+            <div class="bg-white overflow-hidden shadow-sm rounded-xl border border-gray-100">
+                <div class="p-8">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 mb-6">Schnellaktionen</h3>
+                    <div class="space-y-4">
+                        <button type="button" onclick="showChangePasswordModal()" class="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                            </svg>
+                            Passwort ändern
+                        </button>
+                        <a href="/reservations" class="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            Fahrzeug buchen
+                        </a>
+                        <a href="/vehicles" class="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                            </svg>
+                            Fahrzeuge anzeigen
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Hauptinhalt -->
-        <div class="lg:col-span-2 space-y-6">
-            <!-- Persönliche Informationen -->
-            <div class="bg-white overflow-hidden shadow rounded-lg">
-                <div class="px-4 py-5 sm:px-6 flex justify-between items-center border-b border-gray-200">
-                    <h3 class="text-lg leading-6 font-medium text-gray-900">Persönliche Informationen</h3>
-                    <button type="button" id="edit-profile-btn" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        <svg class="-ml-0.5 mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                        </svg>
-                        Bearbeiten
-                    </button>
+        <div class="lg:col-span-3 space-y-8">
+            <!-- Tab Navigation -->
+            <div class="bg-white shadow-sm rounded-xl border border-gray-100">
+                <div class="border-b border-gray-200">
+                    <nav class="-mb-px flex space-x-8 px-8" aria-label="Tabs">
+                        <button class="profile-tab-btn border-indigo-500 text-indigo-600 whitespace-nowrap py-6 px-1 border-b-2 font-medium text-sm" data-tab="personal">
+                            Persönliche Daten
+                        </button>
+                        <button class="profile-tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-6 px-1 border-b-2 font-medium text-sm" data-tab="bookings">
+                            Meine Buchungen
+                        </button>
+                        <button class="profile-tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-6 px-1 border-b-2 font-medium text-sm" data-tab="notifications">
+                            Benachrichtigungen
+                        </button>
+                        <button class="profile-tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-6 px-1 border-b-2 font-medium text-sm" data-tab="activity">
+                            Aktivitätsverlauf
+                        </button>
+                    </nav>
                 </div>
-                <div class="px-4 py-5 sm:p-6">
-                    <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+
+                <!-- Tab: Persönliche Daten -->
+                <div id="personal-tab" class="profile-tab-content p-8">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 mb-8">Persönliche Informationen</h3>
+                    <dl class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
                         <div class="sm:col-span-1">
-                            <dt class="text-sm font-medium text-gray-500">Vorname</dt>
-                            <dd class="mt-1 text-sm text-gray-900" id="profile-firstname">{{.profile.FirstName}}</dd>
+                            <dt class="text-sm font-medium text-gray-500 mb-2">Vorname</dt>
+                            <dd class="text-base text-gray-900 font-medium" id="profile-firstname">{{.profile.FirstName}}</dd>
                         </div>
                         <div class="sm:col-span-1">
-                            <dt class="text-sm font-medium text-gray-500">Nachname</dt>
-                            <dd class="mt-1 text-sm text-gray-900" id="profile-lastname">{{.profile.LastName}}</dd>
+                            <dt class="text-sm font-medium text-gray-500 mb-2">Nachname</dt>
+                            <dd class="text-base text-gray-900 font-medium" id="profile-lastname">{{.profile.LastName}}</dd>
                         </div>
                         <div class="sm:col-span-1">
-                            <dt class="text-sm font-medium text-gray-500">E-Mail-Adresse</dt>
-                            <dd class="mt-1 text-sm text-gray-900" id="profile-email">{{.profile.Email}}</dd>
+                            <dt class="text-sm font-medium text-gray-500 mb-2">E-Mail-Adresse</dt>
+                            <dd class="text-base text-gray-900 font-medium" id="profile-email">{{.profile.Email}}</dd>
                         </div>
                         <div class="sm:col-span-1">
-                            <dt class="text-sm font-medium text-gray-500">Telefonnummer</dt>
-                            <dd class="mt-1 text-sm text-gray-900" id="profile-phone">{{or .profile.Phone "Nicht angegeben"}}</dd>
+                            <dt class="text-sm font-medium text-gray-500 mb-2">Telefonnummer</dt>
+                            <dd class="text-base text-gray-900 font-medium" id="profile-phone">{{if .profile.Phone}}{{.profile.Phone}}{{else}}Nicht angegeben{{end}}</dd>
                         </div>
                         <div class="sm:col-span-1">
-                            <dt class="text-sm font-medium text-gray-500">Abteilung</dt>
-                            <dd class="mt-1 text-sm text-gray-900" id="profile-department">{{or .profile.Department "Nicht angegeben"}}</dd>
+                            <dt class="text-sm font-medium text-gray-500 mb-2">Abteilung</dt>
+                            <dd class="text-base text-gray-900 font-medium" id="profile-department">{{if .profile.Department}}{{.profile.Department}}{{else}}Nicht angegeben{{end}}</dd>
                         </div>
                         <div class="sm:col-span-1">
-                            <dt class="text-sm font-medium text-gray-500">Position</dt>
-                            <dd class="mt-1 text-sm text-gray-900" id="profile-position">{{or .profile.Position "Nicht angegeben"}}</dd>
+                            <dt class="text-sm font-medium text-gray-500 mb-2">Position</dt>
+                            <dd class="text-base text-gray-900 font-medium" id="profile-position">{{if .profile.Position}}{{.profile.Position}}{{else}}Nicht angegeben{{end}}</dd>
+                        </div>
+                        <div class="sm:col-span-1">
+                            <dt class="text-sm font-medium text-gray-500 mb-2">Rolle</dt>
+                            <dd class="text-base text-gray-900 font-medium">
+                                {{if eq .profile.Role "admin"}}Administrator
+                                {{else if eq .profile.Role "manager"}}Manager
+                                {{else}}Fahrer{{end}}
+                            </dd>
+                        </div>
+                        <div class="sm:col-span-1">
+                            <dt class="text-sm font-medium text-gray-500 mb-2">Status</dt>
+                            <dd class="text-base">
+                                {{if eq .profile.Status "active"}}
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                                    Aktiv
+                                </span>
+                                {{else}}
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                                    Inaktiv
+                                </span>
+                                {{end}}
+                            </dd>
                         </div>
                     </dl>
                 </div>
-            </div>
 
-            <!-- Passwort ändern -->
-            <div class="bg-white overflow-hidden shadow rounded-lg">
-                <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
-                    <h3 class="text-lg leading-6 font-medium text-gray-900">Sicherheit</h3>
-                    <p class="mt-1 text-sm text-gray-500">Ändern Sie Ihr Passwort für mehr Sicherheit</p>
+                <!-- Tab: Meine Buchungen -->
+                <div id="bookings-tab" class="profile-tab-content p-8 hidden">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 mb-8">Meine Buchungen</h3>
+                    <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+                        <table class="min-w-full divide-y divide-gray-300">
+                            <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fahrzeug</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Von</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bis</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th scope="col" class="relative px-6 py-3"><span class="sr-only">Aktionen</span></th>
+                            </tr>
+                            </thead>
+                            <tbody id="active-bookings-table-body" class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td colspan="5" class="py-8 text-center text-gray-500">
+                                    <div class="flex flex-col items-center">
+                                        <svg class="w-12 h-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                                        </svg>
+                                        <p>Keine aktiven Buchungen vorhanden</p>
+                                        <a href="/reservations" class="mt-2 inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                            Fahrzeug buchen
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-                <div class="px-4 py-5 sm:p-6">
-                    <form id="password-form">
-                        <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                            <div class="sm:col-span-6">
-                                <label for="current-password" class="block text-sm font-medium text-gray-700">Aktuelles Passwort</label>
-                                <input type="password" name="current-password" id="current-password" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                            </div>
-                            <div class="sm:col-span-3">
-                                <label for="new-password" class="block text-sm font-medium text-gray-700">Neues Passwort</label>
-                                <input type="password" name="new-password" id="new-password" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                            </div>
-                            <div class="sm:col-span-3">
-                                <label for="confirm-password" class="block text-sm font-medium text-gray-700">Passwort bestätigen</label>
-                                <input type="password" name="confirm-password" id="confirm-password" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+
+                <!-- Tab: Benachrichtigungen -->
+                <div id="notifications-tab" class="profile-tab-content p-8 hidden">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 mb-8">Benachrichtigungseinstellungen</h3>
+                    <div class="space-y-8">
+                        <div class="bg-gray-50 p-6 rounded-lg">
+                            <div class="flex items-start">
+                                <div class="flex items-center h-5">
+                                    <input id="email-notifications" name="email-notifications" type="checkbox" checked class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                                </div>
+                                <div class="ml-3">
+                                    <label for="email-notifications" class="font-medium text-gray-700">E-Mail-Benachrichtigungen</label>
+                                    <p class="text-sm text-gray-500">Erhalten Sie Updates per E-Mail über Fahrzeugbuchungen und wichtige Mitteilungen</p>
+                                </div>
                             </div>
                         </div>
-                        <div class="mt-6">
-                            <button type="submit" class="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                                Passwort ändern
-                            </button>
+                        <div class="bg-gray-50 p-6 rounded-lg">
+                            <div class="flex items-start">
+                                <div class="flex items-center h-5">
+                                    <input id="booking-reminders" name="booking-reminders" type="checkbox" checked class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                                </div>
+                                <div class="ml-3">
+                                    <label for="booking-reminders" class="font-medium text-gray-700">Buchungserinnerungen</label>
+                                    <p class="text-sm text-gray-500">Erinnerungen vor anstehenden Fahrzeugbuchungen erhalten</p>
+                                </div>
+                            </div>
                         </div>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Meine aktiven Buchungen -->
-            <div class="bg-white overflow-hidden shadow rounded-lg">
-                <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
-                    <h3 class="text-lg leading-6 font-medium text-gray-900">Meine aktiven Buchungen</h3>
-                </div>
-                <div class="px-4 py-5 sm:p-6">
-                    <div class="flow-root">
-                        <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-                            <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-                                <table class="min-w-full divide-y divide-gray-300">
-                                    <thead>
-                                    <tr>
-                                        <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0">Fahrzeug</th>
-                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Von</th>
-                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Bis</th>
-                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Status</th>
-                                        <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-0">
-                                            <span class="sr-only">Aktionen</span>
-                                        </th>
-                                    </tr>
-                                    </thead>
-                                    <tbody id="active-bookings-table-body" class="divide-y divide-gray-200">
-                                    <!-- Wird durch JavaScript gefüllt -->
-                                    <tr>
-                                        <td colspan="5" class="py-4 text-center text-gray-500">Keine aktiven Buchungen vorhanden</td>
-                                    </tr>
-                                    </tbody>
-                                </table>
+                        <div class="bg-gray-50 p-6 rounded-lg">
+                            <div class="flex items-start">
+                                <div class="flex items-center h-5">
+                                    <input id="fuel-reminders" name="fuel-reminders" type="checkbox" checked class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                                </div>
+                                <div class="ml-3">
+                                    <label for="fuel-reminders" class="font-medium text-gray-700">Tankmeldungen</label>
+                                    <p class="text-sm text-gray-500">Erinnerungen für ausstehende Tankmeldungen</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 p-6 rounded-lg">
+                            <div class="flex items-start">
+                                <div class="flex items-center h-5">
+                                    <input id="maintenance-alerts" name="maintenance-alerts" type="checkbox" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                                </div>
+                                <div class="ml-3">
+                                    <label for="maintenance-alerts" class="font-medium text-gray-700">Wartungsbenachrichtigungen</label>
+                                    <p class="text-sm text-gray-500">Erhalten Sie Benachrichtigungen über anstehende Wartungen</p>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <!-- Benachrichtigungseinstellungen -->
-            <div class="bg-white overflow-hidden shadow rounded-lg">
-                <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
-                    <h3 class="text-lg leading-6 font-medium text-gray-900">Benachrichtigungen</h3>
-                    <p class="mt-1 text-sm text-gray-500">Verwalten Sie Ihre Benachrichtigungseinstellungen</p>
-                </div>
-                <div class="px-4 py-5 sm:p-6">
-                    <div class="space-y-6">
-                        <div class="flex items-start">
-                            <div class="flex items-center h-5">
-                                <input id="email-notifications" name="email-notifications" type="checkbox" checked class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
-                            </div>
-                            <div class="ml-3">
-                                <label for="email-notifications" class="font-medium text-gray-700">E-Mail-Benachrichtigungen</label>
-                                <p class="text-sm text-gray-500">Erhalten Sie Updates per E-Mail über Fahrzeugbuchungen und Wartungsbenachrichtigungen</p>
-                            </div>
-                        </div>
-                        <div class="flex items-start">
-                            <div class="flex items-center h-5">
-                                <input id="booking-reminders" name="booking-reminders" type="checkbox" checked class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
-                            </div>
-                            <div class="ml-3">
-                                <label for="booking-reminders" class="font-medium text-gray-700">Buchungserinnerungen</label>
-                                <p class="text-sm text-gray-500">Erinnerungen vor anstehenden Fahrzeugbuchungen erhalten</p>
-                            </div>
-                        </div>
-                        <div class="flex items-start">
-                            <div class="flex items-center h-5">
-                                <input id="fuel-reminders" name="fuel-reminders" type="checkbox" checked class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
-                            </div>
-                            <div class="ml-3">
-                                <label for="fuel-reminders" class="font-medium text-gray-700">Tankmeldungen</label>
-                                <p class="text-sm text-gray-500">Erinnerungen für ausstehende Tankmeldungen</p>
-                            </div>
-                        </div>
-                        <div class="flex items-start">
-                            <div class="flex items-center h-5">
-                                <input id="maintenance-alerts" name="maintenance-alerts" type="checkbox" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
-                            </div>
-                            <div class="ml-3">
-                                <label for="maintenance-alerts" class="font-medium text-gray-700">Wartungsbenachrichtigungen</label>
-                                <p class="text-sm text-gray-500">Erhalten Sie Benachrichtigungen über anstehende Wartungen</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mt-6">
-                        <button type="button" id="save-notifications-btn" class="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                    <div class="mt-8 pt-6 border-t border-gray-200">
+                        <button type="button" id="save-notifications-btn" class="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-3 px-6 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
                             Einstellungen speichern
                         </button>
+                    </div>
+                </div>
+
+                <!-- Tab: Aktivitätsverlauf -->
+                <div id="activity-tab" class="profile-tab-content p-8 hidden">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 mb-8">Meine Aktivitäten</h3>
+                    <div id="activity-timeline" class="flow-root">
+                        <div class="text-center py-8 text-gray-500">
+                            <svg class="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <p>Aktivitätsdaten werden geladen...</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -249,65 +371,53 @@
 </div>
 
 <!-- Modal: Profil bearbeiten -->
-<div id="edit-profile-modal" class="fixed z-10 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+<div id="edit-profile-modal" class="fixed z-50 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
     <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <!-- Hintergrund-Overlay -->
         <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
-
-        <!-- Zentriert den Modal-Inhalt -->
         <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-        <!-- Modal-Panel -->
-        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+        <div class="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
             <form id="edit-profile-form">
-                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="bg-white px-6 pt-6 pb-4 sm:p-8 sm:pb-4">
                     <div class="sm:flex sm:items-start">
                         <div class="w-full">
-                            <h3 class="text-lg leading-6 font-medium text-gray-900">
+                            <h3 class="text-xl leading-6 font-medium text-gray-900 mb-6">
                                 Profil bearbeiten
                             </h3>
 
-                            <div class="mt-4">
-                                <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                                    <div class="sm:col-span-3">
-                                        <label for="first-name" class="block text-sm font-medium text-gray-700">Vorname</label>
-                                        <input type="text" name="first-name" id="first-name" value="{{.profile.FirstName}}" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                                    </div>
-
-                                    <div class="sm:col-span-3">
-                                        <label for="last-name" class="block text-sm font-medium text-gray-700">Nachname</label>
-                                        <input type="text" name="last-name" id="last-name" value="{{.profile.LastName}}" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                                    </div>
-
-                                    <div class="sm:col-span-6">
-                                        <label for="email-profile" class="block text-sm font-medium text-gray-700">E-Mail</label>
-                                        <input type="email" name="email" id="email-profile" value="{{.profile.Email}}" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                                    </div>
-
-                                    <div class="sm:col-span-6">
-                                        <label for="phone" class="block text-sm font-medium text-gray-700">Telefon</label>
-                                        <input type="tel" name="phone" id="phone" value="{{.profile.Phone}}" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                                    </div>
-
-                                    <div class="sm:col-span-3">
-                                        <label for="department" class="block text-sm font-medium text-gray-700">Abteilung</label>
-                                        <input type="text" name="department" id="department" value="{{.profile.Department}}" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                                    </div>
-
-                                    <div class="sm:col-span-3">
-                                        <label for="position" class="block text-sm font-medium text-gray-700">Position</label>
-                                        <input type="text" name="position" id="position" value="{{.profile.Position}}" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                                    </div>
+                            <div class="grid grid-cols-1 gap-y-8 gap-x-6 sm:grid-cols-6">
+                                <div class="sm:col-span-3">
+                                    <label for="first-name" class="block text-sm font-medium text-gray-700 mb-2">Vorname</label>
+                                    <input type="text" name="first-name" id="first-name" value="{{.profile.FirstName}}" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm text-base border-gray-300 rounded-lg py-3 px-4">
+                                </div>
+                                <div class="sm:col-span-3">
+                                    <label for="last-name" class="block text-sm font-medium text-gray-700 mb-2">Nachname</label>
+                                    <input type="text" name="last-name" id="last-name" value="{{.profile.LastName}}" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm text-base border-gray-300 rounded-lg py-3 px-4">
+                                </div>
+                                <div class="sm:col-span-6">
+                                    <label for="email-profile" class="block text-sm font-medium text-gray-700 mb-2">E-Mail</label>
+                                    <input type="email" name="email" id="email-profile" value="{{.profile.Email}}" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm text-base border-gray-300 rounded-lg py-3 px-4">
+                                </div>
+                                <div class="sm:col-span-6">
+                                    <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">Telefon</label>
+                                    <input type="tel" name="phone" id="phone" value="{{.profile.Phone}}" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm text-base border-gray-300 rounded-lg py-3 px-4">
+                                </div>
+                                <div class="sm:col-span-3">
+                                    <label for="department" class="block text-sm font-medium text-gray-700 mb-2">Abteilung</label>
+                                    <input type="text" name="department" id="department" value="{{.profile.Department}}" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm text-base border-gray-300 rounded-lg py-3 px-4">
+                                </div>
+                                <div class="sm:col-span-3">
+                                    <label for="position" class="block text-sm font-medium text-gray-700 mb-2">Position</label>
+                                    <input type="text" name="position" id="position" value="{{.profile.Position}}" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm text-base border-gray-300 rounded-lg py-3 px-4">
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                    <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm">
+                <div class="bg-gray-50 px-6 py-4 sm:px-8 sm:flex sm:flex-row-reverse">
+                    <button type="submit" class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-6 py-3 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto">
                         Speichern
                     </button>
-                    <button type="button" id="close-profile-modal-btn" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                    <button type="button" onclick="closeProfileModal()" class="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-6 py-3 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto">
                         Abbrechen
                     </button>
                 </div>
@@ -316,247 +426,52 @@
     </div>
 </div>
 
-<script>
-    // Profil-Funktionen
-    function openProfileModal() {
-        const modal = document.getElementById('edit-profile-modal');
-        if (modal) {
-            modal.classList.remove('hidden');
-        }
-    }
+<!-- Modal: Passwort ändern -->
+<div id="change-password-modal" class="fixed z-50 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div class="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <form id="password-form">
+                <div class="bg-white px-6 pt-6 pb-4 sm:p-8 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="w-full">
+                            <h3 class="text-xl leading-6 font-medium text-gray-900 mb-6">
+                                Passwort ändern
+                            </h3>
 
-    function closeProfileModal() {
-        const modal = document.getElementById('edit-profile-modal');
-        if (modal) {
-            modal.classList.add('hidden');
-        }
-    }
+                            <div class="space-y-6">
+                                <div>
+                                    <label for="current-password" class="block text-sm font-medium text-gray-700 mb-2">Aktuelles Passwort</label>
+                                    <input type="password" name="current-password" id="current-password" required class="focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm text-base border-gray-300 rounded-lg py-3 px-4">
+                                </div>
+                                <div>
+                                    <label for="new-password" class="block text-sm font-medium text-gray-700 mb-2">Neues Passwort</label>
+                                    <input type="password" name="new-password" id="new-password" required class="focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm text-base border-gray-300 rounded-lg py-3 px-4">
+                                </div>
+                                <div>
+                                    <label for="confirm-password" class="block text-sm font-medium text-gray-700 mb-2">Passwort bestätigen</label>
+                                    <input type="password" name="confirm-password" id="confirm-password" required class="focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm text-base border-gray-300 rounded-lg py-3 px-4">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-6 py-4 sm:px-8 sm:flex sm:flex-row-reverse">
+                    <button type="submit" class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-6 py-3 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto">
+                        Passwort ändern
+                    </button>
+                    <button type="button" onclick="closeChangePasswordModal()" class="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-6 py-3 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto">
+                        Abbrechen
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
-    document.addEventListener('DOMContentLoaded', function() {
-        // Button zum Öffnen des Profil-Edit-Modals
-        const editProfileBtn = document.getElementById('edit-profile-btn');
-        if (editProfileBtn) {
-            editProfileBtn.addEventListener('click', openProfileModal);
-        }
-
-        // Button zum Schließen des Modals
-        const closeModalBtn = document.getElementById('close-profile-modal-btn');
-        if (closeModalBtn) {
-            closeModalBtn.addEventListener('click', closeProfileModal);
-        }
-
-        // Formular für Profilaktualisierung
-        const editProfileForm = document.getElementById('edit-profile-form');
-        if (editProfileForm) {
-            editProfileForm.addEventListener('submit', function(event) {
-                event.preventDefault();
-
-                const formData = new FormData(editProfileForm);
-                const profileData = {};
-
-                for (let [key, value] of formData.entries()) {
-                    profileData[key] = value;
-                }
-
-                // API-Aufruf zum Aktualisieren des Profils
-                fetch('/api/profile', {  // Korrigiert: /api/profile
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(profileData)
-                })
-                    .then(response => {
-                        if (!response.ok) {
-                            return response.json().then(err => { throw new Error(err.error || 'Fehler beim Aktualisieren des Profils'); });
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        closeProfileModal();
-                        // Aktualisieren der Anzeige
-                        document.getElementById('profile-firstname').textContent = data.firstName || '';
-                        document.getElementById('profile-lastname').textContent = data.lastName || '';
-                        document.getElementById('profile-email').textContent = data.email || '';
-                        document.getElementById('profile-phone').textContent = data.phone || 'Nicht angegeben';
-                        document.getElementById('profile-department').textContent = data.department || 'Nicht angegeben';
-                        document.getElementById('profile-position').textContent = data.position || 'Nicht angegeben';
-
-                        alert('Profil erfolgreich aktualisiert!');
-                    })
-                    .catch(error => {
-                        console.error('Fehler:', error);
-                        alert('Fehler beim Aktualisieren des Profils: ' + error.message);
-                    });
-            });
-        }
-
-        // Formular für Passwortänderung
-        const passwordForm = document.getElementById('password-form');
-        if (passwordForm) {
-            passwordForm.addEventListener('submit', function(event) {
-                event.preventDefault();
-
-                const currentPassword = document.getElementById('current-password').value;
-                const newPassword = document.getElementById('new-password').value;
-                const confirmPassword = document.getElementById('confirm-password').value;
-
-                if (newPassword !== confirmPassword) {
-                    alert('Die neuen Passwörter stimmen nicht überein!');
-                    return;
-                }
-
-                // API-Aufruf zum Ändern des Passworts
-                fetch('/api/profile/password', {  // Korrigiert: /api/profile/password
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        currentPassword,
-                        newPassword
-                    })
-                })
-                    .then(response => {
-                        if (!response.ok) {
-                            return response.json().then(err => { throw new Error(err.error || 'Passwortänderung fehlgeschlagen'); });
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        alert('Passwort erfolgreich geändert!');
-                        passwordForm.reset();
-                    })
-                    .catch(error => {
-                        console.error('Fehler:', error);
-                        alert('Fehler beim Ändern des Passworts: ' + error.message);
-                    });
-            });
-        }
-
-        // Laden der aktiven Buchungen
-        function loadActiveBookings() {
-            fetch('/api/profile/bookings/my-active')  // Ist bereits korrekt
-                .then(response => {
-                    if (!response.ok) {
-                        if (response.status === 404) {
-                            // 404 ist in diesem Fall okay, es gibt einfach keine aktiven Buchungen
-                            return { bookings: [] };
-                        }
-                        throw new Error('Fehler beim Laden der Buchungen');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    const tableBody = document.getElementById('active-bookings-table-body');
-                    if (!tableBody) return;
-
-                    if (!data.bookings || data.bookings.length === 0) {
-                        tableBody.innerHTML = `
-                            <tr>
-                                <td colspan="5" class="py-4 text-center text-gray-500">Keine aktiven Buchungen vorhanden</td>
-                            </tr>
-                        `;
-                        return;
-                    }
-
-                    tableBody.innerHTML = data.bookings.map(booking => `
-                        <tr>
-                            <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
-                                ${booking.vehicleName}
-                            </td>
-                            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                ${new Date(booking.startDate).toLocaleDateString('de-DE')}
-                            </td>
-                            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                ${booking.endDate ? new Date(booking.endDate).toLocaleDateString('de-DE') : '-'}
-                            </td>
-                            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                <span class="inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${getStatusClass(booking.status)}">
-                                    ${getStatusText(booking.status)}
-                                </span>
-                            </td>
-                            <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
-                                <a href="/vehicle-details/${booking.id}" class="text-indigo-600 hover:text-indigo-900">Details</a>
-                            </td>
-                        </tr>
-                    `).join('');
-                })
-                .catch(error => {
-                    console.error('Fehler beim Laden der Buchungen:', error);
-                    const tableBody = document.getElementById('active-bookings-table-body');
-                    if (tableBody) {
-                        tableBody.innerHTML = `
-                            <tr>
-                                <td colspan="5" class="py-4 text-center text-red-500">Fehler beim Laden der Buchungen</td>
-                            </tr>
-                        `;
-                    }
-                });
-        }
-
-        // Hilfsfunktionen für Status
-        function getStatusClass(status) {
-            switch (status) {
-                case 'active': return 'bg-green-100 text-green-800';
-                case 'pending': return 'bg-yellow-100 text-yellow-800';
-                case 'completed': return 'bg-gray-100 text-gray-800';
-                case 'cancelled': return 'bg-red-100 text-red-800';
-                default: return 'bg-gray-100 text-gray-800';
-            }
-        }
-
-        function getStatusText(status) {
-            switch (status) {
-                case 'active': return 'Aktiv';
-                case 'pending': return 'Ausstehend';
-                case 'completed': return 'Abgeschlossen';
-                case 'cancelled': return 'Storniert';
-                default: return status;
-            }
-        }
-
-        // Speichern der Benachrichtigungseinstellungen
-        const saveNotificationsBtn = document.getElementById('save-notifications-btn');
-        if (saveNotificationsBtn) {
-            saveNotificationsBtn.addEventListener('click', function() {
-                const settings = {
-                    emailNotifications: document.getElementById('email-notifications').checked,
-                    bookingReminders: document.getElementById('booking-reminders').checked,
-                    fuelReminders: document.getElementById('fuel-reminders').checked,
-                    maintenanceAlerts: document.getElementById('maintenance-alerts').checked
-                };
-
-                fetch('/api/profile/notification-settings', {  // Korrigiert: /api/profile/notification-settings
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(settings)
-                })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Fehler beim Speichern der Benachrichtigungseinstellungen');
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        alert('Benachrichtigungseinstellungen gespeichert!');
-                    })
-                    .catch(error => {
-                        console.error('Fehler:', error);
-                        alert('Fehler beim Speichern der Einstellungen.');
-                    });
-            });
-        }
-
-        // Initial laden der aktiven Buchungen
-        loadActiveBookings();
-
-        // Refresh alle 5 Minuten
-        setInterval(loadActiveBookings, 5 * 60 * 1000);
-    });
-</script>
+<!-- Profile JavaScript -->
+<script src="/static/js/profile.js"></script>
 
 {{ template "footer" .}}
 </body>

@@ -58,6 +58,13 @@
                 Integrationen
             </button>
 
+            <button class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="email">
+                <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                </svg>
+                E-Mail-Konfiguration
+            </button>
+
             <button class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-400 flex items-center cursor-not-allowed" data-tab="notifications">
                 <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4.828 2.828l15.546 15.546a1 1 0 01-1.414 1.414L2.414 4.242a1 1 0 011.414-1.414zm9.9 2.829a7 7 0 00-9.9 9.9l9.9-9.9z"></path>
@@ -617,7 +624,102 @@
         </div>
     </div>
 
-    <!-- 4. Benachrichtigungen (Disabled) -->
+    <!-- 4. E-Mail-Konfiguration (nur für Admins) -->
+    {{ if eq .userRole "admin" }}
+    <div id="email-tab" class="tab-content hidden">
+        <div class="space-y-6">
+            <!-- SMTP-Konfiguration -->
+            <div class="bg-white shadow sm:rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 mb-2">SMTP-Server Konfiguration</h3>
+                    <p class="text-sm text-gray-500 mb-6">Konfigurieren Sie den SMTP-Server für das Versenden von E-Mail-Benachrichtigungen</p>
+
+                    <form id="smtp-config-form" class="space-y-6">
+                        <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                            <div class="sm:col-span-4">
+                                <label for="smtp-host" class="block text-sm font-medium text-gray-700">SMTP-Server</label>
+                                <input type="text" name="smtp-host" id="smtp-host" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" placeholder="smtp.gmail.com">
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label for="smtp-port" class="block text-sm font-medium text-gray-700">Port</label>
+                                <input type="number" name="smtp-port" id="smtp-port" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" placeholder="587">
+                            </div>
+                            <div class="sm:col-span-3">
+                                <label for="smtp-username" class="block text-sm font-medium text-gray-700">Benutzername</label>
+                                <input type="text" name="smtp-username" id="smtp-username" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                            </div>
+                            <div class="sm:col-span-3">
+                                <label for="smtp-password" class="block text-sm font-medium text-gray-700">Passwort</label>
+                                <input type="password" name="smtp-password" id="smtp-password" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                            </div>
+                            <div class="sm:col-span-3">
+                                <label for="smtp-from-name" class="block text-sm font-medium text-gray-700">Absender Name</label>
+                                <input type="text" name="smtp-from-name" id="smtp-from-name" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" placeholder="FleetFlow System">
+                            </div>
+                            <div class="sm:col-span-3">
+                                <label for="smtp-from-email" class="block text-sm font-medium text-gray-700">Absender E-Mail</label>
+                                <input type="email" name="smtp-from-email" id="smtp-from-email" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" placeholder="noreply@example.com">
+                            </div>
+                        </div>
+
+                        <div class="flex items-center space-x-6">
+                            <div class="flex items-center">
+                                <input id="smtp-use-tls" name="smtp-use-tls" type="checkbox" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                                <label for="smtp-use-tls" class="ml-2 block text-sm text-gray-900">TLS verwenden</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input id="smtp-use-ssl" name="smtp-use-ssl" type="checkbox" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                                <label for="smtp-use-ssl" class="ml-2 block text-sm text-gray-900">SSL verwenden</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input id="smtp-is-active" name="smtp-is-active" type="checkbox" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                                <label for="smtp-is-active" class="ml-2 block text-sm text-gray-900">Aktiv</label>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between">
+                            <button type="button" onclick="testSMTPConfig()" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                <svg class="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                Verbindung testen
+                            </button>
+                            <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                Konfiguration speichern
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- E-Mail-Logs -->
+            <div class="bg-white shadow sm:rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">E-Mail-Versand-Protokoll</h3>
+                    <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+                        <table class="min-w-full divide-y divide-gray-300">
+                            <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Empfänger</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Betreff</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gesendet</th>
+                            </tr>
+                            </thead>
+                            <tbody id="email-logs-table" class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td colspan="4" class="py-4 text-center text-gray-500">E-Mail-Logs werden geladen...</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {{ end }}
+
+    <!-- 5. Benachrichtigungen (Disabled) -->
     <div id="notifications-tab" class="tab-content hidden">
         <div class="bg-white shadow sm:rounded-lg">
             <div class="px-4 py-5 sm:p-6 text-center">
@@ -660,7 +762,8 @@
                     </div>
                     <div>
                         <label for="password" class="block text-sm font-medium text-gray-700">Passwort</label>
-                        <input type="password" name="password" id="password" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <input type="password" name="password" id="password" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <p class="mt-1 text-sm text-gray-500">Leer lassen für automatische Generierung</p>
                     </div>
                     <div>
                         <label for="role" class="block text-sm font-medium text-gray-700">Rolle</label>
@@ -669,6 +772,20 @@
                             <option value="manager">Manager</option>
                             <option value="admin">Administrator</option>
                         </select>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex items-center">
+                            <input id="generatePassword" name="generatePassword" type="checkbox" checked class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                            <label for="generatePassword" class="ml-2 block text-sm text-gray-900">
+                                Sicheres Passwort automatisch generieren
+                            </label>
+                        </div>
+                        <div class="flex items-center">
+                            <input id="sendEmail" name="sendEmail" type="checkbox" checked class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                            <label for="sendEmail" class="ml-2 block text-sm text-gray-900">
+                                Begrüßungs-E-Mail mit Zugangsdaten senden
+                            </label>
+                        </div>
                     </div>
                 </div>
                 <div class="mt-5 flex justify-end space-x-3">

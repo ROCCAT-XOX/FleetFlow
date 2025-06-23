@@ -2,12 +2,16 @@
 package handler
 
 import (
+	"FleetDrive/backend/db"
 	"FleetDrive/backend/model"
 	"FleetDrive/backend/repository"
+	"io"
 	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/gridfs"
 )
 
 // ProfileHandler verwaltet die Profiloperationen
@@ -28,8 +32,8 @@ func NewProfileHandler() *ProfileHandler {
 
 // ProfileUpdateInput repräsentiert die Eingabedaten für die Profilaktualisierung
 type ProfileUpdateInput struct {
-	FirstName  string `json:"first-name" binding:"required"`
-	LastName   string `json:"last-name" binding:"required"`
+	FirstName  string `json:"firstName" binding:"required"`
+	LastName   string `json:"lastName" binding:"required"`
 	Email      string `json:"email" binding:"required,email"`
 	Phone      string `json:"phone"`
 	Department string `json:"department"`
@@ -275,4 +279,191 @@ func (h *ProfileHandler) UpdateNotificationSettings(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Benachrichtigungseinstellungen erfolgreich gespeichert",
 	})
+}
+
+// UploadProfilePicture behandelt das Hochladen von Profilbildern
+func (h *ProfileHandler) UploadProfilePicture(c *gin.Context) {
+	// Benutzer aus dem Kontext holen
+	userInterface, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Nicht authentifiziert"})
+		return
+	}
+
+	user, ok := userInterface.(*model.User)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Fehler beim Verarbeiten der Benutzerdaten"})
+		return
+	}
+
+	// File vom Request holen
+	file, header, err := c.Request.FormFile("profilePicture")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Keine Datei gefunden"})
+		return
+	}
+	defer file.Close()
+
+	// Validierung der Dateigröße (max 5MB)
+	if header.Size > 5*1024*1024 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Datei ist zu groß. Maximale Größe: 5MB"})
+		return
+	}
+
+	// Validierung des Dateityps
+	contentType := header.Header.Get("Content-Type")
+	if contentType != "image/jpeg" && contentType != "image/png" && contentType != "image/jpg" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Ungültiger Dateityp. Nur JPEG und PNG sind erlaubt"})
+		return
+	}
+
+	// Altes Profilbild löschen falls vorhanden
+	if user.ProfilePicture != nil {
+		h.deleteProfilePictureFile(*user.ProfilePicture)
+	}
+
+	// GridFS Bucket erstellen
+	bucket, err := gridfs.NewBucket(db.DBClient.Database("FleetFlow"))
+	if err != nil {
+		log.Printf("Fehler beim Erstellen des GridFS Buckets: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Fehler beim Speichern der Datei"})
+		return
+	}
+
+	// Datei in GridFS hochladen
+	uploadStream, err := bucket.OpenUploadStream("profile_picture_"+user.ID.Hex())
+	if err != nil {
+		log.Printf("Fehler beim Öffnen des Upload Streams: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Fehler beim Speichern der Datei"})
+		return
+	}
+	defer uploadStream.Close()
+
+	// Datei kopieren
+	_, err = io.Copy(uploadStream, file)
+	if err != nil {
+		log.Printf("Fehler beim Kopieren der Datei: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Fehler beim Speichern der Datei"})
+		return
+	}
+
+	// File ID holen
+	fileID := uploadStream.FileID.(primitive.ObjectID)
+
+	// User Profil mit neuer Bild-ID aktualisieren
+	user.ProfilePicture = &fileID
+	if err := h.userRepo.Update(user); err != nil {
+		log.Printf("Fehler beim Aktualisieren des Benutzers: %v", err)
+		// Hochgeladene Datei löschen da User Update fehlgeschlagen
+		h.deleteProfilePictureFile(fileID)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Fehler beim Aktualisieren des Profils"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Profilbild erfolgreich hochgeladen",
+		"fileID":  fileID.Hex(),
+	})
+}
+
+// GetProfilePicture liefert das Profilbild des aktuellen Benutzers
+func (h *ProfileHandler) GetProfilePicture(c *gin.Context) {
+	// Benutzer aus dem Kontext holen
+	userInterface, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Nicht authentifiziert"})
+		return
+	}
+
+	user, ok := userInterface.(*model.User)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Fehler beim Verarbeiten der Benutzerdaten"})
+		return
+	}
+
+	// Prüfen ob Profilbild existiert
+	if user.ProfilePicture == nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Kein Profilbild gefunden"})
+		return
+	}
+
+	// GridFS Bucket erstellen
+	bucket, err := gridfs.NewBucket(db.DBClient.Database("FleetFlow"))
+	if err != nil {
+		log.Printf("Fehler beim Erstellen des GridFS Buckets: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Fehler beim Laden der Datei"})
+		return
+	}
+
+	// Datei aus GridFS laden
+	downloadStream, err := bucket.OpenDownloadStream(*user.ProfilePicture)
+	if err != nil {
+		log.Printf("Fehler beim Öffnen des Download Streams: %v", err)
+		c.JSON(http.StatusNotFound, gin.H{"error": "Profilbild nicht gefunden"})
+		return
+	}
+	defer downloadStream.Close()
+
+	// Content-Type setzen
+	c.Header("Content-Type", "image/jpeg") // Default, könnte aus Metadaten gelesen werden
+	c.Header("Cache-Control", "public, max-age=3600")
+
+	// Datei streamen
+	_, err = io.Copy(c.Writer, downloadStream)
+	if err != nil {
+		log.Printf("Fehler beim Streamen der Datei: %v", err)
+		return
+	}
+}
+
+// DeleteProfilePicture löscht das Profilbild des aktuellen Benutzers
+func (h *ProfileHandler) DeleteProfilePicture(c *gin.Context) {
+	// Benutzer aus dem Kontext holen
+	userInterface, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Nicht authentifiziert"})
+		return
+	}
+
+	user, ok := userInterface.(*model.User)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Fehler beim Verarbeiten der Benutzerdaten"})
+		return
+	}
+
+	// Prüfen ob Profilbild existiert
+	if user.ProfilePicture == nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Kein Profilbild zum Löschen gefunden"})
+		return
+	}
+
+	// Datei löschen
+	fileID := *user.ProfilePicture
+	if err := h.deleteProfilePictureFile(fileID); err != nil {
+		log.Printf("Fehler beim Löschen der Datei: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Fehler beim Löschen der Datei"})
+		return
+	}
+
+	// User Profil aktualisieren
+	user.ProfilePicture = nil
+	if err := h.userRepo.Update(user); err != nil {
+		log.Printf("Fehler beim Aktualisieren des Benutzers: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Fehler beim Aktualisieren des Profils"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Profilbild erfolgreich gelöscht",
+	})
+}
+
+// deleteProfilePictureFile ist eine Hilfsfunktion zum Löschen von Dateien aus GridFS
+func (h *ProfileHandler) deleteProfilePictureFile(fileID primitive.ObjectID) error {
+	bucket, err := gridfs.NewBucket(db.DBClient.Database("FleetFlow"))
+	if err != nil {
+		return err
+	}
+
+	return bucket.Delete(fileID)
 }

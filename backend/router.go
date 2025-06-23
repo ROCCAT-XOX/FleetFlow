@@ -440,6 +440,9 @@ func setupAPIRoutes(api *gin.RouterGroup) {
 		profile.GET("/notification-settings", profileHandler.GetNotificationSettings)
 		profile.PUT("/notification-settings", profileHandler.UpdateNotificationSettings)
 		profile.GET("/stats", profileHandler.GetProfileStats)
+		profile.POST("/picture", profileHandler.UploadProfilePicture)
+		profile.GET("/picture", profileHandler.GetProfilePicture)
+		profile.DELETE("/picture", profileHandler.DeleteProfilePicture)
 	}
 
 	// Fahrzeug-API (KORRIGIERT)
@@ -581,4 +584,18 @@ func setupAPIRoutes(api *gin.RouterGroup) {
 		reservations.GET("/available-vehicles", reservationHandler.GetAvailableVehicles)
 		reservations.GET("/check-conflict", reservationHandler.CheckReservationConflict)
 	}
+
+	// SMTP API
+	smtpHandler := handler.NewSMTPHandler()
+	smtp := api.Group("/smtp")
+	{
+		smtp.GET("/config", middleware.AdminMiddleware(), smtpHandler.GetSMTPConfig)
+		smtp.POST("/config", middleware.AdminMiddleware(), smtpHandler.SaveSMTPConfig)
+		smtp.POST("/test", middleware.AdminMiddleware(), smtpHandler.TestSMTPConfig)
+		smtp.GET("/templates", middleware.AdminMiddleware(), smtpHandler.GetEmailTemplates)
+		smtp.POST("/templates", middleware.AdminMiddleware(), smtpHandler.SaveEmailTemplate)
+		smtp.GET("/logs", middleware.AdminMiddleware(), smtpHandler.GetEmailLogs)
+		smtp.POST("/send", middleware.AdminMiddleware(), smtpHandler.SendTestEmail)
+	}
+
 }
