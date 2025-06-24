@@ -362,3 +362,5 @@ document.addEventListener('DOMContentLoaded', function() {
 
     console.log('Initialisierung abgeschlossen.');
 });
+
+// Die renderVehicles Funktion ist im HTML-Template definiert
