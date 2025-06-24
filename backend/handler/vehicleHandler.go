@@ -736,6 +736,15 @@ func (h *VehicleHandler) UpdateBasicInfo(c *gin.Context) {
 		FuelType     model.FuelType `json:"fuelType"`
 		Mileage      int            `json:"mileage"`
 
+		// Registrierungsfelder
+		RegistrationDate   string              `json:"registrationDate"`
+		NextInspectionDate string              `json:"nextInspectionDate"`
+		InsuranceCompany   string              `json:"insuranceCompany"`
+		InsuranceNumber    string              `json:"insuranceNumber"`
+		InsuranceType      model.InsuranceType `json:"insuranceType"`
+		InsuranceExpiry    string              `json:"insuranceExpiry"`
+		InsuranceCost      float64             `json:"insuranceCost"`
+
 		// Neue technische Felder
 		VehicleType        string  `json:"vehicleType"`
 		EngineDisplacement int     `json:"engineDisplacement"`
@@ -756,15 +765,18 @@ func (h *VehicleHandler) UpdateBasicInfo(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		log.Printf("JSON binding error in UpdateBasicInfo: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Ungültige Eingabedaten: " + err.Error()})
 		return
 	}
 
 	// Debug: Request-Daten ausgeben
 	log.Printf("UpdateBasicInfo received data: CardNumber='%s', LicensePlate='%s', Brand='%s'", req.CardNumber, req.LicensePlate, req.Brand)
+	log.Printf("UpdateBasicInfo registration data: registrationDate='%s', insuranceType='%s', insuranceCompany='%s'", 
+		req.RegistrationDate, req.InsuranceType, req.InsuranceCompany)
 
-	// Prüfen, ob ein anderes Fahrzeug mit dem gleichen Kennzeichen existiert
-	if req.LicensePlate != vehicle.LicensePlate {
+	// Prüfen, ob ein anderes Fahrzeug mit dem gleichen Kennzeichen existiert (nur wenn Kennzeichen gesendet wird)
+	if req.LicensePlate != "" && req.LicensePlate != vehicle.LicensePlate {
 		existingVehicle, _ := h.vehicleRepo.FindByLicensePlate(req.LicensePlate)
 		if existingVehicle != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Ein anderes Fahrzeug mit diesem Kennzeichen existiert bereits"})
@@ -780,38 +792,131 @@ func (h *VehicleHandler) UpdateBasicInfo(c *gin.Context) {
 	oldMileage := vehicle.Mileage
 	oldVIN := vehicle.VIN
 
-	// Grunddaten aktualisieren
-	vehicle.LicensePlate = req.LicensePlate
-	vehicle.Brand = req.Brand
-	vehicle.Model = req.Model
-	vehicle.Year = req.Year
-	vehicle.Color = req.Color
-	vehicle.VehicleID = req.VehicleID
-	vehicle.VIN = req.VIN
-	vehicle.CardNumber = req.CardNumber
-	vehicle.FuelType = req.FuelType
-	vehicle.Mileage = req.Mileage
+	// Nur die tatsächlich gesendeten Felder aktualisieren (nicht-leere Werte)
+	if req.LicensePlate != "" {
+		vehicle.LicensePlate = req.LicensePlate
+	}
+	if req.Brand != "" {
+		vehicle.Brand = req.Brand
+	}
+	if req.Model != "" {
+		vehicle.Model = req.Model
+	}
+	if req.Year != 0 {
+		vehicle.Year = req.Year
+	}
+	if req.Color != "" {
+		vehicle.Color = req.Color
+	}
+	if req.VehicleID != "" {
+		vehicle.VehicleID = req.VehicleID
+	}
+	if req.VIN != "" {
+		vehicle.VIN = req.VIN
+	}
+	if req.CardNumber != "" {
+		vehicle.CardNumber = req.CardNumber
+	}
+	if req.FuelType != "" {
+		vehicle.FuelType = req.FuelType
+	}
+	if req.Mileage != 0 {
+		vehicle.Mileage = req.Mileage
+	}
+
+	// Registrierungsfelder aktualisieren
+	if req.RegistrationDate != "" {
+		if registrationTime, err := time.Parse("2006-01-02", req.RegistrationDate); err != nil {
+			log.Printf("Error parsing registration date '%s': %v", req.RegistrationDate, err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Ungültiges Datum für Zulassung: " + req.RegistrationDate})
+			return
+		} else {
+			vehicle.RegistrationDate = registrationTime
+		}
+	}
+	if req.NextInspectionDate != "" {
+		if inspectionTime, err := time.Parse("2006-01-02", req.NextInspectionDate); err != nil {
+			log.Printf("Error parsing next inspection date '%s': %v", req.NextInspectionDate, err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Ungültiges Datum für nächste HU/AU: " + req.NextInspectionDate})
+			return
+		} else {
+			vehicle.NextInspectionDate = inspectionTime
+		}
+	}
+	if req.InsuranceCompany != "" {
+		vehicle.InsuranceCompany = req.InsuranceCompany
+	}
+	if req.InsuranceNumber != "" {
+		vehicle.InsuranceNumber = req.InsuranceNumber
+	}
+	if req.InsuranceType != "" {
+		vehicle.InsuranceType = req.InsuranceType
+	}
+	if req.InsuranceExpiry != "" {
+		if insuranceTime, err := time.Parse("2006-01-02", req.InsuranceExpiry); err != nil {
+			log.Printf("Error parsing insurance expiry date '%s': %v", req.InsuranceExpiry, err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Ungültiges Datum für Versicherungsablauf: " + req.InsuranceExpiry})
+			return
+		} else {
+			vehicle.InsuranceExpiry = insuranceTime
+		}
+	}
+	if req.InsuranceCost != 0 {
+		vehicle.InsuranceCost = req.InsuranceCost
+	}
 
 	// Debug: Vor Update
 	log.Printf("BEFORE UPDATE: Vehicle CardNumber='%s'", vehicle.CardNumber)
 
-	// Neue technische Felder aktualisieren
-	vehicle.VehicleType = req.VehicleType
-	vehicle.EngineDisplacement = req.EngineDisplacement
-	vehicle.PowerRating = req.PowerRating
-	vehicle.NumberOfAxles = req.NumberOfAxles
-	vehicle.TireSize = req.TireSize
-	vehicle.RimType = req.RimType
-	vehicle.GrossWeight = req.GrossWeight
-	vehicle.TechnicalMaxWeight = req.TechnicalMaxWeight
-	vehicle.Length = req.Length
-	vehicle.Width = req.Width
-	vehicle.Height = req.Height
-	vehicle.EmissionClass = req.EmissionClass
-	vehicle.CurbWeight = req.CurbWeight
-	vehicle.MaxSpeed = req.MaxSpeed
-	vehicle.TowingCapacity = req.TowingCapacity
-	vehicle.SpecialFeatures = req.SpecialFeatures
+	// Technische Felder aktualisieren (nur nicht-leere Werte)
+	if req.VehicleType != "" {
+		vehicle.VehicleType = req.VehicleType
+	}
+	if req.EngineDisplacement != 0 {
+		vehicle.EngineDisplacement = req.EngineDisplacement
+	}
+	if req.PowerRating != 0 {
+		vehicle.PowerRating = req.PowerRating
+	}
+	if req.NumberOfAxles != 0 {
+		vehicle.NumberOfAxles = req.NumberOfAxles
+	}
+	if req.TireSize != "" {
+		vehicle.TireSize = req.TireSize
+	}
+	if req.RimType != "" {
+		vehicle.RimType = req.RimType
+	}
+	if req.GrossWeight != 0 {
+		vehicle.GrossWeight = req.GrossWeight
+	}
+	if req.TechnicalMaxWeight != 0 {
+		vehicle.TechnicalMaxWeight = req.TechnicalMaxWeight
+	}
+	if req.Length != 0 {
+		vehicle.Length = req.Length
+	}
+	if req.Width != 0 {
+		vehicle.Width = req.Width
+	}
+	if req.Height != 0 {
+		vehicle.Height = req.Height
+	}
+	if req.EmissionClass != "" {
+		vehicle.EmissionClass = req.EmissionClass
+	}
+	if req.CurbWeight != 0 {
+		vehicle.CurbWeight = req.CurbWeight
+	}
+	if req.MaxSpeed != 0 {
+		vehicle.MaxSpeed = req.MaxSpeed
+	}
+	if req.TowingCapacity != 0 {
+		vehicle.TowingCapacity = req.TowingCapacity
+	}
+	if req.SpecialFeatures != "" {
+		vehicle.SpecialFeatures = req.SpecialFeatures
+	}
 
 	// Fahrzeug in der Datenbank aktualisieren
 	if err := h.vehicleRepo.Update(vehicle); err != nil {

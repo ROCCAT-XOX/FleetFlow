@@ -569,13 +569,20 @@ async function handleRegistrationSubmit(e) {
             insuranceCost: parseFloat(formData.get('insurance-cost')) || 0
         };
 
+        console.log('Sending registration data:', data); // Debug
+
         const response = await fetch(`/api/vehicles/${vehicleId}/basic-info`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
         });
 
-        if (!response.ok) throw new Error('Fehler beim Aktualisieren');
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            const errorMessage = errorData.error || `HTTP ${response.status}: ${response.statusText}`;
+            console.error('Server error:', errorMessage);
+            throw new Error(errorMessage);
+        }
 
         showNotification('Zulassungsdaten erfolgreich aktualisiert', 'success');
         modal.classList.add('hidden');
@@ -583,7 +590,7 @@ async function handleRegistrationSubmit(e) {
 
     } catch (error) {
         console.error('Fehler:', error);
-        showNotification('Fehler beim Aktualisieren der Zulassungsdaten', 'error');
+        showNotification('Fehler beim Aktualisieren der Zulassungsdaten: ' + error.message, 'error');
     }
 }
 
