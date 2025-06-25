@@ -365,6 +365,7 @@ func (h *ReservationHandler) GetReservationsByDriver(c *gin.Context) {
 func (h *ReservationHandler) GetAvailableVehicles(c *gin.Context) {
 	startTimeStr := c.Query("startTime")
 	endTimeStr := c.Query("endTime")
+	excludeReservationID := c.Query("excludeReservationId") // Optional: für Bearbeitung von Reservierungen
 
 	if startTimeStr == "" || endTimeStr == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Start- und Endzeit sind erforderlich"})
@@ -399,24 +400,32 @@ func (h *ReservationHandler) GetAvailableVehicles(c *gin.Context) {
 
 	// Verfügbare Fahrzeuge filtern
 	var availableVehicles []model.Vehicle
+	reservationRepo := repository.NewVehicleReservationRepository()
+	
 	for _, vehicle := range allVehicles {
-		// Nur verfügbare Fahrzeuge berücksichtigen
-		if vehicle.Status != model.VehicleStatusAvailable {
+		// Fahrzeuge mit nicht-verfügbarem Status überspringen (außer temporär reserviert)
+		if vehicle.Status != model.VehicleStatusAvailable && vehicle.Status != model.VehicleStatusReserved {
 			continue
 		}
 
-		// Prüfen ob Fahrzeug in diesem Zeitraum reserviert ist
-		hasConflict, err := repository.NewVehicleReservationRepository().CheckConflict(
+		// Prüfen ob Fahrzeug in diesem Zeitraum bereits reserviert ist
+		var excludeIDPtr *string
+		if excludeReservationID != "" {
+			excludeIDPtr = &excludeReservationID
+		}
+		
+		hasConflict, err := reservationRepo.CheckConflict(
 			vehicle.ID.Hex(),
 			startTime,
 			endTime,
-			nil,
+			excludeIDPtr,
 		)
 
 		if err != nil {
 			continue // Fehler beim Prüfen - Fahrzeug überspringen
 		}
 
+		// Fahrzeug ist verfügbar wenn es keinen Zeitkonflikt gibt
 		if !hasConflict {
 			availableVehicles = append(availableVehicles, *vehicle)
 		}

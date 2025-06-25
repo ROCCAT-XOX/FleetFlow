@@ -223,7 +223,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         try {
-            const response = await fetch(`/api/reservations/available-vehicles?startTime=${encodeURIComponent(startTime)}&endTime=${encodeURIComponent(endTime)}`);
+            // Bei Bearbeitung einer Reservierung: aktuelle Reservierung ausschließen
+            const excludeParam = currentReservationId ? `&excludeReservationId=${currentReservationId}` : '';
+            const response = await fetch(`/api/reservations/available-vehicles?startTime=${encodeURIComponent(startTime)}&endTime=${encodeURIComponent(endTime)}${excludeParam}`);
             
             if (response.ok) {
                 const availableVehicles = await response.json();
@@ -546,44 +548,65 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('purpose').value = reservation.purpose || '';
                     document.getElementById('notes').value = reservation.notes || '';
                     
-                    // Fahrzeug- und Fahrer-Auswahl setzen (mit Verzögerung damit die Optionen geladen sind)
-                    setTimeout(() => {
-                        const vehicleSelect = document.getElementById('vehicle-select');
-                        const driverSelect = document.getElementById('driver-select');
-                        
-                        // Verschiedene mögliche Feldnamen prüfen
-                        const vehicleId = reservation.vehicleId || reservation.vehicleID || (reservation.vehicle && reservation.vehicle.id);
-                        const driverId = reservation.driverId || reservation.driverID || (reservation.driver && reservation.driver.id);
-                        
-                        console.log('Setting vehicle ID:', vehicleId, 'Driver ID:', driverId);
-                        console.log('Available vehicle options:', Array.from(vehicleSelect.options).map(o => ({value: o.value, text: o.text})));
-                        console.log('Available driver options:', Array.from(driverSelect.options).map(o => ({value: o.value, text: o.text})));
-                        
-                        if (vehicleSelect && vehicleId) {
-                            vehicleSelect.value = vehicleId;
-                            // Falls die direkte Zuweisung nicht funktioniert, Option suchen
-                            if (vehicleSelect.value !== vehicleId) {
-                                for (let option of vehicleSelect.options) {
-                                    if (option.value === vehicleId) {
-                                        option.selected = true;
-                                        break;
-                                    }
+                    // Fahrzeug- und Fahrer-Auswahl setzen
+                    const vehicleSelect = document.getElementById('vehicle-select');
+                    const driverSelect = document.getElementById('driver-select');
+                    
+                    // Verschiedene mögliche Feldnamen prüfen
+                    const vehicleId = reservation.vehicleId || reservation.vehicleID || (reservation.vehicle && reservation.vehicle.id);
+                    const driverId = reservation.driverId || reservation.driverID || (reservation.driver && reservation.driver.id);
+                    
+                    console.log('Setting vehicle ID:', vehicleId, 'Driver ID:', driverId);
+                    
+                    // Fahrer-Auswahl direkt setzen (da Fahrer-Liste sich nicht ändert)
+                    if (driverSelect && driverId) {
+                        driverSelect.value = driverId;
+                        if (driverSelect.value !== driverId) {
+                            for (let option of driverSelect.options) {
+                                if (option.value === driverId) {
+                                    option.selected = true;
+                                    break;
                                 }
                             }
                         }
-                        if (driverSelect && driverId) {
-                            driverSelect.value = driverId;
-                            // Falls die direkte Zuweisung nicht funktioniert, Option suchen
-                            if (driverSelect.value !== driverId) {
-                                for (let option of driverSelect.options) {
-                                    if (option.value === driverId) {
+                    }
+                    
+                    // Verfügbare Fahrzeuge neu laden (mit Ausschluss der aktuellen Reservierung)
+                    // und dann die Fahrzeug-Auswahl setzen
+                    if (vehicleId) {
+                        // Speichere die gewünschte Fahrzeug-ID
+                        vehicleSelect.dataset.pendingValue = vehicleId;
+                        
+                        // Lade verfügbare Fahrzeuge für den aktuellen Zeitraum
+                        checkAvailableVehicles().then(() => {
+                            // Setze Fahrzeug-Auswahl nach dem Laden der verfügbaren Fahrzeuge
+                            const pendingValue = vehicleSelect.dataset.pendingValue;
+                            if (pendingValue) {
+                                vehicleSelect.value = pendingValue;
+                                if (vehicleSelect.value !== pendingValue) {
+                                    // Prüfe ob das Fahrzeug in der verfügbaren Liste ist
+                                    let found = false;
+                                    for (let option of vehicleSelect.options) {
+                                        if (option.value === pendingValue) {
+                                            option.selected = true;
+                                            found = true;
+                                            break;
+                                        }
+                                    }
+                                    // Wenn das Fahrzeug nicht in der verfügbaren Liste ist, füge es hinzu
+                                    if (!found && reservation.vehicle) {
+                                        const option = document.createElement('option');
+                                        option.value = pendingValue;
+                                        option.textContent = `${reservation.vehicle.brand} ${reservation.vehicle.model} (${reservation.vehicle.licensePlate}) - Aktuell gewählt`;
                                         option.selected = true;
-                                        break;
+                                        vehicleSelect.appendChild(option);
                                     }
                                 }
+                                // Lösche den temporären Wert
+                                delete vehicleSelect.dataset.pendingValue;
                             }
-                        }
-                    }, 100);
+                        });
+                    }
                 } else {
                     console.error('Reservation not found with ID:', reservationId);
                     showNotification('Reservierung nicht gefunden', 'error');
