@@ -24,12 +24,10 @@ func NewReservationScheduler() *ReservationScheduler {
 // Start startet den Scheduler mit einem bestimmten Intervall (in Minuten)
 func (s *ReservationScheduler) Start(intervalMinutes int) {
 	if s.running {
-		log.Println("Reservation scheduler is already running")
 		return
 	}
 
 	s.running = true
-	log.Printf("Starting reservation scheduler with %d minute interval", intervalMinutes)
 
 	// Initialer Lauf beim Start
 	s.processReservations()
@@ -44,7 +42,6 @@ func (s *ReservationScheduler) Start(intervalMinutes int) {
 			case <-ticker.C:
 				s.processReservations()
 			case <-s.stopChan:
-				log.Println("Reservation scheduler stopped")
 				return
 			}
 		}
@@ -59,18 +56,13 @@ func (s *ReservationScheduler) Stop() {
 
 	s.running = false
 	s.stopChan <- true
-	log.Println("Stopping reservation scheduler")
 }
 
 // processReservations verarbeitet alle ausstehenden Reservierungen
 func (s *ReservationScheduler) processReservations() {
-	log.Println("Processing scheduled reservations...")
-
 	err := s.reservationService.ProcessScheduledReservations()
 	if err != nil {
-		log.Printf("Error processing scheduled reservations: %v", err)
-	} else {
-		log.Println("Scheduled reservations processed successfully")
+		log.Printf("⚠️  Reservation scheduler error: %v", err)
 	}
 }
 

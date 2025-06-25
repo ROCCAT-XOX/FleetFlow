@@ -77,6 +77,107 @@ go build -o fleetdrive
 
 The application will be available at `http://localhost:8080`
 
+## 📊 Logging Configuration
+
+FleetFlow features an intelligent logging system with configurable verbosity levels:
+
+### Log Levels
+
+#### **DEBUG Mode** - Complete Development Logging
+```bash
+export LOG_LEVEL=debug
+go run .
+```
+- ✅ Shows **all routes** during application startup
+- ✅ Displays **every HTTP request** with full details
+- ✅ Perfect for development and debugging
+- ✅ Includes route registration with handler mapping
+
+#### **INFO Mode** - Smart Production Logging (Default)
+```bash
+export LOG_LEVEL=info
+go run .
+# or simply: go run .
+```
+- ✅ Clean startup sequence without route spam
+- ✅ Logs only **important requests**:
+  - Data modification operations (POST, PUT, DELETE)
+  - Error responses (4xx, 5xx status codes)
+  - Slow requests (>1 second response time)
+- ✅ Ideal for normal development and production monitoring
+
+#### **MINIMAL Mode** - Error-Only Logging
+```bash
+export LOG_LEVEL=minimal
+go run .
+```
+- ✅ **Errors only** - minimal noise
+- ✅ Perfect for production environments
+- ✅ Clean console output
+
+### Log Output Examples
+
+**Startup Sequence (All Modes):**
+```
+🚀 Starting FleetFlow Application...
+📊 Connecting to database...
+✅ Database connected successfully
+👤 Admin user verified/created
+📅 Starting reservation scheduler...
+✅ Reservation scheduler started
+🌐 Setting up routes...
+✅ Routes configured
+🌍 Server starting on http://localhost:8080
+💡 Current log level: INFO
+   To change: export LOG_LEVEL=debug|info|minimal
+   • DEBUG: Show all routes and requests
+   • INFO: Show data changes and errors (default)
+   • MINIMAL: Show errors only
+📋 Ready to handle requests...
+```
+
+**Request Logging (INFO/DEBUG modes):**
+```
+✏️  POST /api/vehicles 201 45ms | 192.168.1.100 | User: admin
+⚠️  GET /api/invalid 404 2ms | 192.168.1.100 | Anonymous  
+❌ POST /api/login 500 120ms | 192.168.1.100 | Anonymous
+🐌 GET /api/heavy-query 200 2.3s | 192.168.1.100 | User: admin
+```
+
+**Route Registration (DEBUG mode only):**
+```
+[GIN-debug] GET    /api/vehicles --> handler.GetVehicles (5 handlers)
+[GIN-debug] POST   /api/vehicles --> handler.CreateVehicle (5 handlers)
+[GIN-debug] PUT    /api/vehicles/:id --> handler.UpdateVehicle (5 handlers)
+...
+```
+
+### Log Symbols and Meanings
+
+| Symbol | Meaning | When Used |
+|--------|---------|-----------|
+| ✏️ | Data Change | POST, PUT, DELETE requests |
+| ⚠️ | Warning | 4xx status codes |
+| ❌ | Error | 5xx status codes |
+| 🐌 | Slow Request | Requests taking >1 second |
+| 📋 | Info | General informational logs |
+| 🔍 | Debug | DEBUG mode detailed logs |
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `LOG_LEVEL` | `info` | Sets logging verbosity (`debug`, `info`, `minimal`) |
+| `ENV` | `development` | Environment mode for database connection |
+| `GIN_MODE` | Auto-set | Gin framework mode (managed by LOG_LEVEL) |
+
+### Best Practices
+
+- **Development**: Use `LOG_LEVEL=debug` to see all routes and requests
+- **Staging**: Use `LOG_LEVEL=info` to monitor important operations
+- **Production**: Use `LOG_LEVEL=minimal` for clean error-only logging
+- **Debugging**: Switch to `debug` temporarily when investigating issues
+
 ## 🐳 Docker
 
 ### Build Docker Image

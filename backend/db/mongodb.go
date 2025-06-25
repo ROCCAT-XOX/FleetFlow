@@ -3,7 +3,6 @@ package db
 
 import (
 	"context"
-	"log"
 	"os"
 	"time"
 
@@ -32,24 +31,20 @@ func ConnectDB() error {
 
 	// Dynamische URI basierend auf Umgebung
 	mongoURI := getMongoURI()
-	log.Printf("Verbindung zu MongoDB: %s", mongoURI)
 
 	// Verbindung zur MongoDB herstellen
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(mongoURI))
 	if err != nil {
-		log.Printf("Fehler beim Verbinden zur MongoDB: %v", err)
 		return err
 	}
 
 	// Ping zur Überprüfung der Verbindung
 	err = client.Ping(ctx, nil)
 	if err != nil {
-		log.Printf("Fehler beim Pingen der MongoDB: %v", err)
 		return err
 	}
 
 	DBClient = client
-	log.Println("Erfolgreich mit MongoDB verbunden")
 	return nil
 }
 
@@ -64,10 +59,8 @@ func DisconnectDB() error {
 	defer cancel()
 
 	if err := DBClient.Disconnect(ctx); err != nil {
-		log.Printf("Fehler beim Trennen der MongoDB-Verbindung: %v", err)
 		return err
 	}
 
-	log.Println("Verbindung zur MongoDB getrennt")
 	return nil
 }
