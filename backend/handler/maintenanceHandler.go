@@ -31,8 +31,8 @@ type CreateMaintenanceRequest struct {
 	VehicleID string                `json:"vehicleId" binding:"required"`
 	Date      string                `json:"date" binding:"required"`
 	Type      model.MaintenanceType `json:"type" binding:"required"`
-	Mileage   int                   `json:"mileage" binding:"required"`
-	Cost      float64               `json:"cost" binding:"required"`
+	Mileage   int                   `json:"mileage"`                    // Optional: 0 bedeutet keine Angabe
+	Cost      float64               `json:"cost"`                      // Optional: 0.0 bedeutet keine Angabe
 	Workshop  string                `json:"workshop"`
 	Notes     string                `json:"notes"`
 }
@@ -158,8 +158,8 @@ func (h *MaintenanceHandler) CreateMaintenanceEntry(c *gin.Context) {
 		return
 	}
 
-	// Kilometerstand des Fahrzeugs aktualisieren, wenn der Eintrag einen höheren Wert hat
-	if req.Mileage > vehicle.Mileage {
+	// Kilometerstand des Fahrzeugs aktualisieren, wenn der Eintrag einen höheren Wert hat und ein Wert angegeben wurde
+	if req.Mileage > 0 && req.Mileage > vehicle.Mileage {
 		vehicle.Mileage = req.Mileage
 		if err := h.vehicleRepo.Update(vehicle); err != nil {
 			// Kein kritischer Fehler, nur loggen
@@ -229,9 +229,9 @@ func (h *MaintenanceHandler) UpdateMaintenanceEntry(c *gin.Context) {
 		return
 	}
 
-	// Kilometerstand des Fahrzeugs aktualisieren, wenn der Eintrag einen höheren Wert hat
+	// Kilometerstand des Fahrzeugs aktualisieren, wenn der Eintrag einen höheren Wert hat und ein Wert angegeben wurde
 	vehicle, err := h.vehicleRepo.FindByID(entry.VehicleID.Hex())
-	if err == nil && req.Mileage > vehicle.Mileage {
+	if err == nil && req.Mileage > 0 && req.Mileage > vehicle.Mileage {
 		vehicle.Mileage = req.Mileage
 		h.vehicleRepo.Update(vehicle)
 	}

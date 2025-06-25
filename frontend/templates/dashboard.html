@@ -361,32 +361,34 @@
                         <ul class="divide-y divide-gray-200">
                             {{range .recentDrivers}}
                             <li class="py-3">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center">
-                                        <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-800 text-sm font-medium mr-3">
-                                            {{ getInitials (printf "%s %s" .FirstName .LastName) }}
+                                <a href="/drivers?edit={{.ID.Hex}}" class="block hover:bg-gray-50 transition-colors duration-200 cursor-pointer rounded-md px-3 py-2 -mx-3 -my-2">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center">
+                                            <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-800 text-sm font-medium mr-3">
+                                                {{ getInitials (printf "%s %s" .FirstName .LastName) }}
+                                            </div>
+                                            <div>
+                                                <p class="text-sm font-medium text-gray-900 hover:text-blue-600">{{.FirstName}} {{.LastName}}</p>
+                                                <p class="text-sm text-gray-500">
+                                                    {{if eq .Status "available"}}Verfügbar
+                                                    {{else if eq .Status "onduty"}}Im Dienst
+                                                    {{else if eq .Status "offduty"}}Außer Dienst
+                                                    {{else}}{{.Status}}{{end}}
+                                                </p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p class="text-sm font-medium text-gray-900">{{.FirstName}} {{.LastName}}</p>
-                                            <p class="text-sm text-gray-500">
-                                                {{if eq .Status "available"}}Verfügbar
-                                                {{else if eq .Status "onduty"}}Im Dienst
-                                                {{else if eq .Status "offduty"}}Außer Dienst
-                                                {{else}}{{.Status}}{{end}}
-                                            </p>
-                                        </div>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                      {{if eq .Status "available"}}bg-green-100 text-green-800
+                                        {{else if eq .Status "onduty"}}bg-yellow-100 text-yellow-800
+                                        {{else if eq .Status "offduty"}}bg-gray-100 text-gray-800
+                                        {{else}}bg-gray-100 text-gray-800{{end}}">
+                                        {{if eq .Status "available"}}●
+                                        {{else if eq .Status "onduty"}}●
+                                        {{else if eq .Status "offduty"}}●
+                                        {{else}}●{{end}}
+                                        </span>
                                     </div>
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                  {{if eq .Status "available"}}bg-green-100 text-green-800
-                                    {{else if eq .Status "onduty"}}bg-yellow-100 text-yellow-800
-                                    {{else if eq .Status "offduty"}}bg-gray-100 text-gray-800
-                                    {{else}}bg-gray-100 text-gray-800{{end}}">
-                                    {{if eq .Status "available"}}●
-                                    {{else if eq .Status "onduty"}}●
-                                    {{else if eq .Status "offduty"}}●
-                                    {{else}}●{{end}}
-                                    </span>
-                                </div>
+                                </a>
                             </li>
                             {{else}}
                             <li class="py-3 text-center text-gray-500">
@@ -401,21 +403,37 @@
                 <div class="bg-white rounded-xl shadow-md overflow-hidden">
                     <div class="flex items-center justify-between p-4 border-b border-gray-200">
                         <h3 class="text-lg font-semibold text-gray-800">Wartungen nächster Monat</h3>
-                        <a href="/maintenance" class="text-sm text-blue-600 hover:underline">Alle anzeigen</a>
+                        <a href="/vehicles" class="text-sm text-blue-600 hover:underline">Alle anzeigen</a>
                     </div>
                     <div class="p-4">
                         <ul class="divide-y divide-gray-200">
                             {{range .upcomingMaintenance}}
                             <li class="py-3">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <p class="text-sm font-medium text-gray-900">{{.vehicleName}}</p>
-                                        <p class="text-sm text-gray-500">{{.licensePlate}}</p>
+                                <a href="/vehicle-details/{{.vehicleId}}?tab=maintenance" class="block hover:bg-gray-50 transition-colors duration-200 cursor-pointer rounded-md px-3 py-2 -mx-3 -my-2">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex-1">
+                                            <div class="flex items-center justify-between">
+                                                <p class="text-sm font-medium text-gray-900 hover:text-blue-600">{{.vehicleName}}</p>
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                                    {{.nextDueDate | formatDate}}
+                                                </span>
+                                            </div>
+                                            <div class="flex items-center justify-between mt-1">
+                                                <p class="text-sm text-gray-500">{{.licensePlate}}</p>
+                                                {{if .type}}
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                                    {{.type}}
+                                                </span>
+                                                {{end}}
+                                            </div>
+                                            {{if .daysRemaining}}
+                                            <p class="text-xs text-gray-400 mt-1">
+                                                {{if le .daysRemaining 0}}Heute fällig{{else if eq .daysRemaining 1}}Morgen{{else}}In {{.daysRemaining}} Tagen{{end}}
+                                            </p>
+                                            {{end}}
+                                        </div>
                                     </div>
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                  {{.nextDueDate | formatDate}}
-                </span>
-                                </div>
+                                </a>
                             </li>
                             {{else}}
                             <li class="py-3 text-center text-gray-500">

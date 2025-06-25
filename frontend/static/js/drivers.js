@@ -12,6 +12,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Event Listeners
     setupEventListeners();
+
+    // URL-Parameter prüfen für automatisches Öffnen des Edit-Modals
+    const urlParams = new URLSearchParams(window.location.search);
+    const editDriverId = urlParams.get('edit');
+    if (editDriverId) {
+        // Kurz warten, damit die Fahrer geladen sind, dann Modal öffnen
+        setTimeout(() => {
+            openEditDriverModal(editDriverId);
+            // URL-Parameter entfernen, ohne die Seite neu zu laden
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }, 500);
+    }
 });
 
 // Event Listeners einrichten
@@ -191,6 +203,10 @@ function renderDrivers(drivers) {
         const licenseClasses = driver.licenseClasses && driver.licenseClasses.length > 0 ?
             driver.licenseClasses.join(', ') : 'Keine';
 
+        row.className = "cursor-pointer hover:bg-blue-50 hover:shadow-lg transition-all duration-200 ease-in-out group relative";
+        row.style.borderLeft = "4px solid transparent";
+        row.onclick = function() { openEditDriverModal(driver.id); };
+
         row.innerHTML = `
             <td class="px-6 py-4 whitespace-nowrap">
                 <div class="flex items-center">
@@ -229,14 +245,14 @@ function renderDrivers(drivers) {
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <div class="flex items-center justify-end space-x-2">
-                    <button onclick="openDocumentsModal('${driver.id}')" 
+                    <button onclick="event.stopPropagation(); openDocumentsModal('${driver.id}')" 
                             class="text-gray-600 hover:text-gray-900 p-1 rounded hover:bg-gray-50"
                             title="Dokumente">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
                     </button>
-                    <button onclick="openAssignVehicleModal('${driver.id}')" 
+                    <button onclick="event.stopPropagation(); openAssignVehicleModal('${driver.id}')" 
                             class="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50"
                             title="Fahrzeug zuweisen">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -244,14 +260,14 @@ function renderDrivers(drivers) {
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l2.414 2.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0M15 17a2 2 0 104 0M9 17h6"></path>
                         </svg>
                     </button>
-                    <button onclick="openEditDriverModal('${driver.id}')" 
+                    <button onclick="event.stopPropagation(); openEditDriverModal('${driver.id}')" 
                            class="text-indigo-600 hover:text-indigo-900 p-1 rounded hover:bg-indigo-50"
                            title="Bearbeiten">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                         </svg>
                     </button>
-                    <button onclick="deleteDriver('${driver.id}')" 
+                    <button onclick="event.stopPropagation(); deleteDriver('${driver.id}')" 
                             class="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
                             title="Löschen">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -263,6 +279,53 @@ function renderDrivers(drivers) {
         `;
 
         tbody.appendChild(row);
+    });
+
+    // Verbesserte Hover-Effekte mit explizitem Styling für alle Zeilen
+    tbody.addEventListener('mouseover', function(e) {
+        const row = e.target.closest('tr[data-status]');
+        if (row) {
+            row.style.backgroundColor = 'rgb(239 246 255)'; // bg-blue-50
+            row.style.borderLeftColor = 'rgb(96 165 250)'; // border-blue-400
+            row.style.borderLeftWidth = '4px';
+            row.style.borderLeftStyle = 'solid';
+            row.style.boxShadow = '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)'; // shadow-lg
+            row.style.transform = 'translateX(2px)';
+            row.style.transition = 'all 0.2s ease-in-out';
+        }
+    });
+
+    tbody.addEventListener('mouseout', function(e) {
+        const row = e.target.closest('tr[data-status]');
+        if (row) {
+            row.style.backgroundColor = '';
+            row.style.borderLeftColor = 'transparent';
+            row.style.borderLeftWidth = '4px';
+            row.style.borderLeftStyle = 'solid';
+            row.style.boxShadow = '';
+            row.style.transform = 'translateX(0)';
+        }
+    });
+
+    // Event-Delegation für dynamisch erstellte Zeilen (fallback falls onclick nicht funktioniert)
+    tbody.addEventListener('click', function(e) {
+        // Finde die Tabellenzeile
+        const row = e.target.closest('tr[data-status]');
+        if (!row) return;
+
+        // Prüfe ob das Klick-Event von einem Button kam
+        if (e.target.closest('button')) {
+            return; // Button-Event nicht überschreiben
+        }
+
+        // Extrahiere Driver-ID aus dem onclick-Attribut
+        const onclickAttr = row.getAttribute('onclick');
+        if (onclickAttr) {
+            const match = onclickAttr.match(/openEditDriverModal\('([^']+)'\)/);
+            if (match) {
+                openEditDriverModal(match[1]);
+            }
+        }
     });
 
     console.log('renderDrivers completed');

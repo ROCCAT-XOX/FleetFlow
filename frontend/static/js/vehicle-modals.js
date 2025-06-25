@@ -292,11 +292,13 @@ async function handleMaintenanceSubmit(e) {
 
     const newMileage = parseInt(formData.get('mileage')) || 0;
     
-    // Kilometerstand-Validierung
-    const currentMileage = await getCurrentVehicleMileage(vehicleId);
-    if (newMileage > 0 && !validateMileage(newMileage, currentMileage, 'Wartungseintrag')) {
-        isSubmitting = false;
-        return;
+    // Kilometerstand-Validierung nur wenn ein Wert eingegeben wurde
+    if (newMileage > 0) {
+        const currentMileage = await getCurrentVehicleMileage(vehicleId);
+        if (!validateMileage(newMileage, currentMileage, 'Wartungseintrag')) {
+            isSubmitting = false;
+            return;
+        }
     }
 
     const data = {

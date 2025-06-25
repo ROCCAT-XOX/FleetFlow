@@ -185,3 +185,40 @@ func (r *MaintenanceRepository) FindByDateRange(startDate, endDate time.Time) ([
 
 	return maintenances, nil
 }
+
+// FindUpcoming findet alle geplanten Wartungseinträge ab einem bestimmten Datum
+func (r *MaintenanceRepository) FindUpcoming(fromDate time.Time, toDate time.Time) ([]*model.Maintenance, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	var maintenances []*model.Maintenance
+
+	// Nach Datum aufsteigend sortieren (nächste zuerst)
+	opts := options.Find().SetSort(bson.D{{Key: "date", Value: 1}})
+
+	cursor, err := r.collection.Find(ctx, bson.M{
+		"date": bson.M{
+			"$gte": fromDate,
+			"$lte": toDate,
+		},
+	}, opts)
+
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	for cursor.Next(ctx) {
+		var maintenance model.Maintenance
+		if err := cursor.Decode(&maintenance); err != nil {
+			return nil, err
+		}
+		maintenances = append(maintenances, &maintenance)
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+
+	return maintenances, nil
+}

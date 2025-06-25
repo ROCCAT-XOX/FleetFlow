@@ -365,19 +365,77 @@ func (h *DashboardHandler) getUpcomingMaintenanceNextMonth() []gin.H {
 	endOfNextMonth := time.Date(nextMonth.Year(), nextMonth.Month(), 1, 0, 0, 0, 0, nextMonth.Location()).AddDate(0, 1, 0).Add(-time.Nanosecond)
 
 	var upcoming []gin.H
+	upcomingMap := make(map[string]gin.H) // Um Duplikate zu vermeiden
 
+	// 1. Fahrzeug-Inspektionstermine prüfen
 	for _, vehicle := range vehicles {
 		if !vehicle.NextInspectionDate.IsZero() &&
 			vehicle.NextInspectionDate.After(now) &&
 			vehicle.NextInspectionDate.Before(endOfNextMonth) {
-			upcoming = append(upcoming, gin.H{
+			
+			key := vehicle.ID.Hex() + "_inspection"
+			upcomingMap[key] = gin.H{
 				"vehicleId":     vehicle.ID.Hex(),
 				"vehicleName":   vehicle.Brand + " " + vehicle.Model,
 				"licensePlate":  vehicle.LicensePlate,
 				"nextDueDate":   vehicle.NextInspectionDate,
 				"daysRemaining": int(vehicle.NextInspectionDate.Sub(now).Hours() / 24),
-			})
+				"type":          "Inspektion",
+				"source":        "vehicle",
+			}
 		}
+	}
+
+	// 2. Geplante Wartungseinträge prüfen
+	maintenanceRepo := repository.NewMaintenanceRepository()
+	upcomingMaintenances, err := maintenanceRepo.FindUpcoming(now, endOfNextMonth)
+	if err == nil {
+		// Vehicle-Map für schnelle Zugriffe erstellen
+		vehicleMap := make(map[string]*model.Vehicle)
+		for _, vehicle := range vehicles {
+			vehicleMap[vehicle.ID.Hex()] = vehicle
+		}
+
+		for _, maintenance := range upcomingMaintenances {
+			vehicle, exists := vehicleMap[maintenance.VehicleID.Hex()]
+			if !exists {
+				continue
+			}
+
+			// Wartungstyp übersetzen
+			var maintenanceTypeText string
+			switch maintenance.Type {
+			case model.MaintenanceTypeInspection:
+				maintenanceTypeText = "Inspektion"
+			case model.MaintenanceTypeOilChange:
+				maintenanceTypeText = "Ölwechsel"
+			case model.MaintenanceTypeTireChange:
+				maintenanceTypeText = "Reifenwechsel"
+			case model.MaintenanceTypeRepair:
+				maintenanceTypeText = "Reparatur"
+			case model.MaintenanceTypeOther:
+				maintenanceTypeText = "Sonstiges"
+			default:
+				maintenanceTypeText = string(maintenance.Type)
+			}
+
+			key := maintenance.VehicleID.Hex() + "_" + maintenance.ID.Hex()
+			upcomingMap[key] = gin.H{
+				"vehicleId":       vehicle.ID.Hex(),
+				"vehicleName":     vehicle.Brand + " " + vehicle.Model,
+				"licensePlate":    vehicle.LicensePlate,
+				"nextDueDate":     maintenance.Date,
+				"daysRemaining":   int(maintenance.Date.Sub(now).Hours() / 24),
+				"type":            maintenanceTypeText,
+				"source":          "maintenance",
+				"maintenanceId":   maintenance.ID.Hex(),
+			}
+		}
+	}
+
+	// Map zu Slice konvertieren
+	for _, item := range upcomingMap {
+		upcoming = append(upcoming, item)
 	}
 
 	// Nach Datum sortieren
