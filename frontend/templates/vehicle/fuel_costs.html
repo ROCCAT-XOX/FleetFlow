@@ -49,7 +49,12 @@
                             {{if .Mileage}}{{formatMileage .Mileage}}{{else}}-{{end}}
                         </td>
                         <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                            <button class="text-indigo-600 hover:text-indigo-900" onclick="editFuelCost('{{.ID.Hex}}')">Bearbeiten</button>
+                            <button class="text-indigo-600 hover:text-indigo-900 mr-4" onclick="editFuelCost('{{.ID.Hex}}')">Bearbeiten</button>
+                            <button class="text-red-600 hover:text-red-900 p-1" onclick="deleteFuelCost('{{.ID.Hex}}')" title="Löschen">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
                         </td>
                     </tr>
                     {{end}}
@@ -85,4 +90,112 @@
         </div>
     </div>
 </div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteFuelCostModal" class="fixed z-10 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <!-- Background Overlay -->
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeDeleteFuelCostModal()"></div>
+        
+        <!-- Modal Content Center Helper -->
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        
+        <!-- Modal Panel -->
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <!-- Modal Content -->
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="sm:flex sm:items-start">
+                    <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                        <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 18.5c-.77.833.192 2.5 1.732 2.5z" />
+                        </svg>
+                    </div>
+                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                            Tankkosten löschen
+                        </h3>
+                        <div class="mt-2">
+                            <p class="text-sm text-gray-500">
+                                Sind Sie sicher, dass Sie diese Tankkosten löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Modal Footer -->
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button type="button" id="confirmDeleteFuelCost" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
+                    Löschen
+                </button>
+                <button type="button" onclick="closeDeleteFuelCostModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                    Abbrechen
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentFuelCostId = null;
+
+// Modal öffnen
+function openDeleteFuelCostModal(fuelCostId) {
+    currentFuelCostId = fuelCostId;
+    document.getElementById('deleteFuelCostModal').classList.remove('hidden');
+}
+
+// Modal schließen
+function closeDeleteFuelCostModal() {
+    currentFuelCostId = null;
+    document.getElementById('deleteFuelCostModal').classList.add('hidden');
+}
+
+// Löschen bestätigen
+document.getElementById('confirmDeleteFuelCost').addEventListener('click', async function() {
+    if (!currentFuelCostId) return;
+
+    try {
+        const response = await fetch(`/api/fuelcosts/${currentFuelCostId}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            throw new Error('Fehler beim Löschen');
+        }
+
+        // Benachrichtigung anzeigen
+        if (typeof showNotification === 'function') {
+            showNotification('Tankkosten erfolgreich gelöscht', 'success');
+        }
+
+        // Modal schließen
+        closeDeleteFuelCostModal();
+
+        // Seite nach kurzer Verzögerung neu laden
+        setTimeout(() => {
+            window.location.reload();
+        }, 500);
+
+    } catch (error) {
+        console.error('Fehler beim Löschen:', error);
+        if (typeof showNotification === 'function') {
+            showNotification('Fehler beim Löschen der Tankkosten', 'error');
+        } else {
+            alert('Fehler beim Löschen der Tankkosten');
+        }
+    }
+});
+
+// Hauptfunktion für Löschen
+window.deleteFuelCost = function(fuelCostId) {
+    openDeleteFuelCostModal(fuelCostId);
+};
+
+// ESC-Taste zum Schließen
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeDeleteFuelCostModal();
+    }
+});
+</script>
 {{ end }}

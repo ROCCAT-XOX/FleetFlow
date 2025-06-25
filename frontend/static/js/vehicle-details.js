@@ -288,3 +288,31 @@ window.deleteUsage = async function(usageId) {
         showNotification('Fehler beim Löschen des Nutzungseintrags', 'error');
     }
 };
+
+// Tankkosten löschen
+window.deleteFuelCost = async function(fuelCostId) {
+    if (!confirm('Möchten Sie diese Tankkosten wirklich löschen?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/fuelcosts/${fuelCostId}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            throw new Error('Fehler beim Löschen');
+        }
+
+        showNotification('Tankkosten erfolgreich gelöscht', 'success');
+
+        // Seite nach kurzer Verzögerung neu laden
+        setTimeout(() => {
+            window.location.reload();
+        }, 500);
+
+    } catch (error) {
+        console.error('Fehler beim Löschen:', error);
+        showNotification('Fehler beim Löschen der Tankkosten', 'error');
+    }
+};

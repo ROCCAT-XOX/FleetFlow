@@ -3,6 +3,7 @@ package service
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"FleetDrive/backend/repository"
 )
@@ -33,34 +34,52 @@ type MileageSource struct {
 	ID     string `json:"id,omitempty"`
 }
 
-// GetHighestMileageForVehicle ermittelt den höchsten Kilometerstand aus allen Quellen für ein Fahrzeug
-func (s *VehicleMileageService) GetHighestMileageForVehicle(vehicleID string) (*MileageSource, error) {
+// GetLatestMileageForVehicle ermittelt den neuesten Kilometerstand aus allen Quellen für ein Fahrzeug basierend auf dem Datum
+func (s *VehicleMileageService) GetLatestMileageForVehicle(vehicleID string) (*MileageSource, error) {
 
-	var highestMileage *MileageSource
+	var latestMileage *MileageSource
 
-	// Hilfsfunktion zum Vergleichen und Aktualisieren
-	updateIfHigher := func(value int, source, date, id string) {
-		if value > 0 && (highestMileage == nil || value > highestMileage.Value) {
-			highestMileage = &MileageSource{
-				Value:  value,
-				Source: source,
-				Date:   date,
-				ID:     id,
+	// Hilfsfunktion zum Vergleichen und Aktualisieren basierend auf Datum
+	updateIfNewer := func(value int, source, date, id string) {
+		if value > 0 && date != "" {
+			// Datum parsen für Vergleich
+			entryDate, err := time.Parse("2006-01-02", date)
+			if err != nil {
+				return // Ungültiges Datum ignorieren
+			}
+			
+			if latestMileage == nil {
+				latestMileage = &MileageSource{
+					Value:  value,
+					Source: source,
+					Date:   date,
+					ID:     id,
+				}
+			} else {
+				// Aktuelles Datum parsen
+				currentDate, err := time.Parse("2006-01-02", latestMileage.Date)
+				if err != nil {
+					return
+				}
+				
+				// Wenn das neue Datum neuer ist, aktualisieren
+				if entryDate.After(currentDate) {
+					latestMileage = &MileageSource{
+						Value:  value,
+						Source: source,
+						Date:   date,
+						ID:     id,
+					}
+				}
 			}
 		}
 	}
 
-	// 1. Aktueller Fahrzeug-Kilometerstand
-	vehicle, err := s.vehicleRepo.FindByID(vehicleID)
-	if err == nil && vehicle.Mileage > 0 {
-		updateIfHigher(vehicle.Mileage, "vehicle", "", vehicle.ID.Hex())
-	}
-
-	// 2. Wartungseinträge
+	// 1. Wartungseinträge
 	maintenanceEntries, err := s.maintenanceRepo.FindByVehicle(vehicleID)
 	if err == nil {
 		for _, maintenance := range maintenanceEntries {
-			updateIfHigher(
+			updateIfNewer(
 				maintenance.Mileage,
 				"maintenance",
 				maintenance.Date.Format("2006-01-02"),
@@ -69,12 +88,12 @@ func (s *VehicleMileageService) GetHighestMileageForVehicle(vehicleID string) (*
 		}
 	}
 
-	// 3. Fahrzeugnutzungseinträge
+	// 2. Fahrzeugnutzungseinträge
 	usageEntries, err := s.usageRepo.FindByVehicle(vehicleID)
 	if err == nil {
 		for _, usage := range usageEntries {
 			// Start-Kilometerstand prüfen
-			updateIfHigher(
+			updateIfNewer(
 				usage.StartMileage,
 				"usage_start",
 				usage.StartDate.Format("2006-01-02"),
@@ -82,7 +101,7 @@ func (s *VehicleMileageService) GetHighestMileageForVehicle(vehicleID string) (*
 			)
 			// End-Kilometerstand prüfen (falls vorhanden)
 			if usage.EndMileage > 0 {
-				updateIfHigher(
+				updateIfNewer(
 					usage.EndMileage,
 					"usage_end",
 					usage.EndDate.Format("2006-01-02"),
@@ -92,11 +111,11 @@ func (s *VehicleMileageService) GetHighestMileageForVehicle(vehicleID string) (*
 		}
 	}
 
-	// 4. Tankkosten-Einträge
+	// 3. Tankkosten-Einträge
 	fuelCostEntries, err := s.fuelCostRepo.FindByVehicle(vehicleID)
 	if err == nil {
 		for _, fuelCost := range fuelCostEntries {
-			updateIfHigher(
+			updateIfNewer(
 				fuelCost.Mileage,
 				"fuel_cost",
 				fuelCost.Date.Format("2006-01-02"),
@@ -105,19 +124,30 @@ func (s *VehicleMileageService) GetHighestMileageForVehicle(vehicleID string) (*
 		}
 	}
 
-	if highestMileage == nil {
+	// 4. Aktueller Fahrzeug-Kilometerstand als Fallback (ohne Datum)
+	vehicle, err := s.vehicleRepo.FindByID(vehicleID)
+	if err == nil && vehicle.Mileage > 0 && latestMileage == nil {
+		latestMileage = &MileageSource{
+			Value:  vehicle.Mileage,
+			Source: "vehicle",
+			Date:   "",
+			ID:     vehicle.ID.Hex(),
+		}
+	}
+
+	if latestMileage == nil {
 		return &MileageSource{Value: 0, Source: "none"}, nil
 	}
 
-	return highestMileage, nil
+	return latestMileage, nil
 }
 
-// UpdateVehicleMileageFromAllSources aktualisiert den Kilometerstand des Fahrzeugs basierend auf dem höchsten Wert aus allen Quellen
+// UpdateVehicleMileageFromAllSources aktualisiert den Kilometerstand des Fahrzeugs basierend auf dem neuesten Wert aus allen Quellen
 func (s *VehicleMileageService) UpdateVehicleMileageFromAllSources(vehicleID string) error {
-	// Höchsten Kilometerstand ermitteln
-	highestMileage, err := s.GetHighestMileageForVehicle(vehicleID)
+	// Neuesten Kilometerstand ermitteln
+	latestMileage, err := s.GetLatestMileageForVehicle(vehicleID)
 	if err != nil {
-		return fmt.Errorf("fehler beim Ermitteln des höchsten Kilometerstands: %v", err)
+		return fmt.Errorf("fehler beim Ermitteln des neuesten Kilometerstands: %v", err)
 	}
 
 	// Fahrzeug laden
@@ -126,24 +156,29 @@ func (s *VehicleMileageService) UpdateVehicleMileageFromAllSources(vehicleID str
 		return fmt.Errorf("fahrzeug nicht gefunden: %v", err)
 	}
 
-	// Kilometerstand nur aktualisieren, wenn ein höherer Wert gefunden wurde
-	if highestMileage.Value > vehicle.Mileage {
+	// Kilometerstand aktualisieren, wenn ein neuerer Wert gefunden wurde
+	if latestMileage.Value > 0 && latestMileage.Value != vehicle.Mileage {
 		oldMileage := vehicle.Mileage
-		vehicle.Mileage = highestMileage.Value
+		vehicle.Mileage = latestMileage.Value
 
 		err = s.vehicleRepo.Update(vehicle)
 		if err != nil {
 			return fmt.Errorf("fehler beim Aktualisieren des Fahrzeug-Kilometerstands: %v", err)
 		}
 
-		log.Printf("Kilometerstand für Fahrzeug %s aktualisiert: %d -> %d (Quelle: %s)",
-			vehicleID, oldMileage, highestMileage.Value, highestMileage.Source)
+		log.Printf("Kilometerstand für Fahrzeug %s aktualisiert: %d -> %d (Quelle: %s, Datum: %s)",
+			vehicleID, oldMileage, latestMileage.Value, latestMileage.Source, latestMileage.Date)
 	}
 
 	return nil
 }
 
-// UpdateAllVehicleMileages aktualisiert die Kilometerstände aller Fahrzeuge basierend auf den höchsten Werten aus allen Quellen
+// GetHighestMileageForVehicle ist eine Kompatibilitätsfunktion für die alte API - jetzt delegiert sie an GetLatestMileageForVehicle
+func (s *VehicleMileageService) GetHighestMileageForVehicle(vehicleID string) (*MileageSource, error) {
+	return s.GetLatestMileageForVehicle(vehicleID)
+}
+
+// UpdateAllVehicleMileages aktualisiert die Kilometerstände aller Fahrzeuge basierend auf den neuesten Werten aus allen Quellen
 func (s *VehicleMileageService) UpdateAllVehicleMileages() error {
 	vehicles, err := s.vehicleRepo.FindAll()
 	if err != nil {
