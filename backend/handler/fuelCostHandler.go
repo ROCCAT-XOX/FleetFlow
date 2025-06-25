@@ -7,6 +7,7 @@ import (
 
 	"FleetDrive/backend/model"
 	"FleetDrive/backend/repository"
+	"FleetDrive/backend/service"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -14,17 +15,19 @@ import (
 
 // FuelCostHandler repräsentiert den Handler für Tankkosten-Operationen
 type FuelCostHandler struct {
-	fuelCostRepo *repository.FuelCostRepository
-	vehicleRepo  *repository.VehicleRepository
-	driverRepo   *repository.DriverRepository
+	fuelCostRepo   *repository.FuelCostRepository
+	vehicleRepo    *repository.VehicleRepository
+	driverRepo     *repository.DriverRepository
+	mileageService *service.VehicleMileageService
 }
 
 // NewFuelCostHandler erstellt einen neuen FuelCostHandler
 func NewFuelCostHandler() *FuelCostHandler {
 	return &FuelCostHandler{
-		fuelCostRepo: repository.NewFuelCostRepository(),
-		vehicleRepo:  repository.NewVehicleRepository(),
-		driverRepo:   repository.NewDriverRepository(),
+		fuelCostRepo:   repository.NewFuelCostRepository(),
+		vehicleRepo:    repository.NewVehicleRepository(),
+		driverRepo:     repository.NewDriverRepository(),
+		mileageService: service.NewVehicleMileageService(),
 	}
 }
 
@@ -167,7 +170,7 @@ func (h *FuelCostHandler) CreateFuelCost(c *gin.Context) {
 	}
 
 	// Prüfen, ob das Fahrzeug existiert
-	vehicle, err := h.vehicleRepo.FindByID(req.VehicleID)
+	_, err = h.vehicleRepo.FindByID(req.VehicleID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Fahrzeug nicht gefunden"})
 		return
@@ -225,10 +228,10 @@ func (h *FuelCostHandler) CreateFuelCost(c *gin.Context) {
 		return
 	}
 
-	// Kilometerstand des Fahrzeugs aktualisieren, wenn der Eintrag einen höheren Wert hat
-	if req.Mileage > vehicle.Mileage {
-		vehicle.Mileage = req.Mileage
-		h.vehicleRepo.Update(vehicle)
+	// Kilometerstand automatisch aus allen Quellen aktualisieren
+	if err := h.mileageService.UpdateVehicleMileageFromAllSources(req.VehicleID); err != nil {
+		// Kein kritischer Fehler, nur loggen - der Tankkosteneintrag wurde erfolgreich erstellt
+		// log.Printf("Fehler beim Aktualisieren des Kilometerstands: %v", err)
 	}
 
 	c.JSON(http.StatusCreated, gin.H{"fuelCost": fuelCost})
@@ -323,11 +326,10 @@ func (h *FuelCostHandler) UpdateFuelCost(c *gin.Context) {
 		return
 	}
 
-	// Kilometerstand des Fahrzeugs aktualisieren, wenn der Eintrag einen höheren Wert hat
-	vehicle, _ := h.vehicleRepo.FindByID(fuelCost.VehicleID.Hex())
-	if vehicle != nil && req.Mileage > vehicle.Mileage {
-		vehicle.Mileage = req.Mileage
-		h.vehicleRepo.Update(vehicle)
+	// Kilometerstand automatisch aus allen Quellen aktualisieren
+	if err := h.mileageService.UpdateVehicleMileageFromAllSources(fuelCost.VehicleID.Hex()); err != nil {
+		// Kein kritischer Fehler, nur loggen - der Tankkosteneintrag wurde erfolgreich aktualisiert
+		// log.Printf("Fehler beim Aktualisieren des Kilometerstands: %v", err)
 	}
 
 	c.JSON(http.StatusOK, gin.H{"fuelCost": fuelCost})

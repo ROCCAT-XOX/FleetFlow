@@ -7,6 +7,7 @@ import (
 
 	"FleetDrive/backend/model"
 	"FleetDrive/backend/repository"
+	"FleetDrive/backend/service"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -14,17 +15,19 @@ import (
 
 // VehicleUsageHandler repräsentiert den Handler für Fahrzeugnutzungs-Operationen
 type VehicleUsageHandler struct {
-	usageRepo   *repository.VehicleUsageRepository
-	vehicleRepo *repository.VehicleRepository
-	driverRepo  *repository.DriverRepository
+	usageRepo      *repository.VehicleUsageRepository
+	vehicleRepo    *repository.VehicleRepository
+	driverRepo     *repository.DriverRepository
+	mileageService *service.VehicleMileageService
 }
 
 // NewVehicleUsageHandler erstellt einen neuen VehicleUsageHandler
 func NewVehicleUsageHandler() *VehicleUsageHandler {
 	return &VehicleUsageHandler{
-		usageRepo:   repository.NewVehicleUsageRepository(),
-		vehicleRepo: repository.NewVehicleRepository(),
-		driverRepo:  repository.NewDriverRepository(),
+		usageRepo:      repository.NewVehicleUsageRepository(),
+		vehicleRepo:    repository.NewVehicleRepository(),
+		driverRepo:     repository.NewDriverRepository(),
+		mileageService: service.NewVehicleMileageService(),
 	}
 }
 
@@ -281,10 +284,10 @@ func (h *VehicleUsageHandler) CreateUsageEntry(c *gin.Context) {
 		h.driverRepo.Update(driver)
 	}
 
-	// Wenn Nutzung abgeschlossen ist, Kilometerstand aktualisieren
-	if req.Status == model.UsageStatusCompleted && req.EndMileage > 0 && req.EndMileage > vehicle.Mileage {
-		vehicle.Mileage = req.EndMileage
-		h.vehicleRepo.Update(vehicle)
+	// Kilometerstand automatisch aus allen Quellen aktualisieren
+	if err := h.mileageService.UpdateVehicleMileageFromAllSources(req.VehicleID); err != nil {
+		// Kein kritischer Fehler, nur loggen - der Nutzungseintrag wurde erfolgreich erstellt
+		// log.Printf("Fehler beim Aktualisieren des Kilometerstands: %v", err)
 	}
 
 	c.JSON(http.StatusCreated, gin.H{"usage": entry})
@@ -440,13 +443,10 @@ func (h *VehicleUsageHandler) UpdateUsageEntry(c *gin.Context) {
 		}
 	}
 
-	// Wenn Nutzung abgeschlossen ist, Kilometerstand aktualisieren
-	if entry.Status == model.UsageStatusCompleted && entry.EndMileage > 0 {
-		vehicle, err := h.vehicleRepo.FindByID(entry.VehicleID.Hex())
-		if err == nil && entry.EndMileage > vehicle.Mileage {
-			vehicle.Mileage = entry.EndMileage
-			h.vehicleRepo.Update(vehicle)
-		}
+	// Kilometerstand automatisch aus allen Quellen aktualisieren
+	if err := h.mileageService.UpdateVehicleMileageFromAllSources(entry.VehicleID.Hex()); err != nil {
+		// Kein kritischer Fehler, nur loggen - der Nutzungseintrag wurde erfolgreich aktualisiert
+		// log.Printf("Fehler beim Aktualisieren des Kilometerstands: %v", err)
 	}
 
 	c.JSON(http.StatusOK, gin.H{"usage": entry})

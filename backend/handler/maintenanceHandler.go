@@ -7,6 +7,7 @@ import (
 
 	"FleetDrive/backend/model"
 	"FleetDrive/backend/repository"
+	"FleetDrive/backend/service"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -14,8 +15,9 @@ import (
 
 // MaintenanceHandler repräsentiert den Handler für Wartungs-Operationen
 type MaintenanceHandler struct {
-	maintenanceRepo *repository.MaintenanceRepository
-	vehicleRepo     *repository.VehicleRepository
+	maintenanceRepo   *repository.MaintenanceRepository
+	vehicleRepo       *repository.VehicleRepository
+	mileageService    *service.VehicleMileageService
 }
 
 // NewMaintenanceHandler erstellt einen neuen MaintenanceHandler
@@ -23,6 +25,7 @@ func NewMaintenanceHandler() *MaintenanceHandler {
 	return &MaintenanceHandler{
 		maintenanceRepo: repository.NewMaintenanceRepository(),
 		vehicleRepo:     repository.NewVehicleRepository(),
+		mileageService:  service.NewVehicleMileageService(),
 	}
 }
 
@@ -128,7 +131,7 @@ func (h *MaintenanceHandler) CreateMaintenanceEntry(c *gin.Context) {
 		return
 	}
 
-	vehicle, err := h.vehicleRepo.FindByID(req.VehicleID)
+	_, err = h.vehicleRepo.FindByID(req.VehicleID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Fahrzeug nicht gefunden"})
 		return
@@ -158,13 +161,10 @@ func (h *MaintenanceHandler) CreateMaintenanceEntry(c *gin.Context) {
 		return
 	}
 
-	// Kilometerstand des Fahrzeugs aktualisieren, wenn der Eintrag einen höheren Wert hat und ein Wert angegeben wurde
-	if req.Mileage > 0 && req.Mileage > vehicle.Mileage {
-		vehicle.Mileage = req.Mileage
-		if err := h.vehicleRepo.Update(vehicle); err != nil {
-			// Kein kritischer Fehler, nur loggen
-			// log.Printf("Fehler beim Aktualisieren des Kilometerstands: %v", err)
-		}
+	// Kilometerstand automatisch aus allen Quellen aktualisieren
+	if err := h.mileageService.UpdateVehicleMileageFromAllSources(req.VehicleID); err != nil {
+		// Kein kritischer Fehler, nur loggen - der Wartungseintrag wurde erfolgreich erstellt
+		// log.Printf("Fehler beim Aktualisieren des Kilometerstands: %v", err)
 	}
 
 	c.JSON(http.StatusCreated, gin.H{"maintenance": entry})
@@ -229,11 +229,10 @@ func (h *MaintenanceHandler) UpdateMaintenanceEntry(c *gin.Context) {
 		return
 	}
 
-	// Kilometerstand des Fahrzeugs aktualisieren, wenn der Eintrag einen höheren Wert hat und ein Wert angegeben wurde
-	vehicle, err := h.vehicleRepo.FindByID(entry.VehicleID.Hex())
-	if err == nil && req.Mileage > 0 && req.Mileage > vehicle.Mileage {
-		vehicle.Mileage = req.Mileage
-		h.vehicleRepo.Update(vehicle)
+	// Kilometerstand automatisch aus allen Quellen aktualisieren
+	if err := h.mileageService.UpdateVehicleMileageFromAllSources(entry.VehicleID.Hex()); err != nil {
+		// Kein kritischer Fehler, nur loggen - der Wartungseintrag wurde erfolgreich aktualisiert
+		// log.Printf("Fehler beim Aktualisieren des Kilometerstands: %v", err)
 	}
 
 	c.JSON(http.StatusOK, gin.H{"maintenance": entry})

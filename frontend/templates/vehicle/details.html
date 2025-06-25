@@ -113,7 +113,6 @@
             {{ else if eq .tab "financing" }}
             {{ template "vehicle/financing" . }}
             {{ else if eq .tab "usage" }}
-            {{ template "vehicle/current_usage" . }}
             {{ template "vehicle/usage_history" . }}
             {{ else if eq .tab "maintenance" }}
             {{ template "vehicle/maintenance" . }}
