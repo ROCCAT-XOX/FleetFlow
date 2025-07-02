@@ -1,8 +1,8 @@
 package repository
 
 import (
-	"FleetDrive/backend/db"
-	"FleetDrive/backend/model"
+	"FleetFlow/backend/db"
+	"FleetFlow/backend/model"
 	"context"
 	"time"
 
