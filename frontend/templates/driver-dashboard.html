@@ -27,29 +27,11 @@
             </div>
             <div class="user-info">
                 <span class="user-name">{{.User.FirstName}}</span>
-                <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
-                    <span></span>
-                    <span></span>
-                    <span></span>
+                <button class="logout-btn" onclick="logout()" title="Abmelden">
+                    🚪
                 </button>
             </div>
         </div>
-        
-        <!-- Mobile Menu -->
-        <nav class="mobile-menu" id="mobileMenu">
-            <a href="/driver/reservations" class="menu-item">
-                <span class="menu-icon">📅</span>
-                <span class="menu-text">Meine Reservierungen</span>
-            </a>
-            <a href="/driver/reports" class="menu-item">
-                <span class="menu-icon">🚗</span>
-                <span class="menu-text">Fahrzeug melden</span>
-            </a>
-            <a href="/logout" class="menu-item logout">
-                <span class="menu-icon">🚪</span>
-                <span class="menu-text">Abmelden</span>
-            </a>
-        </nav>
     </header>
 
     <!-- Main Content -->
@@ -171,6 +153,8 @@
         <div class="loading-spinner"></div>
     </div>
 
+    <!-- JavaScript -->
+    <script src="/static/js/driver-globals.js"></script>
     <script src="/static/js/driver-mobile.js"></script>
 </body>
 </html>
