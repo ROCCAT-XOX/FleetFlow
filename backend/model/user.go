@@ -19,6 +19,7 @@ const (
 	RoleAdmin   UserRole = "admin"
 	RoleManager UserRole = "manager"
 	RoleUser    UserRole = "user"
+	RoleDriver  UserRole = "driver"
 
 	// Benutzerstatus
 	StatusActive   UserStatus = "active"

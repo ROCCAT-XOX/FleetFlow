@@ -73,6 +73,72 @@ func AdminMiddleware() gin.HandlerFunc {
 	}
 }
 
+// ManagerOrAdminMiddleware ist eine Middleware für Manager- und Admin-Operationen
+func ManagerOrAdminMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		user, exists := c.Get("user")
+		if !exists {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Keine Berechtigung"})
+			c.Abort()
+			return
+		}
+		
+		currentUser := user.(*model.User)
+		userRole := currentUser.Role
+		
+		if userRole != model.RoleAdmin && userRole != model.RoleManager {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Nur Manager oder Administratoren dürfen diese Aktion ausführen"})
+			c.Abort()
+			return
+		}
+		c.Next()
+	}
+}
+
+// DriverMiddleware ist eine Middleware für Fahrer-Operationen
+func DriverMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		user, exists := c.Get("user")
+		if !exists {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Keine Berechtigung"})
+			c.Abort()
+			return
+		}
+		
+		currentUser := user.(*model.User)
+		if currentUser.Role != model.RoleDriver {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Nur Fahrer dürfen diese Aktion ausführen"})
+			c.Abort()
+			return
+		}
+		c.Next()
+	}
+}
+
+// DriverOrHigherMiddleware erlaubt Fahrer, Manager und Admins
+func DriverOrHigherMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		user, exists := c.Get("user")
+		if !exists {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Keine Berechtigung"})
+			c.Abort()
+			return
+		}
+		
+		currentUser := user.(*model.User)
+		userRole := currentUser.Role
+		
+		if userRole != model.RoleDriver && 
+		   userRole != model.RoleManager && 
+		   userRole != model.RoleAdmin {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Nicht ausreichende Berechtigung"})
+			c.Abort()
+			return
+		}
+		c.Next()
+	}
+}
+
 // backend/middleware/authMiddleware.go (Fortsetzung)
 // extractToken extrahiert das JWT-Token aus dem Cookie oder Header
 func extractToken(c *gin.Context) (string, error) {
