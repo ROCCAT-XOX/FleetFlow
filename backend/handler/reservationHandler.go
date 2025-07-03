@@ -13,17 +13,21 @@ import (
 
 // ReservationHandler verwaltet alle Reservierungs-bezogenen HTTP-Anfragen
 type ReservationHandler struct {
-	reservationService *service.ReservationService
-	vehicleRepo        *repository.VehicleRepository
-	driverRepo         *repository.DriverRepository
+	reservationService  *service.ReservationService
+	vehicleRepo         *repository.VehicleRepository
+	driverRepo          *repository.DriverRepository
+	userRepo            *repository.UserRepository
+	notificationService *service.NotificationService
 }
 
 // NewReservationHandler erstellt einen neuen ReservationHandler
 func NewReservationHandler() *ReservationHandler {
 	return &ReservationHandler{
-		reservationService: service.NewReservationService(),
-		vehicleRepo:        repository.NewVehicleRepository(),
-		driverRepo:         repository.NewDriverRepository(),
+		reservationService:  service.NewReservationService(),
+		vehicleRepo:         repository.NewVehicleRepository(),
+		driverRepo:          repository.NewDriverRepository(),
+		userRepo:            repository.NewUserRepository(),
+		notificationService: service.NewNotificationService(),
 	}
 }
 
@@ -198,6 +202,26 @@ func (h *ReservationHandler) CreateReservation(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	// Benachrichtigung über neue Reservierungsanfrage an Manager senden
+	go func() {
+		// Fahrzeug- und Fahrer-Details für Benachrichtigung laden
+		vehicle, err := h.vehicleRepo.FindByID(req.VehicleID)
+		if err != nil {
+			return
+		}
+		
+		driver, err := h.driverRepo.FindByID(req.DriverID)
+		if err != nil {
+			return
+		}
+		
+		err = h.notificationService.NotifyNewReservationRequest(reservation, vehicle, driver)
+		if err != nil {
+			// Fehler loggen, aber nicht die Hauptantwort beeinträchtigen
+			// (hier könnte man ein besseres Logging-System verwenden)
+		}
+	}()
 
 	c.JSON(http.StatusCreated, reservation)
 }
@@ -479,4 +503,144 @@ func (h *ReservationHandler) CheckReservationConflict(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, conflictDetails)
+}
+
+// ApproveReservation genehmigt eine Reservierung (für Manager/Admins)
+func (h *ReservationHandler) ApproveReservation(c *gin.Context) {
+	reservationID := c.Param("id")
+
+	// Benutzer aus JWT-Token extrahieren
+	userID, err := utils.ExtractUserIDFromToken(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	// Reservierung über Service genehmigen
+	err = h.reservationService.ApproveReservation(reservationID, userID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Benachrichtigung über Genehmigung senden
+	go func() {
+		// Reservierung und zugehörige Details laden
+		reservationRepo := repository.NewVehicleReservationRepository()
+		reservation, err := reservationRepo.FindByID(reservationID)
+		if err != nil {
+			return
+		}
+		
+		vehicle, err := h.vehicleRepo.FindByID(reservation.VehicleID.Hex())
+		if err != nil {
+			return
+		}
+		
+		driver, err := h.driverRepo.FindByID(reservation.DriverID.Hex())
+		if err != nil {
+			return
+		}
+		
+		approvedBy, err := h.userRepo.FindByID(userID.Hex())
+		if err != nil {
+			return
+		}
+		
+		err = h.notificationService.NotifyReservationApproval(reservation, vehicle, driver, approvedBy)
+		if err != nil {
+			// Fehler loggen, aber nicht die Hauptantwort beeinträchtigen
+		}
+	}()
+
+	c.JSON(http.StatusOK, gin.H{"message": "Reservierung erfolgreich genehmigt"})
+}
+
+// RejectReservation lehnt eine Reservierung ab (für Manager/Admins)
+func (h *ReservationHandler) RejectReservation(c *gin.Context) {
+	reservationID := c.Param("id")
+
+	var req struct {
+		RejectionNote string `json:"rejectionNote" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Ablehnungsgrund ist erforderlich"})
+		return
+	}
+
+	// Benutzer aus JWT-Token extrahieren
+	userID, err := utils.ExtractUserIDFromToken(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	// Reservierung über Service ablehnen
+	err = h.reservationService.RejectReservation(reservationID, userID, req.RejectionNote)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Benachrichtigung über Ablehnung senden
+	go func() {
+		// Reservierung und zugehörige Details laden
+		reservationRepo := repository.NewVehicleReservationRepository()
+		reservation, err := reservationRepo.FindByID(reservationID)
+		if err != nil {
+			return
+		}
+		
+		vehicle, err := h.vehicleRepo.FindByID(reservation.VehicleID.Hex())
+		if err != nil {
+			return
+		}
+		
+		driver, err := h.driverRepo.FindByID(reservation.DriverID.Hex())
+		if err != nil {
+			return
+		}
+		
+		rejectedBy, err := h.userRepo.FindByID(userID.Hex())
+		if err != nil {
+			return
+		}
+		
+		err = h.notificationService.NotifyReservationRejection(reservation, vehicle, driver, rejectedBy)
+		if err != nil {
+			// Fehler loggen, aber nicht die Hauptantwort beeinträchtigen
+		}
+	}()
+
+	c.JSON(http.StatusOK, gin.H{"message": "Reservierung erfolgreich abgelehnt"})
+}
+
+// GetPendingReservations gibt alle wartenden Reservierungen zurück (für Manager/Admins)
+func (h *ReservationHandler) GetPendingReservations(c *gin.Context) {
+	reservations, err := h.reservationService.GetPendingReservations()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Reservierungen mit Details anreichern
+	var responses []ReservationResponse
+	for _, reservation := range reservations {
+		response := ReservationResponse{VehicleReservation: reservation}
+
+		// Fahrzeug-Details laden
+		if vehicle, err := h.vehicleRepo.FindByID(reservation.VehicleID.Hex()); err == nil {
+			response.Vehicle = vehicle
+		}
+
+		// Fahrer-Details laden
+		if driver, err := h.driverRepo.FindByID(reservation.DriverID.Hex()); err == nil {
+			response.Driver = driver
+		}
+
+		responses = append(responses, response)
+	}
+
+	c.JSON(http.StatusOK, responses)
 }
