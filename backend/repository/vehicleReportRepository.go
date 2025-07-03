@@ -21,7 +21,7 @@ type VehicleReportRepository struct {
 // NewVehicleReportRepository erstellt eine neue Repository-Instanz
 func NewVehicleReportRepository() *VehicleReportRepository {
 	return &VehicleReportRepository{
-		collection: db.GetDatabase().Collection("vehicleReports"),
+		collection: db.GetCollection("vehicleReports"),
 	}
 }
 

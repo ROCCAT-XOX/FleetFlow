@@ -6,7 +6,6 @@ import (
 	"FleetFlow/backend/service"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -14,17 +13,21 @@ import (
 
 // VehicleReportHandler verwaltet Fahrzeugmeldungen
 type VehicleReportHandler struct {
-	reportRepo      *repository.VehicleReportRepository
-	vehicleRepo     *repository.VehicleRepository
-	activityService *service.ActivityService
+	reportRepo          *repository.VehicleReportRepository
+	vehicleRepo         *repository.VehicleRepository
+	driverRepo          *repository.DriverRepository
+	activityService     *service.ActivityService
+	notificationService *service.NotificationService
 }
 
 // NewVehicleReportHandler erstellt einen neuen Handler
 func NewVehicleReportHandler() *VehicleReportHandler {
 	return &VehicleReportHandler{
-		reportRepo:      repository.NewVehicleReportRepository(),
-		vehicleRepo:     repository.NewVehicleRepository(),
-		activityService: service.NewActivityService(),
+		reportRepo:          repository.NewVehicleReportRepository(),
+		vehicleRepo:         repository.NewVehicleRepository(),
+		driverRepo:          repository.NewDriverRepository(),
+		activityService:     service.NewActivityService(),
+		notificationService: service.NewNotificationService(),
 	}
 }
 
@@ -61,7 +64,7 @@ func (h *VehicleReportHandler) CreateReport(c *gin.Context) {
 	}
 
 	// Fahrzeug existiert prüfen
-	vehicle, err := h.vehicleRepo.FindByID(vehicleID)
+	vehicle, err := h.vehicleRepo.FindByID(vehicleID.Hex())
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Fahrzeug nicht gefunden"})
 		return
@@ -107,17 +110,32 @@ func (h *VehicleReportHandler) CreateReport(c *gin.Context) {
 
 	// Aktivität protokollieren
 	h.activityService.LogActivity(
-		reporterUser.ID,
 		"vehicle_report_created",
-		"Fahrzeugmeldung erstellt",
-		map[string]interface{}{
-			"reportId":    report.ID,
-			"vehicleId":   vehicleID,
-			"type":        string(reportType),
-			"priority":    string(priority),
-			"vehicleInfo": vehicle.Brand + " " + vehicle.Model + " (" + vehicle.LicensePlate + ")",
-		},
+		"Fahrzeugmeldung erstellt für " + vehicle.Brand + " " + vehicle.Model + " (" + vehicle.LicensePlate + ")",
+		reporterUser.ID,
+		&vehicleID,
 	)
+
+	// Bei dringenden oder kritischen Meldungen Benachrichtigungen senden
+	if priority == model.ReportPriorityUrgent || reportType == model.ReportTypeAccident || reportType == model.ReportTypeBrakeIssue {
+		// Driver-Informationen für Benachrichtigung laden
+		driver, err := h.driverRepo.FindByID(reporterUser.ID.Hex())
+		if err == nil {
+			// Dringende Benachrichtigung senden
+			go func() {
+				err := h.notificationService.NotifyUrgentReport(report, vehicle, driver)
+				if err != nil {
+					// Fehler loggen, aber nicht die Hauptantwort beeinträchtigen
+					h.activityService.LogActivity(
+						"urgent_notification_failed",
+						"Fehler beim Senden der dringenden Benachrichtigung: " + err.Error(),
+						reporterUser.ID,
+						&vehicleID,
+					)
+				}
+			}()
+		}
+	}
 
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "Meldung erfolgreich erstellt",
@@ -229,7 +247,7 @@ func (h *VehicleReportHandler) GetReport(c *gin.Context) {
 	}
 
 	// Fahrzeugdaten hinzufügen
-	vehicle, err := h.vehicleRepo.FindByID(report.VehicleID)
+	vehicle, err := h.vehicleRepo.FindByID(report.VehicleID.Hex())
 	if err == nil {
 		c.JSON(http.StatusOK, gin.H{
 			"report":  report,
@@ -305,15 +323,10 @@ func (h *VehicleReportHandler) UpdateReportStatus(c *gin.Context) {
 
 	// Aktivität protokollieren
 	h.activityService.LogActivity(
-		requestUser.ID,
 		"vehicle_report_status_updated",
-		"Meldungsstatus geändert",
-		map[string]interface{}{
-			"reportId":    reportID,
-			"oldStatus":   string(report.Status),
-			"newStatus":   requestData.Status,
-			"resolution":  requestData.Resolution,
-		},
+		"Meldungsstatus geändert von " + string(report.Status) + " zu " + requestData.Status,
+		requestUser.ID,
+		&report.VehicleID,
 	)
 
 	c.JSON(http.StatusOK, gin.H{
@@ -359,14 +372,10 @@ func (h *VehicleReportHandler) DeleteReport(c *gin.Context) {
 
 	// Aktivität protokollieren
 	h.activityService.LogActivity(
-		requestUser.ID,
 		"vehicle_report_deleted",
-		"Fahrzeugmeldung gelöscht",
-		map[string]interface{}{
-			"reportId":   reportID,
-			"reportType": string(report.Type),
-			"vehicleId":  report.VehicleID,
-		},
+		"Fahrzeugmeldung gelöscht (" + string(report.Type) + ")",
+		requestUser.ID,
+		&report.VehicleID,
 	)
 
 	c.JSON(http.StatusOK, gin.H{

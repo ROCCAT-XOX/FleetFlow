@@ -5,15 +5,12 @@ import (
 	"FleetFlow/backend/repository"
 	"fmt"
 	"log"
-	"time"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // NotificationService verwaltet Benachrichtigungen
 type NotificationService struct {
 	userRepo        *repository.UserRepository
-	smtpService     *SMTPService
+	emailService    *EmailService
 	activityService *ActivityService
 }
 
@@ -21,7 +18,7 @@ type NotificationService struct {
 func NewNotificationService() *NotificationService {
 	return &NotificationService{
 		userRepo:        repository.NewUserRepository(),
-		smtpService:     NewSMTPService(),
+		emailService:    NewEmailService(),
 		activityService: NewActivityService(),
 	}
 }
@@ -46,7 +43,7 @@ func (s *NotificationService) NotifyUrgentReport(report *model.VehicleReport, ve
 
 	// E-Mails an alle Manager senden
 	for _, manager := range managers {
-		err := s.smtpService.SendEmail(manager.Email, subject, body)
+		err := s.emailService.SendEmail(manager.Email, subject, "", body)
 		if err != nil {
 			log.Printf("Fehler beim Senden der E-Mail an %s: %v", manager.Email, err)
 		} else {
@@ -70,7 +67,7 @@ func (s *NotificationService) NotifyReservationApproval(reservation *model.Vehic
 	subject := fmt.Sprintf("✅ Reservierung genehmigt: %s %s", vehicle.Brand, vehicle.Model)
 	body := s.createReservationApprovalEmailBody(reservation, vehicle, driver, approvedBy)
 
-	err := s.smtpService.SendEmail(driver.Email, subject, body)
+	err := s.emailService.SendEmail(driver.Email, subject, "", body)
 	if err != nil {
 		log.Printf("Fehler beim Senden der Genehmigungs-E-Mail an %s: %v", driver.Email, err)
 		return err
@@ -85,7 +82,7 @@ func (s *NotificationService) NotifyReservationRejection(reservation *model.Vehi
 	subject := fmt.Sprintf("❌ Reservierung abgelehnt: %s %s", vehicle.Brand, vehicle.Model)
 	body := s.createReservationRejectionEmailBody(reservation, vehicle, driver, rejectedBy)
 
-	err := s.smtpService.SendEmail(driver.Email, subject, body)
+	err := s.emailService.SendEmail(driver.Email, subject, "", body)
 	if err != nil {
 		log.Printf("Fehler beim Senden der Ablehnungs-E-Mail an %s: %v", driver.Email, err)
 		return err
@@ -114,7 +111,7 @@ func (s *NotificationService) NotifyNewReservationRequest(reservation *model.Veh
 
 	// E-Mails an alle Manager senden
 	for _, manager := range managers {
-		err := s.smtpService.SendEmail(manager.Email, subject, body)
+		err := s.emailService.SendEmail(manager.Email, subject, "", body)
 		if err != nil {
 			log.Printf("Fehler beim Senden der E-Mail an %s: %v", manager.Email, err)
 		} else {
