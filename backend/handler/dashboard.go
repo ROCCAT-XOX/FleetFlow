@@ -60,7 +60,25 @@ type ExpiringContract struct {
 
 // GetCompleteDashboardData liefert alle Daten für das Dashboard
 func (h *DashboardHandler) GetCompleteDashboardData(c *gin.Context) {
-	// Basisstatistiken
+	// Benutzer aus dem Kontext extrahieren
+	user, exists := c.Get("user")
+	if !exists {
+		c.HTML(http.StatusUnauthorized, "error.html", gin.H{
+			"title": "Fehler",
+			"error": "Benutzer nicht authentifiziert",
+		})
+		return
+	}
+
+	currentUser := user.(*model.User)
+	
+	// Fahrer zu ihrem spezifischen Dashboard weiterleiten
+	if currentUser.Role == model.RoleDriver {
+		c.Redirect(http.StatusFound, "/driver/dashboard")
+		return
+	}
+
+	// Basisstatistiken für Manager und Admins
 	vehicles, _ := h.vehicleRepo.FindAll()
 	var totalVehicles, availableVehicles, inUseVehicles, maintenanceVehicles, reservedVehicles int64
 
@@ -133,7 +151,6 @@ func (h *DashboardHandler) GetCompleteDashboardData(c *gin.Context) {
 	}
 
 	// Benutzername
-	user, _ := c.Get("user")
 	userName := ""
 	if u, ok := user.(*model.User); ok {
 		userName = u.FirstName + " " + u.LastName

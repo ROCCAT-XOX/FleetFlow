@@ -79,7 +79,7 @@ func (h *DriverDashboardHandler) ShowReservations(c *gin.Context) {
 	}
 
 	// Reservierungen des Fahrers laden
-	reservations, err := h.reservationRepo.FindByDriver(driverUser.ID)
+	reservations, err := h.reservationRepo.FindByDriverID(driverUser.ID.Hex())
 	if err != nil {
 		c.HTML(http.StatusInternalServerError, "error.html", gin.H{
 			"error": "Fehler beim Laden der Reservierungen",
@@ -87,8 +87,14 @@ func (h *DriverDashboardHandler) ShowReservations(c *gin.Context) {
 		return
 	}
 
+	// Convert slice to pointer slice
+	var reservationPointers []*model.VehicleReservation
+	for i := range reservations {
+		reservationPointers = append(reservationPointers, &reservations[i])
+	}
+
 	// Fahrzeugdaten für Reservierungen laden
-	enrichedReservations, err := h.enrichReservationsWithVehicles(reservations)
+	enrichedReservations, err := h.enrichReservationsWithVehicles(reservationPointers)
 	if err != nil {
 		c.HTML(http.StatusInternalServerError, "error.html", gin.H{
 			"error": "Fehler beim Laden der Fahrzeugdaten",
@@ -97,7 +103,7 @@ func (h *DriverDashboardHandler) ShowReservations(c *gin.Context) {
 	}
 
 	// Verfügbare Fahrzeuge für neue Reservierungen laden
-	availableVehicles, err := h.vehicleRepo.FindAvailable()
+	availableVehicles, err := h.vehicleRepo.FindAll()
 	if err != nil {
 		c.HTML(http.StatusInternalServerError, "error.html", gin.H{
 			"error": "Fehler beim Laden der verfügbaren Fahrzeuge",
@@ -190,9 +196,15 @@ type ReportWithVehicle struct {
 // getDashboardData lädt alle Dashboard-Daten für einen Fahrer
 func (h *DriverDashboardHandler) getDashboardData(driverID primitive.ObjectID) (*DashboardData, error) {
 	// Aktuelle und anstehende Reservierungen laden
-	reservations, err := h.reservationRepo.FindByDriver(driverID)
+	reservationSlice, err := h.reservationRepo.FindByDriverID(driverID.Hex())
 	if err != nil {
 		return nil, err
+	}
+	
+	// Convert slice to pointer slice
+	var reservations []*model.VehicleReservation
+	for i := range reservationSlice {
+		reservations = append(reservations, &reservationSlice[i])
 	}
 
 	// Reservierungen nach Status filtern
@@ -249,7 +261,7 @@ func (h *DriverDashboardHandler) enrichReservationsWithVehicles(reservations []*
 	var enriched []*ReservationWithVehicle
 
 	for _, reservation := range reservations {
-		vehicle, err := h.vehicleRepo.FindByID(reservation.VehicleID)
+		vehicle, err := h.vehicleRepo.FindByID(reservation.VehicleID.Hex())
 		if err != nil {
 			continue // Fahrzeug nicht gefunden, trotzdem weitermachen
 		}
@@ -268,7 +280,7 @@ func (h *DriverDashboardHandler) enrichReportsWithVehicles(reports []*model.Vehi
 	var enriched []*ReportWithVehicle
 
 	for _, report := range reports {
-		vehicle, err := h.vehicleRepo.FindByID(report.VehicleID)
+		vehicle, err := h.vehicleRepo.FindByID(report.VehicleID.Hex())
 		if err != nil {
 			continue // Fahrzeug nicht gefunden, trotzdem weitermachen
 		}
