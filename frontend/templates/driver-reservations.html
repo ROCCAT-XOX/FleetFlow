@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meine Reservierungen - FleetFlow</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/driver-mobile.css">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#3B82F6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="FleetFlow">
+    
+    <!-- Icons -->
+    <link rel="apple-touch-icon" href="/static/images/FleetFlow-Logo-Icon.svg">
+    <link rel="icon" type="image/svg+xml" href="/static/images/FleetFlow-Logo-Icon.svg">
+</head>
+<body class="driver-mobile">
+    <!-- Mobile Header -->
+    <header class="mobile-header">
+        <div class="mobile-header-content">
+            <div class="mobile-logo">
+                <img src="/static/images/FleetFlow-Logo-Icon.svg" alt="FleetFlow" class="logo-icon">
+                <span class="logo-text">Reservierungen</span>
+            </div>
+            <div class="user-info">
+                <span class="user-name">{{.User.FirstName}}</span>
+                <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <nav class="mobile-menu" id="mobileMenu">
+            <a href="/driver/dashboard" class="menu-item">
+                <span class="menu-icon">🏠</span>
+                <span class="menu-text">Dashboard</span>
+            </a>
+            <a href="/driver/reports" class="menu-item">
+                <span class="menu-icon">🚗</span>
+                <span class="menu-text">Fahrzeug melden</span>
+            </a>
+            <a href="/logout" class="menu-item logout">
+                <span class="menu-icon">🚪</span>
+                <span class="menu-text">Abmelden</span>
+            </a>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="mobile-main">
+        <!-- Quick Actions -->
+        <section class="quick-actions">
+            <div class="action-grid single-action">
+                <button class="action-card" onclick="showNewReservationModal()">
+                    <div class="action-icon">➕</div>
+                    <div class="action-content">
+                        <h3>Neue Reservierung</h3>
+                        <p>Fahrzeug buchen</p>
+                    </div>
+                </button>
+            </div>
+        </section>
+
+        <!-- Filter Tabs -->
+        <section class="filter-tabs">
+            <div class="tab-container">
+                <button class="tab-btn active" onclick="showTab('all')">Alle</button>
+                <button class="tab-btn" onclick="showTab('pending')">Wartend</button>
+                <button class="tab-btn" onclick="showTab('approved')">Genehmigt</button>
+                <button class="tab-btn" onclick="showTab('active')">Aktiv</button>
+            </div>
+        </section>
+
+        <!-- Reservations List -->
+        <section class="reservations-section">
+            {{if .Reservations}}
+            <div class="reservation-list" id="reservationList">
+                {{range .Reservations}}
+                <div class="reservation-card" data-status="{{.Status}}">
+                    <!-- Status Header -->
+                    <div class="reservation-header">
+                        <div class="reservation-status">
+                            <span class="status-badge status-{{.Status}}">
+                                {{if eq .Status "pending"}}⏳ Wartend{{end}}
+                                {{if eq .Status "approved"}}✅ Genehmigt{{end}}
+                                {{if eq .Status "rejected"}}❌ Abgelehnt{{end}}
+                                {{if eq .Status "active"}}🔄 Aktiv{{end}}
+                                {{if eq .Status "completed"}}✅ Abgeschlossen{{end}}
+                                {{if eq .Status "cancelled"}}🚫 Storniert{{end}}
+                            </span>
+                            <span class="reservation-id">#{{.ID.Hex | slice 0 8}}</span>
+                        </div>
+                        <button class="reservation-menu" onclick="showReservationMenu('{{.ID}}')">⋮</button>
+                    </div>
+
+                    <!-- Vehicle Info -->
+                    <div class="vehicle-info">
+                        <div class="vehicle-image">
+                            {{if .Vehicle.MainImageID}}
+                            <img src="/api/vehicles/{{.Vehicle.ID}}/image" alt="{{.Vehicle.Brand}} {{.Vehicle.Model}}">
+                            {{else}}
+                            <div class="vehicle-placeholder">🚗</div>
+                            {{end}}
+                        </div>
+                        <div class="vehicle-details">
+                            <h3 class="vehicle-name">{{.Vehicle.Brand}} {{.Vehicle.Model}}</h3>
+                            <p class="vehicle-plate">{{.Vehicle.LicensePlate}}</p>
+                            <p class="vehicle-type">{{.Vehicle.FuelType}} • {{.Vehicle.Category}}</p>
+                        </div>
+                    </div>
+
+                    <!-- Reservation Details -->
+                    <div class="reservation-details">
+                        <div class="time-block">
+                            <div class="time-row">
+                                <span class="time-label">Von:</span>
+                                <span class="time-value">{{formatDateTime .StartTime}}</span>
+                            </div>
+                            <div class="time-row">
+                                <span class="time-label">Bis:</span>
+                                <span class="time-value">{{formatDateTime .EndTime}}</span>
+                            </div>
+                        </div>
+                        
+                        {{if .Purpose}}
+                        <div class="purpose-block">
+                            <span class="purpose-label">Zweck:</span>
+                            <span class="purpose-value">{{.Purpose}}</span>
+                        </div>
+                        {{end}}
+
+                        {{if .Notes}}
+                        <div class="notes-block">
+                            <span class="notes-label">Notizen:</span>
+                            <span class="notes-value">{{.Notes}}</span>
+                        </div>
+                        {{end}}
+
+                        {{if and (eq .Status "rejected") .RejectionNote}}
+                        <div class="rejection-block">
+                            <span class="rejection-label">Ablehnungsgrund:</span>
+                            <span class="rejection-value">{{.RejectionNote}}</span>
+                        </div>
+                        {{end}}
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="reservation-actions">
+                        {{if eq .Status "pending"}}
+                        <button class="btn-secondary" onclick="editReservation('{{.ID}}')">Bearbeiten</button>
+                        <button class="btn-danger" onclick="cancelReservation('{{.ID}}')">Stornieren</button>
+                        {{end}}
+                        
+                        {{if eq .Status "approved"}}
+                        <button class="btn-primary" onclick="reportIssue('{{.Vehicle.ID}}')">Problem melden</button>
+                        <button class="btn-secondary" onclick="viewReservationDetails('{{.ID}}')">Details</button>
+                        {{end}}
+                        
+                        {{if eq .Status "active"}}
+                        <button class="btn-primary" onclick="reportIssue('{{.Vehicle.ID}}')">Problem melden</button>
+                        <button class="btn-success" onclick="completeReservation('{{.ID}}')">Beenden</button>
+                        {{end}}
+                        
+                        {{if or (eq .Status "completed") (eq .Status "cancelled")}}
+                        <button class="btn-secondary" onclick="viewReservationDetails('{{.ID}}')">Details anzeigen</button>
+                        {{end}}
+                    </div>
+                </div>
+                {{end}}
+            </div>
+            {{else}}
+            <!-- Empty State -->
+            <div class="empty-state">
+                <div class="empty-icon">📅</div>
+                <h3>Keine Reservierungen</h3>
+                <p>Sie haben noch keine Fahrzeugbuchungen vorgenommen.</p>
+                <div class="empty-actions">
+                    <button class="btn-primary" onclick="showNewReservationModal()">Erste Reservierung erstellen</button>
+                </div>
+            </div>
+            {{end}}
+        </section>
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a href="/driver/dashboard" class="nav-item">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-label">Dashboard</span>
+        </a>
+        <a href="/driver/reservations" class="nav-item active">
+            <span class="nav-icon">📅</span>
+            <span class="nav-label">Buchungen</span>
+        </a>
+        <a href="/driver/reports" class="nav-item">
+            <span class="nav-icon">🚗</span>
+            <span class="nav-label">Melden</span>
+        </a>
+    </nav>
+
+    <!-- New Reservation Modal -->
+    <div class="modal-overlay" id="newReservationModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Neue Reservierung</h2>
+                <button class="modal-close" onclick="hideNewReservationModal()">×</button>
+            </div>
+            <form class="reservation-form" id="newReservationForm">
+                <!-- Vehicle Selection -->
+                <div class="form-group">
+                    <label>Fahrzeug auswählen</label>
+                    <div class="vehicle-selection" id="vehicleSelection">
+                        {{range .AvailableVehicles}}
+                        <div class="vehicle-option" data-vehicle-id="{{.ID}}">
+                            <div class="vehicle-option-image">
+                                {{if .MainImageID}}
+                                <img src="/api/vehicles/{{.ID}}/image" alt="{{.Brand}} {{.Model}}">
+                                {{else}}
+                                <div class="vehicle-placeholder">🚗</div>
+                                {{end}}
+                            </div>
+                            <div class="vehicle-option-info">
+                                <h4>{{.Brand}} {{.Model}}</h4>
+                                <p>{{.LicensePlate}} • {{.FuelType}}</p>
+                            </div>
+                            <div class="vehicle-option-select">
+                                <input type="radio" name="vehicleId" value="{{.ID}}" id="vehicle_{{.ID}}">
+                                <label for="vehicle_{{.ID}}"></label>
+                            </div>
+                        </div>
+                        {{end}}
+                    </div>
+                </div>
+
+                <!-- Date & Time -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="startDate">Startdatum</label>
+                        <input type="date" id="startDate" name="startDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="startTime">Startzeit</label>
+                        <input type="time" id="startTime" name="startTime" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="endDate">Enddatum</label>
+                        <input type="date" id="endDate" name="endDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="endTime">Endzeit</label>
+                        <input type="time" id="endTime" name="endTime" required>
+                    </div>
+                </div>
+
+                <!-- Purpose -->
+                <div class="form-group">
+                    <label for="purpose">Zweck der Reservierung</label>
+                    <select id="purpose" name="purpose" required>
+                        <option value="">Bitte auswählen</option>
+                        <option value="Geschäftstermin">Geschäftstermin</option>
+                        <option value="Kundenbesuch">Kundenbesuch</option>
+                        <option value="Transport">Transport</option>
+                        <option value="Dienstreise">Dienstreise</option>
+                        <option value="Schulung">Schulung</option>
+                        <option value="Sonstiges">Sonstiges</option>
+                    </select>
+                </div>
+
+                <!-- Notes -->
+                <div class="form-group">
+                    <label for="notes">Zusätzliche Notizen (optional)</label>
+                    <textarea id="notes" name="notes" rows="3" placeholder="Weitere Informationen zur Reservierung..."></textarea>
+                </div>
+
+                <!-- Submit -->
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="hideNewReservationModal()">Abbrechen</button>
+                    <button type="submit" class="btn-primary">Reservierung einreichen</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <script src="/static/js/driver-mobile.js"></script>
+    <script src="/static/js/driver-reservations.js"></script>
+</body>
+</html>
