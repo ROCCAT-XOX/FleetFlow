@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fahrzeug melden - FleetFlow</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/driver-mobile.css">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#3B82F6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="FleetFlow">
+    
+    <!-- Icons -->
+    <link rel="apple-touch-icon" href="/static/images/FleetFlow-Logo-Icon.svg">
+    <link rel="icon" type="image/svg+xml" href="/static/images/FleetFlow-Logo-Icon.svg">
+</head>
+<body class="driver-mobile">
+    <!-- Mobile Header -->
+    <header class="mobile-header">
+        <div class="mobile-header-content">
+            <div class="mobile-logo">
+                <img src="/static/images/FleetFlow-Logo-Icon.svg" alt="FleetFlow" class="logo-icon">
+                <span class="logo-text">Fahrzeug melden</span>
+            </div>
+            <div class="user-info">
+                <span class="user-name">{{.User.FirstName}}</span>
+                <button class="logout-btn" onclick="logout()" title="Abmelden">
+                    🚪
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="mobile-main">
+        <!-- Quick Actions -->
+        <section class="quick-actions">
+            <div class="action-grid single-action">
+                <button class="action-card urgent" onclick="showNewReportModal()">
+                    <div class="action-icon">🚨</div>
+                    <div class="action-content">
+                        <h3>Problem melden</h3>
+                        <p>Fahrzeugproblem sofort melden</p>
+                    </div>
+                </button>
+            </div>
+        </section>
+
+        <!-- Filter Tabs -->
+        <section class="filter-tabs">
+            <div class="tab-container">
+                <button class="tab-btn active" onclick="showTab('all')">Alle</button>
+                <button class="tab-btn" onclick="showTab('open')">Offen</button>
+                <button class="tab-btn" onclick="showTab('in_progress')">Bearbeitung</button>
+                <button class="tab-btn" onclick="showTab('resolved')">Behoben</button>
+            </div>
+        </section>
+
+        <!-- Reports List -->
+        <section class="reports-section">
+            {{if .Reports}}
+            <div class="report-list" id="reportList">
+                {{range .Reports}}
+                <div class="report-card" data-status="{{.Status}}">
+                    <!-- Priority Indicator -->
+                    <div class="priority-indicator priority-{{.Priority}}"></div>
+                    
+                    <!-- Report Header -->
+                    <div class="report-header">
+                        <div class="report-type-section">
+                            <span class="report-type-icon">
+                                {{if eq .Type "engine_light"}}⚠️{{end}}
+                                {{if eq .Type "inspection"}}🔧{{end}}
+                                {{if eq .Type "tire_change"}}🛞{{end}}
+                                {{if eq .Type "fuel_issue"}}⛽{{end}}
+                                {{if eq .Type "cleaning"}}🧽{{end}}
+                                {{if eq .Type "repair"}}🛠️{{end}}
+                                {{if eq .Type "accident"}}🚨{{end}}
+                                {{if eq .Type "brake_issue"}}🛑{{end}}
+                                {{if eq .Type "electrical"}}⚡{{end}}
+                                {{if eq .Type "air_conditioning"}}❄️{{end}}
+                                {{if eq .Type "noise"}}🔊{{end}}
+                                {{if eq .Type "other"}}❓{{end}}
+                            </span>
+                            <div class="report-type-info">
+                                <h3 class="report-type">{{.GetTypeDisplayName}}</h3>
+                                <span class="report-id">#{{.ID.Hex | slice 0 8}}</span>
+                            </div>
+                        </div>
+                        <div class="report-status-section">
+                            <span class="status-badge status-{{.Status}}">{{.GetStatusDisplayName}}</span>
+                            <span class="priority-badge priority-{{.Priority}}">{{.GetPriorityDisplayName}}</span>
+                        </div>
+                    </div>
+
+                    <!-- Vehicle Info -->
+                    <div class="vehicle-info">
+                        <div class="vehicle-image">
+                            {{if .Vehicle.MainImageID}}
+                            <img src="/api/vehicles/{{.Vehicle.ID}}/image" alt="{{.Vehicle.Brand}} {{.Vehicle.Model}}">
+                            {{else}}
+                            <div class="vehicle-placeholder">🚗</div>
+                            {{end}}
+                        </div>
+                        <div class="vehicle-details">
+                            <h4 class="vehicle-name">{{.Vehicle.Brand}} {{.Vehicle.Model}}</h4>
+                            <p class="vehicle-plate">{{.Vehicle.LicensePlate}}</p>
+                            {{if .Mileage}}
+                            <p class="vehicle-mileage">{{.Mileage}} km</p>
+                            {{end}}
+                        </div>
+                    </div>
+
+                    <!-- Report Details -->
+                    <div class="report-details">
+                        <div class="report-title">{{.Title}}</div>
+                        <div class="report-description">{{.Description}}</div>
+                        
+                        {{if .Location}}
+                        <div class="report-location">
+                            <span class="location-icon">📍</span>
+                            <span class="location-text">{{.Location}}</span>
+                        </div>
+                        {{end}}
+                        
+                        <div class="report-date">
+                            <span class="date-icon">📅</span>
+                            <span class="date-text">{{formatDateTime .CreatedAt}}</span>
+                        </div>
+
+                        {{if .Resolution}}
+                        <div class="report-resolution">
+                            <span class="resolution-label">Lösung:</span>
+                            <span class="resolution-text">{{.Resolution}}</span>
+                        </div>
+                        {{end}}
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="report-actions">
+                        <button class="btn-secondary" onclick="viewReportDetails('{{.ID}}')">Details anzeigen</button>
+                        {{if eq .Status "open"}}
+                        <button class="btn-danger" onclick="markAsUrgent('{{.ID}}')">Als dringend markieren</button>
+                        {{end}}
+                    </div>
+                </div>
+                {{end}}
+            </div>
+            {{else}}
+            <!-- Empty State -->
+            <div class="empty-state">
+                <div class="empty-icon">🚗</div>
+                <h3>Keine Meldungen</h3>
+                <p>Sie haben noch keine Fahrzeugprobleme gemeldet.</p>
+                <div class="empty-actions">
+                    <button class="btn-primary" onclick="showNewReportModal()">Erste Meldung erstellen</button>
+                </div>
+            </div>
+            {{end}}
+        </section>
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a href="/driver/dashboard" class="nav-item">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-label">Dashboard</span>
+        </a>
+        <a href="/driver/reservations" class="nav-item">
+            <span class="nav-icon">📅</span>
+            <span class="nav-label">Buchungen</span>
+        </a>
+        <a href="/driver/reports" class="nav-item active">
+            <span class="nav-icon">🚗</span>
+            <span class="nav-label">Melden</span>
+        </a>
+    </nav>
+
+    <!-- New Report Modal -->
+    <div class="modal-overlay" id="newReportModal">
+        <div class="modal-content report-modal">
+            <div class="modal-header">
+                <h2>Problem melden</h2>
+                <button class="modal-close" onclick="hideNewReportModal()">×</button>
+            </div>
+            
+            <form class="report-form" id="newReportForm">
+                <!-- Vehicle Selection -->
+                <div class="form-group">
+                    <label>Fahrzeug auswählen</label>
+                    <div class="vehicle-selection" id="vehicleSelection">
+                        {{range .Vehicles}}
+                        <div class="vehicle-option" data-vehicle-id="{{.ID}}">
+                            <div class="vehicle-option-image">
+                                {{if .MainImageID}}
+                                <img src="/api/vehicles/{{.ID}}/image" alt="{{.Brand}} {{.Model}}">
+                                {{else}}
+                                <div class="vehicle-placeholder">🚗</div>
+                                {{end}}
+                            </div>
+                            <div class="vehicle-option-info">
+                                <h4>{{.Brand}} {{.Model}}</h4>
+                                <p>{{.LicensePlate}} • {{.FuelType}}</p>
+                            </div>
+                            <div class="vehicle-option-select">
+                                <input type="radio" name="vehicleId" value="{{.ID}}" id="vehicle_{{.ID}}">
+                                <label for="vehicle_{{.ID}}"></label>
+                            </div>
+                        </div>
+                        {{end}}
+                    </div>
+                </div>
+
+                <!-- Problem Type -->
+                <div class="form-group">
+                    <label for="reportType">Art des Problems</label>
+                    <div class="report-type-grid">
+                        {{range .ReportTypes}}
+                        <div class="report-type-option" data-type="{{.value}}">
+                            <input type="radio" name="reportType" value="{{.value}}" id="type_{{.value}}">
+                            <label for="type_{{.value}}">
+                                <span class="type-icon">
+                                    {{if eq .value "engine_light"}}⚠️{{end}}
+                                    {{if eq .value "inspection"}}🔧{{end}}
+                                    {{if eq .value "tire_change"}}🛞{{end}}
+                                    {{if eq .value "fuel_issue"}}⛽{{end}}
+                                    {{if eq .value "cleaning"}}🧽{{end}}
+                                    {{if eq .value "repair"}}🛠️{{end}}
+                                    {{if eq .value "accident"}}🚨{{end}}
+                                    {{if eq .value "brake_issue"}}🛑{{end}}
+                                    {{if eq .value "electrical"}}⚡{{end}}
+                                    {{if eq .value "air_conditioning"}}❄️{{end}}
+                                    {{if eq .value "noise"}}🔊{{end}}
+                                    {{if eq .value "other"}}❓{{end}}
+                                </span>
+                                <span class="type-label">{{.label}}</span>
+                            </label>
+                        </div>
+                        {{end}}
+                    </div>
+                </div>
+
+                <!-- Priority -->
+                <div class="form-group">
+                    <label>Dringlichkeit</label>
+                    <div class="priority-selection">
+                        {{range .ReportPriorities}}
+                        <div class="priority-option" data-priority="{{.value}}">
+                            <input type="radio" name="priority" value="{{.value}}" id="priority_{{.value}}">
+                            <label for="priority_{{.value}}">
+                                <span class="priority-indicator priority-{{.value}}"></span>
+                                <span class="priority-label">{{.label}}</span>
+                            </label>
+                        </div>
+                        {{end}}
+                    </div>
+                </div>
+
+                <!-- Title -->
+                <div class="form-group">
+                    <label for="title">Kurze Beschreibung</label>
+                    <input type="text" id="title" name="title" required 
+                           placeholder="z.B. Motorkontrollleuchte leuchtet orange" 
+                           maxlength="100">
+                </div>
+
+                <!-- Description -->
+                <div class="form-group">
+                    <label for="description">Detaillierte Beschreibung</label>
+                    <textarea id="description" name="description" required rows="4" 
+                              placeholder="Beschreiben Sie das Problem genau: Was ist passiert? Wann ist es aufgetreten? Gibt es besondere Umstände?"></textarea>
+                </div>
+
+                <!-- Optional Fields -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="location">Standort (optional)</label>
+                        <input type="text" id="location" name="location" 
+                               placeholder="z.B. Parkplatz Büro, Autobahn A1">
+                    </div>
+                    <div class="form-group">
+                        <label for="mileage">Kilometerstand (optional)</label>
+                        <input type="number" id="mileage" name="mileage" 
+                               placeholder="z.B. 15000" min="0">
+                    </div>
+                </div>
+
+                <!-- Emergency Notice -->
+                <div class="emergency-notice" id="emergencyNotice" style="display: none;">
+                    <div class="emergency-icon">🚨</div>
+                    <div class="emergency-text">
+                        <strong>Notfall erkannt!</strong><br>
+                        Bei Unfällen oder Bremsproblemen wenden Sie sich sofort an die Werkstatt oder den Notdienst.
+                    </div>
+                </div>
+
+                <!-- Submit -->
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="hideNewReportModal()">Abbrechen</button>
+                    <button type="submit" class="btn-primary">Meldung einreichen</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Report Details Modal -->
+    <div class="modal-overlay" id="reportDetailsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Meldungsdetails</h2>
+                <button class="modal-close" onclick="hideReportDetailsModal()">×</button>
+            </div>
+            <div class="report-details-content" id="reportDetailsContent">
+                <!-- Details werden hier dynamisch geladen -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="/static/js/driver-globals.js"></script>
+    <script src="/static/js/driver-mobile.js"></script>
+    <script src="/static/js/driver-reports.js"></script>
+</body>
+</html>

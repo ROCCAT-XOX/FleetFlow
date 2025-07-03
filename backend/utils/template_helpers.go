@@ -318,5 +318,40 @@ func TemplateHelpers() template.FuncMap {
 			loc, _ := time.LoadLocation("Europe/Berlin")
 			return date.In(loc).Format("02.01.2006 15:04")
 		},
+		
+		// Berechnet die Dauer zwischen zwei Zeiten
+		"durationBetween": func(start, end time.Time) string {
+			duration := end.Sub(start)
+			hours := int(duration.Hours())
+			minutes := int(duration.Minutes()) % 60
+			
+			if hours == 0 {
+				return fmt.Sprintf("%d Min", minutes)
+			} else if minutes == 0 {
+				if hours == 1 {
+					return "1 Stunde"
+				}
+				return fmt.Sprintf("%d Stunden", hours)
+			} else {
+				if hours == 1 {
+					return fmt.Sprintf("1 Stunde %d Min", minutes)
+				}
+				return fmt.Sprintf("%d Stunden %d Min", hours, minutes)
+			}
+		},
+		
+		// String-Slice Funktionen
+		"slice": func(s string, start, end int) string {
+			if start < 0 || start >= len(s) {
+				return ""
+			}
+			if end > len(s) {
+				end = len(s)
+			}
+			if end <= start {
+				return ""
+			}
+			return s[start:end]
+		},
 	}
 }

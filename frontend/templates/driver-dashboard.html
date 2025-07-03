@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fahrer Dashboard - FleetFlow</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/driver-mobile.css">
+    
+    <!-- PWA Meta Tags für bessere Mobile Experience -->
+    <meta name="theme-color" content="#3B82F6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="FleetFlow">
+    
+    <!-- Icons -->
+    <link rel="apple-touch-icon" href="/static/images/FleetFlow-Logo-Icon.svg">
+    <link rel="icon" type="image/svg+xml" href="/static/images/FleetFlow-Logo-Icon.svg">
+</head>
+<body class="driver-mobile">
+    <!-- Mobile Header -->
+    <header class="mobile-header">
+        <div class="mobile-header-content">
+            <div class="mobile-logo">
+                <img src="/static/images/FleetFlow-Logo-Icon.svg" alt="FleetFlow" class="logo-icon">
+                <span class="logo-text">FleetFlow</span>
+            </div>
+            <div class="user-info">
+                <span class="user-name">{{.User.FirstName}}</span>
+                <button class="logout-btn" onclick="logout()" title="Abmelden">
+                    🚪
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="mobile-main">
+        <!-- Quick Actions -->
+        <section class="quick-actions">
+            <h2 class="section-title">Schnellzugriff</h2>
+            <div class="action-grid">
+                <a href="/driver/reservations" class="action-card">
+                    <div class="action-icon">📅</div>
+                    <div class="action-content">
+                        <h3>Reservierungen</h3>
+                        <p>Fahrzeuge buchen und verwalten</p>
+                        {{if .PendingReservations}}
+                        <span class="action-badge">{{.PendingReservations}}</span>
+                        {{end}}
+                    </div>
+                </a>
+                
+                <a href="/driver/reports" class="action-card">
+                    <div class="action-icon">🚗</div>
+                    <div class="action-content">
+                        <h3>Meldung erstellen</h3>
+                        <p>Fahrzeugproblem melden</p>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <!-- Current Reservations -->
+        {{if .CurrentReservations}}
+        <section class="current-reservations">
+            <h2 class="section-title">Aktuelle Buchungen</h2>
+            <div class="reservation-list">
+                {{range .CurrentReservations}}
+                <div class="reservation-card">
+                    <div class="reservation-header">
+                        <span class="vehicle-name">{{.Vehicle.Brand}} {{.Vehicle.Model}}</span>
+                        <span class="status-badge status-{{.Status}}">{{.Status}}</span>
+                    </div>
+                    <div class="reservation-details">
+                        <div class="time-info">
+                            <span class="start-time">{{formatDateTime .StartTime}}</span>
+                            <span class="separator">bis</span>
+                            <span class="end-time">{{formatDateTime .EndTime}}</span>
+                        </div>
+                        <div class="purpose">{{.Purpose}}</div>
+                    </div>
+                    <div class="reservation-actions">
+                        <button class="btn-secondary" onclick="showReservationDetails('{{.ID}}')">Details</button>
+                        {{if eq .Status "approved"}}
+                        <button class="btn-primary" onclick="reportIssue('{{.VehicleID}}')">Problem melden</button>
+                        {{end}}
+                    </div>
+                </div>
+                {{end}}
+            </div>
+        </section>
+        {{end}}
+
+        <!-- Recent Reports -->
+        {{if .RecentReports}}
+        <section class="recent-reports">
+            <h2 class="section-title">Letzte Meldungen</h2>
+            <div class="report-list">
+                {{range .RecentReports}}
+                <div class="report-card">
+                    <div class="report-header">
+                        <span class="report-type">{{.GetTypeDisplayName}}</span>
+                        <span class="priority-badge priority-{{.Priority}}">{{.GetPriorityDisplayName}}</span>
+                    </div>
+                    <div class="report-details">
+                        <div class="report-title">{{.Title}}</div>
+                        <div class="report-vehicle">{{.Vehicle.Brand}} {{.Vehicle.Model}} ({{.Vehicle.LicensePlate}})</div>
+                        <div class="report-date">{{formatDate .CreatedAt}}</div>
+                    </div>
+                    <div class="report-status">
+                        <span class="status-badge status-{{.Status}}">{{.GetStatusDisplayName}}</span>
+                    </div>
+                </div>
+                {{end}}
+            </div>
+        </section>
+        {{end}}
+
+        <!-- No Content State -->
+        {{if not .CurrentReservations}}
+        {{if not .RecentReports}}
+        <section class="empty-state">
+            <div class="empty-icon">🚗</div>
+            <h3>Willkommen bei FleetFlow!</h3>
+            <p>Hier können Sie Fahrzeuge buchen und Probleme melden.</p>
+            <div class="empty-actions">
+                <a href="/driver/reservations" class="btn-primary">Fahrzeug buchen</a>
+            </div>
+        </section>
+        {{end}}
+        {{end}}
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a href="/driver/dashboard" class="nav-item active">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-label">Dashboard</span>
+        </a>
+        <a href="/driver/reservations" class="nav-item">
+            <span class="nav-icon">📅</span>
+            <span class="nav-label">Buchungen</span>
+        </a>
+        <a href="/driver/reports" class="nav-item">
+            <span class="nav-icon">🚗</span>
+            <span class="nav-label">Melden</span>
+        </a>
+    </nav>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="/static/js/driver-globals.js"></script>
+    <script src="/static/js/driver-mobile.js"></script>
+</body>
+</html>

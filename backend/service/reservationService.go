@@ -376,3 +376,85 @@ func (s *ReservationService) ProcessScheduledReservations() error {
 
 	return nil
 }
+
+// ApproveReservation genehmigt eine ausstehende Reservierung
+func (s *ReservationService) ApproveReservation(reservationID string, approvedBy primitive.ObjectID) error {
+	reservation, err := s.reservationRepo.FindByID(reservationID)
+	if err != nil {
+		return fmt.Errorf("reservierung nicht gefunden: %v", err)
+	}
+
+	if reservation.Status != model.ReservationStatusPending {
+		return fmt.Errorf("nur ausstehende reservierungen können genehmigt werden")
+	}
+
+	reservation.Status = model.ReservationStatusApproved
+	reservation.ApprovedBy = &approvedBy
+	now := time.Now()
+	reservation.ApprovedAt = &now
+
+	err = s.reservationRepo.Update(reservation)
+	if err != nil {
+		return fmt.Errorf("fehler beim genehmigen der reservierung: %v", err)
+	}
+
+	// Aktivität protokollieren
+	s.activityService.LogActivity(
+		"vehicle_reservation_approved",
+		fmt.Sprintf("Reservierung %s genehmigt", reservationID),
+		approvedBy,
+		&reservation.VehicleID,
+	)
+
+	return nil
+}
+
+// RejectReservation lehnt eine ausstehende Reservierung ab
+func (s *ReservationService) RejectReservation(reservationID string, rejectedBy primitive.ObjectID, rejectionNote string) error {
+	reservation, err := s.reservationRepo.FindByID(reservationID)
+	if err != nil {
+		return fmt.Errorf("reservierung nicht gefunden: %v", err)
+	}
+
+	if reservation.Status != model.ReservationStatusPending {
+		return fmt.Errorf("nur ausstehende reservierungen können abgelehnt werden")
+	}
+
+	reservation.Status = model.ReservationStatusRejected
+	reservation.RejectedBy = &rejectedBy
+	now := time.Now()
+	reservation.RejectedAt = &now
+	reservation.RejectionNote = rejectionNote
+
+	err = s.reservationRepo.Update(reservation)
+	if err != nil {
+		return fmt.Errorf("fehler beim ablehnen der reservierung: %v", err)
+	}
+
+	// Aktivität protokollieren
+	s.activityService.LogActivity(
+		"vehicle_reservation_rejected",
+		fmt.Sprintf("Reservierung %s abgelehnt: %s", reservationID, rejectionNote),
+		rejectedBy,
+		&reservation.VehicleID,
+	)
+
+	return nil
+}
+
+// GetPendingReservations holt alle wartenden Reservierungen für Manager
+func (s *ReservationService) GetPendingReservations() ([]model.VehicleReservation, error) {
+	allReservations, err := s.reservationRepo.FindAll()
+	if err != nil {
+		return nil, err
+	}
+
+	var pendingReservations []model.VehicleReservation
+	for _, reservation := range allReservations {
+		if reservation.Status == model.ReservationStatusPending {
+			pendingReservations = append(pendingReservations, reservation)
+		}
+	}
+
+	return pendingReservations, nil
+}

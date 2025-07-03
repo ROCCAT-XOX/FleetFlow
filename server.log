@@ -1,0 +1,16 @@
+2025/07/03 01:46:56 📋 Log Level: INFO (important requests only)
+2025/07/03 01:46:56 🚀 Starting FleetFlow Application...
+2025/07/03 01:46:56 📊 Connecting to database...
+2025/07/03 01:46:56 ✅ Database connected successfully
+2025/07/03 01:46:56 👤 Admin user verified/created
+2025/07/03 01:46:56 📅 Starting reservation scheduler...
+2025/07/03 01:46:56 ✅ Reservation scheduler started
+2025/07/03 01:46:56 🌐 Setting up routes...
+2025/07/03 01:46:56 ✅ Routes configured
+2025/07/03 01:46:56 🌍 Server starting on http://localhost:8080
+2025/07/03 01:46:56 💡 Current log level: INFO
+2025/07/03 01:46:56    To change: export LOG_LEVEL=debug|info|minimal
+2025/07/03 01:46:56    • DEBUG: Show all routes and requests
+2025/07/03 01:46:56    • INFO: Show data changes and errors (default)
+2025/07/03 01:46:56    • MINIMAL: Show errors only
+2025/07/03 01:46:56 📋 Ready to handle requests...

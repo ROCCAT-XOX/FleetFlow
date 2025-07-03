@@ -21,9 +21,60 @@ func InitializeRoutes(router *gin.Engine) {
 	authorized := router.Group("/")
 	authorized.Use(middleware.AuthMiddleware())
 	{
-		setupAuthorizedRoutes(authorized)
+		// Dashboard-Route mit rollenbasierter Weiterleitung (muss vor anderen Routen stehen)
+		authorized.GET("/dashboard", func(c *gin.Context) {
+			user, exists := c.Get("user")
+			if !exists {
+				c.Redirect(http.StatusFound, "/login")
+				return
+			}
+			
+			currentUser := user.(*model.User)
+			if currentUser.Role == model.RoleDriver {
+				c.Redirect(http.StatusFound, "/driver/dashboard")
+				return
+			}
+			
+			// Für Manager und Admins: normale Dashboard-Handler aufrufen
+			dashboardHandler := handler.NewDashboardHandler()
+			dashboardHandler.GetCompleteDashboardData(c)
+		})
+		
+		// Fahrer-spezifische Routen
+		setupDriverRoutes(authorized.Group("/driver"))
+		
+		// Manager/Admin Routen (schützen vor Fahrer-Zugriff)
+		managerRoutes := authorized.Group("/")
+		managerRoutes.Use(middleware.ManagerOrAdminMiddleware())
+		setupAuthorizedRoutes(managerRoutes)
+		
+		// API Routen mit individueller Berechtigung
 		setupAPIRoutes(authorized.Group("/api"))
 	}
+
+	// Catch-All für alle anderen Routen: Fahrer zu ihrem Dashboard weiterleiten
+	router.NoRoute(func(c *gin.Context) {
+		// Prüfen ob der Benutzer authentifiziert ist
+		tokenString, err := c.Cookie("token")
+		if err == nil && tokenString != "" {
+			// Token validieren
+			claims, err := utils.ValidateJWT(tokenString)
+			if err == nil {
+				// Rolle aus Token extrahieren
+				if claims.Role == string(model.RoleDriver) {
+					c.Redirect(http.StatusFound, "/driver/dashboard")
+					return
+				}
+			}
+		}
+		
+		// Für alle anderen oder nicht authentifizierte Benutzer
+		c.HTML(http.StatusNotFound, "error.html", gin.H{
+			"title": "Seite nicht gefunden",
+			"error": "Die angeforderte Seite existiert nicht",
+			"year":  time.Now().Year(),
+		})
+	})
 }
 
 // setupPublicRoutes konfiguriert die öffentlichen Routen
@@ -52,9 +103,37 @@ func setupPublicRoutes(router *gin.Engine) {
 	router.POST("/auth", authHandler.Login)
 	router.GET("/logout", authHandler.Logout)
 
-	// Root-Pfad zum Dashboard umleiten
+	// Root-Pfad zum Dashboard umleiten (rollenbasiert)
 	router.GET("/", func(c *gin.Context) {
-		c.Redirect(http.StatusFound, "/dashboard")
+		// Token aus dem Cookie extrahieren
+		tokenString, err := c.Cookie("token")
+		if err != nil {
+			c.Redirect(http.StatusFound, "/login")
+			return
+		}
+
+		// Token validieren
+		claims, err := utils.ValidateJWT(tokenString)
+		if err != nil {
+			c.Redirect(http.StatusFound, "/login")
+			return
+		}
+
+		// Benutzer aus der Datenbank abrufen
+		userRepo := repository.NewUserRepository()
+		user, err := userRepo.FindByID(claims.UserID)
+		if err != nil {
+			c.Redirect(http.StatusFound, "/login")
+			return
+		}
+
+		// Rollenbasierte Weiterleitung
+		switch user.Role {
+		case model.RoleDriver:
+			c.Redirect(http.StatusFound, "/driver/dashboard")
+		default:
+			c.Redirect(http.StatusFound, "/dashboard")
+		}
 	})
 }
 
@@ -62,11 +141,7 @@ func setupPublicRoutes(router *gin.Engine) {
 func setupAuthorizedRoutes(group *gin.RouterGroup) {
 	currentYear := time.Now().Year()
 
-	// Dashboard Handler erstellen
-	dashboardHandler := handler.NewDashboardHandler()
-
-	// Dashboard-Route mit dem neuen Handler
-	group.GET("/dashboard", dashboardHandler.GetCompleteDashboardData)
+	// Dashboard-Route ist bereits oben definiert mit rollenbasierter Weiterleitung
 
 	// backend/router.go - Settings Route Anpassung
 	// Ersetze die bestehende Settings-Route in setupAuthorizedRoutes
@@ -402,6 +477,10 @@ func setupAuthorizedRoutes(group *gin.RouterGroup) {
 	// Reservierungen (mit integriertem Kalender)
 	reservationHandler := handler.NewReservationHandler()
 	group.GET("/reservations", reservationHandler.ShowReservationsPage)
+	
+	// Manager-Genehmigungsseite (nur für Manager und Admins)
+	managerApprovalHandler := handler.NewManagerApprovalHandler()
+	group.GET("/manager/approvals", middleware.ManagerOrAdminMiddleware(), managerApprovalHandler.ShowManagerApprovalPage)
 }
 
 // setupAPIRoutes konfiguriert die API-Routen
@@ -583,6 +662,22 @@ func setupAPIRoutes(api *gin.RouterGroup) {
 		reservations.GET("/driver/:driverId", reservationHandler.GetReservationsByDriver)
 		reservations.GET("/available-vehicles", reservationHandler.GetAvailableVehicles)
 		reservations.GET("/check-conflict", reservationHandler.CheckReservationConflict)
+		
+		// Genehmigungsrouten für Manager/Admins
+		reservations.POST("/:id/approve", middleware.ManagerOrAdminMiddleware(), reservationHandler.ApproveReservation)
+		reservations.POST("/:id/reject", middleware.ManagerOrAdminMiddleware(), reservationHandler.RejectReservation)
+		reservations.GET("/pending", middleware.ManagerOrAdminMiddleware(), reservationHandler.GetPendingReservations)
+	}
+
+	// Vehicle Reports API
+	vehicleReportHandler := handler.NewVehicleReportHandler()
+	reportsAPI := api.Group("/vehicle-reports")
+	{
+		reportsAPI.GET("", middleware.ManagerOrAdminMiddleware(), vehicleReportHandler.GetReports)
+		reportsAPI.GET("/urgent", middleware.ManagerOrAdminMiddleware(), vehicleReportHandler.GetUrgentReports)
+		reportsAPI.GET("/:id", vehicleReportHandler.GetReport)
+		reportsAPI.PUT("/:id/status", middleware.ManagerOrAdminMiddleware(), vehicleReportHandler.UpdateReportStatus)
+		reportsAPI.DELETE("/:id", middleware.AdminMiddleware(), vehicleReportHandler.DeleteReport)
 	}
 
 	// SMTP API
@@ -598,4 +693,50 @@ func setupAPIRoutes(api *gin.RouterGroup) {
 		smtp.POST("/send", middleware.AdminMiddleware(), smtpHandler.SendTestEmail)
 	}
 
+}
+
+// setupDriverRoutes konfiguriert die Fahrer-spezifischen Routen
+func setupDriverRoutes(group *gin.RouterGroup) {
+	// Handler initialisieren
+	driverDashboardHandler := handler.NewDriverDashboardHandler()
+	vehicleReportHandler := handler.NewVehicleReportHandler()
+
+	// Fahrer-Middleware hinzufügen - nur Fahrer dürfen diese Routen verwenden
+	group.Use(middleware.DriverOrHigherMiddleware())
+
+	// Dashboard für Fahrer (mobile-optimiert)
+	group.GET("/dashboard", driverDashboardHandler.ShowDashboard)
+
+	// Reservierungen für Fahrer
+	group.GET("/reservations", driverDashboardHandler.ShowReservations)
+
+	// Fahrzeugmeldungen für Fahrer  
+	group.GET("/reports", driverDashboardHandler.ShowReports)
+
+	// API-Routen für Fahrer
+	driverAPI := group.Group("/api")
+	{
+		// Reservierungs-API für Fahrer
+		reservations := driverAPI.Group("/reservations")
+		{
+			reservations.GET("", vehicleReportHandler.GetReportsByDriver) // Eigene Reservierungen
+			// reservations.POST("", driverReservationHandler.CreateReservation) // Neue Reservierung erstellen
+			// reservations.GET("/:id", driverReservationHandler.GetReservation) // Reservierung anzeigen
+		}
+
+		// Fahrzeugmeldungs-API für Fahrer
+		reports := driverAPI.Group("/reports")
+		{
+			reports.GET("", vehicleReportHandler.GetReportsByDriver)          // Eigene Meldungen
+			reports.POST("", vehicleReportHandler.CreateReport)              // Neue Meldung erstellen
+			reports.GET("/:id", vehicleReportHandler.GetReport)              // Meldung anzeigen
+		}
+
+		// Fahrzeug-Info für Fahrer (nur lesend)
+		// vehicles := driverAPI.Group("/vehicles")
+		// {
+		// 	vehicles.GET("", driverVehicleHandler.GetAvailableVehicles) // Verfügbare Fahrzeuge für Reservierung
+		// 	vehicles.GET("/:id", driverVehicleHandler.GetVehicleInfo)   // Fahrzeuginfos für Meldung
+		// }
+	}
 }
