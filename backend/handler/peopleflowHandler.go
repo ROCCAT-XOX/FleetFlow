@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"FleetDrive/backend/model" // Stelle sicher, dass model importiert ist
-	"FleetDrive/backend/service"
+	"FleetFlow/backend/model" // Stelle sicher, dass model importiert ist
+	"FleetFlow/backend/service"
 
 	"github.com/gin-gonic/gin"
 )

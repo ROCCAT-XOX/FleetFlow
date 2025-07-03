@@ -16,8 +16,8 @@ import (
 	"strings"
 	"time"
 
-	"FleetDrive/backend/model"
-	"FleetDrive/backend/repository"
+	"FleetFlow/backend/model"
+	"FleetFlow/backend/repository"
 )
 
 // PeopleFlowService verwaltet die Integration mit PeopleFlow

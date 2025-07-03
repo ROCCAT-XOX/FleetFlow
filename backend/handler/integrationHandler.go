@@ -2,7 +2,7 @@
 package handler
 
 import (
-	"FleetDrive/backend/service"
+	"FleetFlow/backend/service"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )

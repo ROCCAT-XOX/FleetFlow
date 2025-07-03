@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"time"
 
-	"FleetDrive/backend/model"
-	"FleetDrive/backend/repository"
+	"FleetFlow/backend/model"
+	"FleetFlow/backend/repository"
 	"github.com/gin-gonic/gin"
 )
 

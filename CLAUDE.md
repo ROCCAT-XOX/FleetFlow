@@ -13,10 +13,10 @@ FleetFlow is a fleet management system built with Go (backend) and HTML/CSS/Java
 go run .
 
 # Build the application
-go build -o fleetdrive
+go build -o fleetflow
 
 # Run the built executable
-./fleetdrive
+./fleetflow
 
 # Development with hot reload (requires air)
 air

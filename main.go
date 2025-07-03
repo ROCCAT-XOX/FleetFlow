@@ -1,10 +1,10 @@
 package main
 
 import (
-	"FleetDrive/backend/db"
-	"FleetDrive/backend/repository"
-	"FleetDrive/backend/service"
-	"FleetDrive/backend/utils"
+	"FleetFlow/backend/db"
+	"FleetFlow/backend/repository"
+	"FleetFlow/backend/service"
+	"FleetFlow/backend/utils"
 	"fmt"
 	"html/template"
 	"log"
@@ -16,7 +16,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
-	"FleetDrive/backend" // Ändere diesen Pfad zu deinem tatsächlichen Importpfad
+	"FleetFlow/backend" // Ändere diesen Pfad zu deinem tatsächlichen Importpfad
 )
 
 func main() {

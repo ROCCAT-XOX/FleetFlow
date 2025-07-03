@@ -2,8 +2,8 @@
 package service
 
 import (
-	"FleetDrive/backend/model"
-	"FleetDrive/backend/repository"
+	"FleetFlow/backend/model"
+	"FleetFlow/backend/repository"
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"time"

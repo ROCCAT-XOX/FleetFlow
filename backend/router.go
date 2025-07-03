@@ -1,11 +1,11 @@
 package backend
 
 import (
-	"FleetDrive/backend/handler"
-	"FleetDrive/backend/middleware"
-	"FleetDrive/backend/model"
-	"FleetDrive/backend/repository"
-	"FleetDrive/backend/utils"
+	"FleetFlow/backend/handler"
+	"FleetFlow/backend/middleware"
+	"FleetFlow/backend/model"
+	"FleetFlow/backend/repository"
+	"FleetFlow/backend/utils"
 	"net/http"
 	"time"
 

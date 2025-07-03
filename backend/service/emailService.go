@@ -1,8 +1,8 @@
 package service
 
 import (
-	"FleetDrive/backend/model"
-	"FleetDrive/backend/repository"
+	"FleetFlow/backend/model"
+	"FleetFlow/backend/repository"
 	"bytes"
 	"crypto/tls"
 	"fmt"
